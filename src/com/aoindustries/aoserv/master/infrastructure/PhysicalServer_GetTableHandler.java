@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -59,7 +59,7 @@ public class PhysicalServer_GetTableHandler extends TableHandler.GetTableHandler
 			+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
 			+ "where\n"
 			+ "  ms.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -91,7 +91,7 @@ public class PhysicalServer_GetTableHandler extends TableHandler.GetTableHandler
 			// Allow servers it replicates to
 			//+ "    or bp.ao_server=ps.server\n"
 			+ "  )",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

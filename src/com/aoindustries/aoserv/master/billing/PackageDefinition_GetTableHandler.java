@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,7 +9,7 @@ import com.aoindustries.aoserv.client.billing.PackageDefinition;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.master.BusinessHandler;
+import com.aoindustries.aoserv.master.AccountHandler;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -65,13 +65,13 @@ public class PackageDefinition_GetTableHandler extends TableHandler.GetTableHand
 			+ "  and ms.server=bs.server\n"
 			+ "  and bs.accounting=pk.accounting\n"
 			+ "  and pk.package_definition=pd.id",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		if(BusinessHandler.canSeePrices(conn, source)) {
+		if(AccountHandler.canSeePrices(conn, source)) {
 			MasterServer.writeObjects(
 				conn,
 				source,
@@ -98,7 +98,7 @@ public class PackageDefinition_GetTableHandler extends TableHandler.GetTableHand
 				+ "    pk2.package_definition=pd.id\n"
 				+ "    or bu1.accounting=pd.accounting\n"
 				+ "  )",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(
@@ -138,7 +138,7 @@ public class PackageDefinition_GetTableHandler extends TableHandler.GetTableHand
 				+ "    pk2.package_definition=pd.id\n"
 				+ "    or bu1.accounting=pd.accounting\n"
 				+ "  )",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -62,7 +62,7 @@ public class Account_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			+ "  ms.username=?\n"
 			+ "  and ms.server=bs.server\n"
 			+ "  and bs.accounting=bu.accounting",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -90,7 +90,7 @@ public class Account_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 			+ "    INNER JOIN account.\"Account\" a ON accounts.accounting = a.parent\n"
 			+ ")\n"
 			+ "SELECT * FROM accounts",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 		/*
 		MasterServer.writeObjects(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -82,7 +82,7 @@ public final class OriginalClusterOptimizer {
         }
     }
 
-    private static class Server implements Comparable<Server> {
+    private static class Host implements Comparable<Host> {
         private final String hostname;
         private final Rack rack;
         private final int ram;
@@ -92,7 +92,7 @@ public final class OriginalClusterOptimizer {
         private final int processorCores;
         private final Disk[] disks;
         
-        private Server(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
+        private Host(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
             this.hostname = hostname;
             this.rack = rack;
             this.ram = ram;
@@ -109,7 +109,7 @@ public final class OriginalClusterOptimizer {
          * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
          */
 		@Override
-        public int compareTo(Server other) {
+        public int compareTo(Host other) {
             if(ram<other.ram) return -1;
             if(ram>other.ram) return 1;
             return processorCores-other.processorCores;
@@ -185,10 +185,10 @@ public final class OriginalClusterOptimizer {
     /**
      * Need to load this directly from the servers.
      */
-    private static List<Server> getServers() {
-        List<Server> servers = new ArrayList<>();
+    private static List<Host> getServers() {
+        List<Host> servers = new ArrayList<>();
         servers.add(
-            new Server(
+            new Host(
                 "gw1.fc.aoindustries.com",
                 Rack.FC_9_07,
                 2048,
@@ -203,7 +203,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen907-1.fc.aoindustries.com",
                 Rack.FC_9_07,
                 16384,
@@ -222,7 +222,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen907-2.fc.aoindustries.com",
                 Rack.FC_9_07,
                 2048,
@@ -238,7 +238,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen907-5.fc.aoindustries.com",
                 Rack.FC_9_07,
                 4096,
@@ -253,7 +253,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "gw2.fc.aoindustries.com",
                 Rack.FC_9_14,
                 2048,
@@ -268,7 +268,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen914-1.fc.aoindustries.com",
                 Rack.FC_9_14,
                 2048,
@@ -283,7 +283,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen914-2.fc.aoindustries.com",
                 Rack.FC_9_14,
                 4096,
@@ -299,7 +299,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen914-5.fc.lnxhosting.ca",
                 Rack.FC_9_14,
                 16384,
@@ -333,7 +333,7 @@ public final class OriginalClusterOptimizer {
         );
          */
         servers.add(
-            new Server(
+            new Host(
                 "xen917-2.fc.aoindustries.com",
                 Rack.FC_9_17,
                 2048,
@@ -348,7 +348,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen917-3.fc.aoindustries.com",
                 Rack.FC_9_17,
                 6144,
@@ -363,7 +363,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen917-4.fc.aoindustries.com",
                 Rack.FC_9_17,
                 4096,
@@ -377,7 +377,7 @@ public final class OriginalClusterOptimizer {
             )
         );
         servers.add(
-            new Server(
+            new Host(
                 "xen917-5.fc.aoindustries.com",
                 Rack.FC_9_17,
                 16384,
@@ -859,12 +859,12 @@ public final class OriginalClusterOptimizer {
     }
 
     public static void main(String[] args) {
-        List<Server> servers = getServers();
+        List<Host> servers = getServers();
         long totalProcessorCores = 0;
         long totalRam = 0;
         long totalDisk = 0;
         int totalDiskArrays = 0;
-        for(Server server : servers) {
+        for(Host server : servers) {
             totalProcessorCores += server.processorCores;
             totalRam += server.ram;
             for(Disk disk : server.disks) {
@@ -921,8 +921,8 @@ public final class OriginalClusterOptimizer {
     /**
      * TODO: How can we optimize further knowing that multiple virtual servers have exactly the same configuration (and therefore don't affect the overall results when switched positions)
      */
-    private static void mapServers(List<Server> servers, List<VirtualServer> virtualServers, int[] selectedPrimaries, int[] selectedSecondaries, int currentVirtualServer) {
-        final int serversSize = servers.size();
+    private static void mapServers(List<Host> hosts, List<VirtualServer> virtualServers, int[] selectedPrimaries, int[] selectedSecondaries, int currentVirtualServer) {
+        final int hostsSize = hosts.size();
         final int virtualServersSize = virtualServers.size();
 
         callCounter++;
@@ -963,12 +963,12 @@ public final class OriginalClusterOptimizer {
             mapped++;
             /*
             System.out.println("Mapping found with "+skipped+" skips");
-            for(int serverIndex=0;serverIndex<serversSize;serverIndex++) {
-                Server server = servers.get(serverIndex);
+            for(int hostIndex=0;hostIndex<hostsSize;hostIndex++) {
+                Server server = servers.get(hostIndex);
                 System.out.println(server.hostname);
                 System.out.println("    Primary:");
                 for(int virtualServerIndex=0;virtualServerIndex<virtualServersSize;virtualServerIndex++) {
-                    if(selectedPrimaries[virtualServerIndex]==serverIndex) {
+                    if(selectedPrimaries[virtualServerIndex]==hostIndex) {
                         VirtualServer virtualServer = virtualServers.get(virtualServerIndex);
                         System.out.println("        "+virtualServer.hostname+":");
                         System.out.println("            Processor Cores: "+virtualServer.minimumProcessorCores);
@@ -983,10 +983,10 @@ public final class OriginalClusterOptimizer {
                 }
                 System.out.println("        Total:");
                 System.out.println("    Secondary:");
-                for(int failedPrimaryServerIndex=0;failedPrimaryServerIndex<serversSize;failedPrimaryServerIndex++) {
+                for(int failedPrimaryServerIndex=0;failedPrimaryServerIndex<hostsSize;failedPrimaryServerIndex++) {
                     boolean isFirst = true;
                     for(int virtualServerIndex=0;virtualServerIndex<virtualServersSize;virtualServerIndex++) {
-                        if(selectedPrimaries[virtualServerIndex]==failedPrimaryServerIndex && selectedSecondaries[virtualServerIndex]==serverIndex) {
+                        if(selectedPrimaries[virtualServerIndex]==failedPrimaryServerIndex && selectedSecondaries[virtualServerIndex]==hostIndex) {
                             Server failedPrimaryServer = servers.get(failedPrimaryServerIndex);
                             VirtualServer secondaryVirtualServer = virtualServers.get(virtualServerIndex);
                             if(isFirst) {
@@ -1013,9 +1013,9 @@ public final class OriginalClusterOptimizer {
              */
         } else {
             final VirtualServer virtualServer = virtualServers.get(currentVirtualServer);
-            for(int primaryServerIndex=0; primaryServerIndex<serversSize; primaryServerIndex++) {
+            for(int primaryServerIndex=0; primaryServerIndex<hostsSize; primaryServerIndex++) {
                 // Only map the virtual server to the primary server if it matches any processor type, architecture, and speed constraints.
-                final Server primaryServer = servers.get(primaryServerIndex);
+                final Host primaryServer = hosts.get(primaryServerIndex);
                 if(
                     (
                         virtualServer.minimumProcessorType==null
@@ -1044,7 +1044,7 @@ public final class OriginalClusterOptimizer {
                             // Make sure that the combined primary mappings plus secondary CPU cores and RAM do not exceed the total of this machine
                             // for any one primary failure.  The loop represents the failure of each server, one at a time.
                             boolean needsSecondarySkip = false;
-                            for(int failedPrimaryServerIndex=0;failedPrimaryServerIndex<serversSize;failedPrimaryServerIndex++) {
+                            for(int failedPrimaryServerIndex=0;failedPrimaryServerIndex<hostsSize;failedPrimaryServerIndex++) {
                                 if(failedPrimaryServerIndex!=primaryServerIndex) {
                                     //float totalSecondaryVirtualProcessorCores = totalPrimaryServerVirtualProcessorCores;
                                     long totalSecondaryMinimumRam = totalPrimaryServerMinimumRam;
@@ -1068,57 +1068,56 @@ public final class OriginalClusterOptimizer {
                                 // For each disk type, skip if exceeded on either total extents or arrays (allocation)
                                 // TODO: Add in secondary volumes here, too
                                 boolean needsSkip = false;
-                                for(int e=0;e<diskTypes.length;e++) {
-                                    DiskType diskType = diskTypes[e];
-                                    // Calculate total required
-                                    long totalVirtualDisk = 0;
-                                    float totalVirtualDiskArrays = 0;
-                                    for(int d=0;d<=currentVirtualServer;d++) {
-                                        if(selectedPrimaries[d]==primaryServerIndex) {
-                                            VirtualServer mappedVirtualServer = virtualServers.get(d);
-                                            for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
-                                                if(virtualDisk.primaryDiskType==diskType) {
-                                                    totalVirtualDisk += virtualDisk.extents;
-                                                    totalVirtualDiskArrays += virtualDisk.primaryAllocation;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    for(int d=0;d<currentVirtualServer;d++) {
-                                        if(selectedSecondaries[d]==primaryServerIndex) {
-                                            VirtualServer mappedVirtualServer = virtualServers.get(d);
-                                            for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
-                                                if(virtualDisk.secondaryDiskType==diskType) {
-                                                    totalVirtualDisk += virtualDisk.extents;
-                                                    totalVirtualDiskArrays += virtualDisk.secondaryAllocation;
-                                                }
-                                            }
-                                        }
-                                    }
-                                    // Calculate total provided by the primaryServer
-                                    long totalDiskExtents = 0;
-                                    int totalDiskArrays = 0;
-                                    for(Disk disk : primaryServer.disks) {
-                                        if(disk.diskType==diskType) {
-                                            totalDiskExtents+=disk.extents;
-                                            totalDiskArrays++;
-                                        }
-                                    }
-                                    if(totalDiskExtents<totalVirtualDisk) {
-                                        SkipType.PRIMARY_PLUS_SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
-                                        needsSkip = true;
-                                        break;
-                                    } else if(totalDiskArrays<totalVirtualDiskArrays) {
-                                        SkipType.PRIMARY_PLUS_SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
-                                        needsSkip = true;
-                                        break;
-                                    }
-                                }
+								for(DiskType diskType : diskTypes) {
+									// Calculate total required
+									long totalVirtualDisk = 0;
+									float totalVirtualDiskArrays = 0;
+									for(int d=0;d<=currentVirtualServer;d++) {
+										if(selectedPrimaries[d]==primaryServerIndex) {
+											VirtualServer mappedVirtualServer = virtualServers.get(d);
+											for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
+												if(virtualDisk.primaryDiskType==diskType) {
+													totalVirtualDisk += virtualDisk.extents;
+													totalVirtualDiskArrays += virtualDisk.primaryAllocation;
+												}
+											}
+										}
+									}
+									for(int d=0;d<currentVirtualServer;d++) {
+										if(selectedSecondaries[d]==primaryServerIndex) {
+											VirtualServer mappedVirtualServer = virtualServers.get(d);
+											for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
+												if(virtualDisk.secondaryDiskType==diskType) {
+													totalVirtualDisk += virtualDisk.extents;
+													totalVirtualDiskArrays += virtualDisk.secondaryAllocation;
+												}
+											}
+										}
+									}
+									// Calculate total provided by the primaryServer
+									long totalDiskExtents = 0;
+									int totalDiskArrays = 0;
+									for(Disk disk : primaryServer.disks) {
+										if(disk.diskType==diskType) {
+											totalDiskExtents+=disk.extents;
+											totalDiskArrays++;
+										}
+									}
+									if(totalDiskExtents<totalVirtualDisk) {
+										SkipType.PRIMARY_PLUS_SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
+										needsSkip = true;
+										break;
+									} else if(totalDiskArrays<totalVirtualDiskArrays) {
+										SkipType.PRIMARY_PLUS_SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
+										needsSkip = true;
+										break;
+									}
+								}
                                 if(!needsSkip) {
                                     // Now try each of the possible secondary mappings (to all servers except the primary)
-                                    for(int secondaryServerIndex=0; secondaryServerIndex<serversSize; secondaryServerIndex++) {
+                                    for(int secondaryServerIndex=0; secondaryServerIndex<hostsSize; secondaryServerIndex++) {
                                         if(secondaryServerIndex!=primaryServerIndex) {
-                                            final Server secondaryServer = servers.get(secondaryServerIndex);
+                                            final Host secondaryServer = hosts.get(secondaryServerIndex);
                                             selectedSecondaries[currentVirtualServer]=secondaryServerIndex;
 
                                             // Make sure the secondary architecture matches any requirements
@@ -1137,7 +1136,7 @@ public final class OriginalClusterOptimizer {
                                                         }
                                                     }
                                                     needsSecondarySkip = false;
-                                                    for(int failedPrimaryIndex=0;failedPrimaryIndex<serversSize;failedPrimaryIndex++) {
+                                                    for(int failedPrimaryIndex=0;failedPrimaryIndex<hostsSize;failedPrimaryIndex++) {
                                                         if(failedPrimaryIndex!=secondaryServerIndex) {
                                                             //float totalSecondaryVirtualProcessorCores = totalPrimaryVirtualProcessorCores;
                                                             long totalSecondaryMinimumRam = totalPrimaryMinimumRam;
@@ -1160,55 +1159,54 @@ public final class OriginalClusterOptimizer {
                                                     if(!needsSecondarySkip) {
                                                         // For each disk type, skip if exceeded on either total extents or arrays (allocation)
                                                         needsSkip = false;
-                                                        for(int e=0;e<diskTypes.length;e++) {
-                                                            DiskType diskType = diskTypes[e];
-                                                            // Calculate total required for primaries
-                                                            long totalVirtualDisk = 0;
-                                                            float totalVirtualDiskArrays = 0;
-                                                            for(int d=0;d<=currentVirtualServer;d++) {
-                                                                if(selectedPrimaries[d]==secondaryServerIndex) {
-                                                                    VirtualServer mappedVirtualServer = virtualServers.get(d);
-                                                                    for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
-                                                                        if(virtualDisk.primaryDiskType==diskType) {
-                                                                            totalVirtualDisk += virtualDisk.extents;
-                                                                            totalVirtualDiskArrays += virtualDisk.primaryAllocation;
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                            // Also add total required for secondaries
-                                                            for(int d=0;d<=currentVirtualServer;d++) {
-                                                                if(selectedSecondaries[d]==secondaryServerIndex) {
-                                                                    VirtualServer mappedVirtualServer = virtualServers.get(d);
-                                                                    for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
-                                                                        if(virtualDisk.secondaryDiskType==diskType) {
-                                                                            totalVirtualDisk += virtualDisk.extents;
-                                                                            totalVirtualDiskArrays += virtualDisk.secondaryAllocation;
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                            // Calculate total provided by the secondaryServer
-                                                            long totalDiskExtents = 0;
-                                                            int totalDiskArrays = 0;
-                                                            for(Disk disk : secondaryServer.disks) {
-                                                                if(disk.diskType==diskType) {
-                                                                    totalDiskExtents+=disk.extents;
-                                                                    totalDiskArrays++;
-                                                                }
-                                                            }
-                                                            if(totalDiskExtents<totalVirtualDisk) {
-                                                                needsSkip = true;
-                                                                SkipType.SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
-                                                                break;
-                                                            } else if(totalDiskArrays<totalVirtualDiskArrays) {
-                                                                needsSkip = true;
-                                                                SkipType.SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
-                                                                break;
-                                                            }
-                                                        }
+														for(DiskType diskType : diskTypes) {
+															// Calculate total required for primaries
+															long totalVirtualDisk = 0;
+															float totalVirtualDiskArrays = 0;
+															for(int d=0;d<=currentVirtualServer;d++) {
+																if(selectedPrimaries[d]==secondaryServerIndex) {
+																	VirtualServer mappedVirtualServer = virtualServers.get(d);
+																	for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
+																		if(virtualDisk.primaryDiskType==diskType) {
+																			totalVirtualDisk += virtualDisk.extents;
+																			totalVirtualDiskArrays += virtualDisk.primaryAllocation;
+																		}
+																	}
+																}
+															}
+															// Also add total required for secondaries
+															for(int d=0;d<=currentVirtualServer;d++) {
+																if(selectedSecondaries[d]==secondaryServerIndex) {
+																	VirtualServer mappedVirtualServer = virtualServers.get(d);
+																	for(VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
+																		if(virtualDisk.secondaryDiskType==diskType) {
+																			totalVirtualDisk += virtualDisk.extents;
+																			totalVirtualDiskArrays += virtualDisk.secondaryAllocation;
+																		}
+																	}
+																}
+															}
+															// Calculate total provided by the secondaryServer
+															long totalDiskExtents = 0;
+															int totalDiskArrays = 0;
+															for(Disk disk : secondaryServer.disks) {
+																if(disk.diskType==diskType) {
+																	totalDiskExtents+=disk.extents;
+																	totalDiskArrays++;
+																}
+															}
+															if(totalDiskExtents<totalVirtualDisk) {
+																needsSkip = true;
+																SkipType.SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
+																break;
+															} else if(totalDiskArrays<totalVirtualDiskArrays) {
+																needsSkip = true;
+																SkipType.SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
+																break;
+															}
+														}
                                                         if(!needsSkip) {
-                                                            mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, currentVirtualServer+1);
+                                                            mapServers(hosts, virtualServers, selectedPrimaries, selectedSecondaries, currentVirtualServer+1);
                                                         } else {
                                                             skipped++;
                                                         }

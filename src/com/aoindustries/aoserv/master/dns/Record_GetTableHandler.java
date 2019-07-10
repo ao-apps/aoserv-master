@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -84,7 +84,7 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  and bu1.accounting=pk2.accounting\n"
 			+ "  and pk2.name=dz.package\n"
 			+ "  and dz.\"zone\"=dr.\"zone\"",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

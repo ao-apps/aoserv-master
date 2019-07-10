@@ -117,7 +117,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				InvalidateCacheEntry ice=new InvalidateCacheEntry(
 					copy,
 					daemonServer,
-					daemonServer==-1?null:ServerHandler.addInvalidateSyncEntry(daemonServer, this)
+					daemonServer==-1?null:NetHostHandler.addInvalidateSyncEntry(daemonServer, this)
 				);
 				invalidateLists.addLast(ice);
 				notify();
@@ -158,7 +158,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public com.aoindustries.aoserv.client.account.User.Name getUsername() {
+	public com.aoindustries.aoserv.client.account.User.Name getCurrentAdministrator() {
 		return process.getEffectiveUser();
 	}
 
@@ -185,7 +185,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					}
 					DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 					try {
-						process.setDeamonServer(ServerHandler.getServerForAOServerHostname(conn, daemonServer));
+						process.setDeamonServer(NetHostHandler.getHostForLinuxServerHostname(conn, daemonServer));
 					} catch(RuntimeException | IOException err) {
 						conn.rollback();
 						throw err;

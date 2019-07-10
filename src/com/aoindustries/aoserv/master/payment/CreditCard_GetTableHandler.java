@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -78,7 +78,7 @@ public class CreditCard_GetTableHandler extends TableHandler.GetTableHandlerPerm
 			+ TableHandler.PK_BU1_PARENTS_WHERE
 			+ "  )\n"
 			+ "  and bu1.accounting=cc.accounting",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

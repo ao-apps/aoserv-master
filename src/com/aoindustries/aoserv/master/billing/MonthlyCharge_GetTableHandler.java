@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,7 +9,7 @@ import com.aoindustries.aoserv.client.billing.MonthlyCharge;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.master.BusinessHandler;
+import com.aoindustries.aoserv.master.AccountHandler;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -52,7 +52,7 @@ public class MonthlyCharge_GetTableHandler extends TableHandler.GetTableHandlerB
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		if(BusinessHandler.canSeePrices(conn, source)) {
+		if(AccountHandler.canSeePrices(conn, source)) {
 			MasterServer.writeObjects(
 				conn,
 				source,
@@ -76,7 +76,7 @@ public class MonthlyCharge_GetTableHandler extends TableHandler.GetTableHandlerB
 				+ "  )\n"
 				+ "  and bu1.accounting=pk2.accounting\n"
 				+ "  and pk2.name=mc.package",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());

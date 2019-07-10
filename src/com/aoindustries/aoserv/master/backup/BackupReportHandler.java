@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -68,7 +68,7 @@ public class BackupReportHandler {
 
 		@Override
 		public void getObject(DatabaseConnection conn, RequestSource source, CompressedDataInputStream in, CompressedDataOutputStream out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int id = in.readCompressedInt();
+			int backupReport = in.readCompressedInt();
 			if(masterUser != null) {
 				assert masterServers != null;
 				if(masterServers.length == 0) {
@@ -78,7 +78,7 @@ public class BackupReportHandler {
 						out,
 						new BackupReport(),
 						QUERY_MASTER + " where id=?",
-						id
+						backupReport
 					);
 				} else {
 					MasterServer.writeObject(
@@ -88,8 +88,8 @@ public class BackupReportHandler {
 						new BackupReport(),
 						QUERY_DAEMON + "\n"
 						+ "  and br.id=?",
-						source.getUsername(),
-						id
+						source.getCurrentAdministrator(),
+						backupReport
 					);
 				}
 			} else {
@@ -100,8 +100,8 @@ public class BackupReportHandler {
 					new BackupReport(),
 					QUERY_ADMINISTRATOR + "\n"
 					+ "  and br.id=?",
-					source.getUsername(),
-					id
+					source.getCurrentAdministrator(),
+					backupReport
 				);
 			}
 		}
@@ -137,7 +137,7 @@ public class BackupReportHandler {
 				CursorMode.FETCH,
 				new BackupReport(),
 				QUERY_DAEMON,
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		}
 
@@ -151,7 +151,7 @@ public class BackupReportHandler {
 				CursorMode.FETCH,
 				new BackupReport(),
 				QUERY_ADMINISTRATOR,
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		}
 	}

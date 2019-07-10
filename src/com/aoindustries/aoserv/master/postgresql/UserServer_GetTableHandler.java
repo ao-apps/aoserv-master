@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -61,7 +61,7 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			+ "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
 			+ "where\n"
 			+ "  ms.username = ?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -97,7 +97,7 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
 			+ "  and pk2.name=un2.package\n"
 			+ "  and un2.username=psu.username",
 			AoservProtocol.FILTERED,
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

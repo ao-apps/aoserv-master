@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -151,9 +151,6 @@ public class Column_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 			} finally {
 				results.close();
 			}
-		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt.toString());
-			throw err;
 		} finally {
 			pstmt.close();
 		}

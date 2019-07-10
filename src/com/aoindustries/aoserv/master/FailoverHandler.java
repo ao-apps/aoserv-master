@@ -37,11 +37,11 @@ final public class FailoverHandler implements CronJob {
 
 	private static final Logger logger = LogFactory.getLogger(FailoverHandler.class);
 
-	public static int addFailoverFileLog(
+	public static int addFileReplicationLog(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int replication,
+		int fileReplication,
 		long startTime,
 		long endTime,
 		int scanned,
@@ -54,13 +54,13 @@ final public class FailoverHandler implements CronJob {
 		//if (mu==null) throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
 
 		// The server must be an exact package match to allow adding log entries
-		int server=getFromServerForFailoverFileReplication(conn, replication);
-		Account.Name userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		int host = getFromHostForFileReplication(conn, fileReplication);
+		Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
+		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationLog for servers that have the same package as the business_administrator adding the log entry");
-		//ServerHandler.checkAccessServer(conn, source, "add_failover_file_log", server);
+		//ServerHandler.checkAccessServer(conn, source, "addFileReplicationLog", server);
 
-		int id = conn.executeIntUpdate(
+		int fileReplicationLog = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  backup.\"FileReplicationLog\"\n"
 			+ "VALUES (\n"
@@ -73,7 +73,7 @@ final public class FailoverHandler implements CronJob {
 			+ "  ?,\n"
 			+ "  ?\n"
 			+ ") RETURNING id",
-			replication,
+			fileReplication,
 			new Timestamp(startTime),
 			new Timestamp(endTime),
 			scanned,
@@ -86,18 +86,18 @@ final public class FailoverHandler implements CronJob {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.FAILOVER_FILE_LOG,
-			ServerHandler.getBusinessesForServer(conn, server),
-			server,
+			NetHostHandler.getAccountsForHost(conn, host),
+			host,
 			false
 		);
-		return id;
+		return fileReplicationLog;
 	}
 
-	public static void setFailoverFileReplicationBitRate(
+	public static void setFileReplicationBitRate(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int fileReplication,
 		Long bitRate
 	) throws IOException, SQLException {
 		if(
@@ -106,43 +106,43 @@ final public class FailoverHandler implements CronJob {
 		) throw new SQLException("Bit rate too low: "+bitRate+"<"+BitRateProvider.MINIMUM_BIT_RATE);
 
 		// The server must be an exact package match to allow setting the bit rate
-		int server=getFromServerForFailoverFileReplication(conn, id);
-		Account.Name userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		int host = getFromHostForFileReplication(conn, fileReplication);
+		Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
+		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplication.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
 
-		if(bitRate==null) conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=null where id=?", id);
-		else conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=? where id=?", bitRate, id);
+		if(bitRate==null) conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=null where id=?", fileReplication);
+		else conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=? where id=?", bitRate, fileReplication);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.FAILOVER_FILE_REPLICATIONS,
-			ServerHandler.getBusinessesForServer(conn, server),
-			server,
+			NetHostHandler.getAccountsForHost(conn, host),
+			host,
 			false
 		);
 	}
 
-	public static void setFailoverFileSchedules(
+	public static void setFileReplicationSchedules(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int replication,
+		int fileReplication,
 		List<Short> hours,
 		List<Short> minutes
 	) throws IOException, SQLException {
 		// The server must be an exact package match to allow setting the schedule
-		int server=getFromServerForFailoverFileReplication(conn, replication);
-		Account.Name userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		int host = getFromHostForFileReplication(conn, fileReplication);
+		Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
+		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationSchedule for servers that have the same package as the business_administrator setting the schedule");
 
 		// If not modified, invalidation will not be performed
 		boolean modified = false;
 
 		// Get the list of all the ids that currently exist
-		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSchedule\" where replication=?", replication);
+		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSchedule\" where replication=?", fileReplication);
 		int size = hours.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove id from the list, otherwise add
@@ -150,13 +150,13 @@ final public class FailoverHandler implements CronJob {
 			short minute = minutes.get(c);
 			int existingPkey = conn.executeIntQuery(
 				"select coalesce((select id from backup.\"FileReplicationSchedule\" where replication=? and hour=? and minute=?), -1)",
-				replication,
+				fileReplication,
 				hour,
 				minute
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
-				conn.executeUpdate("insert into backup.\"FileReplicationSchedule\" (replication, hour, minute, enabled) values(?,?,?,true)", replication, hour, minute);
+				conn.executeUpdate("insert into backup.\"FileReplicationSchedule\" (replication, hour, minute, enabled) values(?,?,?,true)", fileReplication, hour, minute);
 				modified = true;
 			} else {
 				// Remove from the list that will be removed
@@ -176,33 +176,33 @@ final public class FailoverHandler implements CronJob {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.FAILOVER_FILE_SCHEDULE,
-				ServerHandler.getBusinessesForServer(conn, server),
-				server,
+				NetHostHandler.getAccountsForHost(conn, host),
+				host,
 				false
 			);
 		}
 	}
 
-	public static void setFileBackupSettingsAllAtOnce(
+	public static void setFileReplicationSettings(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int replication,
+		int fileReplication,
 		List<String> paths,
 		List<Boolean> backupEnableds,
 		List<Boolean> requireds
 	) throws IOException, SQLException {
 		// The server must be an exact package match to allow setting the schedule
-		int server=getFromServerForFailoverFileReplication(conn, replication);
-		Account.Name userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, server));
+		int host = getFromHostForFileReplication(conn, fileReplication);
+		Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
+		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationSetting for servers that have the same package as the business_administrator making the settings");
 
 		// If not modified, invalidation will not be performed
 		boolean modified = false;
 
 		// Get the list of all the ids that currently exist
-		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSetting\" where replication=?", replication);
+		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSetting\" where replication=?", fileReplication);
 		int size = paths.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove id from the list, otherwise add
@@ -211,14 +211,14 @@ final public class FailoverHandler implements CronJob {
 			boolean required = requireds.get(c);
 			int existingPkey = conn.executeIntQuery(
 				"select coalesce((select id from backup.\"FileReplicationSetting\" where replication=? and path=?), -1)",
-				replication,
+				fileReplication,
 				path
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
 				conn.executeUpdate(
 					"insert into backup.\"FileReplicationSetting\" (replication, path, backup_enabled, required) values(?,?,?,?)",
-					replication,
+					fileReplication,
 					path,
 					backupEnabled,
 					required
@@ -254,31 +254,31 @@ final public class FailoverHandler implements CronJob {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.FILE_BACKUP_SETTINGS,
-				ServerHandler.getBusinessesForServer(conn, server),
-				server,
+				NetHostHandler.getAccountsForHost(conn, host),
+				host,
 				false
 			);
 		}
 	}
 
-	public static int getFromServerForFailoverFileReplication(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from backup.\"FileReplication\" where id=?", id);
+	public static int getFromHostForFileReplication(DatabaseConnection conn, int fileReplication) throws IOException, SQLException {
+		return conn.executeIntQuery("select server from backup.\"FileReplication\" where id=?", fileReplication);
 	}
 
-	public static int getBackupPartitionForFailoverFileReplication(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select backup_partition from backup.\"FileReplication\" where id=?", id);
+	public static int getBackupPartitionForFileReplication(DatabaseConnection conn, int fileReplication) throws IOException, SQLException {
+		return conn.executeIntQuery("select backup_partition from backup.\"FileReplication\" where id=?", fileReplication);
 	}
 
-	public static void getFailoverFileLogs(
+	public static void getFileReplicationLogs(
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
-		int replication,
+		int fileReplication,
 		int maxRows
 	) throws IOException, SQLException {
 		// Check access for the from server
-		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
-		ServerHandler.checkAccessServer(conn, source, "getFailoverFileLogs", fromServer);
+		int fromHost = getFromHostForFileReplication(conn, fileReplication);
+		NetHostHandler.checkAccessHost(conn, source, "getFileReplicationLogs", fromHost);
 
 		// TODO: release conn before writing to out
 		MasterServer.writeObjects(
@@ -289,28 +289,28 @@ final public class FailoverHandler implements CronJob {
 			maxRows > CursorMode.AUTO_CURSOR_ABOVE ? CursorMode.FETCH : CursorMode.SELECT,
 			new FileReplicationLog(),
 			"select * from backup.\"FileReplicationLog\" where replication=? order by start_time desc limit ?",
-			replication,
+			fileReplication,
 			maxRows
 		);
 	}
 
-	public static Tuple2<Long,String> getFailoverFileReplicationActivity(
+	public static Tuple2<Long,String> getFileReplicationActivity(
 		DatabaseConnection conn,
 		RequestSource source,
-		int replication
+		int fileReplication
 	) throws IOException, SQLException {
 		// Check access for the from server
-		int fromServer = getFromServerForFailoverFileReplication(conn, replication);
-		ServerHandler.checkAccessServer(conn, source, "getFailoverFileReplicationActivity", fromServer);
+		int fromHost = getFromHostForFileReplication(conn, fileReplication);
+		NetHostHandler.checkAccessHost(conn, source, "getFileReplicationActivity", fromHost);
 
 		// Find where going
-		int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, replication);
-		int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
+		int backupPartition = FailoverHandler.getBackupPartitionForFileReplication(conn, fileReplication);
+		int toLinuxServer = BackupHandler.getLinuxServerForBackupPartition(conn, backupPartition);
 
 		// Contact the server
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toLinuxServer);
 		conn.releaseConnection();
-		return daemonConnector.getFailoverFileReplicationActivity(replication);
+		return daemonConnector.getFailoverFileReplicationActivity(fileReplication);
 	}
 
 	/**
@@ -368,7 +368,7 @@ final public class FailoverHandler implements CronJob {
 	public static Server.DaemonAccess requestReplicationDaemonAccess(
 		DatabaseConnection conn,
 		RequestSource source,
-		int id
+		int fileReplication
 	) throws IOException, SQLException {
 		// Security checks
 		//String username=source.getUsername();
@@ -377,51 +377,51 @@ final public class FailoverHandler implements CronJob {
 		// Sometime later we might restrict certain command codes to certain users
 
 		// Current user must have the same exact package as the from server
-		Account.Name userPackage = UsernameHandler.getPackageForUsername(conn, source.getUsername());
-		int fromServer=FailoverHandler.getFromServerForFailoverFileReplication(conn, id);
-		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer));
+		Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
+		int fromServer=FailoverHandler.getFromHostForFileReplication(conn, fileReplication);
+		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, fromServer));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("account.Administrator.username.package!=servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
 		//ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
 		// The to server must match server
-		int backupPartition = FailoverHandler.getBackupPartitionForFailoverFileReplication(conn, id);
-		int toServer = BackupHandler.getAOServerForBackupPartition(conn, backupPartition);
+		int backupPartition = FailoverHandler.getBackupPartitionForFileReplication(conn, fileReplication);
+		int toServer = BackupHandler.getLinuxServerForBackupPartition(conn, backupPartition);
 
 		// The overall backup path includes both the toPath and the server name
 		String serverName;
-		if(ServerHandler.isAOServer(conn, fromServer)) {
-			serverName = ServerHandler.getHostnameForAOServer(conn, fromServer).toString();
+		if(NetHostHandler.isLinuxServer(conn, fromServer)) {
+			serverName = NetHostHandler.getHostnameForLinuxServer(conn, fromServer).toString();
 		} else {
 			serverName =
-				PackageHandler.getNameForPackage(conn, ServerHandler.getPackageForServer(conn, fromServer))
+				PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, fromServer))
 				+"/"
-				+ ServerHandler.getNameForServer(conn, fromServer)
+				+ NetHostHandler.getNameForHost(conn, fromServer)
 			;
 		}
 
-		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", id);
+		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", fileReplication);
 
 		// Verify that the backup_partition is the correct type
-		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", id);
+		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication);
 		if(quota_gid==-1) {
-			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: backup.FileReplication.id="+id);
+			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: backup.FileReplication.id="+fileReplication);
 		} else {
-			if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: backup.FileReplication.id="+id);
+			if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: backup.FileReplication.id="+fileReplication);
 		}
 
 		HostAddress connectAddress = conn.executeObjectQuery(
 			ObjectFactories.hostAddressFactory,
 			"select connect_address from backup.\"FileReplication\" where id=?",
-			id
+			fileReplication
 		);
 		return DaemonHandler.grantDaemonAccess(
 			conn,
 			toServer,
 			connectAddress,
 			AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
-			Integer.toString(id),
+			Integer.toString(fileReplication),
 			serverName,
-			conn.executeStringQuery("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", id),
+			conn.executeStringQuery("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication),
 			quota_gid==-1 ? null : Integer.toString(quota_gid)
 		);
 	}

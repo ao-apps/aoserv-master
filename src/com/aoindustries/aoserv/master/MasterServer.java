@@ -120,7 +120,7 @@ public abstract class MasterServer {
 	/**
 	 * The time the system started up
 	 */
-	private static final long startTime=System.currentTimeMillis();
+	private static final long START_TIME = System.currentTimeMillis();
 
 	/**
 	 * The central list of all objects that are notified of
@@ -252,7 +252,7 @@ public abstract class MasterServer {
 	}
 
 	public static long getStartTime() {
-		return startTime;
+		return START_TIME;
 	}
 
 	/** Used to avoid cloning of array for each access. */
@@ -500,9 +500,9 @@ public abstract class MasterServer {
 							final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
 							try {
 								final AoservProtocol.Version protocolVersion = source.getProtocolVersion();
-								final com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+								final com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 								boolean didInitialInvalidateAll = false;
-								while(!BusinessHandler.isBusinessAdministratorDisabled(conn, username)) {
+								while(!AccountHandler.isAdministratorDisabled(conn, currentAdministrator)) {
 									InvalidateCacheEntry ice;
 									if(!didInitialInvalidateAll) {
 										// Invalidate all once immediately now that listener added, just in case signals were lost during a network outage and reconnect
@@ -544,7 +544,7 @@ public abstract class MasterServer {
 									out.flush();
 
 									if(ice!=null) {
-										int server=ice.getServer();
+										int host = ice.getHost();
 										Long id=ice.getCacheSyncID();
 										if(
 											id!=null
@@ -552,7 +552,7 @@ public abstract class MasterServer {
 										) {
 											if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
 										}
-										if(server!=-1 && id!=null) ServerHandler.removeInvalidateSyncEntry(server, id);
+										if(host!=-1 && id!=null) NetHostHandler.removeInvalidateSyncEntry(host, id);
 									} else {
 										if(!in.readBoolean()) throw new IOException("Unexpected invalidate sync response.");
 									}
@@ -601,7 +601,7 @@ public abstract class MasterServer {
 							boolean connRolledBack=false;
 							try {
 								// Stop processing if the account is disabled
-								if(BusinessHandler.isBusinessAdministratorDisabled(conn, source.getUsername())) throw new IOException("Administrator disabled: "+source.getUsername());
+								if(AccountHandler.isAdministratorDisabled(conn, source.getCurrentAdministrator())) throw new IOException("Administrator disabled: "+source.getCurrentAdministrator());
 
 								switch(taskCode) {
 									case INVALIDATE_TABLE :
@@ -609,12 +609,12 @@ public abstract class MasterServer {
 											int clientTableID = in.readCompressedInt();
 											Table.TableID tableID=TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID==null) throw new IOException("Client table not supported: #"+clientTableID);
-											int server;
+											int host;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 												DomainName hostname = DomainName.valueOf(in.readNullUTF());
-												server = hostname==null ? -1 : ServerHandler.getServerForAOServerHostname(conn, hostname);
+												host = hostname==null ? -1 : NetHostHandler.getHostForLinuxServerHostname(conn, hostname);
 											} else {
-												server = in.readCompressedInt();
+												host = in.readCompressedInt();
 											}
 											process.setCommand(
 												Command.INVALIDATE,
@@ -622,14 +622,14 @@ public abstract class MasterServer {
 													conn,
 													tableID
 												),
-												server==-1 ? null : server
+												host==-1 ? null : host
 											);
 											TableHandler.invalidate(
 												conn,
 												source,
 												invalidateList,
 												tableID,
-												server
+												host
 											);
 											resp = Response.DONE;
 											sendInvalidateList=true;
@@ -642,7 +642,7 @@ public abstract class MasterServer {
 										switch(tableID) {
 											case BUSINESS_ADMINISTRATORS :
 												{
-													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String name=in.readUTF().trim();
 													String title=in.readNullUTF();
 													long birthdayLong=in.readLong();
@@ -666,7 +666,7 @@ public abstract class MasterServer {
 													;
 													process.setCommand(
 														Command.ADD_BUSINESS_ADMINISTRATOR,
-														username,
+														user,
 														name,
 														title,
 														birthday,
@@ -684,11 +684,11 @@ public abstract class MasterServer {
 														zip,
 														enableEmailSupport
 													);
-													BusinessHandler.addBusinessAdministrator(
+													AccountHandler.addAdministrator(
 														conn,
 														source,
 														invalidateList,
-														username,
+														user,
 														name,
 														title,
 														birthday,
@@ -711,7 +711,7 @@ public abstract class MasterServer {
 												break;
 											case BUSINESS_PROFILES :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String name=in.readUTF().trim();
 													boolean isPrivate=in.readBoolean();
 													String phone=in.readUTF().trim();
@@ -759,30 +759,7 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_BUSINESS_PROFILE,
-														accounting,
-														name,
-														isPrivate,
-														phone,
-														fax,
-														address1,
-														address2,
-														city,
-														state,
-														country,
-														zip,
-														sendInvoice,
-														billingContact,
-														billingEmail,
-														billingEmailFormat,
-														technicalContact,
-														technicalEmail,
-														technicalEmailFormat
-													);
-													int id = BusinessHandler.addBusinessProfile(
-														conn,
-														source,
-														invalidateList,
-														accounting,
+														account,
 														name,
 														isPrivate,
 														phone,
@@ -803,14 +780,36 @@ public abstract class MasterServer {
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														AccountHandler.addProfile(
+															conn,
+															source,
+															invalidateList,
+															account,
+															name,
+															isPrivate,
+															phone,
+															fax,
+															address1,
+															address2,
+															city,
+															state,
+															country,
+															zip,
+															sendInvoice,
+															billingContact,
+															billingEmail,
+															billingEmailFormat,
+															technicalContact,
+															technicalEmail,
+															technicalEmailFormat
+														)
 													);
 												}
 												break;
 											case BUSINESS_SERVERS :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
-													int server=in.readCompressedInt();
+													Account.Name account = Account.Name.valueOf(in.readUTF());
+													int host = in.readCompressedInt();
 													if(
 														source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_102)>=0
 														&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0
@@ -819,25 +818,24 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_BUSINESS_SERVER,
-														accounting,
-														server
-													);
-													int id=BusinessHandler.addBusinessServer(
-														conn,
-														source,
-														invalidateList,
-														accounting,
-														server
+														account,
+														host
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														AccountHandler.addAccountHost(
+															conn,
+															source,
+															invalidateList,
+															account,
+															host
+														)
 													);
 												}
 												break;
 											case BUSINESSES :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String contractVersion=in.readNullUTF();
 													int defaultServer;
 													DomainName hostname;
@@ -863,11 +861,11 @@ public abstract class MasterServer {
 													boolean billParent=in.readBoolean();
 													// Convert old hostname to net.Host.id
 													if(defaultServer==-1) {
-														defaultServer = ServerHandler.getServerForAOServerHostname(conn, hostname);
+														defaultServer = NetHostHandler.getHostForLinuxServerHostname(conn, hostname);
 													}
 													process.setCommand(
 														Command.ADD_BUSINESS,
-														accounting,
+														account,
 														contractVersion,
 														defaultServer,
 														parent,
@@ -876,11 +874,11 @@ public abstract class MasterServer {
 														can_see_prices,
 														billParent
 													);
-													BusinessHandler.addBusiness(
+													AccountHandler.addAccount(
 														conn,
 														source,
 														invalidateList,
-														accounting,
+														account,
 														contractVersion,
 														defaultServer,
 														parent,
@@ -911,7 +909,7 @@ public abstract class MasterServer {
 														throw new SQLException("add_credit_card for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
 													}
 													String processorName = in.readUTF();
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String groupName = in.readNullUTF();
 													String cardInfo = in.readUTF().trim();
 													Byte expirationMonth;
@@ -964,7 +962,7 @@ public abstract class MasterServer {
 													process.setCommand(
 														"add_credit_card",
 														processorName,
-														accounting,
+														account,
 														groupName,
 														cardInfo,
 														expirationMonth==null ? null : AoservProtocol.FILTERED,
@@ -990,47 +988,46 @@ public abstract class MasterServer {
 														encryptionFrom==-1 ? null : encryptionFrom,
 														encryptionRecipient==-1 ? null : encryptionRecipient
 													);
-													int id=CreditCardHandler.addCreditCard(
-														conn,
-														source,
-														invalidateList,
-														processorName,
-														accounting,
-														groupName,
-														cardInfo,
-														expirationMonth,
-														expirationYear,
-														providerUniqueId,
-														firstName,
-														lastName,
-														companyName,
-														email,
-														phone,
-														fax,
-														customerId,
-														customerTaxId,
-														streetAddress1,
-														streetAddress2,
-														city,
-														state,
-														postalCode,
-														countryCode,
-														principalName,
-														description,
-														encryptedCardNumber,
-														encryptionFrom,
-														encryptionRecipient
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PaymentHandler.addCreditCard(
+															conn,
+															source,
+															invalidateList,
+															processorName,
+															account,
+															groupName,
+															cardInfo,
+															expirationMonth,
+															expirationYear,
+															providerUniqueId,
+															firstName,
+															lastName,
+															companyName,
+															email,
+															phone,
+															fax,
+															customerId,
+															customerTaxId,
+															streetAddress1,
+															streetAddress2,
+															city,
+															state,
+															postalCode,
+															countryCode,
+															principalName,
+															description,
+															encryptedCardNumber,
+															encryptionFrom,
+															encryptionRecipient
+														)
 													);
 												}
 												break;
 											case CREDIT_CARD_TRANSACTIONS :
 												{
 													String processor = in.readUTF();
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String groupName = in.readNullUTF();
 													boolean testMode = in.readBoolean();
 													int duplicateWindow = in.readCompressedInt();
@@ -1096,7 +1093,7 @@ public abstract class MasterServer {
 													process.setCommand(
 														"add_credit_card_transaction",
 														processor,
-														accounting,
+														account,
 														groupName,
 														testMode,
 														duplicateWindow,
@@ -1147,118 +1144,115 @@ public abstract class MasterServer {
 														new java.util.Date(authorizationTime),
 														authorizationPrincipalName
 													);
-													int id=CreditCardHandler.addCreditCardTransaction(
-														conn,
-														source,
-														invalidateList,
-														processor,
-														accounting,
-														groupName,
-														testMode,
-														duplicateWindow,
-														orderNumber,
-														currencyCode,
-														amount,
-														taxAmount,
-														taxExempt,
-														shippingAmount,
-														dutyAmount,
-														shippingFirstName,
-														shippingLastName,
-														shippingCompanyName,
-														shippingStreetAddress1,
-														shippingStreetAddress2,
-														shippingCity,
-														shippingState,
-														shippingPostalCode,
-														shippingCountryCode,
-														emailCustomer,
-														merchantEmail,
-														invoiceNumber,
-														purchaseOrderNumber,
-														description,
-														creditCardCreatedBy,
-														creditCardPrincipalName,
-														creditCardAccounting,
-														creditCardGroupName,
-														creditCardProviderUniqueId,
-														creditCardMaskedCardNumber,
-														creditCard_expirationMonth,
-														creditCard_expirationYear,
-														creditCardFirstName,
-														creditCardLastName,
-														creditCardCompanyName,
-														creditCardEmail,
-														creditCardPhone,
-														creditCardFax,
-														creditCardCustomerId,
-														creditCardCustomerTaxId,
-														creditCardStreetAddress1,
-														creditCardStreetAddress2,
-														creditCardCity,
-														creditCardState,
-														creditCardPostalCode,
-														creditCardCountryCode,
-														creditCardComments,
-														authorizationTime,
-														authorizationPrincipalName
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PaymentHandler.addPayment(
+															conn,
+															source,
+															invalidateList,
+															processor,
+															account,
+															groupName,
+															testMode,
+															duplicateWindow,
+															orderNumber,
+															currencyCode,
+															amount,
+															taxAmount,
+															taxExempt,
+															shippingAmount,
+															dutyAmount,
+															shippingFirstName,
+															shippingLastName,
+															shippingCompanyName,
+															shippingStreetAddress1,
+															shippingStreetAddress2,
+															shippingCity,
+															shippingState,
+															shippingPostalCode,
+															shippingCountryCode,
+															emailCustomer,
+															merchantEmail,
+															invoiceNumber,
+															purchaseOrderNumber,
+															description,
+															creditCardCreatedBy,
+															creditCardPrincipalName,
+															creditCardAccounting,
+															creditCardGroupName,
+															creditCardProviderUniqueId,
+															creditCardMaskedCardNumber,
+															creditCard_expirationMonth,
+															creditCard_expirationYear,
+															creditCardFirstName,
+															creditCardLastName,
+															creditCardCompanyName,
+															creditCardEmail,
+															creditCardPhone,
+															creditCardFax,
+															creditCardCustomerId,
+															creditCardCustomerTaxId,
+															creditCardStreetAddress1,
+															creditCardStreetAddress2,
+															creditCardCity,
+															creditCardState,
+															creditCardPostalCode,
+															creditCardCountryCode,
+															creditCardComments,
+															authorizationTime,
+															authorizationPrincipalName
+														)
 													);
 												}
 												break;
 											case CVS_REPOSITORIES :
 												{
-													int aoServer = in.readCompressedInt();
+													int linuxServer = in.readCompressedInt();
 													PosixPath path = PosixPath.valueOf(in.readUTF());
 													int lsa = in.readCompressedInt();
 													int lsg = in.readCompressedInt();
 													long mode = in.readLong();
 													process.setCommand(
 														Command.ADD_CVS_REPOSITORY,
-														aoServer,
+														linuxServer,
 														path,
 														lsa,
 														lsg,
 														Long.toOctalString(mode)
 													);
-													int id = CvsHandler.addCvsRepository(
-														conn,
-														source,
-														invalidateList,
-														aoServer,
-														path,
-														lsa,
-														lsg,
-														mode
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														CvsHandler.addCvsRepository(
+															conn,
+															source,
+															invalidateList,
+															linuxServer,
+															path,
+															lsa,
+															lsg,
+															mode
+														)
 													);
 												}
 												break;
 											case DISABLE_LOG :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String disableReason = in.readNullUTF();
 													process.setCommand(
 														"add_disable_log",
-														accounting,
-														disableReason
-													);
-													int id = BusinessHandler.addDisableLog(
-														conn,
-														source,
-														invalidateList,
-														accounting,
+														account,
 														disableReason
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														AccountHandler.addDisableLog(
+															conn,
+															source,
+															invalidateList,
+															account,
+															disableReason
+														)
 													);
 												}
 												break;
@@ -1295,22 +1289,21 @@ public abstract class MasterServer {
 														destination,
 														ttl==Record.NO_TTL ? null : ttl
 													);
-													int id = MasterServer.getService(DnsService.class).addDNSRecord(
-														conn,
-														source,
-														invalidateList,
-														zone,
-														domain,
-														type,
-														priority,
-														weight,
-														port,
-														destination,
-														ttl
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														MasterServer.getService(DnsService.class).addRecord(
+															conn,
+															source,
+															invalidateList,
+															zone,
+															domain,
+															type,
+															priority,
+															weight,
+															port,
+															destination,
+															ttl
+														)
 													);
 												}
 												break;
@@ -1348,41 +1341,39 @@ public abstract class MasterServer {
 														address,
 														domain
 													);
-													int id=EmailHandler.addEmailAddress(
-														conn,
-														source,
-														invalidateList,
-														address,
-														domain
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addAddress(
+															conn,
+															source,
+															invalidateList,
+															address,
+															domain
+														)
 													);
 												}
 												break;
 											case EMAIL_DOMAINS :
 												{
 													DomainName domain = DomainName.valueOf(in.readUTF());
-													int aoServer = in.readCompressedInt();
+													int linuxServer = in.readCompressedInt();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_EMAIL_DOMAIN,
 														domain,
-														aoServer,
-														packageName
-													);
-													int id = EmailHandler.addEmailDomain(
-														conn,
-														source,
-														invalidateList,
-														domain,
-														aoServer,
+														linuxServer,
 														packageName
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addDomain(
+															conn,
+															source,
+															invalidateList,
+															domain,
+															linuxServer,
+															packageName
+														)
 													);
 												}
 												break;
@@ -1395,63 +1386,60 @@ public abstract class MasterServer {
 														address,
 														destination
 													);
-													int id = EmailHandler.addEmailForwarding(
-														conn,
-														source,
-														invalidateList,
-														address,
-														destination
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addForwarding(
+															conn,
+															source,
+															invalidateList,
+															address,
+															destination
+														)
 													);
 												}
 												break;
 											case EMAIL_LIST_ADDRESSES :
 												{
 													int address=in.readCompressedInt();
-													int email_list=in.readCompressedInt();
+													int list=in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_EMAIL_LIST_ADDRESS,
 														address,
-														email_list
-													);
-													int id=EmailHandler.addEmailListAddress(
-														conn,
-														source,
-														invalidateList,
-														address,
-														email_list
+														list
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addListAddress(
+															conn,
+															source,
+															invalidateList,
+															address,
+															list
+														)
 													);
 												}
 												break;
 											case EMAIL_LISTS :
 												{
 													PosixPath path = PosixPath.valueOf(in.readUTF());
-													int linuxServerAccount = in.readCompressedInt();
-													int linuxServerGroup = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
+													int groupServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_EMAIL_LIST,
 														path,
-														linuxServerAccount,
-														linuxServerGroup
-													);
-													int id = EmailHandler.addEmailList(
-														conn,
-														source,
-														invalidateList,
-														path,
-														linuxServerAccount,
-														linuxServerGroup
+														userServer,
+														groupServer
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addList(
+															conn,
+															source,
+															invalidateList,
+															path,
+															userServer,
+															groupServer
+														)
 													);
 												}
 												break;
@@ -1464,41 +1452,39 @@ public abstract class MasterServer {
 														address,
 														pipe
 													);
-													int id=EmailHandler.addEmailPipeAddress(
-														conn,
-														source,
-														invalidateList,
-														address,
-														pipe
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addPipeAddress(
+															conn,
+															source,
+															invalidateList,
+															address,
+															pipe
+														)
 													);
 												}
 												break;
 											case EMAIL_PIPES :
 												{
-													int ao_server = in.readCompressedInt();
+													int linuxServer = in.readCompressedInt();
 													String command = in.readUTF();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_EMAIL_PIPE,
-														ao_server,
-														command,
-														packageName
-													);
-													int id=EmailHandler.addEmailPipe(
-														conn,
-														source,
-														invalidateList,
-														ao_server,
+														linuxServer,
 														command,
 														packageName
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addPipe(
+															conn,
+															source,
+															invalidateList,
+															linuxServer,
+															command,
+															packageName
+														)
 													);
 												}
 												break;
@@ -1508,37 +1494,36 @@ public abstract class MasterServer {
 													currentThread.setPriority(Thread.NORM_PRIORITY+1);
 
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													int aoServer= in.readCompressedInt();
+													int linuxServer= in.readCompressedInt();
 													HostAddress host = HostAddress.valueOf(in.readUTF());
 													String type=in.readUTF();
 													long duration=in.readLong();
 													process.setCommand(
 														Command.ADD_EMAIL_SMTP_RELAY,
 														packageName,
-														aoServer==-1?null:aoServer,
-														host,
-														type,
-														duration
-													);
-													int id = EmailHandler.addEmailSmtpRelay(
-														conn,
-														source,
-														invalidateList,
-														packageName,
-														aoServer,
+														linuxServer==-1?null:linuxServer,
 														host,
 														type,
 														duration
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addSmtpRelay(
+															conn,
+															source,
+															invalidateList,
+															packageName,
+															linuxServer,
+															host,
+															type,
+															duration
+														)
 													);
 												}
 												break;
 											case FAILOVER_FILE_LOG :
 												{
-													int replication=in.readCompressedInt();
+													int fileReplication=in.readCompressedInt();
 													long fflStartTime=in.readLong();
 													long endTime=in.readLong();
 													int scanned=in.readCompressedInt();
@@ -1547,7 +1532,7 @@ public abstract class MasterServer {
 													boolean isSuccessful=in.readBoolean();
 													process.setCommand(
 														"add_failover_file_log",
-														replication,
+														fileReplication,
 														new java.util.Date(fflStartTime),
 														new java.util.Date(endTime),
 														scanned,
@@ -1555,27 +1540,26 @@ public abstract class MasterServer {
 														bytes,
 														isSuccessful
 													);
-													int id=FailoverHandler.addFailoverFileLog(
-														conn,
-														source,
-														invalidateList,
-														replication,
-														fflStartTime,
-														endTime,
-														scanned,
-														updated,
-														bytes,
-														isSuccessful
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														FailoverHandler.addFileReplicationLog(
+															conn,
+															source,
+															invalidateList,
+															fileReplication,
+															fflStartTime,
+															endTime,
+															scanned,
+															updated,
+															bytes,
+															isSuccessful
+														)
 													);
 												}
 												break;
 											case FILE_BACKUP_SETTINGS :
 												{
-													int replication=in.readCompressedInt();
+													int fileReplication=in.readCompressedInt();
 													String path=in.readUTF();
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 														int packageNum=in.readCompressedInt();
@@ -1600,38 +1584,37 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_FILE_BACKUP_SETTING,
-														replication,
-														path,
-														backupEnabled,
-														required
-													);
-													int id = BackupHandler.addFileBackupSetting(
-														conn,
-														source,
-														invalidateList,
-														replication,
+														fileReplication,
 														path,
 														backupEnabled,
 														required
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														BackupHandler.addFileReplicationSetting(
+															conn,
+															source,
+															invalidateList,
+															fileReplication,
+															path,
+															backupEnabled,
+															required
+														)
 													);
 												}
 												break;
 											case FTP_GUEST_USERS :
 												{
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name linuxUser = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_FTP_GUEST_USER,
-														username
+														linuxUser
 													);
-													FTPHandler.addFTPGuestUser(
+													FTPHandler.addGuestUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														linuxUser
 													);
 													resp = Response.DONE;
 												}
@@ -1639,10 +1622,10 @@ public abstract class MasterServer {
 											case HTTPD_SHARED_TOMCATS :
 												{
 													String name=in.readUTF().trim();
-													int aoServer=in.readCompressedInt();
+													int linuxServer=in.readCompressedInt();
 													int version=in.readCompressedInt();
-													com.aoindustries.aoserv.client.linux.User.Name linuxServerAccount = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
-													Group.Name linuxServerGroup = Group.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name group = Group.Name.valueOf(in.readUTF());
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_9) <= 0) {
 														boolean isSecure = in.readBoolean();
 														boolean isOverflow = in.readBoolean();
@@ -1652,34 +1635,33 @@ public abstract class MasterServer {
 													process.setCommand(
 														Command.ADD_HTTPD_SHARED_TOMCAT,
 														name,
-														aoServer,
+														linuxServer,
 														version,
-														linuxServerAccount,
-														linuxServerGroup
-													);
-													int id = HttpdHandler.addHttpdSharedTomcat(
-														conn,
-														source,
-														invalidateList,
-														name,
-														aoServer,
-														version,
-														linuxServerAccount,
-														linuxServerGroup,
-														false
+														user,
+														group
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addSharedTomcat(
+															conn,
+															source,
+															invalidateList,
+															name,
+															linuxServer,
+															version,
+															user,
+															group,
+															false
+														)
 													);
 												}
 												break;
 											case HTTPD_JBOSS_SITES :
 												{
-													int aoServer=in.readCompressedInt();
+													int linuxServer=in.readCompressedInt();
 													String siteName=in.readUTF().trim();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache=in.readBoolean();
@@ -1725,10 +1707,10 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_HTTPD_JBOSS_SITE,
-														aoServer,
+														linuxServer,
 														siteName,
 														packageName,
-														username,
+														user,
 														group,
 														serverAdmin,
 														useApache,
@@ -1744,31 +1726,30 @@ public abstract class MasterServer {
 														enableFollowSymlinks
 													);
 													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_JBOSS_SITE + " call no longer supports non-null content_source");
-													int id = HttpdHandler.addHttpdJBossSite(
-														conn,
-														source,
-														invalidateList,
-														aoServer,
-														siteName,
-														packageName,
-														username,
-														group,
-														serverAdmin,
-														useApache,
-														ipAddress,
-														primaryHttpHostname,
-														altHttpHostnames,
-														jBossVersion,
-														phpVersion,
-														enableCgi,
-														enableSsi,
-														enableHtaccess,
-														enableIndexes,
-														enableFollowSymlinks
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addJbossSite(
+															conn,
+															source,
+															invalidateList,
+															linuxServer,
+															siteName,
+															packageName,
+															user,
+															group,
+															serverAdmin,
+															useApache,
+															ipAddress,
+															primaryHttpHostname,
+															altHttpHostnames,
+															jBossVersion,
+															phpVersion,
+															enableCgi,
+															enableSsi,
+															enableHtaccess,
+															enableIndexes,
+															enableFollowSymlinks
+														)
 													);
 												}
 												break;
@@ -1808,50 +1789,48 @@ public abstract class MasterServer {
 														require,
 														handler
 													);
-													int id = HttpdHandler.addHttpdSiteAuthenticatedLocation(
-														conn,
-														source,
-														invalidateList,
-														httpd_site,
-														path,
-														isRegularExpression,
-														authName,
-														authGroupFile,
-														authUserFile,
-														require,
-														handler
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addLocation(
+															conn,
+															source,
+															invalidateList,
+															httpd_site,
+															path,
+															isRegularExpression,
+															authName,
+															authGroupFile,
+															authUserFile,
+															require,
+															handler
+														)
 													);
 												}
 												break;							
 											case HTTPD_SITE_URLS :
 												{
-													int hsb_id = in.readCompressedInt();
+													int virtualHost = in.readCompressedInt();
 													DomainName hostname = DomainName.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_HTTPD_SITE_URL,
-														hsb_id,
-														hostname
-													);
-													int id = HttpdHandler.addHttpdSiteURL(
-														conn,
-														source,
-														invalidateList,
-														hsb_id,
+														virtualHost,
 														hostname
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addVirtualHostName(
+															conn,
+															source,
+															invalidateList,
+															virtualHost,
+															hostname
+														)
 													);
 												}
 												break;
 											case HTTPD_TOMCAT_CONTEXTS :
 												{
-													int tomcat_site = in.readCompressedInt();
+													int tomcatSite = in.readCompressedInt();
 													String className = in.readNullUTF();
 													boolean cookies = in.readBoolean();
 													boolean crossContext = in.readBoolean();
@@ -1872,26 +1851,7 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_CONTEXT,
-														tomcat_site,
-														className,
-														cookies,
-														crossContext,
-														docBase,
-														override,
-														path,
-														privileged,
-														reloadable,
-														useNaming,
-														wrapperClass,
-														debug,
-														workDir,
-														serverXmlConfigured
-													);
-													int id = HttpdHandler.addHttpdTomcatContext(
-														conn,
-														source,
-														invalidateList,
-														tomcat_site,
+														tomcatSite,
 														className,
 														cookies,
 														crossContext,
@@ -1908,13 +1868,31 @@ public abstract class MasterServer {
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addContext(
+															conn,
+															source,
+															invalidateList,
+															tomcatSite,
+															className,
+															cookies,
+															crossContext,
+															docBase,
+															override,
+															path,
+															privileged,
+															reloadable,
+															useNaming,
+															wrapperClass,
+															debug,
+															workDir,
+															serverXmlConfigured
+														)
 													);
 												}
 												break;							
 											case HTTPD_TOMCAT_DATA_SOURCES :
 												{
-													int tomcat_context=in.readCompressedInt();
+													int context=in.readCompressedInt();
 													String name=in.readUTF();
 													String driverClassName=in.readUTF();
 													String url=in.readUTF();
@@ -1927,7 +1905,7 @@ public abstract class MasterServer {
 													if(validationQuery.length() == 0) validationQuery=null;
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_DATA_SOURCE,
-														tomcat_context,
+														context,
 														name,
 														driverClassName,
 														url,
@@ -1938,30 +1916,29 @@ public abstract class MasterServer {
 														maxWait,
 														validationQuery
 													);
-													int id = HttpdHandler.addHttpdTomcatDataSource(
-														conn,
-														source,
-														invalidateList,
-														tomcat_context,
-														name,
-														driverClassName,
-														url,
-														username,
-														password,
-														maxActive,
-														maxIdle,
-														maxWait,
-														validationQuery
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addContextDataSource(
+															conn,
+															source,
+															invalidateList,
+															context,
+															name,
+															driverClassName,
+															url,
+															username,
+															password,
+															maxActive,
+															maxIdle,
+															maxWait,
+															validationQuery
+														)
 													);
 												}
 												break;							
 											case HTTPD_TOMCAT_PARAMETERS :
 												{
-													int tomcat_context=in.readCompressedInt();
+													int context=in.readCompressedInt();
 													String name=in.readUTF();
 													String value=in.readUTF();
 													boolean override=in.readBoolean();
@@ -1969,17 +1946,7 @@ public abstract class MasterServer {
 													if(description.length() == 0) description=null;
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_PARAMETER,
-														tomcat_context,
-														name,
-														value,
-														override,
-														description
-													);
-													int id = HttpdHandler.addHttpdTomcatParameter(
-														conn,
-														source,
-														invalidateList,
-														tomcat_context,
+														context,
 														name,
 														value,
 														override,
@@ -1987,41 +1954,49 @@ public abstract class MasterServer {
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addContextParameter(
+															conn,
+															source,
+															invalidateList,
+															context,
+															name,
+															value,
+															override,
+															description
+														)
 													);
 												}
 												break;							
 											case HTTPD_TOMCAT_SITE_JK_MOUNTS :
 												{
-													int tomcat_site = in.readCompressedInt();
+													int tomcatSite = in.readCompressedInt();
 													String path = in.readUTF();
 													boolean mount = in.readBoolean();
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_SITE_JK_MOUNT,
-														tomcat_site,
-														path,
-														mount
-													);
-													int id = HttpdHandler.addHttpdTomcatSiteJkMount(
-														conn,
-														source,
-														invalidateList,
-														tomcat_site,
+														tomcatSite,
 														path,
 														mount
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addJkMount(
+															conn,
+															source,
+															invalidateList,
+															tomcatSite,
+															path,
+															mount
+														)
 													);
 												}
 												break;							
 											case HTTPD_TOMCAT_SHARED_SITES :
 												{
-													int aoServer = in.readCompressedInt();
+													int linuxServer = in.readCompressedInt();
 													String siteName=in.readUTF().trim();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache = in.readBoolean();
@@ -2073,10 +2048,10 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_SHARED_SITE,
-														aoServer,
+														linuxServer,
 														siteName,
 														packageName,
-														username,
+														user,
 														group,
 														serverAdmin,
 														useApache,
@@ -2093,40 +2068,39 @@ public abstract class MasterServer {
 													);
 													if(sharedTomcatName == null) throw new IOException(Command.ADD_HTTPD_TOMCAT_SHARED_SITE + " call now requires non-null shared_tomcat_name");
 													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_TOMCAT_SHARED_SITE + " call no longer supports non-null content_source");
-													int id = HttpdHandler.addHttpdTomcatSharedSite(
-														conn,
-														source,
-														invalidateList,
-														aoServer,
-														siteName,
-														packageName,
-														username,
-														group,
-														serverAdmin,
-														useApache,
-														ipAddress,
-														primaryHttpHostname,
-														altHttpHostnames,
-														sharedTomcatName,
-														phpVersion,
-														enableCgi,
-														enableSsi,
-														enableHtaccess,
-														enableIndexes,
-														enableFollowSymlinks
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addSharedTomcatSite(
+															conn,
+															source,
+															invalidateList,
+															linuxServer,
+															siteName,
+															packageName,
+															user,
+															group,
+															serverAdmin,
+															useApache,
+															ipAddress,
+															primaryHttpHostname,
+															altHttpHostnames,
+															sharedTomcatName,
+															phpVersion,
+															enableCgi,
+															enableSsi,
+															enableHtaccess,
+															enableIndexes,
+															enableFollowSymlinks
+														)
 													);
 												}
 												break;
 											case HTTPD_TOMCAT_STD_SITES :
 												{
-													int aoServer = in.readCompressedInt();
+													int linuxServer = in.readCompressedInt();
 													String siteName = in.readUTF().trim();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													Group.Name group = Group.Name.valueOf(in.readUTF());
 													Email serverAdmin = Email.valueOf(in.readUTF());
 													boolean useApache = in.readBoolean();
@@ -2172,10 +2146,10 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_HTTPD_TOMCAT_STD_SITE,
-														aoServer,
+														linuxServer,
 														siteName,
 														packageName,
-														username,
+														user,
 														group,
 														serverAdmin,
 														useApache,
@@ -2191,31 +2165,30 @@ public abstract class MasterServer {
 														enableFollowSymlinks
 													);
 													if(contentSrc != null) throw new IOException(Command.ADD_HTTPD_TOMCAT_STD_SITE + " call no longer supports non-null content_source");
-													int id = HttpdHandler.addHttpdTomcatStdSite(
-														conn,
-														source,
-														invalidateList,
-														aoServer,
-														siteName,
-														packageName,
-														username,
-														group,
-														serverAdmin,
-														useApache,
-														ipAddress,
-														primaryHttpHostname,
-														altHttpHostnames,
-														tomcatVersion,
-														phpVersion,
-														enableCgi,
-														enableSsi,
-														enableHtaccess,
-														enableIndexes,
-														enableFollowSymlinks
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														WebHandler.addPrivateTomcatSite(
+															conn,
+															source,
+															invalidateList,
+															linuxServer,
+															siteName,
+															packageName,
+															user,
+															group,
+															serverAdmin,
+															useApache,
+															ipAddress,
+															primaryHttpHostname,
+															altHttpHostnames,
+															tomcatVersion,
+															phpVersion,
+															enableCgi,
+															enableSsi,
+															enableHtaccess,
+															enableIndexes,
+															enableFollowSymlinks
+														)
 													);
 												}
 												break;
@@ -2227,28 +2200,27 @@ public abstract class MasterServer {
 														throw new IOException(Command.ADD_LINUX_ACC_ADDRESS+" call not supported for AoservProtocol < "+AoservProtocol.Version.VERSION_1_31+", please upgrade AOServ Client.");
 													}
 													int address = in.readCompressedInt();
-													int lsa = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_LINUX_ACC_ADDRESS,
 														address,
-														lsa
-													);
-													int id = EmailHandler.addLinuxAccAddress(
-														conn,
-														source,
-														invalidateList,
-														address,
-														lsa
+														userServer
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addInboxAddress(
+															conn,
+															source,
+															invalidateList,
+															address,
+															userServer
+														)
 													);
 												}
 												break;
 											case LINUX_ACCOUNTS :
 												{
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													Group.Name primary_group = Group.Name.valueOf(in.readUTF());
 													Gecos name;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
@@ -2263,7 +2235,7 @@ public abstract class MasterServer {
 													PosixPath shell = PosixPath.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_ACCOUNT,
-														username,
+														user,
 														primary_group,
 														name,
 														office_location,
@@ -2272,11 +2244,11 @@ public abstract class MasterServer {
 														type,
 														shell
 													);
-													LinuxAccountHandler.addLinuxAccount(
+													LinuxAccountHandler.addUser(
 														conn,
 														source,
 														invalidateList,
-														username,
+														user,
 														primary_group,
 														name,
 														office_location,
@@ -2291,44 +2263,43 @@ public abstract class MasterServer {
 												break;
 											case LINUX_GROUP_ACCOUNTS :
 												{
-													Group.Name groupName = Group.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													Group.Name group = Group.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_GROUP_ACCOUNT,
-														groupName,
-														username
-													);
-													int id = LinuxAccountHandler.addLinuxGroupAccount(
-														conn,
-														source,
-														invalidateList,
-														groupName,
-														username,
-														false,
-														false
+														group,
+														user
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														LinuxAccountHandler.addGroupUser(
+															conn,
+															source,
+															invalidateList,
+															group,
+															user,
+															false,
+															false
+														)
 													);
 												}
 												break;
 											case LINUX_GROUPS :
 												{
-													Group.Name groupName = Group.Name.valueOf(in.readUTF());
+													Group.Name name = Group.Name.valueOf(in.readUTF());
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													String type = in.readUTF().trim();
 													process.setCommand(
 														Command.ADD_LINUX_GROUP,
-														groupName,
+														name,
 														packageName,
 														type
 													);
-													LinuxAccountHandler.addLinuxGroup(
+													LinuxAccountHandler.addGroup(
 														conn,
 														source,
 														invalidateList,
-														groupName,
+														name,
 														packageName,
 														type,
 														false
@@ -2338,50 +2309,48 @@ public abstract class MasterServer {
 												break;
 											case LINUX_SERVER_ACCOUNTS :
 												{
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
-													int aoServer = in.readCompressedInt();
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													int linuxServer = in.readCompressedInt();
 													PosixPath home = PosixPath.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_LINUX_SERVER_ACCOUNT,
-														username,
-														aoServer,
+														user,
+														linuxServer,
 														home
-													);
-													int id = LinuxAccountHandler.addLinuxServerAccount(
-														conn,
-														source,
-														invalidateList,
-														username,
-														aoServer,
-														home,
-														false
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														LinuxAccountHandler.addUserServer(
+															conn,
+															source,
+															invalidateList,
+															user,
+															linuxServer,
+															home,
+															false
+														)
 													);
 												}
 												break;
 											case LINUX_SERVER_GROUPS :
 												{
-													Group.Name groupName = Group.Name.valueOf(in.readUTF());
-													int aoServer = in.readCompressedInt();
+													Group.Name group = Group.Name.valueOf(in.readUTF());
+													int linuxServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_LINUX_SERVER_GROUP,
-														groupName,
-														aoServer
-													);
-													int id = LinuxAccountHandler.addLinuxServerGroup(
-														conn,
-														source,
-														invalidateList,
-														groupName,
-														aoServer,
-														false
+														group,
+														linuxServer
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														LinuxAccountHandler.addGroupServer(
+															conn,
+															source,
+															invalidateList,
+															group,
+															linuxServer,
+															false
+														)
 													);
 												}
 												break;
@@ -2394,16 +2363,15 @@ public abstract class MasterServer {
 														majordomoServer,
 														listName
 													);
-													int id = EmailHandler.addMajordomoList(
-														conn,
-														source,
-														invalidateList,
-														majordomoServer,
-														listName
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addMajordomoList(
+															conn,
+															source,
+															invalidateList,
+															majordomoServer,
+															listName
+														)
 													);
 												}
 												break;
@@ -2443,24 +2411,23 @@ public abstract class MasterServer {
 														mysqlServer,
 														packageName
 													);
-													int id = MySQLHandler.addMySQLDatabase(
-														conn,
-														source,
-														invalidateList,
-														name,
-														mysqlServer,
-														packageName
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														MysqlHandler.addDatabase(
+															conn,
+															source,
+															invalidateList,
+															name,
+															mysqlServer,
+															packageName
+														)
 													);
 												}
 												break;
 											case MYSQL_DB_USERS :
 												{
-													int mysql_database = in.readCompressedInt();
-													int mysql_server_user = in.readCompressedInt();
+													int database = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
 													boolean canSelect=in.readBoolean();
 													boolean canInsert=in.readBoolean();
 													boolean canUpdate=in.readBoolean();
@@ -2516,33 +2483,8 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														Command.ADD_MYSQL_DB_USER,
-														mysql_database,
-														mysql_server_user,
-														canSelect,
-														canInsert,
-														canUpdate,
-														canDelete,
-														canCreate,
-														canDrop,
-														canReference,
-														canIndex,
-														canAlter,
-														canCreateTempTable,
-														canLockTables,
-														canCreateView,
-														canShowView,
-														canCreateRoutine,
-														canAlterRoutine,
-														canExecute,
-														canEvent,
-														canTrigger
-													);
-													int id = MySQLHandler.addMySQLDBUser(
-														conn,
-														source,
-														invalidateList,
-														mysql_database,
-														mysql_server_user,
+														database,
+														userServer,
 														canSelect,
 														canInsert,
 														canUpdate,
@@ -2564,54 +2506,77 @@ public abstract class MasterServer {
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														MysqlHandler.addDatabaseUser(
+															conn,
+															source,
+															invalidateList,
+															database,
+															userServer,
+															canSelect,
+															canInsert,
+															canUpdate,
+															canDelete,
+															canCreate,
+															canDrop,
+															canReference,
+															canIndex,
+															canAlter,
+															canCreateTempTable,
+															canLockTables,
+															canCreateView,
+															canShowView,
+															canCreateRoutine,
+															canAlterRoutine,
+															canExecute,
+															canEvent,
+															canTrigger
+														)
 													);
 												}
 												break;
 											case MYSQL_SERVER_USERS :
 												{
-													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													int mysqlServer = in.readCompressedInt();
 													String host = in.readNullUTF();
 													process.setCommand(
 														Command.ADD_MYSQL_SERVER_USER,
-														username,
-														mysqlServer,
-														host
-													);
-													int id = MySQLHandler.addMySQLServerUser(
-														conn,
-														source,
-														invalidateList,
-														username,
+														user,
 														mysqlServer,
 														host
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														MysqlHandler.addUserServer(
+															conn,
+															source,
+															invalidateList,
+															user,
+															mysqlServer,
+															host
+														)
 													);
 												}
 												break;
 											case MYSQL_USERS :
 												{
-													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_MYSQL_USER,
-														username
+														user
 													);
-													MySQLHandler.addMySQLUser(
+													MysqlHandler.addUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case NET_BINDS :
 												{
-													int server = in.readCompressedInt();
+													int host = in.readCompressedInt();
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
 													int ipAddress = in.readCompressedInt();
 													Port port;
@@ -2659,7 +2624,7 @@ public abstract class MasterServer {
 													}
 													Object[] command = new Object[7 + numZones];
 													command[0] = Command.ADD_NET_BIND;
-													command[1] = server;
+													command[1] = host;
 													command[2] = packageName;
 													command[3] = ipAddress;
 													command[4] = port;
@@ -2673,27 +2638,26 @@ public abstract class MasterServer {
 														numZones
 													);
 													process.setCommand(command);
-													int id = NetBindHandler.addNetBind(
-														conn,
-														source,
-														invalidateList,
-														server,
-														packageName,
-														ipAddress,
-														port,
-														appProtocol,
-														monitoringEnabled,
-														firewalldZones
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														NetBindHandler.addBind(
+															conn,
+															source,
+															invalidateList,
+															host,
+															packageName,
+															ipAddress,
+															port,
+															appProtocol,
+															monitoringEnabled,
+															firewalldZones
+														)
 													);
 												}
 												break;
 											case NOTICE_LOG :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String billingContact = in.readUTF().trim();
 													String emailAddress = in.readUTF().trim();
 													int balance = in.readCompressedInt();
@@ -2701,18 +2665,18 @@ public abstract class MasterServer {
 													int transid = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_NOTICE_LOG,
-														accounting,
+														account,
 														billingContact,
 														emailAddress,
 														SQLUtility.getDecimal(balance),
 														type,
 														transid
 													);
-													BusinessHandler.addNoticeLog(
+													AccountHandler.addNoticeLog(
 														conn,
 														source,
 														invalidateList,
-														accounting,
+														account,
 														billingContact,
 														emailAddress,
 														balance,
@@ -2725,7 +2689,7 @@ public abstract class MasterServer {
 											case PACKAGES :
 												{
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													int packageDefinition;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_122)<=0) {
 														// Try to find a package definition owned by the source accounting with matching rates and limits
@@ -2735,7 +2699,7 @@ public abstract class MasterServer {
 														int additionalUserRate=in.readCompressedInt();
 														int popLimit=in.readCompressedInt();
 														int additionalPopRate=in.readCompressedInt();
-														Account.Name baAccounting = UsernameHandler.getBusinessForUsername(conn, source.getUsername());
+														Account.Name baAccounting = AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator());
 														packageDefinition=PackageHandler.findActivePackageDefinition(
 															conn,
 															baAccounting,
@@ -2761,26 +2725,25 @@ public abstract class MasterServer {
 													process.setCommand(
 														Command.ADD_PACKAGE,
 														packageName,
-														accounting,
-														packageDefinition
-													);
-													int id = PackageHandler.addPackage(
-														conn,
-														source,
-														invalidateList,
-														packageName,
-														accounting,
+														account,
 														packageDefinition
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PackageHandler.addPackage(
+															conn,
+															source,
+															invalidateList,
+															packageName,
+															account,
+															packageDefinition
+														)
 													);
 												}
 												break;
 											case PACKAGE_DEFINITIONS :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String category = in.readUTF().trim();
 													String name = in.readUTF().trim();
 													String version = in.readUTF().trim();
@@ -2792,7 +2755,7 @@ public abstract class MasterServer {
 													String monthlyRateTransactionType = in.readUTF();
 													process.setCommand(
 														"add_package_definition",
-														accounting,
+														account,
 														category,
 														name,
 														version,
@@ -2803,99 +2766,96 @@ public abstract class MasterServer {
 														SQLUtility.getDecimal(monthlyRate),
 														monthlyRateTransactionType
 													);
-													int id = PackageHandler.addPackageDefinition(
-														conn,
-														source,
-														invalidateList,
-														accounting,
-														category,
-														name,
-														version,
-														display,
-														description,
-														setupFee,
-														setupFeeTransactionType,
-														monthlyRate,
-														monthlyRateTransactionType
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PackageHandler.addPackageDefinition(
+															conn,
+															source,
+															invalidateList,
+															account,
+															category,
+															name,
+															version,
+															display,
+															description,
+															setupFee,
+															setupFeeTransactionType,
+															monthlyRate,
+															monthlyRateTransactionType
+														)
 													);
 												}
 												break;
 											case POSTGRES_DATABASES :
 												{
 													com.aoindustries.aoserv.client.postgresql.Database.Name name = com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(in.readUTF());
-													int postgresServer = in.readCompressedInt();
+													int postgresqlServer = in.readCompressedInt();
 													int datdba = in.readCompressedInt();
 													int encoding = in.readCompressedInt();
 													boolean enable_postgis = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_27)>=0?in.readBoolean():false;
 													process.setCommand(
 														Command.ADD_POSTGRES_DATABASE,
 														name,
-														postgresServer,
-														datdba,
-														encoding,
-														enable_postgis
-													);
-													int id = PostgresHandler.addPostgresDatabase(
-														conn,
-														source,
-														invalidateList,
-														name,
-														postgresServer,
+														postgresqlServer,
 														datdba,
 														encoding,
 														enable_postgis
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PostgresqlHandler.addDatabase(
+															conn,
+															source,
+															invalidateList,
+															name,
+															postgresqlServer,
+															datdba,
+															encoding,
+															enable_postgis
+														)
 													);
 												}
 												break;
 											case POSTGRES_SERVER_USERS :
 												{
-													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
-													int postgresServer = in.readCompressedInt();
+													com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
+													int postgresqlServer = in.readCompressedInt();
 													process.setCommand(
 														Command.ADD_POSTGRES_SERVER_USER,
-														username,
-														postgresServer
-													);
-													int id = PostgresHandler.addPostgresServerUser(
-														conn,
-														source,
-														invalidateList,
-														username,
-														postgresServer
+														user,
+														postgresqlServer
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														PostgresqlHandler.addUserServer(
+															conn,
+															source,
+															invalidateList,
+															user,
+															postgresqlServer
+														)
 													);
 												}
 												break;
 											case POSTGRES_USERS :
 												{
-													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_POSTGRES_USER,
-														username
+														user
 													);
-													PostgresHandler.addPostgresUser(
+													PostgresqlHandler.addUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case SIGNUP_REQUESTS :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
 													InetAddress ip_address = InetAddress.valueOf(in.readUTF());
 													int package_definition = in.readCompressedInt();
 													String business_name = in.readUTF();
@@ -2920,7 +2880,7 @@ public abstract class MasterServer {
 													String ba_state = in.readNullUTF();
 													String ba_country = in.readNullUTF();
 													String ba_zip = in.readNullUTF();
-													com.aoindustries.aoserv.client.account.User.Name ba_username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name administrator_user_name = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String billing_contact = in.readUTF();
 													String billing_email = in.readUTF();
 													boolean billing_use_monthly = in.readBoolean();
@@ -2941,7 +2901,7 @@ public abstract class MasterServer {
 													}
 													process.setCommand(
 														"add_signup_request",
-														accounting,
+														account,
 														ip_address,
 														package_definition,
 														business_name,
@@ -2966,7 +2926,7 @@ public abstract class MasterServer {
 														ba_state,
 														ba_country,
 														ba_zip,
-														ba_username,
+														administrator_user_name,
 														billing_contact,
 														billing_email,
 														billing_use_monthly,
@@ -2978,72 +2938,70 @@ public abstract class MasterServer {
 														// options
 														numOptions
 													);
-													int id = SignupHandler.addSignupRequest(
-														conn,
-														source,
-														invalidateList,
-														accounting,
-														ip_address,
-														package_definition,
-														business_name,
-														business_phone,
-														business_fax,
-														business_address1,
-														business_address2,
-														business_city,
-														business_state,
-														business_country,
-														business_zip,
-														ba_name,
-														ba_title,
-														ba_work_phone,
-														ba_cell_phone,
-														ba_home_phone,
-														ba_fax,
-														ba_email,
-														ba_address1,
-														ba_address2,
-														ba_city,
-														ba_state,
-														ba_country,
-														ba_zip,
-														ba_username,
-														billing_contact,
-														billing_email,
-														billing_use_monthly,
-														billing_pay_one_year,
-														// Encrypted values
-														from,
-														recipient,
-														ciphertext,
-														// options
-														options
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														SignupHandler.addRequest(
+															conn,
+															source,
+															invalidateList,
+															account,
+															ip_address,
+															package_definition,
+															business_name,
+															business_phone,
+															business_fax,
+															business_address1,
+															business_address2,
+															business_city,
+															business_state,
+															business_country,
+															business_zip,
+															ba_name,
+															ba_title,
+															ba_work_phone,
+															ba_cell_phone,
+															ba_home_phone,
+															ba_fax,
+															ba_email,
+															ba_address1,
+															ba_address2,
+															ba_city,
+															ba_state,
+															ba_country,
+															ba_zip,
+															administrator_user_name,
+															billing_contact,
+															billing_email,
+															billing_use_monthly,
+															billing_pay_one_year,
+															// Encrypted values
+															from,
+															recipient,
+															ciphertext,
+															// options
+															options
+														)
 													);
 												}
 												break;
 											case SPAM_EMAIL_MESSAGES :
 												{
-													int esr = in.readCompressedInt();
+													int smtpRelay = in.readCompressedInt();
 													String message = in.readUTF().trim();
 													process.setCommand(
 														Command.ADD_SPAM_EMAIL_MESSAGE,
-														esr,
-														message
-													);
-													int id = EmailHandler.addSpamEmailMessage(
-														conn,
-														source,
-														invalidateList,
-														esr,
+														smtpRelay,
 														message
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														EmailHandler.addSpamMessage(
+															conn,
+															source,
+															invalidateList,
+															smtpRelay,
+															message
+														)
 													);
 												}
 												break;
@@ -3053,14 +3011,14 @@ public abstract class MasterServer {
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_46)>=0) {
 														brand = Account.Name.valueOf(in.readUTF());
 													} else {
-														brand = BusinessHandler.getRootBusiness();
+														brand = AccountHandler.getRootAccount();
 													}
-													Account.Name accounting;
+													Account.Name account;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_126)>=0) {
-														accounting = Account.Name.valueOf(in.readNullUTF());
+														account = Account.Name.valueOf(in.readNullUTF());
 													} else {
 														Account.Name packageName = Account.Name.valueOf(in.readUTF());
-														accounting = PackageHandler.getBusinessForPackage(conn, packageName);
+														account = PackageHandler.getAccountForPackage(conn, packageName);
 													}
 													String language = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readUTF() : Language.EN;
 													int category = source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_44)>=0 ? in.readCompressedInt() : -1;
@@ -3096,7 +3054,7 @@ public abstract class MasterServer {
 													process.setCommand(
 														"add_ticket",
 														brand,
-														accounting,
+														account,
 														language,
 														category,
 														type,
@@ -3107,33 +3065,32 @@ public abstract class MasterServer {
 														contactEmails,
 														contactPhoneNumbers
 													);
-													int id = TicketHandler.addTicket(
-														conn,
-														source,
-														invalidateList,
-														brand,
-														accounting,
-														language,
-														category,
-														type,
-														fromAddress,
-														summary,
-														details,
-														clientPriority,
-														contactEmails,
-														contactPhoneNumbers
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														TicketHandler.addTicket(
+															conn,
+															source,
+															invalidateList,
+															brand,
+															account,
+															language,
+															category,
+															type,
+															fromAddress,
+															summary,
+															details,
+															clientPriority,
+															contactEmails,
+															contactPhoneNumbers
+														)
 													);
 												}
 												break;
 											case TRANSACTIONS :
 												{
-													Account.Name accounting = Account.Name.valueOf(in.readUTF());
-													Account.Name sourceAccounting = Account.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.account.User.Name business_administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													Account.Name account = Account.Name.valueOf(in.readUTF());
+													Account.Name sourceAccount = Account.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													String type = in.readUTF().trim();
 													String description = in.readUTF().trim();
 													int quantity = in.readCompressedInt();
@@ -3144,9 +3101,9 @@ public abstract class MasterServer {
 													byte payment_confirmed = in.readByte();
 													process.setCommand(
 														Command.ADD_TRANSACTION,
-														accounting,
-														sourceAccounting,
-														business_administrator,
+														account,
+														sourceAccount,
+														administrator,
 														type,
 														description,
 														SQLUtility.getMilliDecimal(quantity),
@@ -3158,43 +3115,42 @@ public abstract class MasterServer {
 														:payment_confirmed==Transaction.NOT_CONFIRMED?"N"
 														:"W"
 													);
-													int id = TransactionHandler.addTransaction(
-														conn,
-														source,
-														invalidateList,
-														accounting,
-														sourceAccounting,
-														business_administrator,
-														type,
-														description,
-														quantity,
-														rate,
-														paymentType,
-														paymentInfo,
-														processor,
-														payment_confirmed
-													);
 													resp = Response.of(
 														AoservProtocol.DONE,
-														id
+														BillingTransactionHandler.addTransaction(
+															conn,
+															source,
+															invalidateList,
+															account,
+															sourceAccount,
+															administrator,
+															type,
+															description,
+															quantity,
+															rate,
+															paymentType,
+															paymentInfo,
+															processor,
+															payment_confirmed
+														)
 													);
 												}
 												break;
 											case USERNAMES :
 												{
 													Account.Name packageName = Account.Name.valueOf(in.readUTF());
-													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name name = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.ADD_USERNAME,
 														packageName,
-														username
+														name
 													);
-													UsernameHandler.addUsername(
+													AccountUserHandler.addUser(
 														conn,
 														source,
 														invalidateList,
 														packageName,
-														username,
+														name,
 														false
 													);
 													resp = Response.DONE;
@@ -3233,7 +3189,8 @@ public abstract class MasterServer {
 												contact_phone,
 												contact_email
 											);
-											int id=ServerHandler.addBackupServer(
+											resp1=AoservProtocol.DONE;
+											resp2Int = ServerHandler.addBackupServer(
 												conn,
 												source,
 												invalidateList,
@@ -3247,8 +3204,6 @@ public abstract class MasterServer {
 												contact_phone,
 												contact_email
 											);
-											resp1=AoservProtocol.DONE;
-											resp2Int=id;
 											hasResp2Int=true;
 											sendInvalidateList=true;
 											break;
@@ -3288,34 +3243,33 @@ public abstract class MasterServer {
 										break;*/
 									case ADD_SYSTEM_GROUP :
 										{
-											int aoServer = in.readCompressedInt();
-											Group.Name groupName = Group.Name.valueOf(in.readUTF());
+											int linuxServer = in.readCompressedInt();
+											Group.Name group = Group.Name.valueOf(in.readUTF());
 											int gid = in.readCompressedInt();
 											process.setCommand(
 												"add_system_group",
-												aoServer,
-												groupName,
-												gid
-											);
-											int id = LinuxAccountHandler.addSystemGroup(
-												conn,
-												source,
-												invalidateList,
-												aoServer,
-												groupName,
+												linuxServer,
+												group,
 												gid
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												id
+												LinuxAccountHandler.addSystemGroup(
+													conn,
+													source,
+													invalidateList,
+													linuxServer,
+													group,
+													gid
+												)
 											);
 											sendInvalidateList = true;
 										}
 										break;
 									case ADD_SYSTEM_USER:
 										{
-											int aoServer = in.readCompressedInt();
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											int linuxServer = in.readCompressedInt();
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											int uid = in.readCompressedInt();
 											int gid = in.readCompressedInt();
 											Gecos fullName;
@@ -3342,23 +3296,8 @@ public abstract class MasterServer {
 											PosixPath shell = PosixPath.valueOf(in.readUTF());
 											process.setCommand(
 												"add_system_user",
-												aoServer,
-												username,
-												uid,
-												gid,
-												fullName,
-												officeLocation,
-												officePhone,
-												homePhone,
-												home,
-												shell
-											);
-											int id = LinuxAccountHandler.addSystemUser(
-												conn,
-												source,
-												invalidateList,
-												aoServer,
-												username,
+												linuxServer,
+												user,
 												uid,
 												gid,
 												fullName,
@@ -3370,17 +3309,31 @@ public abstract class MasterServer {
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												id
+												LinuxAccountHandler.addSystemUser(
+													conn,
+													source,
+													invalidateList,
+													linuxServer,
+													user,
+													uid,
+													gid,
+													fullName,
+													officeLocation,
+													officePhone,
+													homePhone,
+													home,
+													shell
+												)
 											);
 											sendInvalidateList = true;
 										}
 										break;
 									case CANCEL_BUSINESS :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											String cancelReason = in.readNullUTF();
-											process.setCommand(Command.CANCEL_BUSINESS, accounting, cancelReason);
-											BusinessHandler.cancelBusiness(conn, source, invalidateList, accounting, cancelReason);
+											process.setCommand(Command.CANCEL_BUSINESS, account, cancelReason);
+											AccountHandler.cancelAccount(conn, source, invalidateList, account, cancelReason);
 											resp = Response.DONE;
 											sendInvalidateList = true;
 										}
@@ -3548,7 +3501,7 @@ public abstract class MasterServer {
 												Command.CHECK_SSL_CERTIFICATE,
 												sslCertificate
 											);
-											List<Certificate.Check> results = SslCertificateHandler.check(
+											List<Certificate.Check> results = PkiCertificateHandler.check(
 												conn,
 												source,
 												sslCertificate
@@ -3570,17 +3523,17 @@ public abstract class MasterServer {
 										break;
 									case COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readUTF();
 											process.setCommand(
 												Command.COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD,
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
 											boolean result = LinuxAccountHandler.comparePassword(
 												conn,
 												source,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.of(
@@ -3621,7 +3574,7 @@ public abstract class MasterServer {
 												from_lsa,
 												to_lsa
 											);
-											LinuxAccountHandler.copyLinuxServerAccountPassword(
+											LinuxAccountHandler.copyUserServerPassword(
 												conn,
 												source,
 												invalidateList,
@@ -3634,20 +3587,19 @@ public abstract class MasterServer {
 										break;
 									case COPY_PACKAGE_DEFINITION :
 										{
-											int id = in.readCompressedInt();
+											int packageDefinition = in.readCompressedInt();
 											process.setCommand(
 												"copy_package_definition",
-												id
-											);
-											int newPKey = PackageHandler.copyPackageDefinition(
-												conn,
-												source,
-												invalidateList,
-												id
+												packageDefinition
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												newPKey
+												PackageHandler.copyPackageDefinition(
+													conn,
+													source,
+													invalidateList,
+													packageDefinition
+												)
 											);
 											sendInvalidateList = true;
 										}
@@ -3661,7 +3613,7 @@ public abstract class MasterServer {
 												transid,
 												reason
 											);
-											CreditCardHandler.creditCardDeclined(
+											PaymentHandler.creditCardDeclined(
 												conn,
 												source,
 												invalidateList,
@@ -3674,7 +3626,7 @@ public abstract class MasterServer {
 										break;
 									case CREDIT_CARD_TRANSACTION_SALE_COMPLETED :
 										{
-											int id = in.readCompressedInt();
+											int payment = in.readCompressedInt();
 											String authorizationCommunicationResult = in.readNullUTF();
 											String authorizationProviderErrorCode = in.readNullUTF();
 											String authorizationErrorCode = in.readNullUTF();
@@ -3719,7 +3671,7 @@ public abstract class MasterServer {
 											String status = in.readNullUTF();
 											process.setCommand(
 												"credit_card_transaction_sale_completed",
-												id,
+												payment,
 												authorizationCommunicationResult,
 												authorizationProviderErrorCode,
 												authorizationErrorCode,
@@ -3750,11 +3702,11 @@ public abstract class MasterServer {
 												captureProviderUniqueId,
 												status
 											);
-											CreditCardHandler.creditCardTransactionSaleCompleted(
+											PaymentHandler.paymentSaleCompleted(
 												conn,
 												source,
 												invalidateList,
-												id,
+												payment,
 												authorizationCommunicationResult,
 												authorizationProviderErrorCode,
 												authorizationErrorCode,
@@ -3791,7 +3743,7 @@ public abstract class MasterServer {
 										break;
 									case CREDIT_CARD_TRANSACTION_AUTHORIZE_COMPLETED :
 										{
-											int id = in.readCompressedInt();
+											int payment = in.readCompressedInt();
 											String authorizationCommunicationResult = in.readNullUTF();
 											String authorizationProviderErrorCode = in.readNullUTF();
 											String authorizationErrorCode = in.readNullUTF();
@@ -3829,7 +3781,7 @@ public abstract class MasterServer {
 											String status = in.readNullUTF();
 											process.setCommand(
 												"credit_card_transaction_authorize_completed",
-												id,
+												payment,
 												authorizationCommunicationResult,
 												authorizationProviderErrorCode,
 												authorizationErrorCode,
@@ -3853,11 +3805,11 @@ public abstract class MasterServer {
 												approvalCode,
 												status
 											);
-											CreditCardHandler.creditCardTransactionAuthorizeCompleted(
+											PaymentHandler.paymentAuthorizeCompleted(
 												conn,
 												source,
 												invalidateList,
-												id,
+												payment,
 												authorizationCommunicationResult,
 												authorizationProviderErrorCode,
 												authorizationErrorCode,
@@ -3894,222 +3846,222 @@ public abstract class MasterServer {
 											switch(tableID) {
 												case BUSINESSES :
 													{
-														Account.Name accounting = Account.Name.valueOf(in.readUTF());
+														Account.Name account = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_BUSINESS,
 															disableLog,
-															accounting
+															account
 														);
-														BusinessHandler.disableBusiness(
+														AccountHandler.disableAccount(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															accounting
+															account
 														);
 													}
 													break;
 												case BUSINESS_ADMINISTRATORS :
 													{
-														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_BUSINESS_ADMINISTRATOR,
 															disableLog,
-															username
+															administrator
 														);
-														BusinessHandler.disableBusinessAdministrator(
+														AccountHandler.disableAdministrator(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															username
+															administrator
 														);
 													}
 													break;
 												case CVS_REPOSITORIES :
 													{
-														int id = in.readCompressedInt();
+														int cvsRepository = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_CVS_REPOSITORY,
 															disableLog,
-															id
+															cvsRepository
 														);
 														CvsHandler.disableCvsRepository(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															cvsRepository
 														);
 													}
 													break;
 												case EMAIL_LISTS :
 													{
-														int id = in.readCompressedInt();
+														int list = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_EMAIL_LIST,
 															disableLog,
-															id
+															list
 														);
-														EmailHandler.disableEmailList(
+														EmailHandler.disableList(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															list
 														);
 													}
 													break;
 												case EMAIL_PIPES :
 													{
-														int id = in.readCompressedInt();
+														int pipe = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_EMAIL_PIPE,
 															disableLog,
-															id
+															pipe
 														);
-														EmailHandler.disableEmailPipe(
+														EmailHandler.disablePipe(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															pipe
 														);
 													}
 													break;
 												case EMAIL_SMTP_RELAYS :
 													{
-														int id = in.readCompressedInt();
+														int smtpRelay = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_EMAIL_SMTP_RELAY,
 															disableLog,
-															id
+															smtpRelay
 														);
-														EmailHandler.disableEmailSmtpRelay(
+														EmailHandler.disableSmtpRelay(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															smtpRelay
 														);
 													}
 													break;
 												case HTTPD_SHARED_TOMCATS :
 													{
-														int id = in.readCompressedInt();
+														int sharedTomcat = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_HTTPD_SHARED_TOMCAT,
 															disableLog,
-															id
+															sharedTomcat
 														);
-														HttpdHandler.disableHttpdSharedTomcat(
+														WebHandler.disableSharedTomcat(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															sharedTomcat
 														);
 													}
 													break;
 												case HTTPD_SITES :
 													{
-														int id = in.readCompressedInt();
+														int site = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_HTTPD_SITE,
 															disableLog,
-															id
+															site
 														);
-														HttpdHandler.disableHttpdSite(
+														WebHandler.disableSite(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															site
 														);
 													}
 													break;
 												case HTTPD_SITE_BINDS :
 													{
-														int id = in.readCompressedInt();
+														int virtualHost = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_HTTPD_SITE_BIND,
 															disableLog,
-															id
+															virtualHost
 														);
-														HttpdHandler.disableHttpdSiteBind(
+														WebHandler.disableVirtualHost(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															virtualHost
 														);
 													}
 													break;
 												case LINUX_ACCOUNTS :
 													{
-														com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_LINUX_ACCOUNT,
 															disableLog,
-															username
+															user
 														);
-														LinuxAccountHandler.disableLinuxAccount(
+														LinuxAccountHandler.disableUser(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															username
+															user
 														);
 													}
 													break;
 												case LINUX_SERVER_ACCOUNTS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_LINUX_SERVER_ACCOUNT,
 															disableLog,
-															id
+															userServer
 														);
-														LinuxAccountHandler.disableLinuxServerAccount(
+														LinuxAccountHandler.disableUserServer(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															userServer
 														);
 													}
 													break;
 												case MYSQL_SERVER_USERS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_MYSQL_SERVER_USER,
 															disableLog,
-															id
+															userServer
 														);
-														MySQLHandler.disableMySQLServerUser(
+														MysqlHandler.disableUserServer(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															userServer
 														);
 													}
 													break;
 												case MYSQL_USERS :
 													{
-														com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_MYSQL_USER,
 															disableLog,
-															username
+															user
 														);
-														MySQLHandler.disableMySQLUser(
+														MysqlHandler.disableUser(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															username
+															user
 														);
 													}
 													break;
@@ -4132,52 +4084,52 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_SERVER_USERS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.DISABLE_POSTGRES_SERVER_USER,
 															disableLog,
-															id
+															userServer
 														);
-														PostgresHandler.disablePostgresServerUser(
+														PostgresqlHandler.disableUserServer(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															id
+															userServer
 														);
 													}
 													break;
 												case POSTGRES_USERS :
 													{
-														com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_POSTGRES_USER,
 															disableLog,
-															username
+															user
 														);
-														PostgresHandler.disablePostgresUser(
+														PostgresqlHandler.disableUser(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															username
+															user
 														);
 													}
 													break;
 												case USERNAMES :
 													{
-														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.DISABLE_USERNAME,
 															disableLog,
-															username
+															user
 														);
-														UsernameHandler.disableUsername(
+														AccountUserHandler.disableUser(
 															conn,
 															source,
 															invalidateList,
 															disableLog,
-															username
+															user
 														);
 													}
 													break;
@@ -4193,7 +4145,7 @@ public abstract class MasterServer {
 											process.setPriority(Thread.NORM_PRIORITY-1);
 											currentThread.setPriority(Thread.NORM_PRIORITY-1);
 
-											int id = in.readCompressedInt();
+											int database = in.readCompressedInt();
 											boolean gzip;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
@@ -4202,14 +4154,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.DUMP_MYSQL_DATABASE,
-												id,
+												database,
 												gzip
 											);
-											MySQLHandler.dumpMySQLDatabase(
+											MysqlHandler.dumpDatabase(
 												conn,
 												source,
 												out,
-												id,
+												database,
 												gzip
 											);
 											resp = Response.DONE;
@@ -4221,7 +4173,7 @@ public abstract class MasterServer {
 											process.setPriority(Thread.NORM_PRIORITY-1);
 											currentThread.setPriority(Thread.NORM_PRIORITY-1);
 
-											int id = in.readCompressedInt();
+											int database = in.readCompressedInt();
 											boolean gzip;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 												gzip = in.readBoolean();
@@ -4230,14 +4182,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.DUMP_POSTGRES_DATABASE,
-												id,
+												database,
 												gzip
 											);
-											PostgresHandler.dumpPostgresDatabase(
+											PostgresqlHandler.dumpDatabase(
 												conn,
 												source,
 												out,
-												id,
+												database,
 												gzip
 											);
 											resp = Response.DONE;
@@ -4252,196 +4204,196 @@ public abstract class MasterServer {
 											switch(tableID) {
 												case BUSINESSES :
 													{
-														Account.Name accounting = Account.Name.valueOf(in.readUTF());
+														Account.Name account = Account.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_BUSINESS,
-															accounting
+															account
 														);
-														BusinessHandler.enableBusiness(
+														AccountHandler.enableAccount(
 															conn,
 															source,
 															invalidateList,
-															accounting
+															account
 														);
 													}
 													break;
 												case BUSINESS_ADMINISTRATORS :
 													{
-														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_BUSINESS_ADMINISTRATOR,
-															username
+															administrator
 														);
-														BusinessHandler.enableBusinessAdministrator(
+														AccountHandler.enableAdministrator(
 															conn,
 															source,
 															invalidateList,
-															username
+															administrator
 														);
 													}
 													break;
 												case CVS_REPOSITORIES :
 													{
-														int id = in.readCompressedInt();
+														int cvsRepository = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_CVS_REPOSITORY,
-															id
+															cvsRepository
 														);
 														CvsHandler.enableCvsRepository(
 															conn,
 															source,
 															invalidateList,
-															id
+															cvsRepository
 														);
 													}
 													break;
 												case EMAIL_LISTS :
 													{
-														int id = in.readCompressedInt();
+														int list = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_EMAIL_LIST,
-															id
+															list
 														);
-														EmailHandler.enableEmailList(
+														EmailHandler.enableList(
 															conn,
 															source,
 															invalidateList,
-															id
+															list
 														);
 													}
 													break;
 												case EMAIL_PIPES :
 													{
-														int id = in.readCompressedInt();
+														int pipe = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_EMAIL_PIPE,
-															id
+															pipe
 														);
-														EmailHandler.enableEmailPipe(
+														EmailHandler.enablePipe(
 															conn,
 															source,
 															invalidateList,
-															id
+															pipe
 														);
 													}
 													break;
 												case EMAIL_SMTP_RELAYS :
 													{
-														int id = in.readCompressedInt();
+														int smtpRelay = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_EMAIL_SMTP_RELAY,
-															id
+															smtpRelay
 														);
-														EmailHandler.enableEmailSmtpRelay(
+														EmailHandler.enableSmtpRelay(
 															conn,
 															source,
 															invalidateList,
-															id
+															smtpRelay
 														);
 													}
 													break;
 												case HTTPD_SHARED_TOMCATS :
 													{
-														int id = in.readCompressedInt();
+														int sharedTomcat = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_HTTPD_SHARED_TOMCAT,
-															id
+															sharedTomcat
 														);
-														HttpdHandler.enableHttpdSharedTomcat(
+														WebHandler.enableSharedTomcat(
 															conn,
 															source,
 															invalidateList,
-															id
+															sharedTomcat
 														);
 													}
 													break;
 												case HTTPD_SITES :
 													{
-														int id = in.readCompressedInt();
+														int site = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_HTTPD_SITE,
-															id
+															site
 														);
-														HttpdHandler.enableHttpdSite(
+														WebHandler.enableSite(
 															conn,
 															source,
 															invalidateList,
-															id
+															site
 														);
 													}
 													break;
 												case HTTPD_SITE_BINDS :
 													{
-														int id = in.readCompressedInt();
+														int virtualHost = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_HTTPD_SITE_BIND,
-															id
+															virtualHost
 														);
-														HttpdHandler.enableHttpdSiteBind(
+														WebHandler.enableVirtualHost(
 															conn,
 															source,
 															invalidateList,
-															id
+															virtualHost
 														);
 													}
 													break;
 												case LINUX_ACCOUNTS :
 													{
-														com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_LINUX_ACCOUNT,
-															username
+															user
 														);
-														LinuxAccountHandler.enableLinuxAccount(
+														LinuxAccountHandler.enableUser(
 															conn,
 															source,
 															invalidateList,
-															username
+															user
 														);
 													}
 													break;
 												case LINUX_SERVER_ACCOUNTS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_LINUX_SERVER_ACCOUNT,
-															id
+															userServer
 														);
-														LinuxAccountHandler.enableLinuxServerAccount(
+														LinuxAccountHandler.enableUserServer(
 															conn,
 															source,
 															invalidateList,
-															id
+															userServer
 														);
 													}
 													break;
 												case MYSQL_SERVER_USERS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_MYSQL_SERVER_USER,
-															id
+															userServer
 														);
-														MySQLHandler.enableMySQLServerUser(
+														MysqlHandler.enableUserServer(
 															conn,
 															source,
 															invalidateList,
-															id
+															userServer
 														);
 													}
 													break;
 												case MYSQL_USERS :
 													{
-														com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_MYSQL_USER,
-															username
+															user
 														);
-														MySQLHandler.enableMySQLUser(
+														MysqlHandler.enableUser(
 															conn,
 															source,
 															invalidateList,
-															username
+															user
 														);
 													}
 													break;
@@ -4462,46 +4414,46 @@ public abstract class MasterServer {
 													break;
 												case POSTGRES_SERVER_USERS :
 													{
-														int id = in.readCompressedInt();
+														int userServer = in.readCompressedInt();
 														process.setCommand(
 															Command.ENABLE_POSTGRES_SERVER_USER,
-															id
+															userServer
 														);
-														PostgresHandler.enablePostgresServerUser(
+														PostgresqlHandler.enableUserServer(
 															conn,
 															source,
 															invalidateList,
-															id
+															userServer
 														);
 													}
 													break;
 												case POSTGRES_USERS :
 													{
-														com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_POSTGRES_USER,
-															username
+															user
 														);
-														PostgresHandler.enablePostgresUser(
+														PostgresqlHandler.enableUser(
 															conn,
 															source,
 															invalidateList,
-															username
+															user
 														);
 													}
 													break;
 												case USERNAMES :
 													{
-														com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+														com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 														process.setCommand(
 															Command.ENABLE_USERNAME,
-															username
+															user
 														);
-														UsernameHandler.enableUsername(
+														AccountUserHandler.enableUser(
 															conn,
 															source,
 															invalidateList,
-															username
+															user
 														);
 													}
 													break;
@@ -4519,13 +4471,13 @@ public abstract class MasterServer {
 												Command.GENERATE_ACCOUNTING,
 												template
 											);
-											Account.Name accounting = BusinessHandler.generateAccountingCode(
+											Account.Name account = AccountHandler.generateAccountName(
 												conn,
 												template
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												accounting
+												account
 											);
 											sendInvalidateList = false;
 										}
@@ -4539,7 +4491,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											Database.Name name = MySQLHandler.generateMySQLDatabaseName(
+											Database.Name name = MysqlHandler.generateDatabaseName(
 												conn,
 												template_base,
 												template_added
@@ -4578,7 +4530,7 @@ public abstract class MasterServer {
 												template_base,
 												template_added
 											);
-											com.aoindustries.aoserv.client.postgresql.Database.Name name = PostgresHandler.generatePostgresDatabaseName(
+											com.aoindustries.aoserv.client.postgresql.Database.Name name = PostgresqlHandler.generateDatabaseName(
 												conn,
 												template_base,
 												template_added
@@ -4597,7 +4549,7 @@ public abstract class MasterServer {
 												Command.GENERATE_SHARED_TOMCAT_NAME,
 												template
 											);
-											String name = HttpdHandler.generateSharedTomcatName(
+											String name = WebHandler.generateSharedTomcatName(
 												conn,
 												template
 											);
@@ -4615,7 +4567,7 @@ public abstract class MasterServer {
 												Command.GENERATE_SITE_NAME,
 												template
 											);
-											String name = HttpdHandler.generateSiteName(
+											String name = WebHandler.generateSiteName(
 												conn,
 												template
 											);
@@ -4628,16 +4580,16 @@ public abstract class MasterServer {
 										break;
 									case GET_ACCOUNT_BALANCE :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_account_balance",
-												accounting
+												account
 											);
-											TransactionHandler.getAccountBalance(
+											BillingTransactionHandler.getAccountBalance(
 												conn,
 												source,
 												out,
-												accounting
+												account
 											);
 											resp = null;
 											sendInvalidateList = false;
@@ -4645,18 +4597,18 @@ public abstract class MasterServer {
 										break;
 									case GET_ACCOUNT_BALANCE_BEFORE :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											long before = in.readLong();
 											process.setCommand(
 												"get_account_balance_before",
-												accounting,
+												account,
 												new java.util.Date(before)
 											);
-											TransactionHandler.getAccountBalanceBefore(
+											BillingTransactionHandler.getAccountBalanceBefore(
 												conn,
 												source,
 												out,
-												accounting,
+												account,
 												before
 											);
 											resp = null;
@@ -4672,7 +4624,7 @@ public abstract class MasterServer {
 												provideProgress,
 												account
 											);
-											BankAccountHandler.getBankTransactionsAccount(
+											BankAccountHandler.getTransactionsForAccount(
 												conn,
 												source,
 												out,
@@ -4685,16 +4637,16 @@ public abstract class MasterServer {
 										break;
 									case GET_CONFIRMED_ACCOUNT_BALANCE :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_confirmed_account_balance",
-												accounting
+												account
 											);
-											TransactionHandler.getConfirmedAccountBalance(
+											BillingTransactionHandler.getConfirmedAccountBalance(
 												conn,
 												source,
 												out,
-												accounting
+												account
 											);
 											resp = null;
 											sendInvalidateList = false;
@@ -4702,18 +4654,18 @@ public abstract class MasterServer {
 										break;
 									case GET_CONFIRMED_ACCOUNT_BALANCE_BEFORE :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											long before = in.readLong();
 											process.setCommand(
 												"get_confirmed_account_balance_before",
-												accounting,
+												account,
 												new java.util.Date(before)
 											);
-											TransactionHandler.getConfirmedAccountBalanceBefore(
+											BillingTransactionHandler.getConfirmedAccountBalanceBefore(
 												conn,
 												source,
 												out,
-												accounting,
+												account,
 												before
 											);
 											resp = null;
@@ -4722,38 +4674,37 @@ public abstract class MasterServer {
 										break;
 									case GET_AUTORESPONDER_CONTENT :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_AUTORESPONDER_CONTENT,
-												id
-											);
-											String content = LinuxAccountHandler.getAutoresponderContent(
-												conn,
-												source,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												content
+												LinuxAccountHandler.getAutoresponderContent(
+													conn,
+													source,
+													userServer
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_AWSTATS_FILE :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											String path = in.readUTF();
 											String queryString = in.readUTF();
 											process.setCommand(
 												Command.GET_AWSTATS_FILE,
-												id,
+												site,
 												path,
 												queryString
 											);
-											HttpdHandler.getAWStatsFile(
+											WebHandler.getAWStatsFile(
 												conn,
 												source,
-												id,
+												site,
 												path,
 												queryString,
 												out
@@ -4764,38 +4715,36 @@ public abstract class MasterServer {
 										break;
 									case GET_BACKUP_PARTITION_DISK_TOTAL_SIZE :
 										{
-											int id = in.readCompressedInt();
+											int backupPartition = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_BACKUP_PARTITION_TOTAL_SIZE,
-												id
-											);
-											long size = BackupHandler.getBackupPartitionTotalSize(
-												conn,
-												source,
-												id
+												backupPartition
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												size
+												BackupHandler.getBackupPartitionTotalSize(
+													conn,
+													source,
+													backupPartition
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_BACKUP_PARTITION_DISK_USED_SIZE :
 										{
-											int id = in.readCompressedInt();
+											int backupPartition = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_BACKUP_PARTITION_USED_SIZE,
-												id
-											);
-											long size = BackupHandler.getBackupPartitionUsedSize(
-												conn,
-												source,
-												id
+												backupPartition
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												size
+												BackupHandler.getBackupPartitionUsedSize(
+													conn,
+													source,
+													backupPartition
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -4826,38 +4775,36 @@ public abstract class MasterServer {
 										break;
 									case GET_CRON_TABLE :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_CRON_TABLE,
-												id
-											);
-											String cronTable = LinuxAccountHandler.getCronTable(
-												conn,
-												source,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												cronTable
+												LinuxAccountHandler.getCronTable(
+													conn,
+													source,
+													userServer
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_EMAIL_LIST_ADDRESS_LIST :
 										{
-											int id = in.readCompressedInt();
+											int list = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_EMAIL_LIST,
-												id
-											);
-											String emailList = EmailHandler.getEmailListAddressList(
-												conn,
-												source,
-												id
+												list
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												emailList
+												EmailHandler.getListFile(
+													conn,
+													source,
+													list
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -4866,7 +4813,7 @@ public abstract class MasterServer {
 										{
 											int replication = in.readCompressedInt();
 											int maxRows = in.readCompressedInt();
-											FailoverHandler.getFailoverFileLogs(
+											FailoverHandler.getFileReplicationLogs(
 												conn,
 												source,
 												out,
@@ -4884,7 +4831,7 @@ public abstract class MasterServer {
 												Command.GET_FAILOVER_FILE_REPLICATION_ACTIVITY,
 												replication
 											);
-											Tuple2<Long,String> activity = FailoverHandler.getFailoverFileReplicationActivity(
+											Tuple2<Long,String> activity = FailoverHandler.getFileReplicationActivity(
 												conn,
 												source,
 												replication
@@ -4904,7 +4851,7 @@ public abstract class MasterServer {
 												Command.GET_HTTPD_SERVER_CONCURRENCY,
 												httpdServer
 											);
-											int hsConcurrency = HttpdHandler.getHttpdServerConcurrency(
+											int hsConcurrency = WebHandler.getHttpdServerConcurrency(
 												conn,
 												source,
 												httpdServer
@@ -4918,13 +4865,13 @@ public abstract class MasterServer {
 										break;
 									case GET_IMAP_FOLDER_SIZES :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											int numFolders = in.readCompressedInt();
 											String[] folderNames = new String[numFolders];
 											for(int c=0;c<numFolders;c++) folderNames[c] = in.readUTF();
 											process.setCommand(
 												Command.GET_IMAP_FOLDER_SIZES,
-												id,
+												userServer,
 												numFolders,
 												folderNames
 											);
@@ -4933,7 +4880,7 @@ public abstract class MasterServer {
 												EmailHandler.getImapFolderSizes(
 													conn,
 													source,
-													id,
+													userServer,
 													folderNames
 												)
 											);
@@ -4942,17 +4889,17 @@ public abstract class MasterServer {
 										break;
 									case GET_INBOX_ATTRIBUTES :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_INBOX_ATTRIBUTES,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
 												EmailHandler.getInboxAttributes(
 													conn,
 													source,
-													id
+													userServer
 												)
 											);
 											sendInvalidateList = false;
@@ -4960,38 +4907,36 @@ public abstract class MasterServer {
 										break;
 									case GET_MAJORDOMO_INFO_FILE :
 										{
-											int id = in.readCompressedInt();
+											int majordomoList = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_MAJORDOMO_INFO_FILE,
-												id
-											);
-											String file = EmailHandler.getMajordomoInfoFile(
-												conn,
-												source,
-												id
+												majordomoList
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												file
+												EmailHandler.getMajordomoInfoFile(
+													conn,
+													source,
+													majordomoList
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_MAJORDOMO_INTRO_FILE :
 										{
-											int id = in.readCompressedInt();
+											int majordomoList = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_MAJORDOMO_INTRO_FILE,
-												id
-											);
-											String file = EmailHandler.getMajordomoIntroFile(
-												conn,
-												source,
-												id
+												majordomoList
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												file
+												EmailHandler.getMajordomoIntroFile(
+													conn,
+													source,
+													majordomoList
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -5026,17 +4971,17 @@ public abstract class MasterServer {
 										break;
 									case GET_MRTG_FILE :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											String filename = in.readUTF().trim();
 											process.setCommand(
 												Command.GET_MRTG_FILE,
-												aoServer,
+												linuxServer,
 												filename
 											);
-											AOServerHandler.getMrtgFile(
+											LinuxServerHandler.getMrtgFile(
 												conn,
 												source,
-												aoServer,
+												linuxServer,
 												filename,
 												out
 											);
@@ -5051,7 +4996,7 @@ public abstract class MasterServer {
 												"get_mysql_master_status",
 												mysqlServer
 											);
-											MySQLHandler.getMasterStatus(
+											MysqlHandler.getMasterStatus(
 												conn,
 												source,
 												mysqlServer,
@@ -5068,7 +5013,7 @@ public abstract class MasterServer {
 												"get_mysql_slave_status",
 												failoverMySQLReplication
 											);
-											MySQLHandler.getSlaveStatus(
+											MysqlHandler.getSlaveStatus(
 												conn,
 												source,
 												failoverMySQLReplication,
@@ -5092,7 +5037,7 @@ public abstract class MasterServer {
 												mysqlDatabase,
 												mysqlSlave==-1 ? null : mysqlSlave
 											);
-											MySQLHandler.getTableStatus(
+											MysqlHandler.getTableStatus(
 												conn,
 												source,
 												mysqlDatabase,
@@ -5124,7 +5069,7 @@ public abstract class MasterServer {
 												tableNames
 											);
 											logSQLException = false;
-											MySQLHandler.checkTables(
+											MysqlHandler.checkTables(
 												conn,
 												source,
 												mysqlDatabase,
@@ -5139,53 +5084,51 @@ public abstract class MasterServer {
 										break;
 									case GET_NET_DEVICE_BONDING_REPORT :
 										{
-											int id = in.readCompressedInt();
+											int device = in.readCompressedInt();
 											process.setCommand(
 												"get_net_device_bonding_report",
-												id
-											);
-											String report = NetDeviceHandler.getNetDeviceBondingReport(
-												conn,
-												source,
-												id
+												device
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												report
+												NetDeviceHandler.getDeviceBondingReport(
+													conn,
+													source,
+													device
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_NET_DEVICE_STATISTICS_REPORT :
 										{
-											int id = in.readCompressedInt();
+											int device = in.readCompressedInt();
 											process.setCommand(
 												"get_net_device_statistics_report",
-												id
-											);
-											String report = NetDeviceHandler.getNetDeviceStatisticsReport(
-												conn,
-												source,
-												id
+												device
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												report
+												NetDeviceHandler.getDeviceStatisticsReport(
+													conn,
+													source,
+													device
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_AO_SERVER_3WARE_RAID_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_3ware_raid_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.get3wareRaidReport(
+											String report = LinuxServerHandler.get3wareRaidReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5196,15 +5139,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_MD_STAT_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_md_stat_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getMdStatReport(
+											String report = LinuxServerHandler.getMdStatReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5215,15 +5158,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_MD_MISMATCH_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_md_mismatch_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getMdMismatchReport(
+											String report = LinuxServerHandler.getMdMismatchReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5234,15 +5177,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_DRBD_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_drbd_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getDrbdReport(
+											String report = LinuxServerHandler.getDrbdReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5253,15 +5196,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_LVM_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_lvm_report",
-												aoServer
+												linuxServer
 											);
-											String[] report = AOServerHandler.getLvmReport(
+											String[] report = LinuxServerHandler.getLvmReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5274,15 +5217,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_HDD_TEMP_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_hdd_temp_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getHddTempReport(
+											String report = LinuxServerHandler.getHddTempReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5293,15 +5236,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_HDD_MODEL_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_hdd_model_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getHddModelReport(
+											String report = LinuxServerHandler.getHddModelReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5312,15 +5255,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_FILESYSTEMS_CSV_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_filesystems_csv_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getFilesystemsCsvReport(
+											String report = LinuxServerHandler.getFilesystemsCsvReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5331,15 +5274,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_LOADAVG_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_loadavg_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getLoadAvgReport(
+											String report = LinuxServerHandler.getLoadAvgReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5350,15 +5293,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_MEMINFO_REPORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_meminfo_report",
-												aoServer
+												linuxServer
 											);
-											String report = AOServerHandler.getMemInfoReport(
+											String report = LinuxServerHandler.getMemInfoReport(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5369,7 +5312,7 @@ public abstract class MasterServer {
 										break;
 									case AO_SERVER_CHECK_PORT :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											InetAddress ipAddress = InetAddress.valueOf(in.readUTF());
 											Port port;
 											{
@@ -5386,7 +5329,7 @@ public abstract class MasterServer {
 											String monitoringParameters = in.readUTF();
 											process.setCommand(
 												"ao_server_check_port",
-												aoServer,
+												linuxServer,
 												ipAddress,
 												port,
 												appProtocol,
@@ -5394,10 +5337,10 @@ public abstract class MasterServer {
 											);
 											// Do not log any IO exception
 											logIOException = false;
-											String result = AOServerHandler.checkPort(
+											String result = LinuxServerHandler.checkPort(
 												conn,
 												source,
-												aoServer,
+												linuxServer,
 												ipAddress,
 												port,
 												appProtocol,
@@ -5413,21 +5356,21 @@ public abstract class MasterServer {
 										break;
 									case AO_SERVER_CHECK_SMTP_BLACKLIST :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											InetAddress sourceIp = InetAddress.valueOf(in.readUTF());
 											InetAddress connectIp = InetAddress.valueOf(in.readUTF());
 											process.setCommand(
 												"ao_server_check_smtp_blacklist",
-												aoServer,
+												linuxServer,
 												sourceIp,
 												connectIp
 											);
 											// Do not log any IO exception
 											logIOException = false;
-											String result = AOServerHandler.checkSmtpBlacklist(
+											String result = LinuxServerHandler.checkSmtpBlacklist(
 												conn,
 												source,
-												aoServer,
+												linuxServer,
 												sourceIp,
 												connectIp
 											);
@@ -5441,15 +5384,15 @@ public abstract class MasterServer {
 										break;
 									case GET_AO_SERVER_SYSTEM_TIME_MILLIS :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												"get_ao_server_system_time_millis",
-												aoServer
+												linuxServer
 											);
-											long systemTime = AOServerHandler.getSystemTimeMillis(
+											long systemTime = LinuxServerHandler.getSystemTimeMillis(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5460,15 +5403,15 @@ public abstract class MasterServer {
 										break;
 									case GET_UPS_STATUS :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.GET_UPS_STATUS,
-												aoServer
+												linuxServer
 											);
-											String status = AOServerHandler.getUpsStatus(
+											String status = LinuxServerHandler.getUpsStatus(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5507,7 +5450,7 @@ public abstract class MasterServer {
 												"get_pending_payments",
 												provideProgress
 											);
-											TransactionHandler.getPendingPayments(
+											BillingTransactionHandler.getPendingPayments(
 												conn,
 												source,
 												out,
@@ -5522,7 +5465,7 @@ public abstract class MasterServer {
 											process.setCommand(Command.GET_ROOT_BUSINESS);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												BusinessHandler.getRootBusiness()
+												AccountHandler.getRootAccount()
 											);
 											sendInvalidateList = false;
 										}
@@ -5565,7 +5508,7 @@ public abstract class MasterServer {
 												provideProgress,
 												esr
 											);
-											EmailHandler.getSpamEmailMessagesForEmailSmtpRelay(
+											EmailHandler.getSpamMessagesForSmtpRelay(
 												conn,
 												source,
 												out,
@@ -5648,133 +5591,126 @@ public abstract class MasterServer {
 										break;
 									case GET_TICKET_DETAILS :
 										{
-											int id = in.readCompressedInt();
+											int ticket = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_details",
-												id
-											);
-											String details = TicketHandler.getTicketDetails(
-												conn,
-												source,
-												id
+												ticket
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												details
+												TicketHandler.getTicketDetails(
+													conn,
+													source,
+													ticket
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_RAW_EMAIL :
 										{
-											int id = in.readCompressedInt();
+											int ticket = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_raw_email",
-												id
-											);
-											String rawEmail = TicketHandler.getTicketRawEmail(
-												conn,
-												source,
-												id
+												ticket
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												rawEmail
+												TicketHandler.getTicketRawEmail(
+													conn,
+													source,
+													ticket
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_INTERNAL_NOTES :
 										{
-											int id = in.readCompressedInt();
+											int ticket = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_internal_notes",
-												id
-											);
-											String internalNotes = TicketHandler.getTicketInternalNotes(
-												conn,
-												source,
-												id
+												ticket
 											);
 											resp = Response.ofLongString(
 												AoservProtocol.DONE,
-												internalNotes
+												TicketHandler.getTicketInternalNotes(
+													conn,
+													source,
+													ticket
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_ACTION_OLD_VALUE :
 										{
-											int id = in.readCompressedInt();
+											int action = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_action_old_value",
-												id
-											);
-											String oldValue = TicketHandler.getTicketActionOldValue(
-												conn,
-												source,
-												id
+												action
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												oldValue
+												TicketHandler.getActionOldValue(
+													conn,
+													source,
+													action
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_ACTION_NEW_VALUE :
 										{
-											int id = in.readCompressedInt();
+											int action = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_action_new_value",
-												id
-											);
-											String newValue = TicketHandler.getTicketActionNewValue(
-												conn,
-												source,
-												id
+												action
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												newValue
+												TicketHandler.getActionNewValue(
+													conn,
+													source,
+													action
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_ACTION_DETAILS :
 										{
-											int id = in.readCompressedInt();
+											int action = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_action_details",
-												id
-											);
-											String details = TicketHandler.getTicketActionDetails(
-												conn,
-												source,
-												id
+												action
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												details
+												TicketHandler.getActionDetails(
+													conn,
+													source,
+													action
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case GET_TICKET_ACTION_RAW_EMAIL :
 										{
-											int id = in.readCompressedInt();
+											int action = in.readCompressedInt();
 											process.setCommand(
 												"get_ticket_action_raw_email",
-												id
-											);
-											String rawEmail = TicketHandler.getTicketActionRawEmail(
-												conn,
-												source,
-												id
+												action
 											);
 											resp = Response.ofNullLongString(
 												AoservProtocol.DONE,
-												rawEmail
+												TicketHandler.getActionRawEmail(
+													conn,
+													source,
+													action
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -5782,18 +5718,18 @@ public abstract class MasterServer {
 									case GET_TRANSACTIONS_BUSINESS :
 										{
 											boolean provideProgress = in.readBoolean();
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_transactions_business",
 												provideProgress,
-												accounting
+												account
 											);
-											TransactionHandler.getTransactionsBusiness(
+											BillingTransactionHandler.getTransactionsForAccount(
 												conn,
 												source,
 												out,
 												provideProgress,
-												accounting
+												account
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -5802,18 +5738,18 @@ public abstract class MasterServer {
 									case GET_TRANSACTIONS_BUSINESS_ADMINISTRATOR :
 										{
 											boolean provideProgress = in.readBoolean();
-											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												"get_transactions_business_administrator",
 												provideProgress,
-												username
+												administrator
 											);
-											TransactionHandler.getTransactionsBusinessAdministrator(
+											BillingTransactionHandler.getTransactionsForAdministrator(
 												conn,
 												source,
 												out,
 												provideProgress,
-												username
+												administrator
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -5829,7 +5765,7 @@ public abstract class MasterServer {
 												provideProgress,
 												"..."
 											);
-											TransactionHandler.getTransactionsSearch(
+											BillingTransactionHandler.getTransactionsSearch(
 												conn,
 												source,
 												out,
@@ -5842,15 +5778,15 @@ public abstract class MasterServer {
 										break;
 									case GET_WHOIS_HISTORY_WHOIS_OUTPUT :
 										{
-											int id = in.readCompressedInt();
+											int whoisHistoryAccount = in.readCompressedInt();
 											process.setCommand(
 												"get_whois_history_whois_output",
-												id
+												whoisHistoryAccount
 											);
 											Tuple2<String,String> whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
 												conn,
 												source,
-												id
+												whoisHistoryAccount
 											);
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 												String output = whoisOutput.getElement1();
@@ -5913,14 +5849,14 @@ public abstract class MasterServer {
 										break;*/
 									case IS_ACCOUNTING_AVAILABLE :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_ACCOUNTING_AVAILABLE,
-												accounting
+												account
 											);
-											boolean isAvailable = BusinessHandler.isAccountingAvailable(
+											boolean isAvailable = AccountHandler.isAccountNameAvailable(
 												conn,
-												accounting
+												account
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5931,15 +5867,15 @@ public abstract class MasterServer {
 										break;
 									case IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET :
 										{
-											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
-												username
+												administrator
 											);
-											boolean isAvailable = BusinessHandler.isBusinessAdministratorPasswordSet(
+											boolean isAvailable = AccountHandler.isAdministratorPasswordSet(
 												conn,
 												source,
-												username
+												administrator
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -5968,17 +5904,17 @@ public abstract class MasterServer {
 										break;
 									case IS_EMAIL_DOMAIN_AVAILABLE :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											DomainName domain = DomainName.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_EMAIL_DOMAIN_AVAILABLE,
-												aoServer,
+												linuxServer,
 												domain
 											);
-											boolean isAvailable = EmailHandler.isEmailDomainAvailable(
+											boolean isAvailable = EmailHandler.isDomainAvailable(
 												conn,
 												source,
-												aoServer,
+												linuxServer,
 												domain
 											);
 											resp = Response.of(
@@ -5995,7 +5931,7 @@ public abstract class MasterServer {
 												Command.IS_LINUX_GROUP_NAME_AVAILABLE,
 												name
 											);
-											boolean isAvailable = LinuxAccountHandler.isLinuxGroupNameAvailable(
+											boolean isAvailable = LinuxAccountHandler.isLinuxGroupAvailable(
 												conn,
 												name
 											);
@@ -6008,34 +5944,33 @@ public abstract class MasterServer {
 										break;
 									case IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET,
-												id
-											);
-											boolean isAvailable = LinuxAccountHandler.isLinuxServerAccountPasswordSet(
-												conn,
-												source,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												isAvailable
+												LinuxAccountHandler.isUserServerPasswordSet(
+													conn,
+													source,
+													userServer
+												)
 											);
 											sendInvalidateList = false;
 										}
 										break;
 									case IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL,
-												id
+												userServer
 											);
-											int isManual = LinuxAccountHandler.isLinuxServerAccountProcmailManual(
+											int isManual = LinuxAccountHandler.isUserServerProcmailManual(
 												conn,
 												source,
-												id
+												userServer
 											);
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_6)>=0) {
 												resp = Response.of(
@@ -6070,7 +6005,7 @@ public abstract class MasterServer {
 												mysqlServer
 											);
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4)<0) throw new IOException(Command.IS_MYSQL_DATABASE_NAME_AVAILABLE+" call not supported for AoservProtocol < "+AoservProtocol.Version.VERSION_1_4+", please upgrade AOServ Client.");
-											boolean isAvailable = MySQLHandler.isMySQLDatabaseNameAvailable(
+											boolean isAvailable = MysqlHandler.isDatabaseNameAvailable(
 												conn,
 												source,
 												name,
@@ -6085,19 +6020,18 @@ public abstract class MasterServer {
 										break;
 									case IS_MYSQL_SERVER_USER_PASSWORD_SET :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_MYSQL_SERVER_USER_PASSWORD_SET,
-												id
-											);
-											boolean isSet = MySQLHandler.isMySQLServerUserPasswordSet(
-												conn,
-												source,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												isSet
+												MysqlHandler.isUserServerPasswordSet(
+													conn,
+													source,
+													userServer
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -6129,7 +6063,7 @@ public abstract class MasterServer {
 												name,
 												postgresServer
 											);
-											boolean isAvailable = PostgresHandler.isPostgresDatabaseNameAvailable(
+											boolean isAvailable = PostgresqlHandler.isDatabaseNameAvailable(
 												conn,
 												source,
 												name,
@@ -6144,19 +6078,18 @@ public abstract class MasterServer {
 										break;
 									case IS_POSTGRES_SERVER_USER_PASSWORD_SET :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_POSTGRES_SERVER_USER_PASSWORD_SET,
-												id
-											);
-											boolean isAvailable = PostgresHandler.isPostgresServerUserPasswordSet(
-												conn,
-												source,
-												id
+												userServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
-												isAvailable
+												PostgresqlHandler.isUserServerPasswordSet(
+													conn,
+													source,
+													userServer
+												)
 											);
 											sendInvalidateList = false;
 										}
@@ -6164,17 +6097,17 @@ public abstract class MasterServer {
 									case IS_POSTGRES_SERVER_NAME_AVAILABLE :
 										{
 											com.aoindustries.aoserv.client.postgresql.Server.Name name = com.aoindustries.aoserv.client.postgresql.Server.Name.valueOf(in.readUTF());
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.IS_POSTGRES_SERVER_NAME_AVAILABLE,
 												name,
-												aoServer
+												linuxServer
 											);
-											boolean isAvailable = PostgresHandler.isPostgresServerNameAvailable(
+											boolean isAvailable = PostgresqlHandler.isServerNameAvailable(
 												conn,
 												source,
 												name,
-												aoServer
+												linuxServer
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -6190,7 +6123,7 @@ public abstract class MasterServer {
 												Command.IS_SHARED_TOMCAT_NAME_AVAILABLE,
 												name
 											);
-											boolean isAvailable = HttpdHandler.isSharedTomcatNameAvailable(
+											boolean isAvailable = WebHandler.isSharedTomcatNameAvailable(
 												conn,
 												name
 											);
@@ -6203,14 +6136,14 @@ public abstract class MasterServer {
 										break;
 									case IS_USERNAME_AVAILABLE :
 										{
-											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name name = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											process.setCommand(
 												Command.IS_USERNAME_AVAILABLE,
-												username
+												name
 											);
-											boolean isAvailable = UsernameHandler.isUsernameAvailable(
+											boolean isAvailable = AccountUserHandler.isUserNameAvailable(
 												conn,
-												username
+												name
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -6226,7 +6159,7 @@ public abstract class MasterServer {
 												Command.IS_SITE_NAME_AVAILABLE,
 												name
 											);
-											boolean isAvailable = HttpdHandler.isSiteNameAvailable(
+											boolean isAvailable = WebHandler.isSiteNameAvailable(
 												conn,
 												name
 											);
@@ -6268,7 +6201,7 @@ public abstract class MasterServer {
 												ipAddress,
 												toServer
 											);
-											IPAddressHandler.moveIPAddress(
+											IpAddressHandler.moveIpAddress(
 												conn,
 												source,
 												invalidateList,
@@ -6307,19 +6240,20 @@ public abstract class MasterServer {
 											process.setPriority(Thread.NORM_PRIORITY + 1);
 											currentThread.setPriority(Thread.NORM_PRIORITY + 1);
 
-											int id = in.readCompressedInt();
-											long min_duration = in.readLong();
+											int smtpRelay = in.readCompressedInt();
+											long minDuration = in.readLong();
 											process.setCommand(
 												Command.REFRESH_EMAIL_SMTP_RELAY,
-												id,
-												min_duration
+												smtpRelay,
+												minDuration
 											);
-											EmailHandler.refreshEmailSmtpRelay(
+											EmailHandler.refreshSmtpRelay(
 												conn,
 												source,
 												invalidateList,
-												id,
-												min_duration
+												smtpRelay,
+												minDuration
+
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -6332,96 +6266,96 @@ public abstract class MasterServer {
 										switch(tableID) {
 											case BLACKHOLE_EMAIL_ADDRESSES :
 												{
-													int id = in.readCompressedInt();
+													int address = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_BLACKHOLE_EMAIL_ADDRESS,
-														id
+														address
 													);
-													EmailHandler.removeBlackholeEmailAddress(
+													EmailHandler.removeBlackholeAddress(
 														conn,
 														source,
 														invalidateList,
-														id
+														address
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case BUSINESS_ADMINISTRATORS :
 												{
-													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_BUSINESS_ADMINISTRATOR,
-														username
+														administrator
 													);
-													BusinessHandler.removeBusinessAdministrator(
+													AccountHandler.removeAdministrator(
 														conn,
 														source,
 														invalidateList,
-														username
+														administrator
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case BUSINESS_SERVERS :
 												{
-													int id = in.readCompressedInt();
+													int accountHost = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_BUSINESS_SERVER,
-														id
+														accountHost
 													);
-													BusinessHandler.removeBusinessServer(
+													AccountHandler.removeAccountHost(
 														conn,
 														source,
 														invalidateList,
-														id
+														accountHost
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case CREDIT_CARDS :
 												{
-													int id = in.readCompressedInt();
+													int creditCard = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_CREDIT_CARD,
-														id
+														creditCard
 													);
-													CreditCardHandler.removeCreditCard(
+													PaymentHandler.removeCreditCard(
 														conn,
 														source,
 														invalidateList,
-														id
+														creditCard
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case CVS_REPOSITORIES :
 												{
-													int id = in.readCompressedInt();
+													int cvsRepository = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_CVS_REPOSITORY,
-														id
+														cvsRepository
 													);
 													CvsHandler.removeCvsRepository(
 														conn,
 														source,
 														invalidateList,
-														id
+														cvsRepository
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case DNS_RECORDS :
 												{
-													int id = in.readCompressedInt();
+													int record = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_DNS_RECORD,
-														id
+														record
 													);
-													MasterServer.getService(DnsService.class).removeDNSRecord(
+													MasterServer.getService(DnsService.class).removeRecord(
 														conn,
 														source,
 														invalidateList,
-														id
+														record
 													);
 													resp = Response.DONE;
 												}
@@ -6444,112 +6378,112 @@ public abstract class MasterServer {
 												break;
 											case EMAIL_ADDRESSES :
 												{
-													int id = in.readCompressedInt();
+													int address = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_ADDRESS,
-														id
+														address
 													);
-													EmailHandler.removeEmailAddress(
+													EmailHandler.removeAddress(
 														conn,
 														source,
 														invalidateList,
-														id
+														address
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_DOMAINS :
 												{
-													int id = in.readCompressedInt();
+													int domain = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_DOMAIN,
-														id
+														domain
 													);
-													EmailHandler.removeEmailDomain(
+													EmailHandler.removeDomain(
 														conn,
 														source,
 														invalidateList,
-														id
+														domain
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_FORWARDING :
 												{
-													int id = in.readCompressedInt();
+													int forwarding = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_FORWARDING,
-														id
+														forwarding
 													);
-													EmailHandler.removeEmailForwarding(
+													EmailHandler.removeForwarding(
 														conn,
 														source,
 														invalidateList,
-														id
+														forwarding
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_LIST_ADDRESSES :
 												{
-													int id = in.readCompressedInt();
+													int listAddress = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_LIST_ADDRESS,
-														id
+														listAddress
 													);
-													EmailHandler.removeEmailListAddress(
+													EmailHandler.removeListAddress(
 														conn,
 														source,
 														invalidateList,
-														id
+														listAddress
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_LISTS :
 												{
-													int id = in.readCompressedInt();
+													int list = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_LIST,
-														id
+														list
 													);
-													EmailHandler.removeEmailList(
+													EmailHandler.removeList(
 														conn,
 														source,
 														invalidateList,
-														id
+														list
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_PIPE_ADDRESSES :
 												{
-													int id = in.readCompressedInt();
+													int pipeAddress = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_PIPE_ADDRESS,
-														id
+														pipeAddress
 													);
-													EmailHandler.removeEmailPipeAddress(
+													EmailHandler.removePipeAddress(
 														conn,
 														source,
 														invalidateList,
-														id
+														pipeAddress
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case EMAIL_PIPES :
 												{
-													int id = in.readCompressedInt();
+													int pipe = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_PIPE,
-														id
+														pipe
 													);
-													EmailHandler.removeEmailPipe(
+													EmailHandler.removePipe(
 														conn,
 														source,
 														invalidateList,
-														id
+														pipe
 													);
 													resp = Response.DONE;
 												}
@@ -6559,224 +6493,224 @@ public abstract class MasterServer {
 													process.setPriority(Thread.NORM_PRIORITY + 1);
 													currentThread.setPriority(Thread.NORM_PRIORITY + 1);
 
-													int id = in.readCompressedInt();
+													int smtpRelay = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_EMAIL_SMTP_RELAY,
-														id
+														smtpRelay
 													);
-													EmailHandler.removeEmailSmtpRelay(
+													EmailHandler.removeSmtpRelay(
 														conn,
 														source,
 														invalidateList,
-														id
+														smtpRelay
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case FILE_BACKUP_SETTINGS :
 												{
-													int id = in.readCompressedInt();
+													int fileReplicationSetting = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_FILE_BACKUP_SETTING,
-														id
+														fileReplicationSetting
 													);
-													BackupHandler.removeFileBackupSetting(
+													BackupHandler.removeFileReplicationSetting(
 														conn,
 														source,
 														invalidateList,
-														id
+														fileReplicationSetting
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case FTP_GUEST_USERS :
 												{
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_FTP_GUEST_USER,
-														username
+														user
 													);
-													FTPHandler.removeFTPGuestUser(
+													FTPHandler.removeGuestUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_SHARED_TOMCATS :
 												{
-													int id = in.readCompressedInt();
+													int sharedTomcat = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_SHARED_TOMCAT,
-														id
+														sharedTomcat
 													);
-													HttpdHandler.removeHttpdSharedTomcat(
+													WebHandler.removeSharedTomcat(
 														conn,
 														source,
 														invalidateList,
-														id
+														sharedTomcat
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_SITE_AUTHENTICATED_LOCATIONS :
 												{
-													int id = in.readCompressedInt();
+													int location = in.readCompressedInt();
 													process.setCommand(
 														"remove_httpd_site_authenticated_location",
-														id
+														location
 													);
-													HttpdHandler.removeHttpdSiteAuthenticatedLocation(
+													WebHandler.removeLocation(
 														conn,
 														source,
 														invalidateList,
-														id
+														location
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_SITES :
 												{
-													int id = in.readCompressedInt();
+													int site = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_SITE,
-														id
+														site
 													);
-													HttpdHandler.removeHttpdSite(
+													WebHandler.removeSite(
 														conn,
 														source,
 														invalidateList,
-														id
+														site
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_SITE_URLS :
 												{
-													int id = in.readCompressedInt();
+													int virtualHostName = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_SITE_URL,
-														id
+														virtualHostName
 													);
-													HttpdHandler.removeHttpdSiteURL(
+													WebHandler.removeVirtualHostName(
 														conn,
 														source,
 														invalidateList,
-														id
+														virtualHostName
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_TOMCAT_CONTEXTS :
 												{
-													int id = in.readCompressedInt();
+													int context = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_TOMCAT_CONTEXT,
-														id
+														context
 													);
-													HttpdHandler.removeHttpdTomcatContext(
+													WebHandler.removeContext(
 														conn,
 														source,
 														invalidateList,
-														id
+														context
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_TOMCAT_DATA_SOURCES :
 												{
-													int id = in.readCompressedInt();
+													int contextDataSource = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_TOMCAT_DATA_SOURCE,
-														id
+														contextDataSource
 													);
-													HttpdHandler.removeHttpdTomcatDataSource(
+													WebHandler.removeContextDataSource(
 														conn,
 														source,
 														invalidateList,
-														id
+														contextDataSource
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_TOMCAT_PARAMETERS :
 												{
-													int id = in.readCompressedInt();
+													int contextParameter = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_TOMCAT_PARAMETER,
-														id
+														contextParameter
 													);
-													HttpdHandler.removeHttpdTomcatParameter(
+													WebHandler.removeContextParameter(
 														conn,
 														source,
 														invalidateList,
-														id
+														contextParameter
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case HTTPD_TOMCAT_SITE_JK_MOUNTS :
 												{
-													int id = in.readCompressedInt();
+													int jkMount = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_HTTPD_TOMCAT_SITE_JK_MOUNT,
-														id
+														jkMount
 													);
-													HttpdHandler.removeHttpdTomcatSiteJkMount(
+													WebHandler.removeJkMount(
 														conn,
 														source,
 														invalidateList,
-														id
+														jkMount
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case LINUX_ACC_ADDRESSES :
 												{
-													int id = in.readCompressedInt();
+													int inboxAddress = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_LINUX_ACC_ADDRESS,
-														id
+														inboxAddress
 													);
-													EmailHandler.removeLinuxAccAddress(
+													EmailHandler.removeInboxAddress(
 														conn,
 														source,
 														invalidateList,
-														id
+														inboxAddress
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case LINUX_ACCOUNTS :
 												{
-													com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_LINUX_ACCOUNT,
-														username
+														user
 													);
-													LinuxAccountHandler.removeLinuxAccount(
+													LinuxAccountHandler.removeUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case LINUX_GROUP_ACCOUNTS :
 												{
-													int id = in.readCompressedInt();
+													int groupUser = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_LINUX_GROUP_ACCOUNT,
-														id
+														groupUser
 													);
-													LinuxAccountHandler.removeLinuxGroupAccount(
+													LinuxAccountHandler.removeGroupUser(
 														conn,
 														source,
 														invalidateList,
-														id
+														groupUser
 													);
 													resp = Response.DONE;
 												}
@@ -6788,7 +6722,7 @@ public abstract class MasterServer {
 														Command.REMOVE_LINUX_GROUP,
 														name
 													);
-													LinuxAccountHandler.removeLinuxGroup(
+													LinuxAccountHandler.removeGroup(
 														conn,
 														source,
 														invalidateList,
@@ -6799,32 +6733,32 @@ public abstract class MasterServer {
 												break;
 											case LINUX_SERVER_ACCOUNTS :
 												{
-													int id = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_LINUX_SERVER_ACCOUNT,
-														id
+														userServer
 													);
-													LinuxAccountHandler.removeLinuxServerAccount(
+													LinuxAccountHandler.removeUserServer(
 														conn,
 														source,
 														invalidateList,
-														id
+														userServer
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case LINUX_SERVER_GROUPS :
 												{
-													int id = in.readCompressedInt();
+													int groupServer = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_LINUX_SERVER_GROUP,
-														id
+														groupServer
 													);
-													LinuxAccountHandler.removeLinuxServerGroup(
+													LinuxAccountHandler.removeGroupServer(
 														conn,
 														source,
 														invalidateList,
-														id
+														groupServer
 													);
 													resp = Response.DONE;
 												}
@@ -6847,160 +6781,160 @@ public abstract class MasterServer {
 												break;
 											case MYSQL_DATABASES :
 												{
-													int id = in.readCompressedInt();
+													int database = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_MYSQL_DATABASE,
-														id
+														database
 													);
-													MySQLHandler.removeMySQLDatabase(
+													MysqlHandler.removeDatabase(
 														conn,
 														source,
 														invalidateList,
-														id
+														database
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case MYSQL_DB_USERS :
 												{
-													int id = in.readCompressedInt();
+													int databaseUser = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_MYSQL_DB_USER,
-														id
+														databaseUser
 													);
-													MySQLHandler.removeMySQLDBUser(
+													MysqlHandler.removeDatabaseUser(
 														conn,
 														source,
 														invalidateList,
-														id
+														databaseUser
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case MYSQL_SERVER_USERS :
 												{
-													int id = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_MYSQL_SERVER_USER,
-														id
+														userServer
 													);
-													MySQLHandler.removeMySQLServerUser(
+													MysqlHandler.removeUserServer(
 														conn,
 														source,
 														invalidateList,
-														id
+														userServer
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case MYSQL_USERS :
 												{
-													com.aoindustries.aoserv.client.mysql.User.Name username = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_MYSQL_USER,
-														username
+														user
 													);
-													MySQLHandler.removeMySQLUser(
+													MysqlHandler.removeUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case NET_BINDS :
 												{
-													int id = in.readCompressedInt();
+													int bind = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_NET_BIND,
-														id
+														bind
 													);
-													NetBindHandler.removeNetBind(
+													NetBindHandler.removeBind(
 														conn,
 														source,
 														invalidateList,
-														id
+														bind
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case PACKAGE_DEFINITIONS :
 												{
-													int id = in.readCompressedInt();
+													int packageDefinition = in.readCompressedInt();
 													process.setCommand(
 														"remove_package_definition",
-														id
+														packageDefinition
 													);
 													PackageHandler.removePackageDefinition(
 														conn,
 														source,
 														invalidateList,
-														id
+														packageDefinition
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case POSTGRES_DATABASES :
 												{
-													int id = in.readCompressedInt();
+													int database = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_POSTGRES_DATABASE,
-														id
+														database
 													);
-													PostgresHandler.removePostgresDatabase(
+													PostgresqlHandler.removeDatabase(
 														conn,
 														source,
 														invalidateList,
-														id
+														database
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case POSTGRES_SERVER_USERS :
 												{
-													int id = in.readCompressedInt();
+													int userServer = in.readCompressedInt();
 													process.setCommand(
 														Command.REMOVE_POSTGRES_SERVER_USER,
-														id
+														userServer
 													);
-													PostgresHandler.removePostgresServerUser(
+													PostgresqlHandler.removeUserServer(
 														conn,
 														source,
 														invalidateList,
-														id
+														userServer
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case POSTGRES_USERS :
 												{
-													com.aoindustries.aoserv.client.postgresql.User.Name username = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_POSTGRES_USER,
-														username
+														user
 													);
-													PostgresHandler.removePostgresUser(
+													PostgresqlHandler.removeUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
 												break;
 											case USERNAMES :
 												{
-													com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+													com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 													process.setCommand(
 														Command.REMOVE_USERNAME,
-														username
+														user
 													);
-													UsernameHandler.removeUsername(
+													AccountUserHandler.removeUser(
 														conn,
 														source,
 														invalidateList,
-														username
+														user
 													);
 													resp = Response.DONE;
 												}
@@ -7013,15 +6947,15 @@ public abstract class MasterServer {
 									}
 									case REQUEST_REPLICATION_DAEMON_ACCESS :
 										{
-											int id = in.readCompressedInt();
+											int fileReplication = in.readCompressedInt();
 											process.setCommand(
 												"request_replication_daemon_access",
-												id
+												fileReplication
 											);
 											Server.DaemonAccess daemonAccess = FailoverHandler.requestReplicationDaemonAccess(
 												conn,
 												source,
-												id
+												fileReplication
 											);
 											resp = Response.of(
 												AoservProtocol.DONE,
@@ -7035,15 +6969,15 @@ public abstract class MasterServer {
 										break;
 									case RESTART_APACHE :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.RESTART_APACHE,
-												aoServer
+												linuxServer
 											);
-											HttpdHandler.restartApache(
+											WebHandler.restartApache(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -7051,15 +6985,15 @@ public abstract class MasterServer {
 										break;
 									case RESTART_CRON :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.RESTART_CRON,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.restartCron(
+											LinuxServerHandler.restartCron(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -7075,7 +7009,7 @@ public abstract class MasterServer {
 												Command.RESTART_MYSQL,
 												mysqlServer
 											);
-											MySQLHandler.restartMySQL(
+											MysqlHandler.restartServer(
 												conn,
 												source,
 												mysqlServer
@@ -7091,7 +7025,7 @@ public abstract class MasterServer {
 												Command.RESTART_POSTGRESQL,
 												postgresServer
 											);
-											PostgresHandler.restartPostgreSQL(
+											PostgresqlHandler.restartServer(
 												conn,
 												source,
 												postgresServer
@@ -7102,15 +7036,15 @@ public abstract class MasterServer {
 										break;
 									case RESTART_XFS :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.RESTART_XFS,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.restartXfs(
+											LinuxServerHandler.restartXfs(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -7118,15 +7052,15 @@ public abstract class MasterServer {
 										break;
 									case RESTART_XVFB :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.RESTART_XVFB,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.restartXvfb(
+											LinuxServerHandler.restartXvfb(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -7134,14 +7068,14 @@ public abstract class MasterServer {
 										break;
 									case SET_AUTORESPONDER :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											int from = in.readCompressedInt();
 											String subject = in.readNullUTF();
 											String content = in.readNullUTF();
 											boolean enabled = in.readBoolean();
 											process.setCommand(
 												Command.SET_AUTORESPONDER,
-												id,
+												userServer,
 												from==-1?null:from,
 												subject,
 												content,
@@ -7151,7 +7085,7 @@ public abstract class MasterServer {
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												from,
 												subject,
 												content,
@@ -7170,7 +7104,7 @@ public abstract class MasterServer {
 												oldAccounting,
 												newAccounting
 											);
-											BusinessHandler.setBusinessAccounting(
+											AccountHandler.setAccountName(
 												conn,
 												source,
 												invalidateList,
@@ -7183,18 +7117,18 @@ public abstract class MasterServer {
 										break;
 									case SET_BUSINESS_ADMINISTRATOR_PASSWORD :
 										{
-											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											String password = in.readUTF();
 											process.setCommand(
 												Command.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
-												username,
+												administrator,
 												AoservProtocol.FILTERED
 											);
-											BusinessHandler.setBusinessAdministratorPassword(
+											AccountHandler.setAdministratorPassword(
 												conn,
 												source,
 												invalidateList,
-												username,
+												administrator,
 												password
 											);
 											resp = Response.DONE;
@@ -7203,7 +7137,7 @@ public abstract class MasterServer {
 										break;
 									case SET_BUSINESS_ADMINISTRATOR_PROFILE :
 										{
-											com.aoindustries.aoserv.client.account.User.Name username = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
 											String name=in.readUTF().trim();
 											String title=in.readNullUTF();
 											long birthdayLong=in.readLong();
@@ -7222,7 +7156,7 @@ public abstract class MasterServer {
 											String zip=in.readNullUTF();
 											process.setCommand(
 												Command.SET_BUSINESS_ADMINISTRATOR_PROFILE,
-												username,
+												administrator,
 												name,
 												title,
 												birthday,
@@ -7239,11 +7173,11 @@ public abstract class MasterServer {
 												country,
 												zip
 											);
-											BusinessHandler.setBusinessAdministratorProfile(
+											AccountHandler.setAdministratorProfile(
 												conn,
 												source,
 												invalidateList,
-												username,
+												administrator,
 												name,
 												title,
 												birthday,
@@ -7266,17 +7200,17 @@ public abstract class MasterServer {
 										break;
 									case SET_CRON_TABLE :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String crontab = in.readUTF();
 											process.setCommand(
 												Command.SET_CRON_TABLE,
-												id,
+												userServer,
 												crontab
 											);
 											LinuxAccountHandler.setCronTable(
 												conn,
 												source,
-												id,
+												userServer,
 												crontab
 											);
 											resp = Response.DONE;
@@ -7285,18 +7219,18 @@ public abstract class MasterServer {
 										break;
 									case SET_CVS_REPOSITORY_MODE :
 										{
-											int id = in.readCompressedInt();
+											int cvsRepository = in.readCompressedInt();
 											long mode = in.readLong();
 											process.setCommand(
 												Command.SET_CVS_REPOSITORY_MODE,
-												id,
+												cvsRepository,
 												Long.toOctalString(mode)
 											);
 											CvsHandler.setMode(
 												conn,
 												source,
 												invalidateList,
-												id,
+												cvsRepository,
 												mode
 											);
 											resp = Response.DONE;
@@ -7305,16 +7239,16 @@ public abstract class MasterServer {
 										break;
 									case SET_DEFAULT_BUSINESS_SERVER :
 										{
-											int id = in.readCompressedInt();
+											int accountHost = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_DEFAULT_BUSINESS_SERVER,
-												id
+												accountHost
 											);
-											BusinessHandler.setDefaultBusinessServer(
+											AccountHandler.setDefaultAccountHost(
 												conn,
 												source,
 												invalidateList,
-												id
+												accountHost
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -7342,18 +7276,18 @@ public abstract class MasterServer {
 										break;
 									case SET_EMAIL_LIST_ADDRESS_LIST :
 										{
-											int id = in.readCompressedInt();
-											String list = in.readUTF();
+											int list = in.readCompressedInt();
+											String addresses = in.readUTF();
 											process.setCommand(
 												Command.SET_EMAIL_LIST,
-												id,
-												list
+												list,
+												addresses
 											);
-											EmailHandler.setEmailListAddressList(
+											EmailHandler.setListFile(
 												conn,
 												source,
-												id,
-												list
+												list,
+												addresses
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -7361,7 +7295,7 @@ public abstract class MasterServer {
 										break;
 									case SET_FILE_BACKUP_SETTINGS :
 										{
-											int id = in.readCompressedInt();
+											int fileReplicationSetting = in.readCompressedInt();
 											String path = in.readUTF();
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30)<=0) {
 												in.readCompressedInt(); // package
@@ -7383,16 +7317,16 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_FILE_BACKUP_SETTING,
-												id,
+												fileReplicationSetting,
 												path,
 												backupEnabled,
 												required
 											);
-											BackupHandler.setFileBackupSettings(
+											BackupHandler.setFileReplicationSettings(
 												conn,
 												source,
 												invalidateList,
-												id,
+												fileReplicationSetting,
 												path,
 												backupEnabled,
 												required
@@ -7425,7 +7359,7 @@ public abstract class MasterServer {
 												replication,
 												size
 											);
-											FailoverHandler.setFileBackupSettingsAllAtOnce(
+											FailoverHandler.setFileReplicationSettings(
 												conn,
 												source,
 												invalidateList,
@@ -7440,19 +7374,19 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SHARED_TOMCAT_IS_MANUAL :
 										{
-											int id = in.readCompressedInt();
-											boolean is_manual = in.readBoolean();
+											int sharedTomcat = in.readCompressedInt();
+											boolean isManual = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SHARED_TOMCAT_IS_MANUAL,
-												id,
-												is_manual
+												sharedTomcat,
+												isManual
 											);
-											HttpdHandler.setHttpdSharedTomcatIsManual(
+											WebHandler.setSharedTomcatIsManual(
 												conn,
 												source,
 												invalidateList,
-												id,
-												is_manual
+												sharedTomcat,
+												isManual
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -7460,18 +7394,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE :
 										{
-											int id = in.readCompressedInt();
+											int sharedTomcat = in.readCompressedInt();
 											int maxPostSize = in.readInt();
 											process.setCommand(
 												Command.SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE,
-												id,
+												sharedTomcat,
 												maxPostSize
 											);
-											HttpdHandler.setHttpdSharedTomcatMaxPostSize(
+											WebHandler.setSharedTomcatMaxPostSize(
 												conn,
 												source,
 												invalidateList,
-												id,
+												sharedTomcat,
 												maxPostSize
 											);
 											resp = Response.DONE;
@@ -7480,18 +7414,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS :
 										{
-											int id = in.readCompressedInt();
+											int sharedTomcat = in.readCompressedInt();
 											boolean unpackWARs = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS,
-												id,
+												sharedTomcat,
 												unpackWARs
 											);
-											HttpdHandler.setHttpdSharedTomcatUnpackWARs(
+											WebHandler.setSharedTomcatUnpackWARs(
 												conn,
 												source,
 												invalidateList,
-												id,
+												sharedTomcat,
 												unpackWARs
 											);
 											resp = Response.DONE;
@@ -7500,18 +7434,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY :
 										{
-											int id = in.readCompressedInt();
+											int sharedTomcat = in.readCompressedInt();
 											boolean autoDeploy = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY,
-												id,
+												sharedTomcat,
 												autoDeploy
 											);
-											HttpdHandler.setHttpdSharedTomcatAutoDeploy(
+											WebHandler.setSharedTomcatAutoDeploy(
 												conn,
 												source,
 												invalidateList,
-												id,
+												sharedTomcat,
 												autoDeploy
 											);
 											resp = Response.DONE;
@@ -7520,18 +7454,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SHARED_TOMCAT_VERSION :
 										{
-											int id = in.readCompressedInt();
+											int sharedTomcat = in.readCompressedInt();
 											int version = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_HTTPD_SHARED_TOMCAT_VERSION,
-												id,
+												sharedTomcat,
 												version
 											);
-											HttpdHandler.setHttpdSharedTomcatVersion(
+											WebHandler.setSharedTomcatVersion(
 												conn,
 												source,
 												invalidateList,
-												id,
+												sharedTomcat,
 												version
 											);
 											resp = Response.DONE;
@@ -7540,7 +7474,7 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES :
 										{
-											int id = in.readCompressedInt();
+											int location = in.readCompressedInt();
 											String path = in.readUTF().trim();
 											boolean isRegularExpression = in.readBoolean();
 											String authName = in.readUTF().trim();
@@ -7565,7 +7499,7 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES,
-												id,
+												location,
 												path,
 												isRegularExpression,
 												authName,
@@ -7574,11 +7508,11 @@ public abstract class MasterServer {
 												require,
 												handler
 											);
-											HttpdHandler.setHttpdSiteAuthenticatedLocationAttributes(
+											WebHandler.setLocationAttributes(
 												conn,
 												source,
 												invalidateList,
-												id,
+												location,
 												path,
 												isRegularExpression,
 												authName,
@@ -7593,19 +7527,19 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BIND_IS_MANUAL :
 										{
-											int id = in.readCompressedInt();
-											boolean is_manual = in.readBoolean();
+											int virtualHost = in.readCompressedInt();
+											boolean isManual = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BIND_IS_MANUAL,
-												id,
-												is_manual
+												virtualHost,
+												isManual
 											);
-											HttpdHandler.setHttpdSiteBindIsManual(
+											WebHandler.setVirtualHostIsManual(
 												conn,
 												source,
 												invalidateList,
-												id,
-												is_manual
+												virtualHost,
+												isManual
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -7613,19 +7547,19 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME :
 										{
-											int id = in.readCompressedInt();
-											boolean redirect_to_primary_hostname = in.readBoolean();
+											int virtualHost = in.readCompressedInt();
+											boolean redirectToPrimaryHostname = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME,
-												id,
-												redirect_to_primary_hostname
+												virtualHost,
+												redirectToPrimaryHostname
 											);
-											HttpdHandler.setHttpdSiteBindRedirectToPrimaryHostname(
+											WebHandler.setVirtualHostRedirectToPrimaryHostname(
 												conn,
 												source,
 												invalidateList,
-												id,
-												redirect_to_primary_hostname
+												virtualHost,
+												redirectToPrimaryHostname
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -7633,19 +7567,19 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_IS_MANUAL :
 										{
-											int id = in.readCompressedInt();
-											boolean is_manual = in.readBoolean();
+											int site = in.readCompressedInt();
+											boolean isManual = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_IS_MANUAL,
-												id,
-												is_manual
+												site,
+												isManual
 											);
-											HttpdHandler.setHttpdSiteIsManual(
+											WebHandler.setSiteIsManual(
 												conn,
 												source,
 												invalidateList,
-												id,
-												is_manual
+												site,
+												isManual
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -7653,18 +7587,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_SERVER_ADMIN :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											Email emailAddress = Email.valueOf(in.readUTF());
 											process.setCommand(
 												Command.SET_HTTPD_SITE_SERVER_ADMIN,
-												id,
+												site,
 												emailAddress
 											);
-											HttpdHandler.setHttpdSiteServerAdmin(
+											WebHandler.setSiteServerAdmin(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												emailAddress
 											);
 											resp = Response.DONE;
@@ -7673,18 +7607,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_PHP_VERSION :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											int phpVersion = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_PHP_VERSION,
-												id,
+												site,
 												phpVersion
 											);
-											HttpdHandler.setHttpdSitePhpVersion(
+											WebHandler.setSitePhpVersion(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												phpVersion
 											);
 											resp = Response.DONE;
@@ -7693,18 +7627,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_CGI :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableCgi = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_CGI,
-												id,
+												site,
 												enableCgi
 											);
-											HttpdHandler.setHttpdSiteEnableCgi(
+											WebHandler.setSiteEnableCgi(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableCgi
 											);
 											resp = Response.DONE;
@@ -7713,18 +7647,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_SSI :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableSsi = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_SSI,
-												id,
+												site,
 												enableSsi
 											);
-											HttpdHandler.setHttpdSiteEnableSsi(
+											WebHandler.setSiteEnableSsi(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableSsi
 											);
 											resp = Response.DONE;
@@ -7733,18 +7667,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_HTACCESS :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableHtaccess = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_HTACCESS,
-												id,
+												site,
 												enableHtaccess
 											);
-											HttpdHandler.setHttpdSiteEnableHtaccess(
+											WebHandler.setSiteEnableHtaccess(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableHtaccess
 											);
 											resp = Response.DONE;
@@ -7753,18 +7687,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_INDEXES :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableIndexes = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_INDEXES,
-												id,
+												site,
 												enableIndexes
 											);
-											HttpdHandler.setHttpdSiteEnableIndexes(
+											WebHandler.setSiteEnableIndexes(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableIndexes
 											);
 											resp = Response.DONE;
@@ -7773,18 +7707,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableFollowSymlinks = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS,
-												id,
+												site,
 												enableFollowSymlinks
 											);
-											HttpdHandler.setHttpdSiteEnableFollowSymlinks(
+											WebHandler.setSiteEnableFollowSymlinks(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableFollowSymlinks
 											);
 											resp = Response.DONE;
@@ -7793,18 +7727,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean enableAnonymousFtp = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP,
-												id,
+												site,
 												enableAnonymousFtp
 											);
-											HttpdHandler.setHttpdSiteEnableAnonymousFtp(
+											WebHandler.setSiteEnableAnonymousFtp(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												enableAnonymousFtp
 											);
 											resp = Response.DONE;
@@ -7813,18 +7747,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BLOCK_TRACE_TRACK :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean blockTraceTrack = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BLOCK_TRACE_TRACK,
-												id,
+												site,
 												blockTraceTrack
 											);
-											HttpdHandler.setHttpdSiteBlockTraceTrack(
+											WebHandler.setSiteBlockTraceTrack(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												blockTraceTrack
 											);
 											resp = Response.DONE;
@@ -7833,18 +7767,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BLOCK_SCM :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean blockScm = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BLOCK_SCM,
-												id,
+												site,
 												blockScm
 											);
-											HttpdHandler.setHttpdSiteBlockScm(
+											WebHandler.setSiteBlockScm(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												blockScm
 											);
 											resp = Response.DONE;
@@ -7853,18 +7787,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BLOCK_CORE_DUMPS :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean blockCoreDumps = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BLOCK_CORE_DUMPS,
-												id,
+												site,
 												blockCoreDumps
 											);
-											HttpdHandler.setHttpdSiteBlockCoreDumps(
+											WebHandler.setSiteBlockCoreDumps(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												blockCoreDumps
 											);
 											resp = Response.DONE;
@@ -7873,18 +7807,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS :
 										{
-											int id = in.readCompressedInt();
+											int site = in.readCompressedInt();
 											boolean blockEditorBackups = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS,
-												id,
+												site,
 												blockEditorBackups
 											);
-											HttpdHandler.setHttpdSiteBlockEditorBackups(
+											WebHandler.setSiteBlockEditorBackups(
 												conn,
 												source,
 												invalidateList,
-												id,
+												site,
 												blockEditorBackups
 											);
 											resp = Response.DONE;
@@ -7893,18 +7827,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG :
 										{
-											int id = in.readCompressedInt();
+											int virtualHost = in.readCompressedInt();
 											String config = in.readNullUTF();
 											process.setCommand(
 												"set_httpd_site_bind_predisable_config",
-												id,
+												virtualHost,
 												AoservProtocol.FILTERED
 											);
-											HttpdHandler.setHttpdSiteBindPredisableConfig(
+											WebHandler.setVirtualHostPredisableConfig(
 												conn,
 												source,
 												invalidateList,
-												id,
+												virtualHost,
 												config
 											);
 											resp = Response.DONE;
@@ -7913,7 +7847,7 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES :
 										{
-											int id = in.readCompressedInt();
+											int context = in.readCompressedInt();
 											String className = in.readNullUTF();
 											boolean cookies = in.readBoolean();
 											boolean crossContext = in.readBoolean();
@@ -7934,7 +7868,7 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES,
-												id,
+												context,
 												className,
 												cookies,
 												crossContext,
@@ -7949,11 +7883,11 @@ public abstract class MasterServer {
 												workDir,
 												serverXmlConfigured
 											);
-											HttpdHandler.setHttpdTomcatContextAttributes(
+											WebHandler.setContextAttributes(
 												conn,
 												source,
 												invalidateList,
-												id,
+												context,
 												className,
 												cookies,
 												crossContext,
@@ -7974,18 +7908,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF :
 										{
-											int id = in.readCompressedInt();
+											int tomcatSite = in.readCompressedInt();
 											boolean blockWebinf = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF,
-												id,
+												tomcatSite,
 												blockWebinf
 											);
-											HttpdHandler.setHttpdTomcatSiteBlockWebinf(
+											WebHandler.setTomcatSiteBlockWebinf(
 												conn,
 												source,
 												invalidateList,
-												id,
+												tomcatSite,
 												blockWebinf
 											);
 											resp = Response.DONE;
@@ -7994,18 +7928,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE :
 										{
-											int id = in.readCompressedInt();
+											int privateTomcatSite = in.readCompressedInt();
 											int maxPostSize = in.readInt();
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE,
-												id,
+												privateTomcatSite,
 												maxPostSize
 											);
-											HttpdHandler.setHttpdTomcatStdSiteMaxPostSize(
+											WebHandler.setPrivateTomcatSiteMaxPostSize(
 												conn,
 												source,
 												invalidateList,
-												id,
+												privateTomcatSite,
 												maxPostSize
 											);
 											resp = Response.DONE;
@@ -8014,18 +7948,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS :
 										{
-											int id = in.readCompressedInt();
+											int privateTomcatSite = in.readCompressedInt();
 											boolean unpackWARs = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS,
-												id,
+												privateTomcatSite,
 												unpackWARs
 											);
-											HttpdHandler.setHttpdTomcatStdSiteUnpackWARs(
+											WebHandler.setPrivateTomcatSiteUnpackWARs(
 												conn,
 												source,
 												invalidateList,
-												id,
+												privateTomcatSite,
 												unpackWARs
 											);
 											resp = Response.DONE;
@@ -8034,18 +7968,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY :
 										{
-											int id = in.readCompressedInt();
+											int privateTomcatSite = in.readCompressedInt();
 											boolean autoDeploy = in.readBoolean();
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY,
-												id,
+												privateTomcatSite,
 												autoDeploy
 											);
-											HttpdHandler.setHttpdTomcatStdSiteAutoDeploy(
+											WebHandler.setPrivateTomcatSiteAutoDeploy(
 												conn,
 												source,
 												invalidateList,
-												id,
+												privateTomcatSite,
 												autoDeploy
 											);
 											resp = Response.DONE;
@@ -8054,18 +7988,18 @@ public abstract class MasterServer {
 										break;
 									case SET_HTTPD_TOMCAT_STD_SITE_VERSION :
 										{
-											int id = in.readCompressedInt();
+											int privateTomcatSite = in.readCompressedInt();
 											int version = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_HTTPD_TOMCAT_STD_SITE_VERSION,
-												id,
+												privateTomcatSite,
 												version
 											);
-											HttpdHandler.setHttpdTomcatStdSiteVersion(
+											WebHandler.setPrivateTomcatSiteVersion(
 												conn,
 												source,
 												invalidateList,
-												id,
+												privateTomcatSite,
 												version
 											);
 											resp = Response.DONE;
@@ -8081,7 +8015,7 @@ public abstract class MasterServer {
 												ipAddress,
 												dhcpAddress
 											);
-											IPAddressHandler.setIPAddressDHCPAddress(
+											IpAddressHandler.setDhcpAddressDestination(
 												conn,
 												source,
 												invalidateList,
@@ -8101,7 +8035,7 @@ public abstract class MasterServer {
 												ipAddress,
 												hostname
 											);
-											IPAddressHandler.setIPAddressHostname(
+											IpAddressHandler.setIpAddressHostname(
 												conn,
 												source,
 												invalidateList,
@@ -8121,7 +8055,7 @@ public abstract class MasterServer {
 												ipAddress,
 												enabled
 											);
-											IPAddressHandler.setIPAddressMonitoringEnabled(
+											IpAddressHandler.setIpAddressMonitoringEnabled(
 												conn,
 												source,
 												invalidateList,
@@ -8141,7 +8075,7 @@ public abstract class MasterServer {
 												ipAddress,
 												packageName
 											);
-											IPAddressHandler.setIPAddressPackage(
+											IpAddressHandler.setIpAddressPackage(
 												conn,
 												source,
 												invalidateList,
@@ -8174,7 +8108,7 @@ public abstract class MasterServer {
 												ipReputationSet,
 												size
 											);
-											IpReputationSetHandler.addIpReputation(
+											NetReputationSetHandler.addIpReputation(
 												conn,
 												source,
 												invalidateList,
@@ -8190,18 +8124,18 @@ public abstract class MasterServer {
 											process.setPriority(Thread.MIN_PRIORITY+1);
 											currentThread.setPriority(Thread.MIN_PRIORITY+1);
 
-											int ao_server = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											long time = in.readLong();
 											process.setCommand(
 												"set_last_distro_time",
-												ao_server,
+												linuxServer,
 												new java.util.Date(time)
 											);
-											AOServerHandler.setLastDistroTime(
+											LinuxServerHandler.setLastDistroTime(
 												conn,
 												source,
 												invalidateList,
-												ao_server,
+												linuxServer,
 												time
 											);
 											resp = Response.DONE;
@@ -8210,7 +8144,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_HOME_PHONE :
 										{
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos phone;
 											{
 												String s = in.readUTF();
@@ -8218,14 +8152,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_HOME_PHONE,
-												username,
+												user,
 												phone
 											);
-											LinuxAccountHandler.setLinuxAccountHomePhone(
+											LinuxAccountHandler.setUserHomePhone(
 												conn,
 												source,
 												invalidateList,
-												username,
+												user,
 												phone
 											);
 											resp = Response.DONE;
@@ -8234,7 +8168,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_NAME :
 										{
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos fullName;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
 												fullName = Gecos.valueOf(in.readUTF());
@@ -8244,14 +8178,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_NAME,
-												username,
+												user,
 												fullName
 											);
-											LinuxAccountHandler.setLinuxAccountName(
+											LinuxAccountHandler.setUserFullName(
 												conn,
 												source,
 												invalidateList,
-												username,
+												user,
 												fullName
 											);
 											resp = Response.DONE;
@@ -8260,7 +8194,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_OFFICE_LOCATION :
 										{
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos location;
 											{
 												String s = in.readUTF();
@@ -8268,14 +8202,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_OFFICE_LOCATION,
-												username,
+												user,
 												location
 											);
-											LinuxAccountHandler.setLinuxAccountOfficeLocation(
+											LinuxAccountHandler.setUserOfficeLocation(
 												conn,
 												source,
 												invalidateList,
-												username,
+												user,
 												location
 											);
 											resp = Response.DONE;
@@ -8284,7 +8218,7 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_OFFICE_PHONE :
 										{
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											Gecos phone;
 											{
 												String s = in.readUTF();
@@ -8292,14 +8226,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_OFFICE_PHONE,
-												username,
+												user,
 												phone
 											);
-											LinuxAccountHandler.setLinuxAccountOfficePhone(
+											LinuxAccountHandler.setUserOfficePhone(
 												conn,
 												source,
 												invalidateList,
-												username,
+												user,
 												phone
 											);
 											resp = Response.DONE;
@@ -8308,18 +8242,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_ACCOUNT_SHELL :
 										{
-											com.aoindustries.aoserv.client.linux.User.Name username = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
+											com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
 											PosixPath shell = PosixPath.valueOf(in.readUTF());
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_SHELL,
-												username,
+												user,
 												shell
 											);
-											LinuxAccountHandler.setLinuxAccountShell(
+											LinuxAccountHandler.setUserShell(
 												conn,
 												source,
 												invalidateList,
-												username,
+												user,
 												shell
 											);
 											resp = Response.DONE;
@@ -8328,18 +8262,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											int days = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION,
-												id,
+												userServer,
 												days
 											);
-											LinuxAccountHandler.setLinuxServerAccountJunkEmailRetention(
+											LinuxAccountHandler.setUserServerJunkEmailRetention(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												days
 											);
 											resp = Response.DONE;
@@ -8348,18 +8282,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readUTF();
 											process.setCommand(
 												Command.SET_LINUX_ACCOUNT_PASSWORD,
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
-											LinuxAccountHandler.setLinuxServerAccountPassword(
+											LinuxAccountHandler.setUserServerPassword(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8368,18 +8302,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_PREDISABLE_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
 												"set_linux_server_account_predisable_password",
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
-											LinuxAccountHandler.setLinuxServerAccountPredisablePassword(
+											LinuxAccountHandler.setUserServerPredisablePassword(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8388,18 +8322,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_EMAIL_SPAMASSASSIN_INTEGRATION_MODE:
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String mode = in.readUTF();
 											process.setCommand(
 												Command.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_INTEGRATION_MODE,
-												id,
+												userServer,
 												mode
 											);
-											LinuxAccountHandler.setLinuxServerAccountSpamAssassinIntegrationMode(
+											LinuxAccountHandler.setUserServerSpamAssassinIntegrationMode(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												mode
 											);
 											resp = Response.DONE;
@@ -8408,18 +8342,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE:
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											float required_score = in.readFloat();
 											process.setCommand(
 												Command.SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE,
-												id,
+												userServer,
 												required_score
 											);
-											LinuxAccountHandler.setLinuxServerAccountSpamAssassinRequiredScore(
+											LinuxAccountHandler.setUserServerSpamAssassinRequiredScore(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												required_score
 											);
 											resp = Response.DONE;
@@ -8428,19 +8362,19 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_DISCARD_SCORE:
 										{
-											int id = in.readCompressedInt();
-											int discard_score = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
+											int discardScore = in.readCompressedInt();
 											process.setCommand(
 												"set_linux_server_account_spamassassin_discard_score",
-												id,
-												discard_score==-1 ? "\"\"" : Integer.toString(discard_score)
+												userServer,
+												discardScore==-1 ? "\"\"" : Integer.toString(discardScore)
 											);
-											LinuxAccountHandler.setLinuxServerAccountSpamAssassinDiscardScore(
+											LinuxAccountHandler.setUserServerSpamAssassinDiscardScore(
 												conn,
 												source,
 												invalidateList,
-												id,
-												discard_score
+												userServer,
+												discardScore
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -8448,18 +8382,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											int days = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION,
-												id,
+												userServer,
 												days
 											);
-											LinuxAccountHandler.setLinuxServerAccountTrashEmailRetention(
+											LinuxAccountHandler.setUserServerTrashEmailRetention(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												days
 											);
 											resp = Response.DONE;
@@ -8468,18 +8402,18 @@ public abstract class MasterServer {
 										break;
 									case SET_LINUX_SERVER_ACCOUNT_USE_INBOX :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											boolean useInbox = in.readBoolean();
 											process.setCommand(
 												Command.SET_LINUX_SERVER_ACCOUNT_USE_INBOX,
-												id,
+												userServer,
 												useInbox
 											);
-											LinuxAccountHandler.setLinuxServerAccountUseInbox(
+											LinuxAccountHandler.setUserServerUseInbox(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												useInbox
 											);
 											resp = Response.DONE;
@@ -8488,17 +8422,17 @@ public abstract class MasterServer {
 										break;
 									case SET_MAJORDOMO_INFO_FILE :
 										{
-											int id = in.readCompressedInt();
+											int majordomoList = in.readCompressedInt();
 											String file = in.readUTF();
 											process.setCommand(
 												Command.SET_MAJORDOMO_INFO_FILE,
-												id,
+												majordomoList,
 												file
 											);
 											EmailHandler.setMajordomoInfoFile(
 												conn,
 												source,
-												id,
+												majordomoList,
 												file
 											);
 											resp = Response.DONE;
@@ -8507,17 +8441,17 @@ public abstract class MasterServer {
 										break;
 									case SET_MAJORDOMO_INTRO_FILE :
 										{
-											int id = in.readCompressedInt();
+											int majordomoList = in.readCompressedInt();
 											String file = in.readUTF();
 											process.setCommand(
 												Command.SET_MAJORDOMO_INTRO_FILE,
-												id,
+												majordomoList,
 												file
 											);
 											EmailHandler.setMajordomoIntroFile(
 												conn,
 												source,
-												id,
+												majordomoList,
 												file
 											);
 											resp = Response.DONE;
@@ -8526,17 +8460,17 @@ public abstract class MasterServer {
 										break;
 									case SET_MYSQL_SERVER_USER_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
 												Command.SET_MYSQL_SERVER_USER_PASSWORD,
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
-											MySQLHandler.setMySQLServerUserPassword(
+											MysqlHandler.setUserServerPassword(
 												conn,
 												source,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8545,18 +8479,18 @@ public abstract class MasterServer {
 										break;
 									case SET_MYSQL_SERVER_USER_PREDISABLE_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
 												"set_mysql_server_user_predisable_password",
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
-											MySQLHandler.setMySQLServerUserPredisablePassword(
+											MysqlHandler.setUserServerPredisablePassword(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8565,7 +8499,7 @@ public abstract class MasterServer {
 										break;
 									case SET_NET_BIND_FIREWALLD_ZONES :
 										{
-											int id = in.readCompressedInt();
+											int bind = in.readCompressedInt();
 											int numZones = in.readCompressedInt();
 											Set<FirewallZone.Name> firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
 											for(int i = 0; i < numZones; i++) {
@@ -8576,7 +8510,7 @@ public abstract class MasterServer {
 											}
 											Object[] command = new Object[2 + numZones];
 											command[0] = Command.SET_NET_BIND_FIREWALLD_ZONES;
-											command[1] = id;
+											command[1] = bind;
 											System.arraycopy(
 												firewalldZones.toArray(new FirewallZone.Name[numZones]),
 												0,
@@ -8585,11 +8519,11 @@ public abstract class MasterServer {
 												numZones
 											);
 											process.setCommand(command);
-											NetBindHandler.setNetBindFirewalldZones(
+											NetBindHandler.setBindFirewalldZones(
 												conn,
 												source,
 												invalidateList,
-												id,
+												bind,
 												firewalldZones
 											);
 											resp = Response.DONE;
@@ -8598,18 +8532,18 @@ public abstract class MasterServer {
 										break;
 									case SET_NET_BIND_MONITORING :
 										{
-											int id = in.readCompressedInt();
+											int bind = in.readCompressedInt();
 											boolean enabled = in.readBoolean();
 											process.setCommand(
 												Command.SET_NET_BIND_MONITORING_ENABLED,
-												id,
+												bind,
 												enabled
 											);
-											NetBindHandler.setNetBindMonitoringEnabled(
+											NetBindHandler.setBindMonitoringEnabled(
 												conn,
 												source,
 												invalidateList,
-												id,
+												bind,
 												enabled
 											);
 											resp = Response.DONE;
@@ -8619,19 +8553,19 @@ public abstract class MasterServer {
 									// This exists for compatibility with older clients (versions &lt;= 1.80.2) only.
 									case UNUSED_SET_NET_BIND_OPEN_FIREWALL :
 										{
-											int id = in.readCompressedInt();
-											boolean open_firewall = in.readBoolean();
+											int bind = in.readCompressedInt();
+											boolean openFirewall = in.readBoolean();
 											process.setCommand(
 												"set_net_bind_open_firewall",
-												id,
-												open_firewall
+												bind,
+												openFirewall
 											);
-											NetBindHandler.setNetBindOpenFirewall(
+											NetBindHandler.setBindOpenFirewall(
 												conn,
 												source,
 												invalidateList,
-												id,
-												open_firewall
+												bind,
+												openFirewall
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -8639,19 +8573,19 @@ public abstract class MasterServer {
 										break;
 									case SET_PACKAGE_DEFINITION_ACTIVE :
 										{
-											int id = in.readCompressedInt();
-											boolean is_active = in.readBoolean();
+											int packageDefinition = in.readCompressedInt();
+											boolean isActive = in.readBoolean();
 											process.setCommand(
 												"set_package_definition_active",
-												id,
-												is_active
+												packageDefinition,
+												isActive
 											);
 											PackageHandler.setPackageDefinitionActive(
 												conn,
 												source,
 												invalidateList,
-												id,
-												is_active
+												packageDefinition,
+												isActive
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -8659,7 +8593,7 @@ public abstract class MasterServer {
 										break;
 									case SET_PACKAGE_DEFINITION_LIMITS :
 										{
-											int id = in.readCompressedInt();
+											int packageDefinition = in.readCompressedInt();
 											int count = in.readCompressedInt();
 											String[] resources = new String[count];
 											int[] soft_limits = new int[count];
@@ -8675,7 +8609,7 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												"set_package_definition_limits",
-												id,
+												packageDefinition,
 												count,
 												resources,
 												soft_limits,
@@ -8687,7 +8621,7 @@ public abstract class MasterServer {
 												conn,
 												source,
 												invalidateList,
-												id,
+												packageDefinition,
 												resources,
 												soft_limits,
 												hard_limits,
@@ -8700,17 +8634,17 @@ public abstract class MasterServer {
 										break;
 									case SET_POSTGRES_SERVER_USER_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
 												Command.SET_POSTGRES_SERVER_USER_PASSWORD,
-												id,
+												userServer,
 												password
 											);
-											PostgresHandler.setPostgresServerUserPassword(
+											PostgresqlHandler.setUserServerPassword(
 												conn,
 												source,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8719,18 +8653,18 @@ public abstract class MasterServer {
 										break;
 									case SET_POSTGRES_SERVER_USER_PREDISABLE_PASSWORD :
 										{
-											int id = in.readCompressedInt();
+											int userServer = in.readCompressedInt();
 											String password = in.readNullUTF();
 											process.setCommand(
 												"set_postgres_server_user_predisable_password",
-												id,
+												userServer,
 												AoservProtocol.FILTERED
 											);
-											PostgresHandler.setPostgresServerUserPredisablePassword(
+											PostgresqlHandler.setUserServerPredisablePassword(
 												conn,
 												source,
 												invalidateList,
-												id,
+												userServer,
 												password
 											);
 											resp = Response.DONE;
@@ -8739,16 +8673,16 @@ public abstract class MasterServer {
 										break;
 									case SET_PRIMARY_HTTPD_SITE_URL :
 										{
-											int id = in.readCompressedInt();
+											int virtualHostName = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_PRIMARY_HTTPD_SITE_URL,
-												id
+												virtualHostName
 											);
-											HttpdHandler.setPrimaryHttpdSiteURL(
+											WebHandler.setPrimaryVirtualHostName(
 												conn,
 												source,
 												invalidateList,
-												id
+												virtualHostName
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -8756,16 +8690,16 @@ public abstract class MasterServer {
 										break;
 									case SET_PRIMARY_LINUX_GROUP_ACCOUNT :
 										{
-											int id = in.readCompressedInt();
+											int groupUser = in.readCompressedInt();
 											process.setCommand(
 												Command.SET_PRIMARY_LINUX_GROUP_ACCOUNT,
-												id
+												groupUser
 											);
-											LinuxAccountHandler.setPrimaryLinuxGroupAccount(
+											LinuxAccountHandler.setPrimaryGroupUser(
 												conn,
 												source,
 												invalidateList,
-												id
+												groupUser
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -8878,7 +8812,7 @@ public abstract class MasterServer {
 												oldAccounting,
 												newAccounting
 											);
-											boolean updated = TicketHandler.setTicketBusiness(
+											boolean updated = TicketHandler.setTicketAccount(
 												conn,
 												source,
 												invalidateList,
@@ -8955,15 +8889,15 @@ public abstract class MasterServer {
 										break;
 									case START_APACHE :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.START_APACHE,
-												aoServer
+												linuxServer
 											);
-											HttpdHandler.startApache(
+											WebHandler.startApache(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -8971,15 +8905,15 @@ public abstract class MasterServer {
 										break;
 									case START_CRON :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.START_CRON,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.startCron(
+											LinuxServerHandler.startCron(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -8990,17 +8924,17 @@ public abstract class MasterServer {
 											process.setPriority(Thread.MIN_PRIORITY+1);
 											currentThread.setPriority(Thread.MIN_PRIORITY+1);
 
-											int ao_server = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											boolean includeUser = in.readBoolean();
 											process.setCommand(
 												Command.START_DISTRO,
-												ao_server,
+												linuxServer,
 												includeUser
 											);
-											AOServerHandler.startDistro(
+											LinuxServerHandler.startDistro(
 												conn,
 												source,
-												ao_server,
+												linuxServer,
 												includeUser
 											);
 											resp = Response.DONE;
@@ -9009,15 +8943,15 @@ public abstract class MasterServer {
 										break;
 									case START_JVM :
 										{
-											int id = in.readCompressedInt();
+											int tomcatSite = in.readCompressedInt();
 											process.setCommand(
 												Command.START_JVM,
-												id
+												tomcatSite
 											);
-											String message = HttpdHandler.startJVM(
+											String message = WebHandler.startJVM(
 												conn,
 												source,
-												id
+												tomcatSite
 											);
 											resp = Response.ofNullString(
 												AoservProtocol.DONE,
@@ -9036,7 +8970,7 @@ public abstract class MasterServer {
 												Command.START_MYSQL,
 												mysqlServer
 											);
-											MySQLHandler.startMySQL(
+											MysqlHandler.startServer(
 												conn,
 												source,
 												mysqlServer
@@ -9052,7 +8986,7 @@ public abstract class MasterServer {
 												Command.START_POSTGRESQL,
 												postgresServer
 											);
-											PostgresHandler.startPostgreSQL(
+											PostgresqlHandler.startServer(
 												conn,
 												source,
 												postgresServer
@@ -9063,15 +8997,15 @@ public abstract class MasterServer {
 										break;
 									case START_XFS :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.START_XFS,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.startXfs(
+											LinuxServerHandler.startXfs(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9079,15 +9013,15 @@ public abstract class MasterServer {
 										break;
 									case START_XVFB :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.START_XVFB,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.startXvfb(
+											LinuxServerHandler.startXvfb(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9095,15 +9029,15 @@ public abstract class MasterServer {
 										break;
 									case STOP_APACHE :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.STOP_APACHE,
-												aoServer
+												linuxServer
 											);
-											HttpdHandler.stopApache(
+											WebHandler.stopApache(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9111,15 +9045,15 @@ public abstract class MasterServer {
 										break;
 									case STOP_CRON :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.STOP_CRON,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.stopCron(
+											LinuxServerHandler.stopCron(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9127,15 +9061,15 @@ public abstract class MasterServer {
 										break;
 									case STOP_JVM :
 										{
-											int id = in.readCompressedInt();
+											int tomcatSite = in.readCompressedInt();
 											process.setCommand(
 												Command.STOP_JVM,
-												id
+												tomcatSite
 											);
-											String message = HttpdHandler.stopJVM(
+											String message = WebHandler.stopJVM(
 												conn,
 												source,
-												id
+												tomcatSite
 											);
 											resp = Response.ofNullString(
 												AoservProtocol.DONE,
@@ -9154,7 +9088,7 @@ public abstract class MasterServer {
 												Command.STOP_MYSQL,
 												mysqlServer
 											);
-											MySQLHandler.stopMySQL(
+											MysqlHandler.stopServer(
 												conn,
 												source,
 												mysqlServer
@@ -9170,7 +9104,7 @@ public abstract class MasterServer {
 												Command.STOP_POSTGRESQL,
 												postgresServer
 											);
-											PostgresHandler.stopPostgreSQL(
+											PostgresqlHandler.stopServer(
 												conn,
 												source,
 												postgresServer
@@ -9181,15 +9115,15 @@ public abstract class MasterServer {
 										break;
 									case STOP_XFS :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.STOP_XFS,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.stopXfs(
+											LinuxServerHandler.stopXfs(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9197,15 +9131,15 @@ public abstract class MasterServer {
 										break;
 									case STOP_XVFB :
 										{
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											process.setCommand(
 												Command.STOP_XVFB,
-												aoServer
+												linuxServer
 											);
-											AOServerHandler.stopXvfb(
+											LinuxServerHandler.stopXvfb(
 												conn,
 												source,
-												aoServer
+												linuxServer
 											);
 											resp = Response.DONE;
 											sendInvalidateList = false;
@@ -9261,7 +9195,7 @@ public abstract class MasterServer {
 												creditCardTransaction,
 												paymentInfo
 											);
-											TransactionHandler.transactionApproved(
+											BillingTransactionHandler.transactionApproved(
 												conn,
 												source,
 												invalidateList,
@@ -9297,7 +9231,7 @@ public abstract class MasterServer {
 												creditCardTransaction,
 												paymentInfo
 											);
-											TransactionHandler.transactionDeclined(
+											BillingTransactionHandler.transactionDeclined(
 												conn,
 												source,
 												invalidateList,
@@ -9325,7 +9259,7 @@ public abstract class MasterServer {
 												creditCardTransaction,
 												paymentInfo
 											);
-											TransactionHandler.transactionHeld(
+											BillingTransactionHandler.transactionHeld(
 												conn,
 												source,
 												invalidateList,
@@ -9339,16 +9273,16 @@ public abstract class MasterServer {
 										break;
 									case REACTIVATE_CREDIT_CARD :
 										{
-											int id = in.readCompressedInt();
+											int creditCard = in.readCompressedInt();
 											process.setCommand(
 												"reactivate_credit_card",
-												id
+												creditCard
 											);
-											CreditCardHandler.reactivateCreditCard(
+											PaymentHandler.reactivateCreditCard(
 												conn,
 												source,
 												invalidateList,
-												id
+												creditCard
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -9356,19 +9290,19 @@ public abstract class MasterServer {
 										break;
 									case SET_CREDIT_CARD_USE_MONTHLY :
 										{
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
-											int id = in.readCompressedInt();
+											Account.Name account = Account.Name.valueOf(in.readUTF());
+											int creditCard = in.readCompressedInt();
 											process.setCommand(
 												"set_credit_card_use_monthly",
-												accounting,
-												id
+												account,
+												creditCard
 											);
-											CreditCardHandler.setCreditCardUseMonthly(
+											PaymentHandler.setCreditCardUseMonthly(
 												conn,
 												source,
 												invalidateList,
-												accounting,
-												id
+												account,
+												creditCard
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;
@@ -9376,7 +9310,7 @@ public abstract class MasterServer {
 										break;
 									case SET_FAILOVER_FILE_REPLICATION_BIT_RATE :
 										{
-											int id = in.readCompressedInt();
+											int fileReplication = in.readCompressedInt();
 											final Long bitRate;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_61)<=0) {
 												int bitRateInt = in.readCompressedInt();
@@ -9387,14 +9321,14 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												"set_failover_file_replication_bit_rate",
-												id,
+												fileReplication,
 												bitRate==null ? "unlimited" : bitRate.toString()
 											);
-											FailoverHandler.setFailoverFileReplicationBitRate(
+											FailoverHandler.setFileReplicationBitRate(
 												conn,
 												source,
 												invalidateList,
-												id,
+												fileReplication,
 												bitRate
 											);
 											resp = Response.DONE;
@@ -9416,7 +9350,7 @@ public abstract class MasterServer {
 												replication,
 												size
 											);
-											FailoverHandler.setFailoverFileSchedules(
+											FailoverHandler.setFileReplicationSchedules(
 												conn,
 												source,
 												invalidateList,
@@ -9430,7 +9364,7 @@ public abstract class MasterServer {
 										break;
 									 case UPDATE_CREDIT_CARD :
 										{
-											int id = in.readCompressedInt();
+											int creditCard = in.readCompressedInt();
 											String cardInfo;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
 												cardInfo = in.readUTF().trim();
@@ -9469,7 +9403,7 @@ public abstract class MasterServer {
 											if(description.length() == 0) description=null;
 											process.setCommand(
 												"update_credit_card",
-												id,
+												creditCard,
 												cardInfo,
 												firstName,
 												lastName,
@@ -9487,11 +9421,11 @@ public abstract class MasterServer {
 												countryCode,
 												description
 											);
-											CreditCardHandler.updateCreditCard(
+											PaymentHandler.updateCreditCard(
 												conn,
 												source,
 												invalidateList,
-												id,
+												creditCard,
 												cardInfo,
 												firstName,
 												lastName,
@@ -9515,7 +9449,7 @@ public abstract class MasterServer {
 										break;
 									case UPDATE_CREDIT_CARD_NUMBER_AND_EXPIRATION :
 										{
-											int id = in.readCompressedInt();
+											int creditCard = in.readCompressedInt();
 											String maskedCardNumber = in.readUTF();
 											Byte expirationMonth;
 											Short expirationYear;
@@ -9534,7 +9468,7 @@ public abstract class MasterServer {
 											int encryptionRecipient = in.readCompressedInt();
 											process.setCommand(
 												"update_credit_card_number_and_expiration",
-												id,
+												creditCard,
 												maskedCardNumber,
 												expirationMonth==null ? null : AoservProtocol.FILTERED,
 												expirationYear==null ? null : AoservProtocol.FILTERED,
@@ -9542,11 +9476,11 @@ public abstract class MasterServer {
 												encryptionFrom==-1 ? null : encryptionFrom,
 												encryptionRecipient==-1 ? null : encryptionRecipient
 											);
-											CreditCardHandler.updateCreditCardNumberAndExpiration(
+											PaymentHandler.updateCreditCardNumberAndExpiration(
 												conn,
 												source,
 												invalidateList,
-												id,
+												creditCard,
 												maskedCardNumber,
 												expirationMonth,
 												expirationYear,
@@ -9560,7 +9494,7 @@ public abstract class MasterServer {
 										break;
 									case UPDATE_CREDIT_CARD_EXPIRATION :
 										{
-											int id = in.readCompressedInt();
+											int creditCard = in.readCompressedInt();
 											Byte expirationMonth;
 											Short expirationYear;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
@@ -9575,15 +9509,15 @@ public abstract class MasterServer {
 											}
 											process.setCommand(
 												"update_credit_card_expiration",
-												id,
+												creditCard,
 												expirationMonth==null ? null : AoservProtocol.FILTERED,
 												expirationYear==null ? null : AoservProtocol.FILTERED
 											);
-											CreditCardHandler.updateCreditCardExpiration(
+											PaymentHandler.updateCreditCardExpiration(
 												conn,
 												source,
 												invalidateList,
-												id,
+												creditCard,
 												expirationMonth,
 												expirationYear
 											);
@@ -9593,7 +9527,7 @@ public abstract class MasterServer {
 										break;
 									case UPDATE_HTTPD_TOMCAT_DATA_SOURCE:
 										{
-											int id = in.readCompressedInt();
+											int contextDataSource = in.readCompressedInt();
 											String name=in.readUTF();
 											String driverClassName=in.readUTF();
 											String url=in.readUTF();
@@ -9606,7 +9540,7 @@ public abstract class MasterServer {
 											if(validationQuery.length() == 0) validationQuery=null;
 											process.setCommand(
 												Command.UPDATE_HTTPD_TOMCAT_DATA_SOURCE,
-												id,
+												contextDataSource,
 												name,
 												driverClassName,
 												url,
@@ -9617,11 +9551,11 @@ public abstract class MasterServer {
 												maxWait,
 												validationQuery
 											);
-											HttpdHandler.updateHttpdTomcatDataSource(
+											WebHandler.updateContextDataSource(
 												conn,
 												source,
 												invalidateList,
-												id,
+												contextDataSource,
 												name,
 												driverClassName,
 												url,
@@ -9638,7 +9572,7 @@ public abstract class MasterServer {
 										break;
 									case UPDATE_HTTPD_TOMCAT_PARAMETER :
 										{
-											int id = in.readCompressedInt();
+											int contextParameter = in.readCompressedInt();
 											String name=in.readUTF();
 											String value=in.readUTF();
 											boolean override=in.readBoolean();
@@ -9646,17 +9580,17 @@ public abstract class MasterServer {
 											if(description.length() == 0) description=null;
 											process.setCommand(
 												Command.UPDATE_HTTPD_TOMCAT_PARAMETER,
-												id,
+												contextParameter,
 												name,
 												value,
 												override,
 												description
 											);
-											HttpdHandler.updateHttpdTomcatParameter(
+											WebHandler.updateContextParameter(
 												conn,
 												source,
 												invalidateList,
-												id,
+												contextParameter,
 												name,
 												value,
 												override,
@@ -9668,8 +9602,8 @@ public abstract class MasterServer {
 										break;
 									case UPDATE_PACKAGE_DEFINITION :
 										{
-											int id = in.readCompressedInt();
-											Account.Name accounting = Account.Name.valueOf(in.readUTF());
+											int packageDefinition = in.readCompressedInt();
+											Account.Name account = Account.Name.valueOf(in.readUTF());
 											String category=in.readUTF();
 											String name=in.readUTF().trim();
 											String version=in.readUTF().trim();
@@ -9681,8 +9615,8 @@ public abstract class MasterServer {
 											String monthlyRateTransactionType=in.readUTF();
 											process.setCommand(
 												"update_package_definition",
-												id,
-												accounting,
+												packageDefinition,
+												account,
 												category,
 												name,
 												version,
@@ -9697,8 +9631,8 @@ public abstract class MasterServer {
 												conn,
 												source,
 												invalidateList,
-												id,
-												accounting,
+												packageDefinition,
+												account,
 												category,
 												name,
 												version,
@@ -9718,105 +9652,105 @@ public abstract class MasterServer {
 											int clientTableID = in.readCompressedInt();
 											Table.TableID tableID = TableHandler.convertFromClientTableID(conn, source, clientTableID);
 											if(tableID == null) throw new IOException("Client table not supported: #" + clientTableID);
-											int aoServer = in.readCompressedInt();
+											int linuxServer = in.readCompressedInt();
 											switch(tableID) {
 												case HTTPD_SITES :
 													process.setCommand(
 														Command.WAIT_FOR_HTTPD_SITE_REBUILD,
-														aoServer
+														linuxServer
 													);
-													HttpdHandler.waitForHttpdSiteRebuild(
+													WebHandler.waitForHttpdSiteRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case LINUX_ACCOUNTS :
 													process.setCommand(
 														Command.WAIT_FOR_LINUX_ACCOUNT_REBUILD,
-														aoServer
+														linuxServer
 													);
-													LinuxAccountHandler.waitForLinuxAccountRebuild(
+													LinuxAccountHandler.waitForUserRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case MYSQL_DATABASES :
 													process.setCommand(
 														Command.WAIT_FOR_MYSQL_DATABASE_REBUILD,
-														aoServer
+														linuxServer
 													);
-													MySQLHandler.waitForMySQLDatabaseRebuild(
+													MysqlHandler.waitForDatabaseRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case MYSQL_DB_USERS :
 													process.setCommand(
 														Command.WAIT_FOR_MYSQL_DB_USER_REBUILD,
-														aoServer
+														linuxServer
 													);
-													MySQLHandler.waitForMySQLDBUserRebuild(
+													MysqlHandler.waitForDatabaseUserRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case MYSQL_SERVERS :
 													process.setCommand(
 														Command.WAIT_FOR_MYSQL_SERVER_REBUILD,
-														aoServer
+														linuxServer
 													);
-													MySQLHandler.waitForMySQLServerRebuild(
+													MysqlHandler.waitForServerRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case MYSQL_USERS :
 													process.setCommand(
 														Command.WAIT_FOR_MYSQL_USER_REBUILD,
-														aoServer
+														linuxServer
 													);
-													MySQLHandler.waitForMySQLUserRebuild(
+													MysqlHandler.waitForUserRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case POSTGRES_DATABASES :
 													process.setCommand(
 														Command.WAIT_FOR_POSTGRES_DATABASE_REBUILD,
-														aoServer
+														linuxServer
 													);
-													PostgresHandler.waitForPostgresDatabaseRebuild(
+													PostgresqlHandler.waitForDatabaseRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case POSTGRES_SERVERS :
 													process.setCommand(
 														Command.WAIT_FOR_POSTGRES_SERVER_REBUILD,
-														aoServer
+														linuxServer
 													);
-													PostgresHandler.waitForPostgresServerRebuild(
+													PostgresqlHandler.waitForServerRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												case POSTGRES_USERS :
 													process.setCommand(
 														Command.WAIT_FOR_POSTGRES_USER_REBUILD,
-														aoServer
+														linuxServer
 													);
-													PostgresHandler.waitForPostgresUserRebuild(
+													PostgresqlHandler.waitForUserRebuild(
 														conn,
 														source,
-														aoServer
+														linuxServer
 													);
 													break;
 												default :
@@ -10157,11 +10091,11 @@ public abstract class MasterServer {
 							for(Table.TableID tableID : tableIDs) {
 								int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
 								if(clientTableID!=-1) {
-									List<Account.Name> affectedBusinesses = invalidateList.getAffectedBusinesses(tableID);
-									List<Integer> affectedServers = invalidateList.getAffectedServers(tableID);
+									List<Account.Name> affectedBusinesses = invalidateList.getAffectedAccounts(tableID);
+									List<Integer> affectedHosts = invalidateList.getAffectedHosts(tableID);
 									if(
 										affectedBusinesses!=null
-										&& affectedServers!=null
+										&& affectedHosts!=null
 									) {
 										boolean businessMatches;
 										int size=affectedBusinesses.size();
@@ -10169,7 +10103,7 @@ public abstract class MasterServer {
 										else {
 											businessMatches=false;
 											for(int c=0;c<size;c++) {
-												if(BusinessHandler.canAccessBusiness(conn, source, affectedBusinesses.get(c))) {
+												if(AccountHandler.canAccessAccount(conn, source, affectedBusinesses.get(c))) {
 													businessMatches=true;
 													break;
 												}
@@ -10178,13 +10112,13 @@ public abstract class MasterServer {
 
 										// Filter by server
 										boolean serverMatches;
-										size=affectedServers.size();
+										size=affectedHosts.size();
 										if(size == 0) serverMatches=true;
 										else {
 											serverMatches=false;
 											for(int c=0;c<size;c++) {
-												int server=affectedServers.get(c);
-												if(ServerHandler.canAccessServer(conn, source, server)) {
+												int host = affectedHosts.get(c);
+												if(NetHostHandler.canAccessHost(conn, source, host)) {
 													serverMatches=true;
 													break;
 												}
@@ -10198,8 +10132,8 @@ public abstract class MasterServer {
 													|| tableID==Table.TableID.USERNAMES
 												) {
 													// These tables invalidations are also sent to the servers failover parent
-													int failoverServer=ServerHandler.getFailoverServer(conn, server);
-													if(failoverServer!=-1 && ServerHandler.canAccessServer(conn, source, failoverServer)) {
+													int failoverServer=NetHostHandler.getFailoverServer(conn, host);
+													if(failoverServer!=-1 && NetHostHandler.canAccessHost(conn, source, failoverServer)) {
 														serverMatches=true;
 														break;
 													}
@@ -10327,7 +10261,7 @@ public abstract class MasterServer {
 			// TODO: Convert these to MasterService
 			AccountCleaner.start();
 			ClusterHandler.start();
-			CreditCardHandler.start();
+			PaymentHandler.start();
 			FailoverHandler.start();
 			SignupHandler.start();
 			TableHandler.start();
@@ -10600,16 +10534,16 @@ public abstract class MasterServer {
 		if(connectAs == null) return "Connection attempted with empty connect username";
 		if(authenticateAs == null) return "Connection attempted with empty authentication username";
 
-		if(!BusinessHandler.isBusinessAdministrator(conn, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
+		if(!AccountHandler.isAdministrator(conn, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
 
-		if(BusinessHandler.isBusinessAdministratorDisabled(conn, authenticateAs)) return "Administrator disabled: "+authenticateAs;
+		if(AccountHandler.isAdministratorDisabled(conn, authenticateAs)) return "Administrator disabled: "+authenticateAs;
 
 		if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
 		// Authenticate the client first
 		if(password.length() == 0) return "Connection attempted with empty password";
 
-		HashedPassword correctCrypted=BusinessHandler.getBusinessAdministrator(conn, authenticateAs).getPassword();
+		HashedPassword correctCrypted=AccountHandler.getAdministrator(conn, authenticateAs).getPassword();
 		if(
 			correctCrypted==null
 			|| !correctCrypted.passwordMatches(password)
@@ -10617,9 +10551,9 @@ public abstract class MasterServer {
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions
 		if(!connectAs.equals(authenticateAs)) {
-			if(!BusinessHandler.isBusinessAdministrator(conn, connectAs)) return "Unable to find Administrator: "+connectAs;
+			if(!AccountHandler.isAdministrator(conn, connectAs)) return "Unable to find Administrator: "+connectAs;
 			// Must have can_switch_users permissions and must be switching to a subaccount user
-			if(!BusinessHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
+			if(!AccountHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
 		}
 
 		// Let them in
@@ -10650,7 +10584,7 @@ public abstract class MasterServer {
 			zone
 		)) throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: "+hostname);
 
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
 		String existingZone=conn.executeStringQuery(
 			Connection.TRANSACTION_READ_COMMITTED,
@@ -10676,7 +10610,7 @@ public abstract class MasterServer {
 			"%."+domain
 		);
 		// Must be able to access all of the sites
-		for(int httpdSite : httpdSites) if(!HttpdHandler.canAccessHttpdSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in web.VirtualHostName: "+hostname);
+		for(int httpdSite : httpdSites) if(!WebHandler.canAccessSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in web.VirtualHostName: "+hostname);
 
 		IntList emailDomains=conn.executeIntListQuery(
 			"select id from email.\"Domain\" where (domain=? or domain like ?)",
@@ -10684,18 +10618,18 @@ public abstract class MasterServer {
 			"%."+domain
 		);
 		// Must be able to access all of the domains
-		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessEmailDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
+		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static UserHost[] getUserHosts(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username) throws IOException, SQLException {
+	public static UserHost[] getUserHosts(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
 		synchronized(masterServersLock) {
 			if(masterServers==null) masterServers=new HashMap<>();
-			UserHost[] mss=masterServers.get(username);
+			UserHost[] mss=masterServers.get(user);
 			if(mss!=null) return mss;
 			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
 				try {
 					List<UserHost> v=new ArrayList<>();
-					pstmt.setString(1, username.toString());
+					pstmt.setString(1, user.toString());
 					try (ResultSet results = pstmt.executeQuery()) {
 						while(results.next()) {
 							UserHost ms=new UserHost();
@@ -10705,7 +10639,7 @@ public abstract class MasterServer {
 					}
 					mss=new UserHost[v.size()];
 					v.toArray(mss);
-					masterServers.put(username, mss);
+					masterServers.put(user, mss);
 					return mss;
 				} catch(SQLException e) {
 					throw new WrappedSQLException(e, pstmt);
@@ -10732,14 +10666,14 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static User getUser(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username) throws IOException, SQLException {
-		return getUsers(conn).get(username);
+	public static User getUser(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name name) throws IOException, SQLException {
+		return getUsers(conn).get(name);
 	}
 
 	/**
 	 * Gets the hosts that are allowed for the provided username.
 	 */
-	public static boolean isHostAllowed(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name username, String host) throws IOException, SQLException {
+	public static boolean isHostAllowed(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user, String host) throws IOException, SQLException {
 		Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> myMasterHosts;
 		synchronized(masterHostsLock) {
 			if(masterHosts==null) {
@@ -10764,8 +10698,8 @@ public abstract class MasterServer {
 			}
 			myMasterHosts = masterHosts;
 		}
-		if(getUser(conn, username)!=null) {
-			List<HostAddress> hosts=myMasterHosts.get(username);
+		if(getUser(conn, user)!=null) {
+			List<HostAddress> hosts=myMasterHosts.get(user);
 			// Allow from anywhere if no hosts are provided
 			if(hosts==null) return true;
 			String remoteHost=java.net.InetAddress.getByName(host).getHostAddress();
@@ -10777,7 +10711,7 @@ public abstract class MasterServer {
 			return false;
 		} else {
 			// Normal users can connect from any where
-			return BusinessHandler.getBusinessAdministrator(conn, username)!=null;
+			return AccountHandler.getAdministrator(conn, user)!=null;
 		}
 	}
 
@@ -11019,12 +10953,12 @@ public abstract class MasterServer {
 		DatabaseConnection conn,
 		RequestSource source,
 		String action,
-		Account.Name accounting,
+		Account.Name account,
 		CompressedDataOutputStream out,
 		String sql,
 		String param1
 	) throws IOException, NoRowException, SQLException {
-		BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
+		AccountHandler.checkAccessAccount(conn, source, action, account);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
@@ -11056,13 +10990,13 @@ public abstract class MasterServer {
 		DatabaseConnection conn,
 		RequestSource source,
 		String action,
-		Account.Name accounting,
+		Account.Name account,
 		CompressedDataOutputStream out,
 		String sql,
 		String param1,
 		Timestamp param2
 	) throws IOException, NoRowException, SQLException {
-		BusinessHandler.checkAccessBusiness(conn, source, action, accounting);
+		AccountHandler.checkAccessAccount(conn, source, action, account);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);

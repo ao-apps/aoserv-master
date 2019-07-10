@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -95,24 +95,23 @@ final public class AccountCleaner implements CronJob {
 	@Override
     public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
-            ProcessTimer timer=new ProcessTimer(
-                logger,
-                AccountCleaner.class.getName(),
-                "runCronJob",
-                "Account Cleaner",
-                "Cleaning old account resources",
-                TIMER_MAX_TIME,
-                TIMER_REMINDER_INTERVAL
-            );
-            try {
+            try (
+				ProcessTimer timer = new ProcessTimer(
+					logger,
+					AccountCleaner.class.getName(),
+					"runCronJob",
+					"Account Cleaner",
+					"Cleaning old account resources",
+					TIMER_MAX_TIME,
+					TIMER_REMINDER_INTERVAL
+				)
+			) {
                 MasterServer.executorService.submit(timer);
 
                 // Start the transaction
                 final InvalidateList invalidateList=new InvalidateList();
                 cleanNow(invalidateList);
                 MasterServer.invalidateTables(invalidateList, null);
-            } finally {
-                timer.finished();
             }
         } catch(ThreadDeath TD) {
             throw TD;
@@ -172,7 +171,7 @@ final public class AccountCleaner implements CronJob {
                                 + "  )",
                                 now
                             );
-                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
                         }
 
                         // Those that are older than BackupReport.SendmailSmtpStat.MAX_REPORT_AGE
@@ -198,7 +197,7 @@ final public class AccountCleaner implements CronJob {
                                 + "  (?::date-date)>"+BackupReport.MAX_REPORT_AGE, // Convert to interval?
                                 now
                             );
-                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+                            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
                         }
                     }
 
@@ -208,7 +207,7 @@ final public class AccountCleaner implements CronJob {
                         // look for any accounts that have been canceled but not disabled
                         List<Account.Name> bus = conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
                             "select accounting from account.\"Account\" where parent=? and canceled is not null and disable_log is null",
-                            BusinessHandler.getRootBusiness()
+                            AccountHandler.getRootAccount()
                         );
                         if(!bus.isEmpty()) {
                             message
@@ -264,14 +263,14 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<ccs.size();c++) {
-                        CreditCardHandler.removeCreditCard(conn, invalidateList, ccs.getInt(c));
+                        PaymentHandler.removeCreditCard(conn, invalidateList, ccs.getInt(c));
                     }
                 }
 
                 // account.Administrator over CANCELED_KEEP_DAYS days
                 // remove if balance is zero and has not been used in ticket.Action or billing.Transaction
                 {
-                    List<com.aoindustries.aoserv.client.account.User.Name> bas=conn.executeObjectListQuery(
+                    List<com.aoindustries.aoserv.client.account.User.Name> administrators=conn.executeObjectListQuery(
 						ObjectFactories.userNameFactory,
                         "select\n"
                         + "  ba.username\n"
@@ -314,11 +313,11 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select tr.transid from billing.\"Transaction\" tr where tr.username=ba.username limit 1) is null",
                         now
                     );
-					for (com.aoindustries.aoserv.client.account.User.Name username : bas) {
-						Account.Name business=UsernameHandler.getBusinessForUsername(conn, username);
-						int balance=TransactionHandler.getConfirmedAccountBalance(conn, business);
-						if(balance<=0) {
-							BusinessHandler.removeBusinessAdministrator(conn, invalidateList, username);
+					for (com.aoindustries.aoserv.client.account.User.Name administrator : administrators) {
+						Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
+						int balance = BillingTransactionHandler.getConfirmedAccountBalance(conn, account);
+						if(balance <= 0) {
+							AccountHandler.removeAdministrator(conn, invalidateList, administrator);
 						}
 					}
                 }
@@ -391,7 +390,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<els.size();c++) {
-                        EmailHandler.removeEmailList(conn, invalidateList, els.getInt(c));
+                        EmailHandler.removeList(conn, invalidateList, els.getInt(c));
                     }
                 }
 
@@ -412,7 +411,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<eds.size();c++) {
-                        EmailHandler.removeEmailDomain(conn, invalidateList, eds.getInt(c));
+                        EmailHandler.removeDomain(conn, invalidateList, eds.getInt(c));
                     }
                 }
 
@@ -433,7 +432,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<eps.size();c++) {
-                        EmailHandler.removeEmailPipe(conn, invalidateList, eps.getInt(c));
+                        EmailHandler.removePipe(conn, invalidateList, eps.getInt(c));
                     }
                 }
 
@@ -454,7 +453,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<esrs.size();c++) {
-                        EmailHandler.removeEmailSmtpRelay(conn, invalidateList, esrs.getInt(c));
+                        EmailHandler.removeSmtpRelay(conn, invalidateList, esrs.getInt(c));
                     }
                 }
 
@@ -498,7 +497,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<hss.size();c++) {
-                        HttpdHandler.removeHttpdSite(conn, invalidateList, hss.getInt(c));
+                        WebHandler.removeSite(conn, invalidateList, hss.getInt(c));
                     }
                 }
 
@@ -523,7 +522,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<hsts.size();c++) {
-                        HttpdHandler.removeHttpdSharedTomcat(conn, invalidateList, hsts.getInt(c));
+                        WebHandler.removeSharedTomcat(conn, invalidateList, hsts.getInt(c));
                     }
                 }
 
@@ -546,7 +545,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<pfss.size();c++) {
-                        FTPHandler.removePrivateFTPServer(conn, invalidateList, pfss.getInt(c));
+                        FTPHandler.removePrivateServer(conn, invalidateList, pfss.getInt(c));
                     }
                 }
 
@@ -567,7 +566,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<nbs.size();c++) {
-                        NetBindHandler.removeNetBind(conn, invalidateList, nbs.getInt(c));
+                        NetBindHandler.removeBind(conn, invalidateList, nbs.getInt(c));
                     }
 
                 }
@@ -590,8 +589,8 @@ final public class AccountCleaner implements CronJob {
                     );
                     for(int c=0;c<ias.size();c++) {
                         int ia=ias.getInt(c);
-                        IPAddressHandler.setIPAddressPackage(conn, invalidateList, ia, BusinessHandler.getRootBusiness());
-                        IPAddressHandler.releaseIPAddress(conn, invalidateList, ia);
+                        IpAddressHandler.setIpAddressPackage(conn, invalidateList, ia, AccountHandler.getRootAccount());
+                        IpAddressHandler.releaseIpAddress(conn, invalidateList, ia);
                     }
                 }
 
@@ -613,7 +612,7 @@ final public class AccountCleaner implements CronJob {
                     );
                     for(int c=0;c<hss.size();c++) {
                         int hs=hss.getInt(c);
-                        HttpdHandler.removeHttpdServer(conn, invalidateList, hs);
+                        WebHandler.removeHttpdServer(conn, invalidateList, hs);
                     }
                 }
 
@@ -638,7 +637,7 @@ final public class AccountCleaner implements CronJob {
                     );
 					for (com.aoindustries.aoserv.client.linux.User.Name la : las) {
 						try {
-							LinuxAccountHandler.removeLinuxAccount(conn, invalidateList, la);
+							LinuxAccountHandler.removeUser(conn, invalidateList, la);
 						} catch (SQLException err) {
 							System.err.println("SQLException trying to remove User: " + la);
 							throw err;
@@ -664,7 +663,7 @@ final public class AccountCleaner implements CronJob {
                     );
 					for (Group.Name lg : lgs) {
 						try {
-							LinuxAccountHandler.removeLinuxGroup(conn, invalidateList, lg);
+							LinuxAccountHandler.removeGroup(conn, invalidateList, lg);
 						} catch (SQLException err) {
 							System.err.println("SQLException trying to remove Group: " + lg);
 							throw err;
@@ -689,7 +688,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<mds.size();c++) {
-                        MySQLHandler.removeMySQLDatabase(conn, invalidateList, mds.getInt(c));
+                        MysqlHandler.removeDatabase(conn, invalidateList, mds.getInt(c));
                     }
                 }
 
@@ -712,7 +711,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
 					for (com.aoindustries.aoserv.client.mysql.User.Name mu : mus) {
-						MySQLHandler.removeMySQLUser(conn, invalidateList, mu);
+						MysqlHandler.removeUser(conn, invalidateList, mu);
 					}
                 }
 
@@ -737,7 +736,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
                     for(int c=0;c<pds.size();c++) {
-                        PostgresHandler.removePostgresDatabase(conn, invalidateList, pds.getInt(c));
+                        PostgresqlHandler.removeDatabase(conn, invalidateList, pds.getInt(c));
                     }
                 }
 
@@ -760,7 +759,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
 					for (com.aoindustries.aoserv.client.postgresql.User.Name pu : pus) {
-						PostgresHandler.removePostgresUser(conn, invalidateList, pu);
+						PostgresqlHandler.removeUser(conn, invalidateList, pu);
 					}
                 }
 
@@ -784,7 +783,7 @@ final public class AccountCleaner implements CronJob {
                         now
                     );
 					for (com.aoindustries.aoserv.client.account.User.Name un : uns) {
-						UsernameHandler.removeUsername(conn, invalidateList, un);
+						AccountUserHandler.removeUser(conn, invalidateList, un);
 					}
                 }
 
@@ -819,7 +818,7 @@ final public class AccountCleaner implements CronJob {
                         + "  and (select un.username from account.\"User\" un where un.disable_log=dl.id limit 1) is null",
                         now
                     );
-                    for(int c=0;c<dls.size();c++) BusinessHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
+                    for(int c=0;c<dls.size();c++) AccountHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
                 }
 
                 // account.AccountHost
@@ -842,9 +841,9 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            Account.Name accounting = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
-                            int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
-                            if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
+                            Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
+                            int bsDepth = AccountHandler.getDepthInAccountTree(conn, account);
+                            if(bsDepth==depth) AccountHandler.removeAccountHost(conn, invalidateList, bs);
                         }
 
                         // default
@@ -862,9 +861,9 @@ final public class AccountCleaner implements CronJob {
                         );
                         for(int c=0;c<bss.size();c++) {
                             int bs = bss.getInt(c);
-                            Account.Name accounting = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
-                            int bsDepth = BusinessHandler.getDepthInBusinessTree(conn, accounting);
-                            if(bsDepth==depth) BusinessHandler.removeBusinessServer(conn, invalidateList, bs);
+                            Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
+                            int bsDepth = AccountHandler.getDepthInAccountTree(conn, account);
+                            if(bsDepth==depth) AccountHandler.removeAccountHost(conn, invalidateList, bs);
                         }
                     }
                 }
@@ -896,13 +895,13 @@ final public class AccountCleaner implements CronJob {
             InvalidateList invalidateList = new InvalidateList();
             cleanNow(invalidateList);
             for(Table.TableID tableId : Table.TableID.values()) {
-                List<Integer> affectedServers = invalidateList.getAffectedServers(tableId);
-                if(affectedServers!=null) {
-                    if(affectedServers==InvalidateList.allServers) {
-                        System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH));
+                List<Integer> affectedHosts = invalidateList.getAffectedHosts(tableId);
+                if(affectedHosts != null) {
+                    if(affectedHosts == InvalidateList.allHosts) {
+                        System.out.println("invalidate " + tableId.name().toLowerCase(Locale.ENGLISH));
                     } else {
-                        for(int id : affectedServers) {
-                            System.out.println("invalidate "+tableId.name().toLowerCase(Locale.ENGLISH)+" "+id);
+                        for(int affectedHost : affectedHosts) {
+                            System.out.println("invalidate " + tableId.name().toLowerCase(Locale.ENGLISH) + " " + affectedHost);
                         }
                     }
                 }

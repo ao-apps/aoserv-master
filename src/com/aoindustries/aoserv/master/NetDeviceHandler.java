@@ -20,27 +20,27 @@ final public class NetDeviceHandler {
 	private NetDeviceHandler() {
 	}
 
-	public static String getNetDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
-		int server = getServerForNetDevice(conn, device);
-		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
-		ServerHandler.checkAccessServer(conn, source, "getNetDeviceBondingReport", server);
+	public static String getDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+		int host = getHostForDevice(conn, device);
+		if(!NetHostHandler.isLinuxServer(conn, host)) throw new SQLException("Host is not a Linux server: " + host);
+		NetHostHandler.checkAccessHost(conn, source, "getDeviceBondingReport", host);
 
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, server);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
 		conn.releaseConnection();
 		return daemonConnector.getNetDeviceBondingReport(device);
 	}
 
-	public static String getNetDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
-		int server = getServerForNetDevice(conn, device);
-		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
-		ServerHandler.checkAccessServer(conn, source, "getNetDeviceStatisticsReport", server);
+	public static String getDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+		int host = getHostForDevice(conn, device);
+		if(!NetHostHandler.isLinuxServer(conn, host)) throw new SQLException("Host is not a Linux server: " + host);
+		NetHostHandler.checkAccessHost(conn, source, "getDeviceStatisticsReport", host);
 
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, server);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
 		conn.releaseConnection();
 		return daemonConnector.getNetDeviceStatisticsReport(device);
 	}
 
-	public static int getServerForNetDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
+	public static int getHostForDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
 		return conn.executeIntQuery("select server from net.\"Device\" where id=?", device);
 	}
 }

@@ -32,17 +32,17 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
-final public class TransactionHandler {
+final public class BillingTransactionHandler {
 
-	private TransactionHandler() {
+	private BillingTransactionHandler() {
 	}
 
-	public static boolean canAccessTransaction(DatabaseConnection conn, RequestSource source, int transid) throws IOException, SQLException {
-		return BusinessHandler.canAccessBusiness(conn, source, getBusinessForTransaction(conn, transid));
+	public static boolean canAccessTransaction(DatabaseConnection conn, RequestSource source, int transaction) throws IOException, SQLException {
+		return AccountHandler.canAccessAccount(conn, source, getAccountForTransaction(conn, transaction));
 	}
 
-	public static void checkAccessTransaction(DatabaseConnection conn, RequestSource source, String action, int transid) throws IOException, SQLException {
-		BusinessHandler.checkAccessBusiness(conn, source, action, getBusinessForTransaction(conn, transid));
+	public static void checkAccessTransaction(DatabaseConnection conn, RequestSource source, String action, int transaction) throws IOException, SQLException {
+		AccountHandler.checkAccessAccount(conn, source, action, getAccountForTransaction(conn, transaction));
 	}
 
 	/**
@@ -52,9 +52,9 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		Account.Name accounting,
-		Account.Name sourceAccounting,
-		com.aoindustries.aoserv.client.account.User.Name business_administrator,
+		Account.Name account,
+		Account.Name sourceAccount,
+		com.aoindustries.aoserv.client.account.User.Name administrator,
 		String type,
 		String description,
 		int quantity,
@@ -64,19 +64,19 @@ final public class TransactionHandler {
 		String processor,
 		byte payment_confirmed
 	) throws IOException, SQLException {
-		BankAccountHandler.checkAccounting(conn, source, "addTransaction");
-		BusinessHandler.checkAccessBusiness(conn, source, "addTransaction", accounting);
-		BusinessHandler.checkAccessBusiness(conn, source, "addTransaction", sourceAccounting);
-		UsernameHandler.checkAccessUsername(conn, source, "addTransaction", business_administrator);
-		if(business_administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		BankAccountHandler.checkIsAccounting(conn, source, "addTransaction");
+		AccountHandler.checkAccessAccount(conn, source, "addTransaction", account);
+		AccountHandler.checkAccessAccount(conn, source, "addTransaction", sourceAccount);
+		AccountUserHandler.checkAccessUser(conn, source, "addTransaction", administrator);
+		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		return addTransaction(
 			conn,
 			invalidateList,
 			new Timestamp(System.currentTimeMillis()),
-			accounting,
-			sourceAccounting,
-			business_administrator,
+			account,
+			sourceAccount,
+			administrator,
 			type,
 			description,
 			new BigDecimal(SQLUtility.getMilliDecimal(quantity)),
@@ -95,9 +95,9 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		Timestamp time,
-		Account.Name accounting,
-		Account.Name sourceAccounting,
-		com.aoindustries.aoserv.client.account.User.Name business_administrator,
+		Account.Name account,
+		Account.Name sourceAccount,
+		com.aoindustries.aoserv.client.account.User.Name administrator,
 		String type,
 		String description,
 		BigDecimal quantity,
@@ -107,14 +107,14 @@ final public class TransactionHandler {
 		String processor,
 		byte payment_confirmed
 	) throws IOException, SQLException {
-		if(business_administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
-		int transid = conn.executeIntUpdate(
+		int transaction = conn.executeIntUpdate(
 			"INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
 			time,
-			accounting,
-			sourceAccounting,
-			business_administrator,
+			account,
+			sourceAccount,
+			administrator,
 			type,
 			description,
 			quantity,
@@ -126,8 +126,8 @@ final public class TransactionHandler {
 		);
 
 		// Notify all clients of the updates
-		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, BusinessHandler.getServersForBusiness(conn, accounting), false);
-		return transid;
+		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, AccountHandler.getHostsForAccount(conn, account), false);
+		return transaction;
 	}
 
 	/**
@@ -137,17 +137,17 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		CompressedDataOutputStream out,
-		Account.Name accounting
+		Account.Name account
 	) throws IOException, SQLException {
 		// TODO: release conn before writing to out
 		MasterServer.writePenniesCheckBusiness(
 			conn,
 			source,
 			"getAccountBalance",
-			accounting,
+			account,
 			out,
 			"select coalesce(sum(cast((rate*quantity) as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed!='N'",
-			accounting.toString()
+			account.toString()
 		);
 	}
 
@@ -158,7 +158,7 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source, 
 		CompressedDataOutputStream out, 
-		Account.Name accounting,
+		Account.Name account,
 		long before
 	) throws IOException, SQLException {
 		// TODO: release conn before writing to out
@@ -166,10 +166,10 @@ final public class TransactionHandler {
 			conn,
 			source,
 			"getAccountBalanceBefore",
-			accounting,
+			account,
 			out,
 			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed!='N'",
-			accounting.toString(),
+			account.toString(),
 			new Timestamp(before)
 		);
 	}
@@ -181,17 +181,17 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
-		Account.Name accounting
+		Account.Name account
 	) throws IOException, SQLException {
 		// TODO: release conn before writing to out
 		MasterServer.writePenniesCheckBusiness(
 			conn,
 			source,
 			"getConfirmedAccountBalance",
-			accounting,
+			account,
 			out,
 			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
-			accounting.toString()
+			account.toString()
 		);
 	}
 
@@ -200,12 +200,12 @@ final public class TransactionHandler {
 	 */
 	public static int getConfirmedAccountBalance(
 		DatabaseConnection conn,
-		Account.Name accounting
+		Account.Name account
 	) throws IOException, SQLException {
 		return SQLUtility.getPennies(
 			conn.executeStringQuery(
 				"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
-				accounting.toString()
+				account.toString()
 			)
 		);
 	}
@@ -217,7 +217,7 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		CompressedDataOutputStream out,
-		Account.Name accounting,
+		Account.Name account,
 		long before
 	) throws IOException, SQLException {
 		// TODO: release conn before writing to out
@@ -225,10 +225,10 @@ final public class TransactionHandler {
 			conn,
 			source,
 			"getConfirmedAccountBalanceBefore",
-			accounting,
+			account,
 			out,
 			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed='Y'",
-			accounting.toString(),
+			account.toString(),
 			new Timestamp(before)
 		);
 	}
@@ -242,7 +242,7 @@ final public class TransactionHandler {
 		CompressedDataOutputStream out, 
 		boolean provideProgress
 	) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu!=null && mu.canAccessAccounting()) {
 			// TODO: release conn before writing to out
 			MasterServer.writeObjects(
@@ -264,16 +264,16 @@ final public class TransactionHandler {
 	/**
 	 * Gets all billing.Transaction for one business.
 	 */
-	public static void getTransactionsBusiness(
+	public static void getTransactionsForAccount(
 		DatabaseConnection conn,
 		RequestSource source, 
 		CompressedDataOutputStream out,
 		boolean provideProgress,
-		Account.Name accounting
+		Account.Name account
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-		User masterUser=MasterServer.getUser(conn, username);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser=MasterServer.getUser(conn, currentAdministrator);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
 		if(masterUser!=null) {
 			if(masterServers.length==0) {
 				// TODO: release conn before writing to out
@@ -285,7 +285,7 @@ final public class TransactionHandler {
 					CursorMode.AUTO,
 					new Transaction(),
 					"select * from billing.\"Transaction\" where accounting=?",
-					accounting
+					account
 				);
 			}else {
 				conn.releaseConnection();
@@ -315,8 +315,8 @@ final public class TransactionHandler {
 				+ "  )\n"
 				+ "  and bu1.accounting=tr.accounting\n"
 				+ "  and tr.accounting=?",
-				username,
-				accounting
+				currentAdministrator,
+				account
 			);
 		}
 	}
@@ -324,14 +324,14 @@ final public class TransactionHandler {
 	/**
 	 * Gets all billing.Transaction for one business administrator.
 	 */
-	public static void getTransactionsBusinessAdministrator(
+	public static void getTransactionsForAdministrator(
 		DatabaseConnection conn,
 		RequestSource source, 
 		CompressedDataOutputStream out,
 		boolean provideProgress,
-		com.aoindustries.aoserv.client.account.User.Name username
+		com.aoindustries.aoserv.client.account.User.Name administrator
 	) throws IOException, SQLException {
-		UsernameHandler.checkAccessUsername(conn, source, "getTransactionsBusinessAdministrator", source.getUsername());
+		AccountUserHandler.checkAccessUser(conn, source, "getTransactionsForAdministrator", source.getCurrentAdministrator());
 
 		// TODO: release conn before writing to out
 		MasterServer.writeObjects(
@@ -342,7 +342,7 @@ final public class TransactionHandler {
 			CursorMode.FETCH,
 			new Transaction(),
 			"select * from billing.\"Transaction\" where username=?",
-			username
+			administrator
 		);
 	}
 
@@ -353,9 +353,9 @@ final public class TransactionHandler {
 		boolean provideProgress,
 		TransactionSearchCriteria criteria
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-		User masterUser=MasterServer.getUser(conn, username);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser=MasterServer.getUser(conn, currentAdministrator);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
 		StringBuilder sql;
 		final List<Object> params = new ArrayList<>();
 		boolean whereDone;
@@ -390,7 +390,7 @@ final public class TransactionHandler {
 				+ "  )\n"
 				+ "  and bu1.accounting=tr.accounting\n"
 			);
-			params.add(source.getUsername());
+			params.add(source.getCurrentAdministrator());
 			whereDone=true;
 		}
 
@@ -478,26 +478,19 @@ final public class TransactionHandler {
 		}
 
 		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
-		PreparedStatement pstmt = dbConn.prepareStatement(
-			sql.toString(),
-			provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
-			ResultSet.CONCUR_READ_ONLY
-		);
-		try {
+		try (
+			PreparedStatement pstmt = dbConn.prepareStatement(
+				sql.toString(),
+				provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
+				ResultSet.CONCUR_READ_ONLY
+			)
+		) {
 			DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
-			ResultSet results = pstmt.executeQuery();
-			try {
+			try (ResultSet results = pstmt.executeQuery()) {
 				// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
 				// TODO: release conn before writing to out
 				MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
-			} finally {
-				results.close();
 			}
-		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt);
-			throw err;
-		} finally {
-			pstmt.close();
 		}
 	}
 
@@ -505,140 +498,140 @@ final public class TransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		BankAccountHandler.checkAccounting(conn, source, "transactionApproved");
-		checkAccessTransaction(conn, source, "transactionApproved", transid);
-		CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
+		BankAccountHandler.checkIsAccounting(conn, source, "transactionApproved");
+		checkAccessTransaction(conn, source, "transactionApproved", transaction);
+		PaymentHandler.checkAccessPayment(conn, source, "transactionApproved", payment);
 
-		transactionApproved(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
+		transactionApproved(conn, invalidateList, transaction, payment, paymentInfo);
 	}
 
 	public static void transactionApproved(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForTransaction(conn, transid);
+		Account.Name account = getAccountForTransaction(conn, transaction);
 		int updateCount;
 		if(paymentInfo == null) {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
-				creditCardTransaction,
-				transid
+				payment,
+				transaction
 			);
 		} else {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
-				creditCardTransaction,
+				payment,
 				paymentInfo,
-				transid
+				transaction
 			);
 		}
-		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
+		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transaction+" and payment_confirmed='W'");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
 	}
 
 	public static void transactionDeclined(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		BankAccountHandler.checkAccounting(conn, source, "transactionDeclined");
-		checkAccessTransaction(conn, source, "transactionDeclined", transid);
-		CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionApproved", creditCardTransaction);
+		BankAccountHandler.checkIsAccounting(conn, source, "transactionDeclined");
+		checkAccessTransaction(conn, source, "transactionDeclined", transaction);
+		PaymentHandler.checkAccessPayment(conn, source, "transactionApproved", payment);
 
-		transactionDeclined(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
+		transactionDeclined(conn, invalidateList, transaction, payment, paymentInfo);
 	}
 
 	public static void transactionDeclined(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForTransaction(conn, transid);
+		Account.Name account = getAccountForTransaction(conn, transaction);
 
 		int updateCount;
 		if(paymentInfo == null) {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
-				creditCardTransaction,
-				transid
+				payment,
+				transaction
 			);
 		} else {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
-				creditCardTransaction,
+				payment,
 				paymentInfo,
-				transid
+				transaction
 			);
 		}
-		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W'");
+		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transaction+" and payment_confirmed='W'");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
 	}
 
 	public static void transactionHeld(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		BankAccountHandler.checkAccounting(conn, source, "transactionHeld");
-		checkAccessTransaction(conn, source, "transactionHeld", transid);
-		CreditCardHandler.checkAccessCreditCardTransaction(conn, source, "transactionHeld", creditCardTransaction);
+		BankAccountHandler.checkIsAccounting(conn, source, "transactionHeld");
+		checkAccessTransaction(conn, source, "transactionHeld", transaction);
+		PaymentHandler.checkAccessPayment(conn, source, "transactionHeld", payment);
 
-		transactionHeld(conn, invalidateList, transid, creditCardTransaction, paymentInfo);
+		transactionHeld(conn, invalidateList, transaction, payment, paymentInfo);
 	}
 
 	public static void transactionHeld(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int transid,
-		int creditCardTransaction,
+		int transaction,
+		int payment,
 		String paymentInfo
 	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForTransaction(conn, transid);
+		Account.Name account = getAccountForTransaction(conn, transaction);
 
 		int updateCount;
 		if(paymentInfo == null) {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
-				creditCardTransaction,
-				transid
+				payment,
+				transaction
 			);
 		} else {
 			updateCount = conn.executeUpdate(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
-				creditCardTransaction,
+				payment,
 				paymentInfo,
-				transid
+				transaction
 			);
 		}
-		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transid+" and payment_confirmed='W' and credit_card_transaction is null");
+		if(updateCount==0) throw new SQLException("Unable to find transaction with transid="+transaction+" and payment_confirmed='W' and credit_card_transaction is null");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
 	}
 
-	public static Account.Name getBusinessForTransaction(DatabaseConnection conn, int transid) throws IOException, SQLException {
+	public static Account.Name getAccountForTransaction(DatabaseConnection conn, int transaction) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select accounting from billing.\"Transaction\" where transid=?",
-			transid
+			transaction
 		);
 	}
 }

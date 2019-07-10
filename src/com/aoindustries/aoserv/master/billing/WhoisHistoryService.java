@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -140,19 +140,17 @@ final public class WhoisHistoryService implements MasterService {
 			if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": cleanup: Deleted canceled at zero balance: " + deletedCanceledZero.size());
 		}
 		if(!accountsAffected.isEmpty()) {
-			invalidateList.addTable(
-				conn,
+			invalidateList.addTable(conn,
 				Table.TableID.WhoisHistoryAccount,
 				accountsAffected,
-				InvalidateList.allServers,
+				InvalidateList.allHosts,
 				false
 			);
 			// Affects visibility, so invalidate WhoisHistory, too
-			invalidateList.addTable(
-				conn,
+			invalidateList.addTable(conn,
 				Table.TableID.WhoisHistory,
 				accountsAffected,
-				InvalidateList.allServers,
+				InvalidateList.allHosts,
 				false
 			);
 		}
@@ -356,7 +354,7 @@ final public class WhoisHistoryService implements MasterService {
 									// update database
 									// TODO: Store the parsed nameservers, too?  At least for when is success.
 									// This could be a batch, but this is short and simple
-									int id = conn.executeIntUpdate(
+									int whoisHistory = conn.executeIntUpdate(
 										"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
 										registrableDomain,
 										exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
@@ -367,22 +365,20 @@ final public class WhoisHistoryService implements MasterService {
 									for(Account.Name account : accounts) {
 										conn.executeUpdate(
 											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
-											id,
+											whoisHistory,
 											account
 										);
 									}
-									invalidateList.addTable(
-										conn,
+									invalidateList.addTable(conn,
 										Table.TableID.WhoisHistory,
 										accounts,
-										InvalidateList.allServers,
+										InvalidateList.allHosts,
 										false
 									);
-									invalidateList.addTable(
-										conn,
+									invalidateList.addTable(conn,
 										Table.TableID.WhoisHistoryAccount,
 										accounts,
-										InvalidateList.allServers,
+										InvalidateList.allHosts,
 										false
 									);
 									conn.commit();
@@ -458,11 +454,11 @@ final public class WhoisHistoryService implements MasterService {
 	 *
 	 * The same filtering as {@link #startGetTableHandler()}
 	 */
-	public Tuple2<String,String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int id) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
-		User masterUser = MasterServer.getUser(conn, username);
+	public Tuple2<String,String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser = MasterServer.getUser(conn, currentAdministrator);
 		if(masterUser != null) {
-			UserHost[] masterServers = MasterServer.getUserHosts(conn, source.getUsername());
+			UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
 			if(masterServers.length == 0) {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// id is that of the associated billing.WhoisHistoryAccount
@@ -482,7 +478,7 @@ final public class WhoisHistoryService implements MasterService {
 						+ "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\"\n"
 						+ "WHERE\n"
 						+ "  wha.id=?",
-						id
+						whoisHistoryAccount
 					);
 				} else {
 					return conn.executeQuery(
@@ -494,7 +490,7 @@ final public class WhoisHistoryService implements MasterService {
 							}
 						},
 						"select \"output\", error from billing.\"WhoisHistory\" where id=?",
-						id
+						whoisHistoryAccount
 					);
 				}
 			} else {
@@ -529,8 +525,8 @@ final public class WhoisHistoryService implements MasterService {
 					+ "  AND bu1.accounting = wha.account\n"
 					+ "  AND wha.\"whoisHistory\" = wh.id\n"
 					+ "  AND wha.id=?",
-					username,
-					id
+					currentAdministrator,
+					whoisHistoryAccount
 				);
 			} else {
 				return conn.executeQuery(
@@ -560,8 +556,8 @@ final public class WhoisHistoryService implements MasterService {
 					+ "  AND wha.\"whoisHistory\" = wh.id\n"
 					+ "  AND wh.id=?\n"
 					+ "LIMIT 1", // Might be reached through multiple accounts
-					username,
-					id
+					currentAdministrator,
+					whoisHistoryAccount
 				);
 			}
 		}
@@ -658,7 +654,7 @@ final public class WhoisHistoryService implements MasterService {
 						+ "  )\n"
 						+ "  and bu1.accounting = wha.account\n"
 						+ "  and wha.\"whoisHistory\" = wh.id",
-						source.getUsername()
+						source.getCurrentAdministrator()
 					);
 				} else {
 					MasterServer.writeObjects(
@@ -689,7 +685,7 @@ final public class WhoisHistoryService implements MasterService {
 						+ "  )\n"
 						+ "  and bu1.accounting = wha.account\n"
 						+ "  and wha.\"whoisHistory\" = wh.id",
-						source.getUsername()
+						source.getCurrentAdministrator()
 					);
 				}
 			}

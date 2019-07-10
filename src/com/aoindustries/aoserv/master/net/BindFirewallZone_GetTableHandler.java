@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -63,13 +63,13 @@ public class BindFirewallZone_GetTableHandler extends TableHandler.GetTableHandl
 			+ "  ms.username=?\n"
 			+ "  and ms.server=nb.server\n"
 			+ "  and nb.id=nbfz.net_bind",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -149,10 +149,10 @@ public class BindFirewallZone_GetTableHandler extends TableHandler.GetTableHandl
 			+ "      and pk5.accounting=bs5.accounting\n"
 			+ "      and bs5.server=ps5.ao_server\n"
 			+ "  )",
-			username,
-			username,
-			username,
-			username
+			currentAdministrator,
+			currentAdministrator,
+			currentAdministrator,
+			currentAdministrator
 		);
 	}
 }

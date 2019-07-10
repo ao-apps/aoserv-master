@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -76,7 +76,7 @@ public class Host_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  inner join \"net.reputation\".\"Host\"       irsh on irs.id       = irsh.\"set\"\n"    // Find all hosts belonging to these sets
 				+ "where\n"
 				+ "  ms.username=?",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
@@ -111,7 +111,7 @@ public class Host_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  )\n"
 			+ "  and bu1.accounting=irs.accounting\n"
 			+ "  and irs.id=irsh.\"set\"",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

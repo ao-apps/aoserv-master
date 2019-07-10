@@ -280,7 +280,7 @@ final public class ClusterHandler implements CronJob {
 
                     // Query the servers in parallel
                     final MasterDatabase database = MasterDatabase.getDatabase();
-                    IntList xenPhysicalServers = ServerHandler.getEnabledXenPhysicalServers(database);
+                    IntList xenPhysicalServers = NetHostHandler.getEnabledXenPhysicalServers(database);
                     Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
                     for(final Integer xenPhysicalServer : xenPhysicalServers) {
                         futures.put(
@@ -289,7 +289,7 @@ final public class ClusterHandler implements CronJob {
 								// Try up to ten times
 								for(int c=0;c<10;c++) {
 									try {
-										final int rootPackagePkey = PackageHandler.getPKeyForPackage(database, BusinessHandler.getRootBusiness());
+										final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
 										AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
 										// database.releaseConnection();
 										// Get the DRBD states
@@ -307,7 +307,7 @@ final public class ClusterHandler implements CronJob {
 												)
 											) {
 												primaryMapping.add(
-													ServerHandler.getServerForPackageAndName(
+													NetHostHandler.getHostForPackageAndName(
 														database,
 														rootPackagePkey,
 														drbdReport.getResourceHostname()
@@ -324,7 +324,7 @@ final public class ClusterHandler implements CronJob {
 												)
 											) {
 												secondaryMapping.add(
-													ServerHandler.getServerForPackageAndName(
+													NetHostHandler.getHostForPackageAndName(
 														database,
 														rootPackagePkey,
 														drbdReport.getResourceHostname()
@@ -337,7 +337,7 @@ final public class ClusterHandler implements CronJob {
 										Set<Integer> autoMapping = new HashSet<>(autoStartList.size()*4/3+1);
 										for(String serverName : autoStartList) {
 											autoMapping.add(
-												ServerHandler.getServerForPackageAndName(
+												NetHostHandler.getHostForPackageAndName(
 													database,
 													rootPackagePkey,
 													serverName
@@ -396,7 +396,7 @@ final public class ClusterHandler implements CronJob {
     }
 
 	public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        User mu=MasterServer.getUser(conn, source.getUsername());
+        User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
         return mu!=null && mu.isClusterAdmin();
     }
 

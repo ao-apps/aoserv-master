@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -34,11 +34,11 @@ final public class NetBindHandler {
 	 */
 	private static final Object netBindLock = new Object();
 
-	public static int addNetBind(
+	public static int addBind(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int server,
+		int host,
 		Account.Name packageName,
 		int ipAddress,
 		Port port,
@@ -50,7 +50,7 @@ final public class NetBindHandler {
 			conn.executeBooleanQuery("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
 		) throw new SQLException("Unable to find in table net.AppProtocol: "+appProtocol);
 
-		User mu=MasterServer.getUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu==null) {
 			// Must be a user service
 			if(
@@ -66,13 +66,13 @@ final public class NetBindHandler {
 			if(port != defaultPort) throw new SQLException("Only master users may override the port for a service.");
 		}
 
-		ServerHandler.checkAccessServer(conn, source, "addNetBind", server);
-		PackageHandler.checkAccessPackage(conn, source, "addNetBind", packageName);
+		NetHostHandler.checkAccessHost(conn, source, "addBind", host);
+		PackageHandler.checkAccessPackage(conn, source, "addBind", packageName);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to add net bind, package disabled: "+packageName);
-		IPAddressHandler.checkAccessIPAddress(conn, source, "addNetBind", ipAddress);
-		InetAddress inetAddress = IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress);
+		IpAddressHandler.checkAccessIpAddress(conn, source, "addBind", ipAddress);
+		InetAddress inetAddress = IpAddressHandler.getInetAddressForIpAddress(conn, ipAddress);
 
-		int id;
+		int bind;
 		synchronized(netBindLock) {
 			if(inetAddress.isUnspecified()) {
 				// Wildcard must be unique per server
@@ -90,11 +90,11 @@ final public class NetBindHandler {
 						+ "      and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						server,
+						host,
 						port.getPort(),
 						port.getProtocol().name()
 					)
-				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+host+"->"+inetAddress.toBracketedString()+":"+port);
 			} else if(inetAddress.isLoopback()) {
 				// Loopback must be unique per server and not have wildcard
 				if(
@@ -113,13 +113,13 @@ final public class NetBindHandler {
 						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						server,
+						host,
 						IpAddress.WILDCARD_IP,
 						IpAddress.LOOPBACK_IP,
 						port.getPort(),
 						port.getProtocol().name()
 					)
-				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+host+"->"+inetAddress.toBracketedString()+":"+port);
 			} else {
 				// Make sure that this port is not already allocated within the server on this IP or the wildcard
 				if(
@@ -141,17 +141,17 @@ final public class NetBindHandler {
 						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
-						server,
+						host,
 						IpAddress.WILDCARD_IP,
 						ipAddress,
 						port.getPort(),
 						port.getProtocol().name()
 					)
-				) throw new SQLException("Bind already in use: "+server+"->"+inetAddress.toBracketedString()+":"+port);
+				) throw new SQLException("Bind already in use: "+host+"->"+inetAddress.toBracketedString()+":"+port);
 			}
 
 			// Add the port to the DB
-			id = conn.executeIntUpdate(
+			bind = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  net.\"Bind\"\n"
 				+ "VALUES (\n"
@@ -165,7 +165,7 @@ final public class NetBindHandler {
 				+ "  ?\n"
 				+ ") RETURNING id",
 				packageName,
-				server,
+				host,
 				ipAddress,
 				port.getPort(),
 				port.getProtocol(),
@@ -173,12 +173,12 @@ final public class NetBindHandler {
 				monitoringEnabled
 			);
 		}
-		Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
 			business,
-			server,
+			host,
 			false
 		);
 		if(!firewalldZones.isEmpty()) {
@@ -188,8 +188,8 @@ final public class NetBindHandler {
 					+ "  ?,\n"
 					+ "  (select id from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 					+ ")",
-					id,
-					server,
+					bind,
+					host,
 					firewalldZone
 				);
 			}
@@ -197,26 +197,26 @@ final public class NetBindHandler {
 				conn,
 				Table.TableID.NET_BIND_FIREWALLD_ZONES,
 				business,
-				server,
+				host,
 				false
 			);
 		}
-		return id;
+		return bind;
 	}
 
-	public static int allocateNetBind(
+	public static int allocateBind(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int server,
+		int host,
 		int ipAddress,
 		com.aoindustries.net.Protocol netProtocol,
 		String appProtocol,
-		Account.Name pack,
+		Account.Name packageName,
 		int minimumPort
 	) throws IOException, SQLException {
-		int id;
+		int bind;
 		synchronized(netBindLock) {
-			id = conn.executeIntUpdate(
+			bind = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  net.\"Bind\"\n"
 				+ "VALUES (\n"
@@ -236,10 +236,10 @@ final public class NetBindHandler {
 				+ "  true,\n" // monitoring_enabled
 				+ "  null\n" // monitoring_parameters
 				+ ") RETURNING id",
-				pack,
-				server,
+				packageName,
+				host,
 				ipAddress,
-				server,
+				host,
 				ipAddress,
 				minimumPort,
 				netProtocol.name(),
@@ -251,26 +251,23 @@ final public class NetBindHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
-			PackageHandler.getBusinessForPackage(conn, pack),
-			server,
+			PackageHandler.getAccountForPackage(conn, packageName),
+			host,
 			false
 		);
-		return id;
+		return bind;
 	}
 
-	public static Account.Name getBusinessForNetBind(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getAccountForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from net.\"Bind\" nb, billing.\"Package\" pk where nb.id=? and nb.package=pk.name",
-			id
+			bind
 		);
 	}
 
-	public static int getNetBind(
+	public static int getBind(
 		DatabaseConnection conn,
-		int server,
+		int host,
 		int ipAddress,
 		Port port
 	) throws IOException, SQLException {
@@ -289,101 +286,96 @@ final public class NetBindHandler {
 			+ "        and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
 			+ "    ), -1\n"
 			+ "  )",
-			server,
+			host,
 			ipAddress,
 			port.getPort(),
 			port.getProtocol().name()
 		);
 	}
 
-	public static int getServerForNetBind(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net.\"Bind\" where id=?", id);
+	public static int getHostForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
+		return conn.executeIntQuery("select server from net.\"Bind\" where id=?", bind);
 	}
 
-	public static Account.Name getPackageForNetBind(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+	public static Account.Name getPackageForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountNameFactory,
 			"select package from net.\"Bind\" where id=?",
-			id
+			bind
 		);
 	}
 
-	public static void removeNetBind(
+	public static void removeBind(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int bind
 	) throws IOException, SQLException {
 		// Security checks
-		PackageHandler.checkAccessPackage(conn, source, "removeNetBind", getPackageForNetBind(conn, id));
+		PackageHandler.checkAccessPackage(conn, source, "removeBind", getPackageForBind(conn, bind));
 
 		// Do the remove
-		removeNetBind(conn, invalidateList, id);
+		removeBind(conn, invalidateList, bind);
 	}
 
-	public static void removeNetBind(
+	public static void removeBind(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id
+		int bind
 	) throws IOException, SQLException {
-		Account.Name business = getBusinessForNetBind(conn, id);
-		int server=getServerForNetBind(conn, id);
+		Account.Name business = getAccountForBind(conn, bind);
+		int host = getHostForBind(conn, bind);
 
-		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", id) > 0) {
+		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", bind) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_TCP_REDIRECTS,
 				business,
-				server,
+				host,
 				false
 			);
 		}
 
-		if(conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", id) > 0) {
+		if(conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", bind) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.PRIVATE_FTP_SERVERS,
 				business,
-				server,
+				host,
 				false
 			);
 		}
 
-		conn.executeUpdate("delete from net.\"Bind\" where id=?", id);
+		conn.executeUpdate("delete from net.\"Bind\" where id=?", bind);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
 			business,
-			server,
+			host,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BIND_FIREWALLD_ZONES,
 			business,
-			server,
+			host,
 			false
 		);
 	}
 
-	public static void setNetBindFirewalldZones(
+	public static void setBindFirewalldZones(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int bind,
 		Set<FirewallZone.Name> firewalldZones
 	) throws IOException, SQLException {
-		PackageHandler.checkAccessPackage(conn, source, "setNetBindFirewalldZones", getPackageForNetBind(conn, id));
+		PackageHandler.checkAccessPackage(conn, source, "setBindFirewalldZones", getPackageForBind(conn, bind));
 
 		boolean updated = false;
-		int server = getServerForNetBind(conn, id);
+		int host = getHostForBind(conn, bind);
 		if(firewalldZones.isEmpty()) {
-			if(conn.executeUpdate("delete from net.\"BindFirewallZone\" where net_bind=?", id) != 0) {
+			if(conn.executeUpdate("delete from net.\"BindFirewallZone\" where net_bind=?", bind) != 0) {
 				updated = true;
 			}
 		} else {
@@ -397,7 +389,7 @@ final public class NetBindHandler {
 				+ "  inner join net.\"FirewallZone\" fz on nbfz.firewalld_zone=fz.id\n"
 				+ "where\n"
 				+ "  nbfz.net_bind=?",
-				id
+				bind
 			);
 			// Delete extra
 			for(FirewallZone.Name name : existing) {
@@ -413,7 +405,7 @@ final public class NetBindHandler {
 						+ "    nbfz.net_bind=?\n"
 						+ "    and fz.\"name\"=?\n"
 						+ ")",
-						id,
+						bind,
 						name
 					);
 					updated = true;
@@ -427,8 +419,8 @@ final public class NetBindHandler {
 						+ "  ?,\n"
 						+ "  (select id from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 						+ ")",
-						id,
-						server,
+						bind,
+						host,
 						name
 					);
 					updated = true;
@@ -436,40 +428,39 @@ final public class NetBindHandler {
 			}
 		}
 		if(updated) {
-			Account.Name business = getBusinessForNetBind(conn, id);
+			Account.Name business = getAccountForBind(conn, bind);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BINDS,
 				business,
-				server,
+				host,
 				false
 			);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BIND_FIREWALLD_ZONES,
 				business,
-				server,
+				host,
 				false
 			);
 		}
 	}
 
-	public static void setNetBindMonitoringEnabled(
+	public static void setBindMonitoringEnabled(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
-		boolean enabled
+		int bind,
+		boolean monitoringEnabled
 	) throws IOException, SQLException {
-		PackageHandler.checkAccessPackage(conn, source, "setNetBindMonitoringEnabled", getPackageForNetBind(conn, id));
+		PackageHandler.checkAccessPackage(conn, source, "setBindMonitoringEnabled", getPackageForBind(conn, bind));
 
-		conn.executeUpdate("update net.\"Bind\" set monitoring_enabled=? where id=?", enabled, id);
+		conn.executeUpdate("update net.\"Bind\" set monitoring_enabled=? where id=?", monitoringEnabled, bind);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.NET_BINDS,
-			getBusinessForNetBind(conn, id),
-			getServerForNetBind(conn, id),
+			getAccountForBind(conn, bind),
+			getHostForBind(conn, bind),
 			false
 		);
 	}
@@ -478,49 +469,49 @@ final public class NetBindHandler {
 	 * This exists for compatibility with older clients (versions &lt;= 1.80.2) only.
 	 * This has been implemented by adding and removing the public zone from the net_bind.
 	 */
-	public static void setNetBindOpenFirewall(
+	public static void setBindOpenFirewall(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
-		boolean open_firewall
+		int bind,
+		boolean openFirewall
 	) throws IOException, SQLException {
 		AoservProtocol.Version clientVersion = source.getProtocolVersion();
 		if(clientVersion.compareTo(AoservProtocol.Version.VERSION_1_80_2) > 0) {
 			throw new IOException("This compatibility method only remains for clients version <= 1.80.2: Client is version " + clientVersion);
 		}
 
-		PackageHandler.checkAccessPackage(conn, source, "setNetBindOpenFirewall", getPackageForNetBind(conn, id));
+		PackageHandler.checkAccessPackage(conn, source, "setBindOpenFirewall", getPackageForBind(conn, bind));
 
-		int server = getServerForNetBind(conn, id);
-		if(open_firewall) {
+		int host = getHostForBind(conn, bind);
+		if(openFirewall) {
 			// Add the public zone if missing
-			int fz = conn.executeIntQuery("select id from net.\"FirewallZone\" where server=? and \"name\"=?", server, FirewallZone.PUBLIC);
+			int fz = conn.executeIntQuery("select id from net.\"FirewallZone\" where server=? and \"name\"=?", host, FirewallZone.PUBLIC);
 			boolean updated;
 			synchronized(netBindLock) {
 				if(
-					conn.executeBooleanQuery("select (select id from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=?) is null", id, fz)
+					conn.executeBooleanQuery("select (select id from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=?) is null", bind, fz)
 				) {
-					conn.executeUpdate("insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (?,?)", id, fz);
+					conn.executeUpdate("insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (?,?)", bind, fz);
 					updated = true;
 				} else {
 					updated = false;
 				}
 			}
 			if(updated) {
-				Account.Name business = getBusinessForNetBind(conn, id);
+				Account.Name business = getAccountForBind(conn, bind);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BINDS,
 					business,
-					server,
+					host,
 					false
 				);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BIND_FIREWALLD_ZONES,
 					business,
-					server,
+					host,
 					false
 				);
 			}
@@ -529,24 +520,24 @@ final public class NetBindHandler {
 			if(
 				conn.executeUpdate(
 					"delete from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=(select id from net.\"FirewallZone\" where server=? and \"name\"=?)",
-					id,
-					server,
+					bind,
+					host,
 					FirewallZone.PUBLIC
 				) != 0
 			) {
-				Account.Name business = getBusinessForNetBind(conn, id);
+				Account.Name business = getAccountForBind(conn, bind);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BINDS,
 					business,
-					server,
+					host,
 					false
 				);
 				invalidateList.addTable(
 					conn,
 					Table.TableID.NET_BIND_FIREWALLD_ZONES,
 					business,
-					server,
+					host,
 					false
 				);
 			}

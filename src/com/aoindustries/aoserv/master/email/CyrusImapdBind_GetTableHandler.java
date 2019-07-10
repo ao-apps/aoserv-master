@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class CyrusImapdBind_GetTableHandler extends TableHandler.GetTableHandler
 			+ "  inner join email.\"CyrusImapdBind\" cib on nb.id=cib.net_bind\n"
 			+ "where\n"
 			+ "  ms.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -91,7 +91,7 @@ public class CyrusImapdBind_GetTableHandler extends TableHandler.GetTableHandler
 			+ "  and bu1.accounting=pk2.accounting\n"
 			+ "  and pk2.name=nb.package\n"
 			+ "  and nb.id=cib.net_bind",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

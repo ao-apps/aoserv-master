@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -82,7 +82,7 @@ public class TransactionHandler {
 					new Transaction(),
 					QUERY_ADMINISTRATOR + "\n"
 					+ "  and tr.transid=?",
-					source.getUsername(),
+					source.getCurrentAdministrator(),
 					transid
 				);
 			}
@@ -124,7 +124,7 @@ public class TransactionHandler {
 				CursorMode.FETCH,
 				new Transaction(),
 				QUERY_ADMINISTRATOR,
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		}
 	}

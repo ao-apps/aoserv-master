@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -47,7 +47,7 @@ public class GroupUser_GetTableHandler extends TableHandler.GetTableHandlerByRol
 
 	@Override
 	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -80,14 +80,14 @@ public class GroupUser_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "        ms2.username=?\n"
 			+ "        and ms2.server=lsa.ao_server\n"
 			+ "  )",
-			username,
-			username
+			currentAdministrator,
+			currentAdministrator
 		);
 	}
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -140,11 +140,11 @@ public class GroupUser_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "      and pk4.name=un3.package\n"
 			+ "      and un3.username=la.username\n"
 			+ "  )",
-			username,
+			currentAdministrator,
 			Group.FTPONLY,
 			Group.MAIL,
 			Group.MAILONLY,
-			username
+			currentAdministrator
 		);
 	}
 }

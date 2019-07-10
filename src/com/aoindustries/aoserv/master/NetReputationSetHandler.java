@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2012-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -25,15 +25,15 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-final public class IpReputationSetHandler {
+final public class NetReputationSetHandler {
 
     /**
      * Make no instances.
      */
-    private IpReputationSetHandler() {
+    private NetReputationSetHandler() {
     }
 
-    public static Account.Name getBusinessForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
+    public static Account.Name getAccountForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
         return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
             "select accounting from \"net.reputation\".\"Set\" where id=?",
             ipReputationSet
@@ -41,13 +41,13 @@ final public class IpReputationSetHandler {
     }
 
     public static void checkAccessIpReputationSet(DatabaseConnection conn, RequestSource source, String action, int ipReputationSet) throws IOException, SQLException {
-        User mu = MasterServer.getUser(conn, source.getUsername());
+        User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
         if(mu!=null) {
-            if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
+            if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length!=0) {
                 // Must be an admin or router to submit reputation
                 String message=
-                    "business_administrator.username="
-                    +source.getUsername()
+                    "currentAdministrator="
+                    +source.getCurrentAdministrator()
                     +" is not allowed to access ip reputation set: action='"
                     +action
                     +", id="
@@ -56,11 +56,10 @@ final public class IpReputationSetHandler {
                 throw new SQLException(message);
             }
         } else {
-            BusinessHandler.checkAccessBusiness(
-                conn,
+            AccountHandler.checkAccessAccount(conn,
                 source,
                 action,
-                getBusinessForIpReputationSet(conn, ipReputationSet)
+                getAccountForIpReputationSet(conn, ipReputationSet)
             );
         }
     }
@@ -207,8 +206,8 @@ final public class IpReputationSetHandler {
         Set.AddReputation[] addReputations
     ) throws IOException, SQLException {
         // Can't add reputation to a disabled business
-        Account.Name accounting = getBusinessForIpReputationSet(conn, ipReputationSet);
-        if(BusinessHandler.isBusinessDisabled(conn, accounting)) throw new SQLException("Unable to add IP reputation, business disabled: "+accounting);
+        Account.Name account = getAccountForIpReputationSet(conn, ipReputationSet);
+        if(AccountHandler.isAccountDisabled(conn, account)) throw new SQLException("Unable to add IP reputation, business disabled: "+account);
 
         if(addReputations.length>0) {
             // Get the settings
@@ -400,8 +399,8 @@ final public class IpReputationSetHandler {
                 invalidateList.addTable(
                     conn,
                     Table.TableID.IP_REPUTATION_SET_HOSTS,
-                    accounting,
-                    BusinessHandler.getServersForBusiness(conn, accounting),
+                    account,
+                    AccountHandler.getHostsForAccount(conn, account),
                     false
                 );
             }
@@ -409,32 +408,30 @@ final public class IpReputationSetHandler {
                 invalidateList.addTable(
                     conn,
                     Table.TableID.IP_REPUTATION_SET_NETWORKS,
-                    accounting,
-                    BusinessHandler.getServersForBusiness(conn, accounting),
+                    account,
+                    AccountHandler.getHostsForAccount(conn, account),
                     false
                 );
             }
             // Also notify routers
             for(Map.Entry<com.aoindustries.aoserv.client.account.User.Name,User> entry : MasterServer.getUsers(conn).entrySet()) {
-                com.aoindustries.aoserv.client.account.User.Name username = entry.getKey();
+                com.aoindustries.aoserv.client.account.User.Name user = entry.getKey();
                 User mu = entry.getValue();
                 if(mu.isRouter()) {
                     // TODO: Filter isRouter users by server_farm
-                    for(UserHost ms : MasterServer.getUserHosts(conn, username)) {
+                    for(UserHost ms : MasterServer.getUserHosts(conn, user)) {
                         if(hostsUpdated) {
-                            invalidateList.addTable(
-                                conn,
+                            invalidateList.addTable(conn,
                                 Table.TableID.IP_REPUTATION_SET_HOSTS,
-                                InvalidateList.allBusinesses,
+                                InvalidateList.allAccounts,
                                 ms.getServerPKey(),
                                 false
                             );
                         }
                         if(networksUpdated) {
-                            invalidateList.addTable(
-                                conn,
+                            invalidateList.addTable(conn,
                                 Table.TableID.IP_REPUTATION_SET_NETWORKS,
-                                InvalidateList.allBusinesses,
+                                InvalidateList.allAccounts,
                                 ms.getServerPKey(),
                                 false
                             );

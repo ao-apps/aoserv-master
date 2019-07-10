@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2003-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -49,7 +49,7 @@ final public class ReportGenerator implements CronJob {
 	private static final long TIMER_REMINDER_INTERVAL=12L*60*60*1000;
 
 	static class TempBackupReport {
-		int server;
+		int host;
 		int packageNum;
 		int fileCount;
 		long diskSize;
@@ -101,16 +101,17 @@ final public class ReportGenerator implements CronJob {
 	@Override
 	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
-			ProcessTimer timer=new ProcessTimer(
-				logger,
-				ReportGenerator.class.getName(),
-				"runCronJob",
-				"Backup Report Generator",
-				"Generating contents for backup.BackupReport",
-				BACKUP_REPORT_MAX_TIME,
-				TIMER_REMINDER_INTERVAL
-			);
-			try {
+			try (
+				ProcessTimer timer=new ProcessTimer(
+					logger,
+					ReportGenerator.class.getName(),
+					"runCronJob",
+					"Backup Report Generator",
+					"Generating contents for backup.BackupReport",
+					BACKUP_REPORT_MAX_TIME,
+					TIMER_REMINDER_INTERVAL
+				)
+			) {
 				MasterServer.executorService.submit(timer);
 
 				// Start the transaction
@@ -137,37 +138,37 @@ final public class ReportGenerator implements CronJob {
 								now
 							)
 						) {
-							// HashMap keyed on server, containing HashMaps keyed on package, containing TempBackupReport objects
+							// HashMap keyed on host, containing HashMaps keyed on package, containing TempBackupReport objects
 							Map<Integer,Map<Integer,TempBackupReport>> stats=new HashMap<>();
 
 							/* TODO: Implement as calls to the aoserv daemons to get the quota reports
 							String sqlString=null;
 							Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
 							try {
-								// First, count up the total number of files per server and per package
+								// First, count up the total number of files per host and per package
 								conn.incrementQueryCount();
 								ResultSet results=stmt.executeQuery(sqlString="select server, package, count(*) from file_backups group by server, package");
 								try {
 									while(results.next()) {
-										int server=results.getInt(1);
+										int host=results.getInt(1);
 										int packageNum=results.getInt(2);
 										int fileCount=results.getInt(3);
 
 										TempBackupReport tbr=new TempBackupReport();
-										tbr.server=server;
+										tbr.host=host;
 										tbr.packageNum=packageNum;
 										tbr.fileCount=fileCount;
 
-										Integer serverInteger=Integer.valueOf(server);
-										Map<Integer,TempBackupReport> packages=stats.get(serverInteger);
-										if(packages==null) stats.put(serverInteger, packages=new HashMap<Integer,TempBackupReport>());
+										Integer hostInteger=Integer.valueOf(host);
+										Map<Integer,TempBackupReport> packages=stats.get(hostInteger);
+										if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer,TempBackupReport>());
 										packages.put(Integer.valueOf(packageNum), tbr);
 									}
 								} finally {
 									results.close();
 								}
 
-								// Count up the data sizes by server and package
+								// Count up the data sizes by host and package
 								conn.incrementQueryCount();
 								results=stmt.executeQuery(
 									sqlString=
@@ -228,20 +229,20 @@ final public class ReportGenerator implements CronJob {
 								);
 								try {
 									while(results.next()) {
-										int server=results.getInt(1);
+										int host=results.getInt(1);
 										int packageNum=results.getInt(2);
 										long uncompressedSize=results.getLong(3);
 										long compressedSize=results.getLong(4);
 										long diskSize=results.getLong(5);
 
-										Integer serverInteger=Integer.valueOf(server);
-										Map<Integer,TempBackupReport> packages=stats.get(serverInteger);
-										if(packages==null) stats.put(serverInteger, packages=new HashMap<Integer,TempBackupReport>());
+										Integer hostInteger=Integer.valueOf(host);
+										Map<Integer,TempBackupReport> packages=stats.get(hostInteger);
+										if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer,TempBackupReport>());
 										Integer packageInteger=Integer.valueOf(packageNum);
 										TempBackupReport tbr=(TempBackupReport)packages.get(packageInteger);
 										if(tbr==null) {
 											tbr=new TempBackupReport();
-											tbr.server=server;
+											tbr.host=host;
 											tbr.packageNum=packageNum;
 											packages.put(packageInteger, tbr);
 										}
@@ -252,9 +253,6 @@ final public class ReportGenerator implements CronJob {
 								} finally {
 									results.close();
 								}
-							} catch(SQLException err) {
-								System.err.println("Error from query: "+sqlString);
-								throw err;
 							} finally {
 								stmt.close();
 							}*/
@@ -262,13 +260,13 @@ final public class ReportGenerator implements CronJob {
 							// Add these stats to the table
 							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,?::date,?,?::int8);");
 							try {
-								Iterator<Integer> serverKeys=stats.keySet().iterator();
-								while(serverKeys.hasNext()) {
-									Map<Integer,TempBackupReport> packages=stats.get(serverKeys.next());
+								Iterator<Integer> hostKeys = stats.keySet().iterator();
+								while(hostKeys.hasNext()) {
+									Map<Integer,TempBackupReport> packages = stats.get(hostKeys.next());
 									Iterator<Integer> packageKeys=packages.keySet().iterator();
 									while(packageKeys.hasNext()) {
 										TempBackupReport tbr=packages.get(packageKeys.next());
-										pstmt.setInt(1, tbr.server);
+										pstmt.setInt(1, tbr.host);
 										pstmt.setInt(2, tbr.packageNum);
 										pstmt.setTimestamp(3, now);
 										pstmt.setInt(4, tbr.fileCount);
@@ -285,7 +283,7 @@ final public class ReportGenerator implements CronJob {
 							}
 
 							// Invalidate the table
-							invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+							invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 						}
 					} catch(RuntimeException | IOException err) {
 						if(conn.rollback()) {
@@ -306,8 +304,6 @@ final public class ReportGenerator implements CronJob {
 					conn.releaseConnection();
 				}
 				MasterServer.invalidateTables(invalidateList, null);
-			} finally {
-				timer.finished();
 			}
 		} catch(ThreadDeath TD) {
 			throw TD;

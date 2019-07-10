@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -63,7 +63,7 @@ public class SmtpRelay_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "    esr.ao_server is null\n"
 			+ "    or ms.server=esr.ao_server\n"
 			+ "  )",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -95,7 +95,7 @@ public class SmtpRelay_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "    pk2.name=esr.package\n"
 			+ "    or esr.ao_server is null\n"
 			+ "  )",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -108,7 +108,7 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "      limit 1\n"
 			+ "    ) is not null\n"
 			+ "  )",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -155,7 +155,7 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			// Need distinct above when using this or
 			//+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
 			+ "  )",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

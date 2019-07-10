@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class Rack_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  inner join infrastructure.\"Rack\" ra on ps.rack=ra.id\n"
 			+ "where\n"
 			+ "  ms.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -93,7 +93,7 @@ public class Rack_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			// Allow servers it replicates to
 			//+ "    or bp.ao_server=ps.server\n"
 			+ "  ) and ps.rack=ra.id",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

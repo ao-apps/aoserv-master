@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -43,7 +43,7 @@ final public class DnsService implements MasterService {
 	/**
 	 * Creates a new <code>Record</code>.
 	 */
-	public int addDNSRecord(
+	public int addRecord(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
@@ -57,7 +57,7 @@ final public class DnsService implements MasterService {
 		int ttl
 	) throws IOException, SQLException {
 		// Must be allowed to access this zone
-		checkAccessDNSZone(conn, source, "addDNSRecord", zone);
+		checkAccessDNSZone(conn, source, "addRecord", zone);
 
 		// Must have appropriate priority
 		if(conn.executeBooleanQuery("select has_priority from dns.\"RecordType\" where type=?", type)) {
@@ -96,7 +96,7 @@ final public class DnsService implements MasterService {
 		}
 
 		// Add the entry
-		int id = conn.executeIntUpdate(
+		int record = conn.executeIntUpdate(
 			"INSERT INTO dns.\"Record\" (\n"
 			+ "  \"zone\",\n"
 			+ "  \"domain\",\n"
@@ -116,13 +116,13 @@ final public class DnsService implements MasterService {
 			destination,
 			(ttl == -1) ? Null.INTEGER : ttl
 		);
-		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
 		// Update the serial of the zone
 		updateDNSZoneSerial(conn, invalidateList, zone);
 
 		// Notify all clients of the update
-		return id;
+		return record;
 	}
 
 	/**
@@ -206,28 +206,28 @@ final public class DnsService implements MasterService {
 		conn.executeUpdate(INSERT_RECORD, zone, "www",  RecordType.TXT, "v=spf1 -all");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 	}
 
 	/**
 	 * Removes a <code>Record</code>.
 	 */
-	public void removeDNSRecord(
+	public void removeRecord(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int record
 	) throws IOException, SQLException {
 		// Must be allowed to access this zone record
-		checkAccessDNSRecord(conn, source, "removeDNSRecord", id);
+		checkAccessRecord(conn, source, "removeRecord", record);
 
 		// Get the zone associated with the id
-		String zone=getDNSZoneForDNSRecord(conn, id);
+		String zone=getZoneForRecord(conn, record);
 
 		// Remove the dns.Record entry
-		conn.executeUpdate("delete from dns.\"Record\" where id=?", id);
-		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		conn.executeUpdate("delete from dns.\"Record\" where id=?", record);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
 		// Update the serial of the zone
 		updateDNSZoneSerial(conn, invalidateList, zone);
@@ -263,8 +263,8 @@ final public class DnsService implements MasterService {
 		conn.executeUpdate("delete from dns.\"Zone\" where \"zone\"=?", zone);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 	}
 
 	/**
@@ -285,7 +285,7 @@ final public class DnsService implements MasterService {
 	}
 
 	/* Unused 2018-12-02:
-	public boolean addDNSRecord(
+	public boolean addRecord(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		DomainName hostname,
@@ -327,8 +327,8 @@ final public class DnsService implements MasterService {
 				invalidateList.addTable(
 					conn,
 					Table.TableID.DNS_RECORDS,
-					getBusinessForDNSZone(conn, zone),
-					getDNSAOServers(conn),
+					getAccountForDNSZone(conn, zone),
+					getDnsLinuxServers(conn),
 					false
 				);
 				updateDNSZoneSerial(conn, invalidateList, zone);
@@ -339,18 +339,18 @@ final public class DnsService implements MasterService {
 	}
 	 */
 
-	private static void checkAccessDNSRecord(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
+	private static void checkAccessRecord(DatabaseConnection conn, RequestSource source, String action, int record) throws IOException, SQLException {
 		if(
 			!isDNSAdmin(conn, source)
-			&& !PackageHandler.canAccessPackage(conn, source, getPackageForDNSRecord(conn, id))
+			&& !PackageHandler.canAccessPackage(conn, source, getPackageForRecord(conn, record))
 		) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access dns_record: action='"
 				+action
 				+", id="
-				+id
+				+record
 			;
 			throw new SQLException(message);
 		}
@@ -366,8 +366,8 @@ final public class DnsService implements MasterService {
 	private void checkAccessDNSZone(DatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
 		if(!canAccessDNSZone(conn, source, zone)) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access dns_zone: action='"
 				+action
 				+", zone='"
@@ -386,28 +386,28 @@ final public class DnsService implements MasterService {
 		DatabaseConnection conn,
 		RequestSource source
 	) throws IOException, SQLException {
-		User mu=MasterServer.getUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
 		return mu!=null && mu.isDNSAdmin();
 	}
 
 	/* Unused 2018-12-02:
-	public Account.Name getBusinessForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
+	public Account.Name getAccountForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountingCodeFactory,
 			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.\"zone\"=nz.\"zone\" and nz.package=pk.\"name\" and nr.id=?",
-			id
+			record
 		);
 	}
 	 */
 
-	private static Account.Name getBusinessForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
+	private static Account.Name getAccountForDnsZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select pk.accounting from dns.\"Zone\" nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
 			zone
 		);
 	}
 
-	private static IntList getDNSAOServers(DatabaseConnection conn) throws IOException, SQLException {
+	private static IntList getDnsLinuxServers(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Server\")", AppProtocol.DNS);
 	}
 
@@ -452,18 +452,18 @@ final public class DnsService implements MasterService {
 		}
 	}
 
-	private static String getDNSZoneForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeStringQuery("select \"zone\" from dns.\"Record\" where id=?", id);
+	private static String getZoneForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
+		return conn.executeStringQuery("select \"zone\" from dns.\"Record\" where id=?", record);
 	}
 
 	public boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
-	private static Account.Name getPackageForDNSRecord(DatabaseConnection conn, int id) throws IOException, SQLException {
+	private static Account.Name getPackageForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.\"zone\"=nz.\"zone\"",
-			id
+			record
 		);
 	}
 
@@ -509,8 +509,8 @@ final public class DnsService implements MasterService {
 					invalidateList.addTable(
 						conn,
 						Table.TableID.DNS_RECORDS,
-						getBusinessForDNSZone(conn, zone),
-						getDNSAOServers(conn),
+						getAccountForDnsZone(conn, zone),
+						getDnsLinuxServers(conn),
 						false
 					);
 					updateDNSZoneSerial(conn, invalidateList, zone);
@@ -538,8 +538,8 @@ final public class DnsService implements MasterService {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.DNS_ZONES,
-			getBusinessForDNSZone(conn, zone),
-			getDNSAOServers(conn),
+			getAccountForDnsZone(conn, zone),
+			getDnsLinuxServers(conn),
 			false
 		);
 		updateDNSZoneSerial(conn, invalidateList, zone);
@@ -548,28 +548,27 @@ final public class DnsService implements MasterService {
 	public void updateDhcpDnsRecords(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddress,
-		InetAddress dhcpAddress
+		int dhcpAddress,
+		InetAddress destination
 	) throws IOException, SQLException {
 		// Find the ids of the entries that should be changed
-		IntList ids=conn.executeIntListQuery("select id from dns.\"Record\" where \"dhcpAddress\"=?", ipAddress);
+		IntList records = conn.executeIntListQuery("select id from dns.\"Record\" where \"dhcpAddress\"=?", dhcpAddress);
 
 		// Build a list of affected zones
 		List<String> zones=new SortedArrayList<>();
 
-		for(int c=0;c<ids.size();c++) {
-			int id=ids.getInt(c);
-			String zone=getDNSZoneForDNSRecord(conn, id);
+		for(int c=0;c<records.size();c++) {
+			int record = records.getInt(c);
+			String zone = getZoneForRecord(conn, record);
 			if(!zones.contains(zone)) zones.add(zone);
-			conn.executeUpdate("update dns.\"Record\" set destination=? where id=?", dhcpAddress, id);
+			conn.executeUpdate("update dns.\"Record\" set destination=? where id=?", destination, record);
 		}
 
 		// Invalidate the records
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.DNS_RECORDS,
-			InvalidateList.allBusinesses,
-			InvalidateList.allServers,
+			InvalidateList.allAccounts,
+			InvalidateList.allHosts,
 			false
 		);
 
@@ -603,11 +602,10 @@ final public class DnsService implements MasterService {
 
 		// Place the serial back in the database
 		conn.executeUpdate("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.DNS_ZONES,
-			InvalidateList.allBusinesses,
-			InvalidateList.allServers,
+			InvalidateList.allAccounts,
+			InvalidateList.allHosts,
 			false
 		);
 	}
@@ -659,7 +657,7 @@ final public class DnsService implements MasterService {
 								oct4,
 								RecordType.PTR
 							);
-							invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+							invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 						}
 					}
 				}

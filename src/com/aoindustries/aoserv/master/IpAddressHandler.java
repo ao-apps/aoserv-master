@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -25,44 +25,44 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-final public class IPAddressHandler {
+final public class IpAddressHandler {
 
-	public static void checkAccessIPAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+	public static void checkAccessIpAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu!=null) {
-			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
-				ServerHandler.checkAccessServer(conn, source, action, getServerForIPAddress(conn, ipAddressId));
+			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length!=0) {
+				NetHostHandler.checkAccessHost(conn, source, action, getHostForIpAddress(conn, ipAddressId));
 			}
 		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForIPAddress(conn, ipAddressId));
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForIpAddress(conn, ipAddressId));
 		}
 	}
 
-	public static boolean isDHCPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+	public static boolean isDhcpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeBooleanQuery(
 			"select \"isDhcp\" from net.\"IpAddress\" where id=?",
-			ipAddressId
+			ipAddress
 		);
 	}
 
 	public static DomainName getUnassignedHostname(
 		DatabaseConnection conn,
-		int ipAddressId
+		int ipAddress
 	) throws IOException, SQLException {
 		try {
-			final InetAddress inetAddress = getInetAddressForIPAddress(conn, ipAddressId);
+			final InetAddress inetAddress = getInetAddressForIpAddress(conn, ipAddress);
 			switch(inetAddress.getAddressFamily()) {
 				case INET : {
 					String ip = inetAddress.toString();
 					int pos=ip.lastIndexOf('.');
 					final String octet=ip.substring(pos+1);
-					int server=getServerForIPAddress(conn, ipAddressId);
+					int host = getHostForIpAddress(conn, ipAddress);
 					final String net;
 					if(ip.startsWith("66.160.183.")) net = "net1.";
 					else if(ip.startsWith("64.62.174.")) net = "net2.";
 					else if(ip.startsWith("64.71.144.")) net = "net3.";
 					else net = "";
-					final String farm=ServerHandler.getFarmForServer(conn, server);
+					final String farm=NetHostHandler.getFarmForHost(conn, host);
 					String hostname="unassigned"+octet+"."+net+farm+'.'+Zone.API_ZONE;
 					while(hostname.endsWith(".")) hostname = hostname.substring(0, hostname.length()-1);
 					return DomainName.valueOf(hostname);
@@ -78,45 +78,45 @@ final public class IPAddressHandler {
 		}
 	}
 
-	public static void moveIPAddress(
+	public static void moveIpAddress(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddressId,
-		int toServerId
+		int ipAddress,
+		int toHost
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "moveIPAddress", ipAddressId);
-		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", toServerId);
-		int fromServerId=getServerForIPAddress(conn, ipAddressId);
-		ServerHandler.checkAccessServer(conn, source, "moveIPAddress", fromServerId);
+		checkAccessIpAddress(conn, source, "moveIpAddress", ipAddress);
+		NetHostHandler.checkAccessHost(conn, source, "moveIpAddress", toHost);
+		int fromHost = getHostForIpAddress(conn, ipAddress);
+		NetHostHandler.checkAccessHost(conn, source, "moveIpAddress", fromHost);
 
-		Account.Name accounting=getBusinessForIPAddress(conn, ipAddressId);
+		Account.Name account = getAccountForIpAddress(conn, ipAddress);
 
 		// Update net.IpAddress
-		int netDeviceId = conn.executeIntQuery(
+		int toDevice = conn.executeIntQuery(
 			"select id from net.\"Device\" where server=? and \"deviceId\"=?",
-			toServerId,
+			toHost,
 			DeviceId.ETH0
 		);
 		conn.executeUpdate(
 			"update net.\"IpAddress\" set device=? where id=?",
-			netDeviceId,
-			ipAddressId
+			toDevice,
+			ipAddress
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			accounting,
-			fromServerId,
+			account,
+			fromHost,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			accounting,
-			toServerId,
+			account,
+			toHost,
 			false
 		);
 	}
@@ -124,79 +124,79 @@ final public class IPAddressHandler {
 	/**
 	 * Sets the IP address for a DHCP-enabled IP address.
 	 */
-	public static void setIPAddressDHCPAddress(
+	public static void setDhcpAddressDestination(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddressId,
-		InetAddress dhcpAddress
+		int dhcpAddress,
+		InetAddress inetAddress
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressDHCPAddress", ipAddressId);
-		if(!isDHCPAddress(conn, ipAddressId)) throw new SQLException("net.IpAddress is not DHCP-enabled: "+ipAddressId);
+		checkAccessIpAddress(conn, source, "setIPAddressDHCPAddress", dhcpAddress);
+		if(!isDhcpAddress(conn, dhcpAddress)) throw new SQLException("net.IpAddress is not DHCP-enabled: " + dhcpAddress);
 
-		Account.Name accounting=getBusinessForIPAddress(conn, ipAddressId);
-		int server=getServerForIPAddress(conn, ipAddressId);
+		Account.Name account = getAccountForIpAddress(conn, dhcpAddress);
+		int host = getHostForIpAddress(conn, dhcpAddress);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::inet where id=?", dhcpAddress, ipAddressId);
+		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::inet where id=?", inetAddress, dhcpAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			accounting,
-			server,
+			account,
+			host,
 			false
 		);
 
 		// Update any DNS records that follow this IP address
-		MasterServer.getService(DnsService.class).updateDhcpDnsRecords(conn, invalidateList, ipAddressId, dhcpAddress);
+		MasterServer.getService(DnsService.class).updateDhcpDnsRecords(conn, invalidateList, dhcpAddress, inetAddress);
 	}
 
 	/**
 	 * Sets the hostname for an IP address.
 	 */
-	public static void setIPAddressHostname(
+	public static void setIpAddressHostname(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddressId,
+		int ipAddress,
 		DomainName hostname
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressHostname", ipAddressId);
+		checkAccessIpAddress(conn, source, "setIPAddressHostname", ipAddress);
 		MasterServer.checkAccessHostname(conn, source, "setIPAddressHostname", hostname.toString());
 
-		setIPAddressHostname(conn, invalidateList, ipAddressId, hostname);
+		setIpAddressHostname(conn, invalidateList, ipAddress, hostname);
 	}
 
 	/**
 	 * Sets the hostname for an IP address.
 	 */
-	public static void setIPAddressHostname(
+	public static void setIpAddressHostname(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddressId,
+		int ipAddress,
 		DomainName hostname
 	) throws IOException, SQLException {
 		// Can't set the hostname on a disabled package
 		//String packageName=getPackageForIPAddress(conn, ipAddress);
 		//if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
 
-		InetAddress ip = getInetAddressForIPAddress(conn, ipAddressId);
+		InetAddress ip = getInetAddressForIpAddress(conn, ipAddress);
 		if(
 			ip.isLoopback()
 			|| ip.isUnspecified()
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddressId);
+		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddressId),
-			getServerForIPAddress(conn, ipAddressId),
+			getAccountForIpAddress(conn, ipAddress),
+			getHostForIpAddress(conn, ipAddress),
 			false
 		);
 
@@ -204,35 +204,35 @@ final public class IPAddressHandler {
 		MasterServer.getService(DnsService.class).updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
 	}
 
-	public static void setIPAddressMonitoringEnabled(
+	public static void setIpAddressMonitoringEnabled(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddressId,
-		boolean enabled
+		int ipAddress,
+		boolean monitoringEnabled
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddressId);
+		checkAccessIpAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddress);
 
-		setIPAddressMonitoringEnabled(conn, invalidateList, ipAddressId, enabled);
+		setIpAddressMonitoringEnabled(conn, invalidateList, ipAddress, monitoringEnabled);
 	}
 
-	public static void setIPAddressMonitoringEnabled(
+	public static void setIpAddressMonitoringEnabled(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddressId,
-		boolean enabled
+		int ipAddress,
+		boolean monitoringEnabled
 	) throws IOException, SQLException {
 		// Update the table
 		// TODO: Add row when first enabled or column set to non-default
 		// TODO: Remove row when disabled and other columns match defaults
-		conn.executeUpdate("update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=? where id=?", enabled, ipAddressId);
+		conn.executeUpdate("update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=? where id=?", monitoringEnabled, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddressId),
-			getServerForIPAddress(conn, ipAddressId),
+			getAccountForIpAddress(conn, ipAddress),
+			getHostForIpAddress(conn, ipAddress),
 			false
 		);
 	}
@@ -240,31 +240,31 @@ final public class IPAddressHandler {
 	/**
 	 * Sets the Package owner of an net.IpAddress.
 	 */
-	public static void setIPAddressPackage(
+	public static void setIpAddressPackage(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ipAddressId,
+		int ipAddress,
 		Account.Name newPackage
 	) throws IOException, SQLException {
-		checkAccessIPAddress(conn, source, "setIPAddressPackage", ipAddressId);
+		checkAccessIpAddress(conn, source, "setIPAddressPackage", ipAddress);
 		PackageHandler.checkAccessPackage(conn, source, "setIPAddressPackage", newPackage);
 
-		setIPAddressPackage(conn, invalidateList, ipAddressId, newPackage);
+		setIpAddressPackage(conn, invalidateList, ipAddress, newPackage);
 	}
 
 	/**
 	 * Sets the Package owner of an net.IpAddress.
 	 */
-	public static void setIPAddressPackage(
+	public static void setIpAddressPackage(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddressId,
+		int ipAddress,
 		Account.Name newPackage
 	) throws IOException, SQLException {
-		Account.Name oldAccounting = getBusinessForIPAddress(conn, ipAddressId);
-		Account.Name newAccounting = PackageHandler.getBusinessForPackage(conn, newPackage);
-		int server=getServerForIPAddress(conn, ipAddressId);
+		Account.Name oldAccounting = getAccountForIpAddress(conn, ipAddress);
+		Account.Name newAccounting = PackageHandler.getAccountForPackage(conn, newPackage);
+		int host = getHostForIpAddress(conn, ipAddress);
 
 		// Make sure that the IP Address is not in use
 		int count=conn.executeIntQuery(
@@ -274,24 +274,24 @@ final public class IPAddressHandler {
 			+ "  net.\"Bind\"\n"
 			+ "where\n"
 			+ "  \"ipAddress\"=?",
-			ipAddressId
+			ipAddress
 		);
-		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddressId);
+		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), \"isAvailable\"=false where id=?", newPackage, ipAddressId);
+		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), \"isAvailable\"=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.IP_ADDRESSES,
-			InvalidateList.getCollection(oldAccounting, newAccounting),
-			server,
+			InvalidateList.getAccountCollection(oldAccounting, newAccounting),
+			host,
 			false
 		);
 	}
 
-	public static int getSharedHttpdIP(DatabaseConnection conn, int serverId) throws IOException, SQLException {
+	public static int getSharedHttpdIpAddress(DatabaseConnection conn, int linuxServer) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  coalesce(\n"
@@ -331,12 +331,12 @@ final public class IPAddressHandler {
 			+ "    ), -1\n"
 			+ "  )",
 			com.aoindustries.net.Protocol.TCP.name(),
-			serverId,
-			serverId
+			linuxServer,
+			linuxServer
 		);
 	}
 
-	public static Account.Name getPackageForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+	public static Account.Name getPackageForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.name\n"
@@ -345,11 +345,11 @@ final public class IPAddressHandler {
 			+ "  inner join billing.\"Package\" pk on ia.package=pk.id\n"
 			+ "where\n"
 			+ "  ia.id=?",
-			ipAddressId
+			ipAddress
 		);
 	}
 
-	public static Account.Name getBusinessForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+	public static Account.Name getAccountForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
@@ -358,26 +358,26 @@ final public class IPAddressHandler {
 			+ "  inner join billing.\"Package\" pk on ia.package=pk.id\n"
 			+ "where\n"
 			+ "  ia.id=?",
-			ipAddressId
+			ipAddress
 		);
 	}
 
-	public static int getServerForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddressId);
+	public static int getHostForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
+		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddress);
 	}
 
-	public static InetAddress getInetAddressForIPAddress(DatabaseConnection conn, int ipAddressId) throws IOException, SQLException {
+	public static InetAddress getInetAddressForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
 			"select host(\"inetAddress\") from net.\"IpAddress\" where id=?",
-			ipAddressId
+			ipAddress
 		);
 	}
 
-	public static int getWildcardIPAddress(DatabaseConnection conn) throws IOException, SQLException {
+	public static int getWildcardIpAddress(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?::inet", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
-	public static int getLoopbackIPAddress(DatabaseConnection conn, int serverId) throws IOException, SQLException {
+	public static int getLoopbackIpAddress(DatabaseConnection conn, int host) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  ia.id\n"
@@ -390,39 +390,38 @@ final public class IPAddressHandler {
 			+ "  and nd.server=?\n"
 			+ "limit 1",
 			IpAddress.LOOPBACK_IP,
-			serverId
+			host
 		);
 	}
 
-	public static void releaseIPAddress(
+	public static void releaseIpAddress(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int ipAddressId
+		int ipAddress
 	) throws IOException, SQLException {
-		setIPAddressHostname(
+		setIpAddressHostname(
 			conn,
 			invalidateList,
-			ipAddressId,
-			getUnassignedHostname(conn, ipAddressId)
+			ipAddress,
+			getUnassignedHostname(conn, ipAddress)
 		);
 
 		conn.executeUpdate(
 			"update net.\"IpAddress\" set \"isAvailable\"=true, \"isOverflow\"=false where id=?",
-			ipAddressId
+			ipAddress
 		);
 		conn.executeUpdate(
 			"update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
-			ipAddressId
+			ipAddress
 		);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.IP_ADDRESSES,
-			getBusinessForIPAddress(conn, ipAddressId),
-			getServerForIPAddress(conn, ipAddressId),
+			getAccountForIpAddress(conn, ipAddress),
+			getHostForIpAddress(conn, ipAddress),
 			false
 		);
 	}
 
-	private IPAddressHandler() {
+	private IpAddressHandler() {
 	}
 }

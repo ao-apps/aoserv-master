@@ -287,9 +287,9 @@ final public class TableHandler {
 		CompressedDataOutputStream out,
 		Table.TableID tableID
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-		User masterUser=MasterServer.getUser(conn, username);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser=MasterServer.getUser(conn, currentAdministrator);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
 
 		GetObjectHandler handler = getObjectHandlers.get(tableID);
 		if(handler != null) {
@@ -317,17 +317,17 @@ final public class TableHandler {
 		RequestSource source,
 		Table.TableID tableID
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
 		// Synchronize to get the correct objects
 		int[] rowCounts;
 		long[] expireTimes;
 		synchronized(rowCountsPerUsername) {
-			rowCounts=rowCountsPerUsername.get(username);
+			rowCounts=rowCountsPerUsername.get(currentAdministrator);
 			if(rowCounts==null) {
-				rowCountsPerUsername.put(username, rowCounts=new int[_numTables]);
-				expireTimesPerUsername.put(username, expireTimes=new long[_numTables]);
-			} else expireTimes=expireTimesPerUsername.get(username);
+				rowCountsPerUsername.put(currentAdministrator, rowCounts=new int[_numTables]);
+				expireTimesPerUsername.put(currentAdministrator, expireTimes=new long[_numTables]);
+			} else expireTimes=expireTimesPerUsername.get(currentAdministrator);
 		}
 
 		// Synchronize on the array to provide a per-user lock
@@ -359,9 +359,9 @@ final public class TableHandler {
 		RequestSource source,
 		Table.TableID tableID
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-		User masterUser=MasterServer.getUser(conn, username);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, source.getUsername());
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser=MasterServer.getUser(conn, currentAdministrator);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
 		switch(tableID) {
 			case DISTRO_FILES :
 				if(masterUser != null) {
@@ -579,7 +579,7 @@ final public class TableHandler {
 		/**
 		 * Checks if has permission, writing an empty table when does not have the permission.
 		 *
-		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		@Override
 		final public void getTable(
@@ -591,7 +591,7 @@ final public class TableHandler {
 			User masterUser,
 			UserHost[] masterServers
 		) throws IOException, SQLException {
-			if(BusinessHandler.hasPermission(conn, source, getPermissionName())) {
+			if(AccountHandler.hasPermission(conn, source, getPermissionName())) {
 				getTableHasPermission(conn, source, out, provideProgress, tableID, masterUser, masterServers);
 			} else {
 				// No permission, write empty table
@@ -602,7 +602,7 @@ final public class TableHandler {
 		/**
 		 * Handles a request for the given table, once permission has been verified.
 		 *
-		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableHasPermission(
 			DatabaseConnection conn,
@@ -647,7 +647,7 @@ final public class TableHandler {
 		 * permission has been verified, with access to all {@link Account accounts}
 		 * and {@link Host hosts}.
 		 *
-		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableMasterHasPermission(
 			DatabaseConnection conn,
@@ -664,7 +664,7 @@ final public class TableHandler {
 		 * {@link Host hosts}.  This is the filtering generally used by
 		 * <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
 		 *
-		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableDaemonHasPermission(
 			DatabaseConnection conn,
@@ -682,7 +682,7 @@ final public class TableHandler {
 		 * {@link Account accounts} and the {@link Host hosts} those accounts
 		 * can access (see {@link AccountHost}.
 		 *
-		 * @see  BusinessHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableAdministratorHasPermission(
 			DatabaseConnection conn,
@@ -703,9 +703,9 @@ final public class TableHandler {
 		boolean provideProgress,
 		final Table.TableID tableID
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-		User masterUser=MasterServer.getUser(conn, username);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, username);
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User masterUser=MasterServer.getUser(conn, currentAdministrator);
+		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
 
 		GetTableHandler handler = getTableHandlers.get(tableID);
 		if(handler != null) {
@@ -833,14 +833,13 @@ final public class TableHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		Table.TableID tableID,
-		int server
+		int host
 	) throws SQLException, IOException {
 		checkInvalidator(conn, source, "invalidate");
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			tableID,
-			InvalidateList.allBusinesses,
-			server==-1 ? InvalidateList.allServers : InvalidateList.getServerCollection(server),
+			InvalidateList.allAccounts,
+			host==-1 ? InvalidateList.allHosts : InvalidateList.getHostCollection(host),
 			true
 		);
 	}
@@ -850,7 +849,7 @@ final public class TableHandler {
 	}
 
 	public static boolean isInvalidator(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		User mu=MasterServer.getUser(conn, source.getUsername());
+		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
 		return mu!=null && mu.canInvalidateTables();
 	}
 
@@ -1107,7 +1106,7 @@ final public class TableHandler {
 			+ "  and ao.server=se.id\n"
 			+ "  and se.operating_system_version=osv.id\n"
 			+ "  and osv.is_aoserv_daemon_supported",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

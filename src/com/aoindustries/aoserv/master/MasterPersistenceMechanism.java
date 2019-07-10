@@ -131,9 +131,9 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public CreditCard getCreditCard(Principal principal, String persistenceUniqueId) throws SQLException {
-		int id;
+		int creditCard;
 		try {
-			id = Integer.parseInt(persistenceUniqueId);
+			creditCard = Integer.parseInt(persistenceUniqueId);
 		} catch(NumberFormatException e) {
 			return null;
 		}
@@ -153,7 +153,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 			+ "ORDER BY\n"
 			+ "  cc.accounting,\n"
 			+ "  cc.created",
-			id
+			creditCard
 		);
 	}
 
@@ -212,7 +212,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	@Override
 	public void updateCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
 		try {
-            CreditCardHandler.updateCreditCard(
+            PaymentHandler.updateCreditCard(
                 conn,
                 invalidateList,
 				Integer.parseInt(creditCard.getPersistenceUniqueId()),
@@ -258,7 +258,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		short expirationYear
 	) throws SQLException {
 		try {
-            CreditCardHandler.updateCreditCardExpiration(
+            PaymentHandler.updateCreditCardExpiration(
                 conn,
                 invalidateList,
 				Integer.parseInt(creditCard.getPersistenceUniqueId()),
@@ -296,7 +296,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 			if(expirationMonth == CreditCard.UNKNOWN_EXPRIATION_MONTH) expirationMonth = null;
 			Short expirationYear = creditCard.getExpirationYear(); // TODO: 2.0: Nullable Short
 			if(expirationYear == CreditCard.UNKNOWN_EXPRIATION_YEAR) expirationYear = null;
-            int id = CreditCardHandler.addCreditCardTransaction(
+            int payment = PaymentHandler.addPayment(
                 conn,
                 invalidateList,
                 transaction.getProviderId(),
@@ -353,7 +353,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 principal==null ? null : principal.getName()
             );
             conn.commit();
-            return Integer.toString(id);
+            return Integer.toString(payment);
         } catch(IOException err) {
             throw new SQLException(err);
         }
@@ -391,7 +391,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             TransactionResult.ErrorCode captureErrorCode = captureResult.getErrorCode();
 
 			TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
-            CreditCardHandler.creditCardTransactionSaleCompleted(
+            PaymentHandler.paymentSaleCompleted(
                 conn,
                 invalidateList,
                 Integer.parseInt(transaction.getPersistenceUniqueId()),

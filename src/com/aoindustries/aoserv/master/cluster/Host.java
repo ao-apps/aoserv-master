@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,15 +12,14 @@ import java.util.List;
 /**
  * @author  AO Industries, Inc.
  */
-public final class Server implements Comparable<Server> {
+public final class Host implements Comparable<Host> {
 
     /**
      * Need to load this directly from the servers.
      */
-    static Server[] getServers() {
-        List<Server> servers = new ArrayList<>();
-        servers.add(
-            new Server(
+    static Host[] getServers() {
+        List<Host> servers = new ArrayList<>();
+        servers.add(new Host(
                 "gw1.fc.aoindustries.com",
                 Rack.FC_9_07,
                 2048,
@@ -34,8 +33,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen907-1.fc.aoindustries.com",
                 Rack.FC_9_07,
                 16384,
@@ -53,8 +51,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen907-2.fc.aoindustries.com",
                 Rack.FC_9_07,
                 2048,
@@ -69,8 +66,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen907-5.fc.aoindustries.com",
                 Rack.FC_9_07,
                 4096,
@@ -84,8 +80,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "gw2.fc.aoindustries.com",
                 Rack.FC_9_14,
                 2048,
@@ -99,8 +94,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen914-1.fc.aoindustries.com",
                 Rack.FC_9_14,
                 2048,
@@ -114,8 +108,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen914-2.fc.aoindustries.com",
                 Rack.FC_9_14,
                 4096,
@@ -130,8 +123,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen914-5.fc.lnxhosting.ca",
                 Rack.FC_9_14,
                 16384,
@@ -164,8 +156,7 @@ public final class Server implements Comparable<Server> {
             )
         );
          */
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen917-2.fc.aoindustries.com",
                 Rack.FC_9_17,
                 2048,
@@ -179,8 +170,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen917-3.fc.aoindustries.com",
                 Rack.FC_9_17,
                 6144,
@@ -194,8 +184,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen917-4.fc.aoindustries.com",
                 Rack.FC_9_17,
                 4096,
@@ -208,8 +197,7 @@ public final class Server implements Comparable<Server> {
                 }
             )
         );
-        servers.add(
-            new Server(
+        servers.add(new Host(
                 "xen917-5.fc.aoindustries.com",
                 Rack.FC_9_17,
                 16384,
@@ -227,8 +215,8 @@ public final class Server implements Comparable<Server> {
         );
         Collections.sort(servers);
         // Collections.shuffle(servers);
-        Server[] array = servers.toArray(new Server[servers.size()]);
-        for(Server server : array) server.allocatedSecondaryRAMs = new int[array.length];
+        Host[] array = servers.toArray(new Host[servers.size()]);
+        for(Host server : array) server.allocatedSecondaryRAMs = new int[array.length];
         return array;
     }
 
@@ -261,7 +249,7 @@ public final class Server implements Comparable<Server> {
      */
     int allocatedProcessorWeight = 0;
 
-    Server(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
+    Host(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
         this.hostname = hostname;
         this.rack = rack;
         this.ram = ram;
@@ -278,7 +266,7 @@ public final class Server implements Comparable<Server> {
      * results in the smallest skip/map ratio (and hopefully quicker finding of optimal layouts).
      */
 	@Override
-    public int compareTo(Server other) {
+    public int compareTo(Host other) {
         /*
         return -realCompareTo(other);
     }

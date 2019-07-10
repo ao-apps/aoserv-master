@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -19,70 +19,70 @@ import java.sql.SQLException;
  */
 final public class FTPHandler {
 
-	public static void addFTPGuestUser(
+	public static void addGuestUser(
 		DatabaseConnection conn,
 		RequestSource source, 
 		InvalidateList invalidateList,
-		User.Name username
+		User.Name linuxUser
 	) throws IOException, SQLException {
-		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addFTPGuestUser", username);
-		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
+		LinuxAccountHandler.checkAccessUser(conn, source, "addFTPGuestUser", linuxUser);
+		if(linuxUser.equals(User.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
 
-		if(LinuxAccountHandler.isLinuxAccountDisabled(conn, username)) throw new SQLException("Unable to add GuestUser, User disabled: "+username);
+		if(LinuxAccountHandler.isUserDisabled(conn, linuxUser)) throw new SQLException("Unable to add GuestUser, User disabled: "+linuxUser);
 
 		// FTP Guest Users may only be added to user and ftponly accounts
-		String type=LinuxAccountHandler.getTypeForLinuxAccount(conn, username);
+		String type=LinuxAccountHandler.getTypeForUser(conn, linuxUser);
 		if(
 			!UserType.USER.equals(type)
 			&& !UserType.FTPONLY.equals(type)
 		) throw new SQLException("Only Linux Accounts of type '"+UserType.USER+"' or '"+UserType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
 
-		conn.executeUpdate("insert into ftp.\"GuestUser\" values(?)", username);
+		conn.executeUpdate("insert into ftp.\"GuestUser\" values(?)", linuxUser);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.FTP_GUEST_USERS,
-			UsernameHandler.getBusinessForUsername(conn, username),
-			LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
+			AccountUserHandler.getAccountForUser(conn, linuxUser),
+			LinuxAccountHandler.getServersForUser(conn, linuxUser),
 			false
 		);
 	}
 
-	public static void removeFTPGuestUser(
+	public static void removeGuestUser(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		User.Name username
+		User.Name linuxUser
 	) throws IOException, SQLException {
-		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "removeFTPGuestUser", username);
-		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
+		LinuxAccountHandler.checkAccessUser(conn, source, "removeFTPGuestUser", linuxUser);
+		if(linuxUser.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
 
-		conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", username);
+		conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", linuxUser);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.FTP_GUEST_USERS,
-			UsernameHandler.getBusinessForUsername(conn, username),
-			LinuxAccountHandler.getAOServersForLinuxAccount(conn, username),
+			AccountUserHandler.getAccountForUser(conn, linuxUser),
+			LinuxAccountHandler.getServersForUser(conn, linuxUser),
 			false
 		);
 	}
 
-	public static void removePrivateFTPServer(
+	public static void removePrivateServer(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int net_bind
+		int bind
 	) throws IOException, SQLException {
-		conn.executeUpdate("delete from ftp.\"PrivateServer\" net_bind=?", net_bind);
+		conn.executeUpdate("delete from ftp.\"PrivateServer\" net_bind=?", bind);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.PRIVATE_FTP_SERVERS,
-			NetBindHandler.getBusinessForNetBind(conn, net_bind),
-			NetBindHandler.getServerForNetBind(conn, net_bind),
+			NetBindHandler.getAccountForBind(conn, bind),
+			NetBindHandler.getHostForBind(conn, bind),
 			false
 		);
 	}

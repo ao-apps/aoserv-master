@@ -17,20 +17,20 @@ import java.util.List;
 /**
  * @author  AO Industries, Inc.
  */
-final public class SslCertificateHandler {
+final public class PkiCertificateHandler {
 
-	private SslCertificateHandler() {
+	private PkiCertificateHandler() {
 	}
 
-	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int sslCertificate) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int certificate) throws IOException, SQLException {
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu != null) {
-			if(MasterServer.getUserHosts(conn, source.getUsername()).length != 0) {
-				int aoServer = getLinuxServerForCertificate(conn, sslCertificate);
-				ServerHandler.checkAccessServer(conn, source, action, aoServer);
+			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+				int linuxServer = getLinuxServerForCertificate(conn, certificate);
+				NetHostHandler.checkAccessHost(conn, source, action, linuxServer);
 			}
 		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForCertificate(conn, sslCertificate));
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForCertificate(conn, certificate));
 		}
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -42,7 +42,7 @@ public class SpamMessageHandler {
 
 		@Override
 		public void getObject(DatabaseConnection conn, RequestSource source, CompressedDataInputStream in, CompressedDataOutputStream out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int id = in.readCompressedInt();
+			int spamMessage = in.readCompressedInt();
 			if(masterUser!=null && masterServers!=null && masterServers.length==0) {
 				MasterServer.writeObject(
 					conn,
@@ -50,7 +50,7 @@ public class SpamMessageHandler {
 					out,
 					new SpamMessage(),
 					QUERY_MASTER + " where id=?",
-					id
+					spamMessage
 				);
 			} else {
 				out.writeByte(AoservProtocol.DONE);
@@ -58,7 +58,7 @@ public class SpamMessageHandler {
 		}
 	}
 
-	static public class SpamMessage_GetTableHandler extends TableHandler.GetTableHandlerByRole {
+	static public class GetTable extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

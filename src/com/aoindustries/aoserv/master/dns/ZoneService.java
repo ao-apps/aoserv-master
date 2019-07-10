@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -95,7 +95,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 					+ "  )\n"
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.name=dz.package",
-					source.getUsername()
+					source.getCurrentAdministrator()
 				);
 			}
 		};
@@ -114,11 +114,11 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 						// Strip any trailing period
 						if(zone.endsWith(".")) zone = zone.substring(0, zone.length() - 1);
 						DomainName domain = DomainName.valueOf(zone);
-						Account.Name accounting = Account.Name.valueOf(results.getString(2));
+						Account.Name account = Account.Name.valueOf(results.getString(2));
 						// We consider all in dns.Zone table as registrable and use them verbatim for whois lookups
 						Set<Account.Name> accounts = map.get(domain);
 						if(accounts == null) map.put(domain, accounts = new LinkedHashSet<>());
-						accounts.add(accounting);
+						accounts.add(account);
 					}
 					return map;
 				} catch(ValidationException e) {

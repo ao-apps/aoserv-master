@@ -29,8 +29,8 @@ final public class VirtualServerHandler {
 	public static void checkAccessVirtualServer(DatabaseConnection conn, RequestSource source, String action, int virtualServer) throws IOException, SQLException {
 		if(!canAccessVirtualServer(conn, source, virtualServer)) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access virtual server: action='"
 				+action
 				+", virtual_server.server="
@@ -45,12 +45,12 @@ final public class VirtualServerHandler {
 	}
 	 */
 
-	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
-		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
+	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
+		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
 	}
 
-	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDiskId) throws IOException, SQLException {
-		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDiskId);
+	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
+		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
 	}
 
 	public static Server.DaemonAccess requestVncConsoleDaemonAccess(
@@ -59,9 +59,9 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", Permission.Name.vnc_console);
+		AccountHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", Permission.Name.vnc_console);
 		// The business must have proper access
-		boolean canVncConsole=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_vnc_console");
+		boolean canVncConsole=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_vnc_console");
 		if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Must be a virtual server with VNC enabled
@@ -75,7 +75,7 @@ final public class VirtualServerHandler {
 			primaryPhysicalServer,
 			null,
 			AOServDaemonProtocol.VNC_CONSOLE,
-			ServerHandler.getNameForServer(conn, virtualServer),
+			NetHostHandler.getNameForHost(conn, virtualServer),
 			null,
 			null,
 			null
@@ -88,15 +88,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "createVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "createVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.createVirtualServer(virtualServerName);
@@ -108,15 +108,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "rebootVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "rebootVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.rebootVirtualServer(virtualServerName);
@@ -128,15 +128,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "shutdownVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "shutdownVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.shutdownVirtualServer(virtualServerName);
@@ -148,15 +148,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "destroyVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "destroyVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.destroyVirtualServer(virtualServerName);
@@ -168,15 +168,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "pauseVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "pauseVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.pauseVirtualServer(virtualServerName);
@@ -188,15 +188,15 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "unpauseVirtualServer", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "unpauseVirtualServer", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.unpauseVirtualServer(virtualServerName);
@@ -208,12 +208,12 @@ final public class VirtualServerHandler {
 		int virtualServer
 	) throws IOException, SQLException {
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "getVirtualServerStatus", Permission.Name.get_virtual_server_status);
+		AccountHandler.checkPermission(conn, source, "getVirtualServerStatus", Permission.Name.get_virtual_server_status);
 		// TODO: Must not be a disabled server
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
 		// Grant access to the Xen outer server
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		conn.releaseConnection();
 		return daemonConnector.getVirtualServerStatus(virtualServerName);
@@ -226,15 +226,15 @@ final public class VirtualServerHandler {
 	) throws IOException, SQLException {
 		int virtualServer = getVirtualServerForVirtualDisk(conn, virtualDisk);
 		// The user must have proper permissions
-		BusinessHandler.checkPermission(conn, source, "verifyVirtualDisk", Permission.Name.control_virtual_server);
+		AccountHandler.checkPermission(conn, source, "verifyVirtualDisk", Permission.Name.control_virtual_server);
 		// The business must have proper access
-		boolean canControlVirtualServer=BusinessHandler.canBusinessServer(conn, source, virtualServer, "can_control_virtual_server");
+		boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
 		if(!canControlVirtualServer) throw new SQLException("Not allowed to control "+virtualServer);
 		// Must be a cluster admin
 		ClusterHandler.checkClusterAdmin(conn, source, "verifyVirtualDisk");
 		// TODO: Must not be a disabled server
 		// Lookup values
-		String virtualServerName = ServerHandler.getNameForServer(conn, virtualServer);
+		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		String device = getDeviceForVirtualDisk(conn, virtualDisk);
 		// Find current location of primary and secondary servers
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);

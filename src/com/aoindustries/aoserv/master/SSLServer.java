@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2018 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -26,7 +26,7 @@ import javax.net.ssl.SSLServerSocketFactory;
  */
 public class SSLServer extends TCPServer {
 
-	private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+	private static final Logger logger = LogFactory.getLogger(NetHostHandler.class);
 
 	/**
 	 * The protocol of this server.

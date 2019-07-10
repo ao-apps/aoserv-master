@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -74,7 +74,7 @@ public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerBy
 				+ "  inner join \"net.reputation\".\"LimiterClass\" irll on irl.id     = irll.limiter\n"    // Find all limiters limits in the same farm
 				+ "where\n"
 				+ "  ms.username=?",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
@@ -104,7 +104,7 @@ public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerBy
 			+ "  inner join \"net.reputation\".\"LimiterClass\" irll on irl.id         = irll.limiter\n"
 			+ "where\n"
 			+ "  un.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

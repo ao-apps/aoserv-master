@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -105,7 +105,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			//+ "  and pk.accounting=ti.accounting\n"
 			+ "  and ti.status in (?,?,?)\n"
 			+ "  and ti.ticket_type=?",
-			source.getUsername(),
+			source.getCurrentAdministrator(),
 			Status.OPEN,
 			Status.HOLD,
 			Status.BOUNCED,
@@ -157,7 +157,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "    or bu1.accounting=ti.brand\n" // Has access to brand
 				+ "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
 				+ "  )",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(
@@ -198,7 +198,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  )\n"
 				+ "  and bu1.accounting=ti.accounting\n"
 				+ "  and ti.status not in (?,?)",
-				source.getUsername(),
+				source.getCurrentAdministrator(),
 				Status.JUNK,
 				Status.DELETED
 			);

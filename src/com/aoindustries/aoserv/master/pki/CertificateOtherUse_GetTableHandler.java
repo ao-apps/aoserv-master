@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -60,7 +60,7 @@ public class CertificateOtherUse_GetTableHandler extends TableHandler.GetTableHa
 			+ "  inner join pki.\"CertificateOtherUse\" scou on sc.id=scou.ssl_certificate\n"
 			+ "where\n"
 			+ "  ms.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -91,7 +91,7 @@ public class CertificateOtherUse_GetTableHandler extends TableHandler.GetTableHa
 			+ "  and bu1.accounting=pk2.accounting\n"
 			+ "  and pk2.id=sc.package\n"
 			+ "  and sc.id=scou.ssl_certificate",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

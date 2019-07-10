@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2017 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2017, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,25 +16,25 @@ import com.aoindustries.util.IntList;
 final public class InvalidateCacheEntry {
 
 	private final IntList invalidateList;
-	private final int server;
+	private final int host;
 	private final Long cacheSyncID;
 
 	public InvalidateCacheEntry(
 		IntList invalidateList,
-		int server,
+		int host,
 		Long cacheSyncID
 	) {
-		this.invalidateList=invalidateList;
-		this.server=server;
-		this.cacheSyncID=cacheSyncID;
+		this.invalidateList = invalidateList;
+		this.host = host;
+		this.cacheSyncID = cacheSyncID;
 	}
 
 	public IntList getInvalidateList() {
 		return invalidateList;
 	}
 
-	public int getServer() {
-		return server;
+	public int getHost() {
+		return host;
 	}
 
 	public Long getCacheSyncID() {

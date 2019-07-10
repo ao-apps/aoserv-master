@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -62,13 +62,13 @@ public class SendmailServer_GetTableHandler extends TableHandler.GetTableHandler
 			+ "  inner join email.\"SendmailServer\" ss on ms.server=ss.ao_server\n"
 			+ "where\n"
 			+ "  ms.username=?",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -121,8 +121,8 @@ public class SendmailServer_GetTableHandler extends TableHandler.GetTableHandler
 			+ "      and bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting=pk4.accounting\n"
 			+ "      and pk4.id=ss.package\n"
 			+ "  )",
-			username,
-			username
+			currentAdministrator,
+			currentAdministrator
 		);
 	}
 }

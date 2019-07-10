@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -82,8 +82,9 @@ public final class MasterConfiguration {
         return ints;
     }
 
-    public static Account.Name getRootBusiness() throws IOException {
+    public static Account.Name getRootAccount() throws IOException {
         try {
+			// TODO: Rename this property
             return Account.Name.valueOf(getProperty("aoserv.master.businesses.root"));
         } catch(ValidationException e) {
             throw new IOException(e.getLocalizedMessage(), e);
@@ -140,8 +141,8 @@ public final class MasterConfiguration {
         return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
     }
 
-    public static String getDaemonKey(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-        return getProperty("aoserv.daemon.client.key."+ServerHandler.getHostnameForAOServer(database, aoServer));
+    public static String getDaemonKey(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
+        return getProperty("aoserv.daemon.client.key."+NetHostHandler.getHostnameForLinuxServer(database, linuxServer));
     }
 
     public static String getTicketSmtpServer() throws IOException {

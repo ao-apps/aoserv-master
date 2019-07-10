@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,7 +12,7 @@ import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
-import com.aoindustries.aoserv.master.UsernameHandler;
+import com.aoindustries.aoserv.master.AccountUserHandler;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import java.io.IOException;
@@ -75,7 +75,7 @@ public class Set_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 				+ "  inner join \"net.reputation\".\"Set\"        irs  on irls.\"set\" =  irs.id\n"         // Find all sets used by any limiter in the same farm
 				+ "where\n"
 				+ "  ms.username=?",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
@@ -88,9 +88,8 @@ public class Set_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 	 */
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
-		MasterServer.writeObjects(
-			conn,
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		MasterServer.writeObjects(conn,
 			source,
 			out,
 			provideProgress,
@@ -128,8 +127,8 @@ public class Set_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "      irs3.allow_subaccount_use\n"
 			+ "      and account.is_account_or_parent(irs3.accounting, ?)\n"
 			+ "  )",
-			username,
-			UsernameHandler.getBusinessForUsername(conn, username)
+			currentAdministrator,
+			AccountUserHandler.getAccountForUser(conn, currentAdministrator)
 		);
 	}
 }

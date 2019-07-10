@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2004-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -36,14 +36,14 @@ public final class RandomHandler {
 	private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
 		boolean isAllowed=false;
 
-		com.aoindustries.aoserv.client.account.User.Name mustring=source.getUsername();
-		User mu = MasterServer.getUser(conn, mustring);
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+		User mu = MasterServer.getUser(conn, currentAdministrator);
 		if (mu!=null) {
-			UserHost[] masterServers=MasterServer.getUserHosts(conn, mustring);
+			UserHost[] masterServers=MasterServer.getUserHosts(conn, currentAdministrator);
 			if(masterServers.length==0) isAllowed=true;
 			else {
 				for (UserHost masterServer : masterServers) {
-					if (ServerHandler.isAOServer(conn, masterServer.getServerPKey())) {
+					if (NetHostHandler.isLinuxServer(conn, masterServer.getServerPKey())) {
 						isAllowed=true;
 						break;
 					}
@@ -52,8 +52,8 @@ public final class RandomHandler {
 		}
 		if(!isAllowed) {
 			String message=
-				"business_administrator.username="
-				+mustring
+				"currentAdministrator="
+				+currentAdministrator
 				+" is not allowed to access the master entropy pool: action='"
 				+action
 			;

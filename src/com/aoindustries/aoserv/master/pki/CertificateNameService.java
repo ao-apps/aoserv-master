@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -81,7 +81,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 					+ "  inner join pki.\"CertificateName\" scn on sc.id=scn.ssl_certificate\n"
 					+ "where\n"
 					+ "  ms.username=?",
-					source.getUsername()
+					source.getCurrentAdministrator()
 				);
 			}
 
@@ -112,7 +112,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 					+ "  and bu1.accounting=pk2.accounting\n"
 					+ "  and pk2.id=sc.package\n"
 					+ "  and sc.id=scn.ssl_certificate",
-					source.getUsername()
+					source.getCurrentAdministrator()
 				);
 			}
 		};
@@ -129,7 +129,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {
 						DomainName domain = DomainName.valueOf(results.getString(1));
-						Account.Name accounting = Account.Name.valueOf(results.getString(2));
+						Account.Name account = Account.Name.valueOf(results.getString(2));
 						DomainName registrableDomain;
 						try {
 							registrableDomain = ZoneTable.getHostTLD(domain, tlds);
@@ -139,7 +139,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 						}
 						Set<Account.Name> accounts = map.get(registrableDomain);
 						if(accounts == null) map.put(registrableDomain, accounts = new LinkedHashSet<>());
-						accounts.add(accounting);
+						accounts.add(account);
 					}
 					return map;
 				} catch(ValidationException e) {

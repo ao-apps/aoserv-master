@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -62,7 +62,7 @@ public class FileReplicationSetting_GetTableHandler extends TableHandler.GetTabl
 			+ "  ms.username=?\n"
 			+ "  and ms.server=ffr.server\n"
 			+ "  and ffr.id=fbs.replication",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 
@@ -95,7 +95,7 @@ public class FileReplicationSetting_GetTableHandler extends TableHandler.GetTabl
 			+ "  and pk2.id=se.package\n"
 			+ "  and se.id=ffr.server\n"
 			+ "  and ffr.id=fbs.replication",
-			source.getUsername()
+			source.getCurrentAdministrator()
 		);
 	}
 }

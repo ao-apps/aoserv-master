@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -85,7 +85,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 					+ "  and ms.server=hs.ao_server\n"
 					+ "  and hs.id=hsb.httpd_site\n"
 					+ "  and hsb.id=hsu.httpd_site_bind",
-					source.getUsername()
+					source.getCurrentAdministrator()
 				);
 			}
 
@@ -118,7 +118,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 					+ "  and pk2.name=hs.package\n"
 					+ "  and hs.id=hsb.httpd_site\n"
 					+ "  and hsb.id=hsu.httpd_site_bind",
-					source.getUsername()
+					source.getCurrentAdministrator()
 				);
 			}
 		};
@@ -135,7 +135,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {
 						DomainName hostname = DomainName.valueOf(results.getString(1));
-						Account.Name accounting = Account.Name.valueOf(results.getString(2));
+						Account.Name account = Account.Name.valueOf(results.getString(2));
 						DomainName registrableDomain;
 						try {
 							registrableDomain = ZoneTable.getHostTLD(hostname, tlds);
@@ -145,7 +145,7 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 						}
 						Set<Account.Name> accounts = map.get(registrableDomain);
 						if(accounts == null) map.put(registrableDomain, accounts = new LinkedHashSet<>());
-						accounts.add(accounting);
+						accounts.add(account);
 					}
 					return map;
 				} catch(ValidationException e) {

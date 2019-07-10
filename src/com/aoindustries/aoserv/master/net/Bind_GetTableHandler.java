@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -117,7 +117,7 @@ public class Bind_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  )",
 			AoservProtocol.FILTERED,
 			FirewallZone.PUBLIC,
-			source.getUsername(),
+			source.getCurrentAdministrator(),
 			AppProtocol.AOSERV_DAEMON,
 			AppProtocol.AOSERV_DAEMON_SSL
 		);
@@ -125,7 +125,7 @@ public class Bind_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
 	@Override
 	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name username = source.getUsername();
+		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -244,10 +244,10 @@ public class Bind_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  )",
 			AoservProtocol.FILTERED,
 			FirewallZone.PUBLIC,
-			username,
-			username,
-			username,
-			username//,
+			currentAdministrator,
+			currentAdministrator,
+			currentAdministrator,
+			currentAdministrator//,
 			//username,
 			//Protocol.AOSERV_DAEMON,
 			//Protocol.AOSERV_DAEMON_SSL

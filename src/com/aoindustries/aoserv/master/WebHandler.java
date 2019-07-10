@@ -28,7 +28,6 @@ import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.lang.ObjectUtils;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.Port;
@@ -45,18 +44,19 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The <code>HttpdHandler</code> handles all the accesses to the HTTPD tables.
  *
  * @author  AO Industries, Inc.
  */
-final public class HttpdHandler {
+final public class WebHandler {
 
 	/**
 	 * Make no instances.
 	 */
-	private HttpdHandler() {
+	private WebHandler() {
 	}
 
 	/**
@@ -64,20 +64,20 @@ final public class HttpdHandler {
 	 */
 	public static final int MINIMUM_AUTO_PORT_NUMBER = 16384;
 
-	private final static Map<Integer,Boolean> disabledHttpdSharedTomcats = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledHttpdSiteBinds = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledHttpdSites = new HashMap<>();
+	private final static Map<Integer,Boolean> disabledSharedTomcats = new HashMap<>();
+	private final static Map<Integer,Boolean> disabledVirtualHosts = new HashMap<>();
+	private final static Map<Integer,Boolean> disabledSites = new HashMap<>();
 
 	public static void addTomcatWorker(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int netBindPKey,
-		int httpdSitePKey
+		int bind,
+		int site
 	) throws IOException, SQLException {
-		int server=NetBindHandler.getServerForNetBind(conn, netBindPKey);
-		if(!ServerHandler.isAOServer(conn, server)) throw new SQLException("Host is not an Server: "+server);
-		int aoServer = server;
-		if(httpdSitePKey == -1) {
+		int host = NetBindHandler.getHostForBind(conn, bind);
+		if(!NetHostHandler.isLinuxServer(conn, host)) throw new SQLException("Host is not a Linux server: " + host);
+		int linusServer = host;
+		if(site == -1) {
 			conn.executeUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"Worker\"\n"
@@ -107,8 +107,8 @@ final public class HttpdHandler {
 				+ "  ),\n"
 				+ "  null\n"
 				+ ")",
-				netBindPKey,
-				aoServer
+				bind,
+				linusServer
 			);
 		} else {
 			conn.executeUpdate(
@@ -140,33 +140,33 @@ final public class HttpdHandler {
 				+ "  ),\n"
 				+ "  ?\n"
 				+ ")",
-				netBindPKey,
-				aoServer,
-				httpdSitePKey
+				bind,
+				linusServer,
+				site
 			);
 		}
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_WORKERS,
-			NetBindHandler.getBusinessForNetBind(conn, netBindPKey),
-			aoServer,
+			NetBindHandler.getAccountForBind(conn, bind),
+			linusServer,
 			false
 		);
 	}
 
-	public static int addHttpdSiteURL(
+	public static int addVirtualHostName(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int hsb_id,
+		int virtualHost,
 		DomainName hostname
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb_id);
-		checkAccessHttpdSite(conn, source, "addHttpdSiteURL", hs);
-		if(isHttpdSiteBindDisabled(conn, hsb_id)) throw new SQLException("Unable to add VirtualHostName, VirtualHost disabled: "+hsb_id);
-		MasterServer.checkAccessHostname(conn, source, "addHttpdSiteURL", hostname.toString());
+		int site = getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "addVirtualHostName", site);
+		if(isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("Unable to add VirtualHostName, VirtualHost disabled: "+virtualHost);
+		MasterServer.checkAccessHostname(conn, source, "addVirtualHostName", hostname.toString());
 
-		int id = conn.executeIntUpdate(
+		int virtualHostName = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  web.\"VirtualHostName\"\n"
 			+ "VALUES (\n"
@@ -175,74 +175,74 @@ final public class HttpdHandler {
 			+ "  ?,\n"
 			+ "  (select id from web.\"VirtualHostName\" where httpd_site_bind=? and is_primary limit 1) is null\n"
 			+ ") RETURNING id",
-			hsb_id,
+			virtualHost,
 			hostname,
-			hsb_id
+			virtualHost
 		);
 
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITE_URLS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 
-		return id;
+		return virtualHostName;
 	}
 
-	public static void checkAccessHttpdSharedTomcat(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
+	public static void checkAccessSharedTomcat(DatabaseConnection conn, RequestSource source, String action, int sharedTomcat) throws IOException, SQLException {
 		if(
-			!LinuxAccountHandler.canAccessLinuxServerGroup(
+			!LinuxAccountHandler.canAccessGroupServer(
 				conn,
 				source,
-				conn.executeIntQuery("select linux_server_group from \"web.tomcat\".\"SharedTomcat\" where id=?", id)
+				conn.executeIntQuery("select linux_server_group from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat)
 			)
 		) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access httpd_shared_tomcat: action='"
 				+action
 				+"', id="
-				+id
+				+sharedTomcat
 			;
 			throw new SQLException(message);
 		}
 	}
 
-	public static boolean canAccessHttpdSite(DatabaseConnection conn, RequestSource source, int httpdSite) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+	public static boolean canAccessSite(DatabaseConnection conn, RequestSource source, int site) throws IOException, SQLException {
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu!=null) {
-			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
-				return ServerHandler.canAccessServer(conn, source, getAOServerForHttpdSite(conn, httpdSite));
+			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length!=0) {
+				return NetHostHandler.canAccessHost(conn, source, getLinuxServerForSite(conn, site));
 			} else {
 				return true;
 			}
 		} else {
-			return PackageHandler.canAccessPackage(conn, source, getPackageForHttpdSite(conn, httpdSite));
+			return PackageHandler.canAccessPackage(conn, source, getPackageForSite(conn, site));
 		}
 	}
 
 	public static void checkAccessHttpdServer(DatabaseConnection conn, RequestSource source, String action, int httpdServer) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu != null) {
-			if(MasterServer.getUserHosts(conn, source.getUsername()).length != 0) {
-				ServerHandler.checkAccessServer(conn, source, action, getAOServerForHttpdServer(conn, httpdServer));
+			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+				NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForHttpdServer(conn, httpdServer));
 			}
 		} else {
 			PackageHandler.checkAccessPackage(conn, source, action, getPackageForHttpdServer(conn, httpdServer));
 		}
 	}
 
-	public static void checkAccessHttpdSite(DatabaseConnection conn, RequestSource source, String action, int httpdSite) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getUsername());
+	public static void checkAccessSite(DatabaseConnection conn, RequestSource source, String action, int site) throws IOException, SQLException {
+		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu!=null) {
-			if(MasterServer.getUserHosts(conn, source.getUsername()).length!=0) {
-				ServerHandler.checkAccessServer(conn, source, action, getAOServerForHttpdSite(conn, httpdSite));
+			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length!=0) {
+				NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForSite(conn, site));
 			}
 		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForHttpdSite(conn, httpdSite));
+			PackageHandler.checkAccessPackage(conn, source, action, getPackageForSite(conn, site));
 		}
 	}
 
@@ -255,7 +255,7 @@ final public class HttpdHandler {
 
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
 			conn,
-			getAOServerForHttpdServer(conn, httpdServer)
+			getLinuxServerForHttpdServer(conn, httpdServer)
 		);
 		conn.releaseConnection();
 		return daemonConnector.getHttpdServerConcurrency(httpdServer);
@@ -264,36 +264,36 @@ final public class HttpdHandler {
 	/**
 	 * Gets the id of a Site given its server and name or {@code -1} if not found.
 	 */
-	public static int getHttpdSite(DatabaseConnection conn, int aoServer, String siteName) throws IOException, SQLException {
+	public static int getSite(DatabaseConnection conn, int linuxServer, String name) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select coalesce(\n"
 			+ "  (select id from web.\"Site\" where (ao_server, \"name\")=(?,?)),\n"
 			+ "  -1\n"
 			+ ")",
-			aoServer,
-			siteName
+			linuxServer,
+			name
 		);
 	}
 
 	/**
 	 * Gets the id of a SharedTomcat given its server and name or {@code -1} if not found.
 	 */
-	public static int getHttpdSharedTomcat(DatabaseConnection conn, int aoServer, String name) throws IOException, SQLException {
+	public static int getSharedTomcat(DatabaseConnection conn, int linuxServer, String name) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select coalesce(\n"
 			+ "  (select id from \"web.tomcat\".\"SharedTomcat\" where (ao_server, name)=(?,?)),\n"
 			+ "  -1\n"
 			+ ")",
-			aoServer,
+			linuxServer,
 			name
 		);
 	}
 
-	public static int addHttpdSiteAuthenticatedLocation(
+	public static int addLocation(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int httpd_site,
+		int site,
 		String path,
 		boolean isRegularExpression,
 		String authName,
@@ -302,8 +302,8 @@ final public class HttpdHandler {
 		String require,
 		String handler
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "addHttpdSiteAuthenticatedLocation", httpd_site);
-		if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to add Location, Site disabled: "+httpd_site);
+		checkAccessSite(conn, source, "addLocation", site);
+		if(isSiteDisabled(conn, site)) throw new SQLException("Unable to add Location, Site disabled: "+site);
 		String error = Location.validatePath(path);
 		if(error==null) error = Location.validateAuthName(authName);
 		if(error==null) error = Location.validateAuthGroupFile(authGroupFile);
@@ -311,7 +311,7 @@ final public class HttpdHandler {
 		if(error==null) error = Location.validateRequire(require);
 		if(error!=null) throw new SQLException("Unable to add Location: "+error);
 
-		int id = conn.executeIntUpdate(
+		int location = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  web.\"Location\"\n"
 			+ "VALUES (\n"
@@ -325,7 +325,7 @@ final public class HttpdHandler {
 			+ "  ?,\n" // require
 			+ "  ?\n"  // handler
 			+ ") RETURNING id",
-			httpd_site,
+			site,
 			path,
 			isRegularExpression,
 			authName,
@@ -338,12 +338,12 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
-			getBusinessForHttpdSite(conn, httpd_site),
-			getAOServerForHttpdSite(conn, httpd_site),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 
-		return id;
+		return location;
 	}
 
 	/**
@@ -356,12 +356,11 @@ final public class HttpdHandler {
 		return path;
 	}
 
-	@SuppressWarnings("deprecation") // Java 1.7: Do not suppress
-	public static int addHttpdTomcatContext(
+	public static int addContext(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int tomcat_site,
+		int tomcatSite,
 		String className,
 		boolean cookies,
 		boolean crossContext,
@@ -376,12 +375,12 @@ final public class HttpdHandler {
 		PosixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "addHttpdTomcatContext", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add Context, Site disabled: "+tomcat_site);
-		checkHttpdTomcatContext(
+		checkAccessSite(conn, source, "addHttpdTomcatContext", tomcatSite);
+		if(isSiteDisabled(conn, tomcatSite)) throw new SQLException("Unable to add Context, Site disabled: "+tomcatSite);
+		checkContext(
 			conn,
 			source,
-			tomcat_site,
+			tomcatSite,
 			className,
 			crossContext,
 			docBase,
@@ -393,10 +392,10 @@ final public class HttpdHandler {
 			serverXmlConfigured
 		);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
-		int id = conn.executeIntUpdate(
+		int context = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  \"web.tomcat\".\"Context\"\n"
 			+ "VALUES (\n"
@@ -416,7 +415,7 @@ final public class HttpdHandler {
 			+ "  ?,\n"
 			+ "  ?\n"
 			+ ") RETURNING id",
-			tomcat_site,
+			tomcatSite,
 			className,
 			cookies,
 			crossContext,
@@ -428,15 +427,15 @@ final public class HttpdHandler {
 			useNaming,
 			wrapperClass,
 			debug,
-			ObjectUtils.toString(workDir),
+			Objects.toString(workDir, null),
 			serverXmlConfigured
 		);
 
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_CONTEXTS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 
@@ -446,41 +445,41 @@ final public class HttpdHandler {
 			+ "  select id from \"web.tomcat\".\"JkMount\"\n"
 			+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 			+ ") is null",
-			tomcat_site
+			tomcatSite
 		);
 
 		if(useApache) {
 			conn.executeUpdate(
 				"insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-				tomcat_site,
+				tomcatSite,
 				checkJkMountPath(path + "/j_security_check")
 			);
 			conn.executeUpdate(
 				"insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-				tomcat_site,
+				tomcatSite,
 				checkJkMountPath(path + "/servlet/*")
 			);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
 		} else {
-			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from web.\"Site\" where id=?", tomcat_site);
+			boolean enableCgi = conn.executeBooleanQuery("select enable_cgi from web.\"Site\" where id=?", tomcatSite);
 			if(enableCgi) {
 				conn.executeUpdate(
 					"insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
-					tomcat_site,
+					tomcatSite,
 					checkJkMountPath(path + "/cgi-bin/*")
 				);
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
 			}
 		}
 
-		return id;
+		return context;
 	}
 
-	public static int addHttpdTomcatDataSource(
+	public static int addContextDataSource(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int tomcat_context,
+		int context,
 		String name,
 		String driverClassName,
 		String url,
@@ -491,11 +490,11 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "addHttpdTomcatDataSource", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextDataSource, Site disabled: "+tomcat_site);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "addContextDataSource", tomcat_site);
+		if(isSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextDataSource, Site disabled: "+tomcat_site);
 
-		int id = conn.executeIntUpdate(
+		int contextDataSource = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  \"web.tomcat\".\"ContextDataSource\"\n"
 			+ "VALUES (\n"
@@ -511,7 +510,7 @@ final public class HttpdHandler {
 			+ "  ?,\n"
 			+ "  ?\n"
 			+ ") RETURNING id",
-			tomcat_context,
+			context,
 			name,
 			driverClassName,
 			url,
@@ -526,29 +525,29 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			getAccountForSite(conn, tomcat_site),
+			getLinuxServerForSite(conn, tomcat_site),
 			false
 		);
 
-		return id;
+		return contextDataSource;
 	}
 
-	public static int addHttpdTomcatParameter(
+	public static int addContextParameter(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int tomcat_context,
+		int context,
 		String name,
 		String value,
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "addHttpdTomcatParameter", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextParameter, Site disabled: "+tomcat_site);
+		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "addContextParameter", tomcat_site);
+		if(isSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to add ContextParameter, Site disabled: "+tomcat_site);
 
-		int id = conn.executeIntUpdate(
+		int contextParameter = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  \"web.tomcat\".\"ContextParameter\"\n"
 			+ "VALUES (\n"
@@ -559,7 +558,7 @@ final public class HttpdHandler {
 			+ "  ?,\n"
 			+ "  ?\n"
 			+ ") RETURNING id",
-			tomcat_context,
+			context,
 			name,
 			value,
 			override,
@@ -569,27 +568,27 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_PARAMETERS,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			getAccountForSite(conn, tomcat_site),
+			getLinuxServerForSite(conn, tomcat_site),
 			false
 		);
 
-		return id;
+		return contextParameter;
 	}
 
-	public static int addHttpdTomcatSiteJkMount(
+	public static int addJkMount(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int tomcat_site,
+		int tomcatSite,
 		String path,
 		boolean mount
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "addHttpdTomcatSiteJkMount", tomcat_site);
+		checkAccessSite(conn, source, "addHttpdTomcatSiteJkMount", tomcatSite);
 
-		int id = conn.executeIntUpdate(
+		int jkMount = conn.executeIntUpdate(
 			"INSERT INTO \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, \"path\", mount) VALUES (?,?,?) RETURNING id",
-			tomcat_site,
+			tomcatSite,
 			checkJkMountPath(path),
 			mount
 		);
@@ -597,38 +596,38 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			getAccountForSite(conn, tomcatSite),
+			getLinuxServerForSite(conn, tomcatSite),
 			false
 		);
 
-		return id;
+		return jkMount;
 	}
 
-	public static void removeHttpdTomcatSiteJkMount(
+	public static void removeJkMount(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int jkMount
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select httpd_tomcat_site from \"web.tomcat\".\"JkMount\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "removeHttpdTomcatSiteJkMount", tomcat_site);
+		int tomcatSite = conn.executeIntQuery("select httpd_tomcat_site from \"web.tomcat\".\"JkMount\" where id=?", jkMount);
+		checkAccessSite(conn, source, "removeJkMount", tomcatSite);
 
-		conn.executeUpdate("delete from \"web.tomcat\".\"JkMount\" where id=?", id);
+		conn.executeUpdate("delete from \"web.tomcat\".\"JkMount\" where id=?", jkMount);
 
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-			getBusinessForHttpdSite(conn, tomcat_site),
-			getAOServerForHttpdSite(conn, tomcat_site),
+			getAccountForSite(conn, tomcatSite),
+			getLinuxServerForSite(conn, tomcatSite),
 			false
 		);
 	}
 
-	public static void checkHttpdTomcatContext(
+	public static void checkContext(
 		DatabaseConnection conn,
 		RequestSource source,
-		int tomcat_site,
+		int tomcatSite,
 		String className,
 		boolean crossContext,
 		PosixPath docBase,
@@ -640,10 +639,10 @@ final public class HttpdHandler {
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
 		if(!Context.isValidDocBase(docBase)) throw new SQLException("Invalid docBase: "+docBase);
-		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
 		// OperatingSystem settings
-		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
 		PosixPath httpdSharedTomcatsDir = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(osv);
 		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
@@ -661,12 +660,12 @@ final public class HttpdHandler {
 				+ "where\n"
 				+ "  ao_server=?\n"
 				+ "  and (home || '/')=substring(? from 1 for (length(home) + 1))",
-				aoServer,
+				linuxServer,
 				docBaseStr
 			);
 			boolean found=false;
 			for(int c=0;c<lsas.size();c++) {
-				if(LinuxAccountHandler.canAccessLinuxServerAccount(conn, source, lsas.getInt(c))) {
+				if(LinuxAccountHandler.canAccessUserServer(conn, source, lsas.getInt(c))) {
 					found=true;
 					break;
 				}
@@ -676,14 +675,14 @@ final public class HttpdHandler {
 			int slashPos = docBaseStr.indexOf('/', httpdSitesDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();
 			String siteName = docBaseStr.substring(httpdSitesDir.toString().length() + 1, slashPos);
-			int hs = conn.executeIntQuery("select id from web.\"Site\" where ao_server=? and \"name\"=?", aoServer, siteName);
-			HttpdHandler.checkAccessHttpdSite(conn, source, "addCvsRepository", hs);
+			int hs = conn.executeIntQuery("select id from web.\"Site\" where ao_server=? and \"name\"=?", linuxServer, siteName);
+			WebHandler.checkAccessSite(conn, source, "addCvsRepository", hs);
 		} else if(docBaseStr.startsWith(httpdSharedTomcatsDir + "/")) {
 			int slashPos = docBaseStr.indexOf('/', httpdSharedTomcatsDir.toString().length() + 1);
 			if(slashPos == -1) slashPos = docBaseStr.length();
 			String tomcatName = docBaseStr.substring(httpdSharedTomcatsDir.toString().length() + 1, slashPos);
-			int groupLSA = conn.executeIntQuery("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", tomcatName, aoServer);
-			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "addCvsRepository", groupLSA);
+			int groupLSA = conn.executeIntQuery("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", tomcatName, linuxServer);
+			LinuxAccountHandler.checkAccessUserServer(conn, source, "addCvsRepository", groupLSA);
 		} else {
 			// Allow the example directories
 			List<PosixPath> tomcats = conn.executeObjectListQuery(ObjectFactories.posixPathFactory,
@@ -701,8 +700,8 @@ final public class HttpdHandler {
 				+ "  inner join \"web.tomcat\".\"Version\" htv on hts.version=htv.version\n"
 				+ "where\n"
 				+ "  hts.httpd_site=?\n",
-				tomcat_site,
-				tomcat_site
+				tomcatSite,
+				tomcatSite
 			);
 			boolean found=false;
 			for (PosixPath tomcat : tomcats) {
@@ -722,14 +721,14 @@ final public class HttpdHandler {
 	/**
 	 * Creates a new Tomcat site with the standard configuration.
 	 */
-	public static int addHttpdJBossSite(
+	public static int addJbossSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int aoServer,
+		int linuxServer,
 		String siteName,
 		Account.Name packageName,
-		com.aoindustries.aoserv.client.linux.User.Name username,
+		com.aoindustries.aoserv.client.linux.User.Name user,
 		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
@@ -745,14 +744,14 @@ final public class HttpdHandler {
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
-			"addHttdJBossSite",
+			"addJbossSite",
 			conn,
 			source,
 			invalidateList,
-			aoServer,
+			linuxServer,
 			siteName,
 			packageName,
-			username,
+			user,
 			group,
 			serverAdmin,
 			useApache,
@@ -777,10 +776,10 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int aoServer,
+		int linuxServer,
 		String siteName,
 		Account.Name packageName,
-		com.aoindustries.aoserv.client.linux.User.Name username,
+		com.aoindustries.aoserv.client.linux.User.Name user,
 		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
@@ -799,19 +798,19 @@ final public class HttpdHandler {
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		// Perform the security checks on the input
-		ServerHandler.checkAccessServer(conn, source, methodName, aoServer);
+		NetHostHandler.checkAccessHost(conn, source, methodName, linuxServer);
 		if(!Site.isValidSiteName(siteName)) throw new SQLException("Invalid site name: "+siteName);
 		PackageHandler.checkAccessPackage(conn, source, methodName, packageName);
 		if(PackageHandler.isPackageDisabled(conn, packageName)) throw new SQLException("Unable to "+methodName+", Package disabled: "+packageName);
-		LinuxAccountHandler.checkAccessLinuxAccount(conn, source, methodName, username);
-		int lsa=LinuxAccountHandler.getLinuxServerAccount(conn, username, aoServer);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to "+methodName+", UserServer disabled: "+lsa);
-		LinuxAccountHandler.checkAccessLinuxGroup(conn, source, methodName, group);
-		int lsg=LinuxAccountHandler.getLinuxServerGroup(conn, group, aoServer);
-		if(username.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to "+methodName+" for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
-		LinuxAccountHandler.checkAccessLinuxGroup(conn, source, methodName, group);
-		final int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
-		if(osv == -1) throw new SQLException("Unknown operating system version for server #" + aoServer);
+		LinuxAccountHandler.checkAccessUser(conn, source, methodName, user);
+		int lsa=LinuxAccountHandler.getUserServer(conn, user, linuxServer);
+		if(LinuxAccountHandler.isUserServerDisabled(conn, lsa)) throw new SQLException("Unable to "+methodName+", UserServer disabled: "+lsa);
+		LinuxAccountHandler.checkAccessGroup(conn, source, methodName, group);
+		int lsg=LinuxAccountHandler.getGroupServer(conn, group, linuxServer);
+		if(user.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to "+methodName+" for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		LinuxAccountHandler.checkAccessGroup(conn, source, methodName, group);
+		final int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
+		if(osv == -1) throw new SQLException("Unknown operating system version for server #" + linuxServer);
 		if(
 			group.equals(Group.FTPONLY)
 			|| group.equals(Group.MAIL)
@@ -825,7 +824,7 @@ final public class HttpdHandler {
 			// Get shared Tomcat id
 			sharedTomcatPkey = conn.executeIntQuery(
 				"select id from \"web.tomcat\".\"SharedTomcat\" where ao_server=? and name=?",
-				aoServer,
+				linuxServer,
 				sharedTomcatName
 			);
 
@@ -847,10 +846,10 @@ final public class HttpdHandler {
 				+ "    )\n"
 				+ ") is not null",
 				sharedTomcatLinuxGroup,
-				username,
+				user,
 				osv
 			);
-			if (!hasAccess) throw new SQLException("linux.User ("+username+") does not have access to linux.Group ("+sharedTomcatLinuxGroup+")");
+			if (!hasAccess) throw new SQLException("linux.User ("+user+") does not have access to linux.Group ("+sharedTomcatLinuxGroup+")");
 			hasAccess = conn.executeBooleanQuery(
 				"select (\n"
 				+ "  select\n"
@@ -880,13 +879,13 @@ final public class HttpdHandler {
 			&& !tomcatVersionStr.equals(Version.VERSION_3_2_4)
 		;
 		if(ipAddress!=-1) {
-			IPAddressHandler.checkAccessIPAddress(conn, source, methodName, ipAddress);
+			IpAddressHandler.checkAccessIpAddress(conn, source, methodName, ipAddress);
 			// The IP must be on the provided server
-			int ipServer=IPAddressHandler.getServerForIPAddress(conn, ipAddress);
-			if(ipServer!=aoServer) throw new SQLException("IP address "+ipAddress+" is not hosted on Server #"+aoServer);
+			int ipHost = IpAddressHandler.getHostForIpAddress(conn, ipAddress);
+			if(ipHost != linuxServer) throw new SQLException("IP address "+ipAddress+" is not hosted on Server #"+linuxServer);
 		} else {
-			ipAddress=IPAddressHandler.getSharedHttpdIP(conn, aoServer);
-			if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for Server #"+aoServer);
+			ipAddress=IpAddressHandler.getSharedHttpdIpAddress(conn, linuxServer);
+			if(ipAddress==-1) throw new SQLException("Unable to find shared IP address for Server #"+linuxServer);
 		}
 		if(phpVersion != -1) {
 			// Version must be correct for this server
@@ -902,9 +901,9 @@ final public class HttpdHandler {
 			if(tvOsv != osv) throw new SQLException("Requested PHP version is for the wrong operating system version: #" + phpVersion + ": " + tvOsv + " != " + osv);
 		}
 
-		PackageHandler.checkPackageAccessServer(conn, source, methodName, packageName, aoServer);
+		PackageHandler.checkPackageAccessHost(conn, source, methodName, packageName, linuxServer);
 
-		Account.Name accounting = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
 
 		Port httpPort;
 		try {
@@ -916,7 +915,7 @@ final public class HttpdHandler {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 //		DomainName testURL;
 //		try {
-//			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForAOServer(conn, aoServer));
+//			testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForLinuxServer(conn, linuxServer));
 //		} catch(ValidationException e) {
 //			throw new SQLException(e);
 //		}
@@ -935,7 +934,7 @@ final public class HttpdHandler {
 		}
 
 		// Create and/or get the HttpdBind info
-		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, aoServer, ipAddress, httpPort, AppProtocol.HTTP);
+		int httpNetBind = getHttpdBind(conn, invalidateList, packageName, linuxServer, ipAddress, httpPort, AppProtocol.HTTP);
 
 		// Create the Site
 		int httpdSitePKey = conn.executeIntUpdate(
@@ -966,10 +965,10 @@ final public class HttpdHandler {
 			+ "  ?,\n" // enable_indexes
 			+ "  ?\n" // enable_follow_symlinks
 			+ ") RETURNING id",
-			aoServer,
+			linuxServer,
 			siteName,
 			packageName.toString(),
-			username.toString(),
+			user.toString(),
 			group.toString(),
 			serverAdmin.toString(),
 			(phpVersion == -1) ? Null.INTEGER : phpVersion,
@@ -979,7 +978,7 @@ final public class HttpdHandler {
 			enableIndexes,
 			enableFollowSymlinks
 		);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, account, linuxServer, false);
 
 		// Create the Site
 		conn.executeUpdate(
@@ -987,7 +986,7 @@ final public class HttpdHandler {
 			httpdSitePKey,
 			tomcatVersion
 		);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, account, linuxServer, false);
 
 		// OperatingSystem settings
 		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
@@ -1022,7 +1021,7 @@ final public class HttpdHandler {
 			httpdSitePKey,
 			docBase
 		);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
 
 		if(!isTomcat4) {
 			conn.executeUpdate(
@@ -1048,64 +1047,63 @@ final public class HttpdHandler {
 				httpdSitePKey,
 				conn.executeStringQuery("select install_dir from \"web.tomcat\".\"Version\" where version=?", tomcatVersion)+"/webapps/examples"
 			);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
 		}
 
 		if ("jboss".equals(siteType)) {
 			// Create the Site
-			int wildcardIP=IPAddressHandler.getWildcardIPAddress(conn);
-			int jnpBind = NetBindHandler.allocateNetBind(
+			int wildcardIP=IpAddressHandler.getWildcardIpAddress(conn);
+			int jnpBind = NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				wildcardIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.JNP,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			int webserverBind = NetBindHandler.allocateNetBind(
+			int webserverBind = NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				wildcardIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.WEBSERVER,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			int rmiBind = NetBindHandler.allocateNetBind(
+			int rmiBind = NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				wildcardIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.RMI,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			int hypersonicBind = NetBindHandler.allocateNetBind(
+			int hypersonicBind = NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				wildcardIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.HYPERSONIC,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			int jmxBind = NetBindHandler.allocateNetBind(
+			int jmxBind = NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				wildcardIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.JMX,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)");
-			try {
+			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)")) {
 				pstmt.setInt(1, httpdSitePKey);
 				pstmt.setInt(2, jBossVersion);
 				pstmt.setInt(3, jnpBind);
@@ -1114,13 +1112,8 @@ final public class HttpdHandler {
 				pstmt.setInt(6, hypersonicBind);
 				pstmt.setInt(7, jmxBind);
 				pstmt.executeUpdate();
-			} catch(SQLException err) {
-				System.err.println("Error from query: "+pstmt.toString());
-				throw err;
-			} finally {
-				pstmt.close();
 			}
-			invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, account, linuxServer, false);
 		} else if ("tomcat_shared".equals(siteType)) {
 			// Create the SharedTomcatSite
 			conn.executeUpdate(
@@ -1128,15 +1121,15 @@ final public class HttpdHandler {
 				httpdSitePKey,
 				sharedTomcatPkey
 			);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
 		} else if ("tomcat_standard".equals(siteType)) {
 			// Create the PrivateTomcatSite
 			if(isTomcat4) {
-				int shutdownPort=NetBindHandler.allocateNetBind(
+				int shutdownPort=NetBindHandler.allocateBind(
 					conn,
 					invalidateList,
-					aoServer,
-					IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
+					linuxServer,
+					IpAddressHandler.getLoopbackIpAddress(conn, linuxServer),
 					com.aoindustries.net.Protocol.TCP,
 					AppProtocol.TOMCAT4_SHUTDOWN,
 					packageName,
@@ -1156,16 +1149,16 @@ final public class HttpdHandler {
 					SharedTomcat.DEFAULT_MAX_POST_SIZE
 				);
 			}
-			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
 		}
 
 		if(!isTomcat4 || !"tomcat_shared".equals(siteType)) {
 			// Allocate a Bind for the worker
-			int netBindPKey=NetBindHandler.allocateNetBind(
+			int netBindPKey=NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
-				IPAddressHandler.getLoopbackIPAddress(conn, aoServer),
+				linuxServer,
+				IpAddressHandler.getLoopbackIpAddress(conn, linuxServer),
 				com.aoindustries.net.Protocol.TCP,
 				isTomcat4?JkProtocol.AJP13:JkProtocol.AJP12,
 				packageName,
@@ -1189,7 +1182,7 @@ final public class HttpdHandler {
 			siteLogsDir + '/' + siteName + "/http/access_log",
 			siteLogsDir + '/' + siteName + "/http/error_log"
 		);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, account, linuxServer, false);
 
 		conn.executeUpdate(
 			"insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,true)",
@@ -1208,7 +1201,7 @@ final public class HttpdHandler {
 //			httpSiteBindPKey,
 //			testURL
 //		);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, account, linuxServer, false);
 
 		// Initial HttpdTomcatSiteJkMounts
 		if(useApache) {
@@ -1289,37 +1282,37 @@ final public class HttpdHandler {
 				);
 			}
 		}
-		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounting, aoServer, false);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
 
 		return httpdSitePKey;
 	}
 
-	public static int addHttpdSharedTomcat(
+	public static int addSharedTomcat(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		String name,
-		int aoServer,
+		int linuxServer,
 		int version,
-		com.aoindustries.aoserv.client.linux.User.Name linuxServerAccount,
-		Group.Name linuxServerGroup,
+		com.aoindustries.aoserv.client.linux.User.Name user,
+		Group.Name group,
 		boolean skipSecurityChecks
 	) throws IOException, SQLException {
 		if(!SharedTomcat.isValidSharedTomcatName(name)) throw new SQLException("Invalid shared Tomcat name: "+name);
-		if(linuxServerAccount.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add SharedTomcat for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
-		int lsaPkey = LinuxAccountHandler.getLinuxServerAccount(conn, linuxServerAccount, aoServer);
-		int lsgPkey = LinuxAccountHandler.getLinuxServerGroup(conn, linuxServerGroup, aoServer);
+		if(user.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add SharedTomcat for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		int userServer = LinuxAccountHandler.getUserServer(conn, user, linuxServer);
+		int groupServer = LinuxAccountHandler.getGroupServer(conn, group, linuxServer);
 		if(!skipSecurityChecks) {
-			ServerHandler.checkAccessServer(conn, source, "addHttpdSharedTomcat", aoServer);
-			LinuxAccountHandler.checkAccessLinuxAccount(conn, source, "addHttpdSharedTomcat", linuxServerAccount);
-			if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsaPkey)) throw new SQLException("Unable to add SharedTomcat, UserServer disabled: "+lsaPkey);
-			LinuxAccountHandler.checkAccessLinuxGroup(conn, source, "addHttpdSharedTomcat", linuxServerGroup);
+			NetHostHandler.checkAccessHost(conn, source, "addHttpdSharedTomcat", linuxServer);
+			LinuxAccountHandler.checkAccessUser(conn, source, "addHttpdSharedTomcat", user);
+			if(LinuxAccountHandler.isUserServerDisabled(conn, userServer)) throw new SQLException("Unable to add SharedTomcat, UserServer disabled: "+userServer);
+			LinuxAccountHandler.checkAccessGroup(conn, source, "addHttpdSharedTomcat", group);
 		}
 		if(
-			linuxServerGroup.equals(Group.FTPONLY)
-			|| linuxServerGroup.equals(Group.MAIL)
-			|| linuxServerGroup.equals(Group.MAILONLY)
-		) throw new SQLException("Not allowed to add SharedTomcat for group '"+linuxServerGroup+'\'');
+			group.equals(Group.FTPONLY)
+			|| group.equals(Group.MAIL)
+			|| group.equals(Group.MAILONLY)
+		) throw new SQLException("Not allowed to add SharedTomcat for group '"+group+'\'');
 
 		// Tomcat 4 version will start with "4."
 		String versionStr=conn.executeStringQuery("select version from distribution.\"SoftwareVersion\" where id=?", version);
@@ -1328,16 +1321,16 @@ final public class HttpdHandler {
 			&& !versionStr.equals(Version.VERSION_3_2_4)
 		;
 
-		int id;
+		int sharedTomcat;
 		if(isTomcat4) {
-			Account.Name packageName=LinuxAccountHandler.getPackageForLinuxGroup(conn, linuxServerGroup);
-			int loopbackIP=IPAddressHandler.getLoopbackIPAddress(conn, aoServer);
+			Account.Name packageName=LinuxAccountHandler.getPackageForGroup(conn, group);
+			int loopbackIP=IpAddressHandler.getLoopbackIpAddress(conn, linuxServer);
 
 			// Allocate a Bind for the worker
-			int hwBindPKey=NetBindHandler.allocateNetBind(
+			int hwBindPKey=NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				loopbackIP,
 				com.aoindustries.net.Protocol.TCP,
 				JkProtocol.AJP13,
@@ -1354,10 +1347,10 @@ final public class HttpdHandler {
 			);
 
 			// Allocate the shutdown port
-			int shutdownBindPKey=NetBindHandler.allocateNetBind(
+			int shutdownBindPKey=NetBindHandler.allocateBind(
 				conn,
 				invalidateList,
-				aoServer,
+				linuxServer,
 				loopbackIP,
 				com.aoindustries.net.Protocol.TCP,
 				AppProtocol.TOMCAT4_SHUTDOWN,
@@ -1365,7 +1358,7 @@ final public class HttpdHandler {
 				MINIMUM_AUTO_PORT_NUMBER
 			);
 
-			id = conn.executeIntUpdate(
+			sharedTomcat = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"SharedTomcat\"\n"
 				+ "VALUES(\n"
@@ -1385,17 +1378,17 @@ final public class HttpdHandler {
 				+ "  true\n" // auto_deploy
 				+ ") RETURNING id",
 				name,
-				aoServer,
+				linuxServer,
 				version,
-				lsaPkey,
-				lsgPkey,
+				userServer,
+				groupServer,
 				hwBindPKey,
 				shutdownBindPKey,
 				new Identifier(MasterServer.getRandom()).toString(),
 				SharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		} else {
-			id = conn.executeIntUpdate(
+			sharedTomcat = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"SharedTomcat\"\n"
 				+ "VALUES (\n"
@@ -1415,10 +1408,10 @@ final public class HttpdHandler {
 				+ "  true\n" // auto_deploy
 				+ ") RETURNING id",
 				name,
-				aoServer,
+				linuxServer,
 				version,
-				lsaPkey,
-				lsgPkey,
+				userServer,
+				groupServer,
 				SharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		}
@@ -1426,24 +1419,24 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			UsernameHandler.getBusinessForUsername(conn, linuxServerAccount),
-			aoServer,
+			AccountUserHandler.getAccountForUser(conn, user),
+			linuxServer,
 			false
 		);
-		return id;
+		return sharedTomcat;
 	}
 
 	/**
 	 * Creates a new Tomcat site with the standard configuration.
 	 */
-	public static int addHttpdTomcatSharedSite(
+	public static int addSharedTomcatSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int aoServer,
+		int linuxServer,
 		String siteName,
 		Account.Name packageName,
-		com.aoindustries.aoserv.client.linux.User.Name username,
+		com.aoindustries.aoserv.client.linux.User.Name user,
 		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
@@ -1459,14 +1452,14 @@ final public class HttpdHandler {
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
-			"addTomcatSharedSite",
+			"addSharedTomcatSite",
 			conn,
 			source,
 			invalidateList,
-			aoServer,
+			linuxServer,
 			siteName,
 			packageName,
-			username,
+			user,
 			group,
 			serverAdmin,
 			useApache,
@@ -1489,14 +1482,14 @@ final public class HttpdHandler {
 	/**
 	 * Creates a new Tomcat site with the standard configuration.
 	 */
-	public static int addHttpdTomcatStdSite(
+	public static int addPrivateTomcatSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int aoServer,
+		int linuxServer,
 		String siteName,
 		Account.Name packageName,
-		com.aoindustries.aoserv.client.linux.User.Name username,
+		com.aoindustries.aoserv.client.linux.User.Name user,
 		Group.Name group,
 		Email serverAdmin,
 		boolean useApache,
@@ -1512,14 +1505,14 @@ final public class HttpdHandler {
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
 		return addHttpdJVMSite(
-			"addTomcatStdSite",
+			"addPrivateTomcatSite",
 			conn,
 			source,
 			invalidateList,
-			aoServer,
+			linuxServer,
 			siteName,
 			packageName,
-			username,
+			user,
 			group,
 			serverAdmin,
 			useApache,
@@ -1539,179 +1532,179 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static void disableHttpdSharedTomcat(
+	public static void disableSharedTomcat(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		int id
+		int sharedTomcat
 	) throws IOException, SQLException {
-		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSharedTomcat", disableLog, false);
-		checkAccessHttpdSharedTomcat(conn, source, "disableHttpdSharedTomcat", id);
-		if(isHttpdSharedTomcatDisabled(conn, id)) throw new SQLException("SharedTomcat is already disabled: "+id);
+		AccountHandler.checkAccessDisableLog(conn, source, "disableSharedTomcat", disableLog, false);
+		checkAccessSharedTomcat(conn, source, "disableSharedTomcat", sharedTomcat);
+		if(isSharedTomcatDisabled(conn, sharedTomcat)) throw new SQLException("SharedTomcat is already disabled: "+sharedTomcat);
 
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set disable_log=? where id=?",
 			disableLog,
-			id
+			sharedTomcat
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
 
-	public static void disableHttpdSite(
+	public static void disableSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		int id
+		int site
 	) throws IOException, SQLException {
-		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSite", disableLog, false);
-		checkAccessHttpdSite(conn, source, "disableHttpdSite", id);
-		if(isHttpdSiteDisabled(conn, id)) throw new SQLException("Site is already disabled: "+id);
-		IntList httpdSiteBinds=getHttpdSiteBindsForHttpdSite(conn, id);
+		AccountHandler.checkAccessDisableLog(conn, source, "disableSite", disableLog, false);
+		checkAccessSite(conn, source, "disableSite", site);
+		if(isSiteDisabled(conn, site)) throw new SQLException("Site is already disabled: "+site);
+		IntList httpdSiteBinds=getVirtualHostsForSite(conn, site);
 		for(int c=0;c<httpdSiteBinds.size();c++) {
 			int hsb=httpdSiteBinds.getInt(c);
-			if(!isHttpdSiteBindDisabled(conn, hsb)) {
-				throw new SQLException("Cannot disable Site #"+id+": VirtualHost not disabled: "+hsb);
+			if(!isVirtualHostDisabled(conn, hsb)) {
+				throw new SQLException("Cannot disable Site #"+site+": VirtualHost not disabled: "+hsb);
 			}
 		}
 
 		conn.executeUpdate(
 			"update web.\"Site\" set disable_log=? where id=?",
 			disableLog,
-			id
+			site
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void disableHttpdSiteBind(
+	public static void disableVirtualHost(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		int disableLog,
-		int id
+		int virtualHost
 	) throws IOException, SQLException {
-		BusinessHandler.checkAccessDisableLog(conn, source, "disableHttpdSiteBind", disableLog, false);
-		int httpdSite=conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "disableHttpdSiteBind", httpdSite);
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("VirtualHost is already disabled: "+id);
+		AccountHandler.checkAccessDisableLog(conn, source, "disableVirtualHost", disableLog, false);
+		int site = conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", virtualHost);
+		checkAccessSite(conn, source, "disableVirtualHost", site);
+		if(isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("VirtualHost is already disabled: "+virtualHost);
 
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set disable_log=? where id=?",
 			disableLog,
-			id
+			virtualHost
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITE_BINDS,
-			getBusinessForHttpdSite(conn, httpdSite),
-			getAOServerForHttpdSite(conn, httpdSite),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void enableHttpdSharedTomcat(
+	public static void enableSharedTomcat(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int sharedTomcat
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "enableHttpdSharedTomcat", id);
-		int disableLog=getDisableLogForHttpdSharedTomcat(conn, id);
-		if(disableLog==-1) throw new SQLException("SharedTomcat is already enabled: "+id);
-		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSharedTomcat", disableLog, true);
-		Account.Name pk=getPackageForHttpdSharedTomcat(conn, id);
-		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SharedTomcat #"+id+", Package not enabled: "+pk);
-		int lsa=getLinuxServerAccountForHttpdSharedTomcat(conn, id);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable SharedTomcat #"+id+", UserServer not enabled: "+lsa);
+		checkAccessSharedTomcat(conn, source, "enableSharedTomcat", sharedTomcat);
+		int disableLog=getDisableLogForSharedTomcat(conn, sharedTomcat);
+		if(disableLog==-1) throw new SQLException("SharedTomcat is already enabled: "+sharedTomcat);
+		AccountHandler.checkAccessDisableLog(conn, source, "enableSharedTomcat", disableLog, true);
+		Account.Name pk=getPackageForSharedTomcat(conn, sharedTomcat);
+		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable SharedTomcat #"+sharedTomcat+", Package not enabled: "+pk);
+		int userServer = getLinuxUserServerForSharedTomcat(conn, sharedTomcat);
+		if(LinuxAccountHandler.isUserServerDisabled(conn, userServer)) throw new SQLException("Unable to enable SharedTomcat #"+sharedTomcat+", UserServer not enabled: "+userServer);
 
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set disable_log=null where id=?",
-			id
+			sharedTomcat
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			PackageHandler.getBusinessForPackage(conn, pk),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			PackageHandler.getAccountForPackage(conn, pk),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
 
-	public static void enableHttpdSite(
+	public static void enableSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int site
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "enableHttpdSite", id);
-		int disableLog=getDisableLogForHttpdSite(conn, id);
-		if(disableLog==-1) throw new SQLException("Site is already enabled: "+id);
-		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSite", disableLog, true);
-		Account.Name pk=getPackageForHttpdSite(conn, id);
-		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Site #"+id+", Package not enabled: "+pk);
-		int lsa=getLinuxServerAccountForHttpdSite(conn, id);
-		if(LinuxAccountHandler.isLinuxServerAccountDisabled(conn, lsa)) throw new SQLException("Unable to enable Site #"+id+", UserServer not enabled: "+lsa);
+		checkAccessSite(conn, source, "enableSite", site);
+		int disableLog=getDisableLogForSite(conn, site);
+		if(disableLog==-1) throw new SQLException("Site is already enabled: "+site);
+		AccountHandler.checkAccessDisableLog(conn, source, "enableSite", disableLog, true);
+		Account.Name pk=getPackageForSite(conn, site);
+		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Site #"+site+", Package not enabled: "+pk);
+		int userServer = getLinuxUserServerForSite(conn, site);
+		if(LinuxAccountHandler.isUserServerDisabled(conn, userServer)) throw new SQLException("Unable to enable Site #"+site+", UserServer not enabled: "+userServer);
 
 		conn.executeUpdate(
 			"update web.\"Site\" set disable_log=null where id=?",
-			id
+			site
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITES,
-			PackageHandler.getBusinessForPackage(conn, pk),
-			getAOServerForHttpdSite(conn, id),
+			PackageHandler.getAccountForPackage(conn, pk),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void enableHttpdSiteBind(
+	public static void enableVirtualHost(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int virtualHost
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
-		checkAccessHttpdSite(conn, source, "enableHttpdSiteBind", hs);
-		int disableLog=getDisableLogForHttpdSiteBind(conn, id);
-		if(disableLog==-1) throw new SQLException("VirtualHost is already enabled: "+id);
-		BusinessHandler.checkAccessDisableLog(conn, source, "enableHttpdSiteBind", disableLog, true);
-		if(isHttpdSiteDisabled(conn, hs)) throw new SQLException("Unable to enable VirtualHost #"+id+", Site not enabled: "+hs);
+		int hs=getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "enableVirtualHost", hs);
+		int disableLog=getDisableLogForVirtualHost(conn, virtualHost);
+		if(disableLog==-1) throw new SQLException("VirtualHost is already enabled: "+virtualHost);
+		AccountHandler.checkAccessDisableLog(conn, source, "enableVirtualHost", disableLog, true);
+		if(isSiteDisabled(conn, hs)) throw new SQLException("Unable to enable VirtualHost #"+virtualHost+", Site not enabled: "+hs);
 
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set disable_log=null where id=?",
-			id
+			virtualHost
 		);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITE_BINDS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, hs),
+			getLinuxServerForSite(conn, hs),
 			false
 		);
 	}
@@ -1834,29 +1827,23 @@ final public class HttpdHandler {
 		return goodOne;
 	}
 
-	public static int getDisableLogForHttpdSharedTomcat(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
+	public static int getDisableLogForSharedTomcat(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 	}
 
-	public static int getDisableLogForHttpdSite(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"Site\" where id=?", id);
+	public static int getDisableLogForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"Site\" where id=?", site);
 	}
 
-	public static int getDisableLogForHttpdSiteBind(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"VirtualHost\" where id=?", id);
+	public static int getDisableLogForVirtualHost(DatabaseConnection conn, int virtualHost) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce(disable_log, -1) from web.\"VirtualHost\" where id=?", virtualHost);
 	}
 
-	public static IntList getHttpdSiteBindsForHttpdSite(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from web.\"VirtualHost\" where httpd_site=?", id);
+	public static IntList getVirtualHostsForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
+		return conn.executeIntListQuery("select id from web.\"VirtualHost\" where httpd_site=?", site);
 	}
 
-	public static int getHttpdSiteForHttpdSiteURL(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static int getSiteForVirtualHostName(DatabaseConnection conn, int virtualHostName) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  hsb.httpd_site\n"
@@ -1866,21 +1853,15 @@ final public class HttpdHandler {
 			+ "where\n"
 			+ "  hsu.id=?\n"
 			+ "  and hsu.httpd_site_bind=hsb.id",
-			id
+			virtualHostName
 		);
 	}
 
-	public static IntList getHttpdSharedTomcatsForLinuxServerAccount(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from \"web.tomcat\".\"SharedTomcat\" where linux_server_account=?", id);
+	public static IntList getSharedTomcatsForLinuxUserServer(DatabaseConnection conn, int linuxUserServer) throws IOException, SQLException {
+		return conn.executeIntListQuery("select id from \"web.tomcat\".\"SharedTomcat\" where linux_server_account=?", linuxUserServer);
 	}
 
-	public static IntList getHttpdSharedTomcatsForPackage(
-		DatabaseConnection conn,
-		Account.Name name
-	) throws IOException, SQLException {
+	public static IntList getHttpdSharedTomcatsForPackage(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select\n"
 			+ "  hst.id\n"
@@ -1892,21 +1873,18 @@ final public class HttpdHandler {
 			+ "  lg.package=?\n"
 			+ "  and lg.name=lsg.name\n"
 			+ "  and lsg.id=hst.linux_server_group",
-			name
+			packageName
 		);
 	}
 
 	public static IntList getHttpdSitesForPackage(
 		DatabaseConnection conn,
-		Account.Name name
+		Account.Name packageName
 	) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from web.\"Site\" where package=?", name);
+		return conn.executeIntListQuery("select id from web.\"Site\" where package=?", packageName);
 	}
 
-	public static IntList getHttpdSitesForLinuxServerAccount(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static IntList getSitesForLinuxUserServer(DatabaseConnection conn, int linuxUserServer) throws IOException, SQLException {
 		return conn.executeIntListQuery(
 			"select\n"
 			+ "  hs.id\n"
@@ -1917,14 +1895,11 @@ final public class HttpdHandler {
 			+ "  lsa.id=?\n"
 			+ "  and lsa.username=hs.linux_account\n"
 			+ "  and lsa.ao_server=hs.ao_server",
-			id
+			linuxUserServer
 		);
 	}
 
-	public static Account.Name getBusinessForHttpdSharedTomcat(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getAccountForSharedTomcat(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
@@ -1938,14 +1913,11 @@ final public class HttpdHandler {
 			+ "  and hst.linux_server_group=lsg.id\n"
 			+ "  and lsg.name=lg.name\n"
 			+ "  and lg.package=pk.name",
-			id
+			sharedTomcat
 		);
 	}
 
-	public static Account.Name getBusinessForHttpdSite(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getAccountForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
@@ -1955,14 +1927,11 @@ final public class HttpdHandler {
 			+ "where\n"
 			+ "  hs.id=?\n"
 			+ "  and hs.package=pk.name",
-			id
+			site
 		);
 	}
 
-	public static Account.Name getBusinessForHttpdServer(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getAccountForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
@@ -1972,28 +1941,19 @@ final public class HttpdHandler {
 			+ "where\n"
 			+ "  hs.id=?\n"
 			+ "  and hs.package=pk.id",
-			id
+			httpdServer
 		);
 	}
 
-	public static int getHttpdSiteForHttpdSiteBind(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", id);
+	public static int getSiteForVirtualHost(DatabaseConnection conn, int virtualHost) throws IOException, SQLException {
+		return conn.executeIntQuery("select httpd_site from web.\"VirtualHost\" where id=?", virtualHost);
 	}
 
-	public static int getLinuxServerAccountForHttpdSharedTomcat(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
-		return conn.executeIntQuery("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
+	public static int getLinuxUserServerForSharedTomcat(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
+		return conn.executeIntQuery("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 	}
 
-	public static int getLinuxServerAccountForHttpdSite(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static int getLinuxUserServerForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  lsa.id\n"
@@ -2004,7 +1964,7 @@ final public class HttpdHandler {
 			+ "  hs.id=?\n"
 			+ "  and hs.linux_account=lsa.username\n"
 			+ "  and hs.ao_server=lsa.ao_server",
-			id
+			site
 		);
 	}
 
@@ -2024,10 +1984,7 @@ final public class HttpdHandler {
 		);
 	}
 
-	public static Account.Name getPackageForHttpdSharedTomcat(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getPackageForSharedTomcat(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  lg.package\n"
@@ -2039,34 +1996,31 @@ final public class HttpdHandler {
 			+ "  hst.id=?\n"
 			+ "  and hst.linux_server_group=lsg.id\n"
 			+ "  and lsg.name=lg.name",
-			id
+			sharedTomcat
 		);
 	}
 
-	public static Account.Name getPackageForHttpdSite(
-		DatabaseConnection conn,
-		int id
-	) throws IOException, SQLException {
+	public static Account.Name getPackageForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select package from web.\"Site\" where id=?",
-			id
+			site
 		);
 	}
 
-	public static int getAOServerForHttpdSharedTomcat(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
+	public static int getLinuxServerForSharedTomcat(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
+		return conn.executeIntQuery("select ao_server from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 	}
 
-	public static int getAOServerForHttpdSite(DatabaseConnection conn, int httpdSite) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from web.\"Site\" where id=?", httpdSite);
+	public static int getLinuxServerForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
+		return conn.executeIntQuery("select ao_server from web.\"Site\" where id=?", site);
 	}
 
-	public static int getAOServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
+	public static int getLinuxServerForHttpdServer(DatabaseConnection conn, int httpdServer) throws IOException, SQLException {
 		return conn.executeIntQuery("select ao_server from web.\"HttpdServer\" where id=?", httpdServer);
 	}
 
-	public static String getSiteNameForHttpdSite(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeStringQuery("select \"name\" from web.\"Site\" where id=?", id);
+	public static String getNameForSite(DatabaseConnection conn, int site) throws IOException, SQLException {
+		return conn.executeStringQuery("select \"name\" from web.\"Site\" where id=?", site);
 	}
 
 	/**
@@ -2085,55 +2039,55 @@ final public class HttpdHandler {
 
 		DaemonHandler.getDaemonConnector(
 			conn,
-			getAOServerForHttpdSite(conn, sitePKey)
+			getLinuxServerForHttpdSite(conn, sitePKey)
 		).initializeHttpdSitePasswdFile(sitePKey, username, encPassword);
 	}*/
 
 	public static void invalidateTable(Table.TableID tableID) {
 		if(tableID==Table.TableID.HTTPD_SHARED_TOMCATS) {
-			synchronized(HttpdHandler.class) {
-				disabledHttpdSharedTomcats.clear();
+			synchronized(WebHandler.class) {
+				disabledSharedTomcats.clear();
 			}
 		} else if(tableID==Table.TableID.HTTPD_SITE_BINDS) {
-			synchronized(HttpdHandler.class) {
-				disabledHttpdSiteBinds.clear();
+			synchronized(WebHandler.class) {
+				disabledVirtualHosts.clear();
 			}
 		} else if(tableID==Table.TableID.HTTPD_SITES) {
-			synchronized(HttpdHandler.class) {
-				disabledHttpdSites.clear();
+			synchronized(WebHandler.class) {
+				disabledSites.clear();
 			}
 		}
 	}
 
-	public static boolean isHttpdSharedTomcatDisabled(DatabaseConnection conn, int id) throws IOException, SQLException {
-		Integer idObj = id;
-		synchronized(HttpdHandler.class) {
-			Boolean isDisabledObj = disabledHttpdSharedTomcats.get(idObj);
+	public static boolean isSharedTomcatDisabled(DatabaseConnection conn, int sharedTomcat) throws IOException, SQLException {
+		Integer idObj = sharedTomcat;
+		synchronized(WebHandler.class) {
+			Boolean isDisabledObj = disabledSharedTomcats.get(idObj);
 			if(isDisabledObj != null) return isDisabledObj;
-			boolean isDisabled = getDisableLogForHttpdSharedTomcat(conn, id) != -1;
-			disabledHttpdSharedTomcats.put(idObj, isDisabled);
+			boolean isDisabled = getDisableLogForSharedTomcat(conn, sharedTomcat) != -1;
+			disabledSharedTomcats.put(idObj, isDisabled);
 			return isDisabled;
 		}
 	}
 
-	public static boolean isHttpdSiteBindDisabled(DatabaseConnection conn, int id) throws IOException, SQLException {
-		Integer idObj = id;
-		synchronized(HttpdHandler.class) {
-			Boolean isDisabledObj = disabledHttpdSiteBinds.get(idObj);
+	public static boolean isVirtualHostDisabled(DatabaseConnection conn, int virtualHost) throws IOException, SQLException {
+		Integer idObj = virtualHost;
+		synchronized(WebHandler.class) {
+			Boolean isDisabledObj = disabledVirtualHosts.get(idObj);
 			if(isDisabledObj != null) return isDisabledObj;
-			boolean isDisabled = getDisableLogForHttpdSiteBind(conn, id) != -1;
-			disabledHttpdSiteBinds.put(idObj, isDisabled);
+			boolean isDisabled = getDisableLogForVirtualHost(conn, virtualHost) != -1;
+			disabledVirtualHosts.put(idObj, isDisabled);
 			return isDisabled;
 		}
 	}
 
-	public static boolean isHttpdSiteDisabled(DatabaseConnection conn, int id) throws IOException, SQLException {
-		Integer idObj = id;
-		synchronized(HttpdHandler.class) {
-			Boolean isDisabledObj = disabledHttpdSites.get(idObj);
+	public static boolean isSiteDisabled(DatabaseConnection conn, int site) throws IOException, SQLException {
+		Integer idObj = site;
+		synchronized(WebHandler.class) {
+			Boolean isDisabledObj = disabledSites.get(idObj);
 			if(isDisabledObj != null) return isDisabledObj;
-			boolean isDisabled = getDisableLogForHttpdSite(conn, id) != -1;
-			disabledHttpdSites.put(idObj, isDisabled);
+			boolean isDisabled = getDisableLogForSite(conn, site) != -1;
+			disabledSites.put(idObj, isDisabled);
 			return isDisabled;
 		}
 	}
@@ -2152,18 +2106,18 @@ final public class HttpdHandler {
 	public static String startJVM(
 		DatabaseConnection conn,
 		RequestSource source,
-		int tomcat_site
+		int tomcatSite
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "startJVM", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to start JVM, Site disabled: "+tomcat_site);
+		checkAccessSite(conn, source, "startJVM", tomcatSite);
+		if(isSiteDisabled(conn, tomcatSite)) throw new SQLException("Unable to start JVM, Site disabled: "+tomcatSite);
 
 		// Get the server and siteName for the site
-		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
 		// Contact the daemon and start the JVM
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
-		return daemonConnector.startJVM(tomcat_site);
+		return daemonConnector.startJVM(tomcatSite);
 	}
 
 	/**
@@ -2172,12 +2126,12 @@ final public class HttpdHandler {
 	public static String stopJVM(
 		DatabaseConnection conn,
 		RequestSource source, 
-		int tomcat_site
+		int tomcatSite
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "stopJVM", tomcat_site);
+		checkAccessSite(conn, source, "stopJVM", tomcatSite);
 		// Can only stop the daemon if can access the shared linux account
-		if(conn.executeBooleanQuery("select (select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?) is not null", tomcat_site)) {
-			int lsa=conn.executeIntQuery(
+		if(conn.executeBooleanQuery("select (select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?) is not null", tomcatSite)) {
+			int userServer = conn.executeIntQuery(
 				"select\n"
 				+ "  hst.linux_server_account\n"
 				+ "from\n"
@@ -2186,18 +2140,18 @@ final public class HttpdHandler {
 				+ "where\n"
 				+ "  htss.tomcat_site=?\n"
 				+ "  and htss.httpd_shared_tomcat=hst.id",
-				tomcat_site
+				tomcatSite
 			);
-			LinuxAccountHandler.checkAccessLinuxServerAccount(conn, source, "stopJVM", lsa);
+			LinuxAccountHandler.checkAccessUserServer(conn, source, "stopJVM", userServer);
 		}
 
 		// Get the server and siteName for the site
-		int aoServer=getAOServerForHttpdSite(conn, tomcat_site);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
 		// Contact the daemon and start the JVM
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
-		return daemonConnector.stopJVM(tomcat_site);
+		return daemonConnector.stopJVM(tomcatSite);
 	}
 
 	/**
@@ -2206,11 +2160,11 @@ final public class HttpdHandler {
 	public static void waitForHttpdSiteRebuild(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int linuxServer
 	) throws IOException, SQLException {
-		ServerHandler.checkAccessServer(conn, source, "waitForHttpdSiteRebuild", aoServer);
-		ServerHandler.waitForInvalidates(aoServer);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		NetHostHandler.checkAccessHost(conn, source, "waitForHttpdSiteRebuild", linuxServer);
+		NetHostHandler.waitForInvalidates(linuxServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
 		daemonConnector.waitForHttpdSiteRebuild();
 	}
@@ -2219,19 +2173,20 @@ final public class HttpdHandler {
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		Account.Name packageName,
-		int aoServer,
+		int linuxServer,
 		int ipAddress,
 		Port httpPort,
 		String protocol
 	) throws IOException, SQLException {
 		// First, find the net_bind
 		int netBind;
-		PreparedStatement pstmt = conn.getConnection(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true
-		).prepareStatement("select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"");
-		try {
-			pstmt.setInt(1, aoServer);
+		try (
+			PreparedStatement pstmt = conn.getConnection(
+				Connection.TRANSACTION_READ_COMMITTED,
+				true
+			).prepareStatement("select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"")
+		) {
+			pstmt.setInt(1, linuxServer);
 			pstmt.setInt(2, ipAddress);
 			pstmt.setInt(3, httpPort.getPort());
 			pstmt.setString(4, httpPort.getProtocol().name());
@@ -2241,25 +2196,22 @@ final public class HttpdHandler {
 					String bindProtocol=results.getString(2);
 					if(!protocol.equals(bindProtocol)) throw new SQLException(
 						"Protocol mismatch on net.\"Bind\"(id="
-						+netBind
-						+" ao_server="
-						+aoServer
-						+" ipAddress="
-						+ipAddress
-						+" port="
-						+httpPort
-						+" net_protocol=tcp), app_protocol is "
-						+bindProtocol
-						+", requested protocol is "
-						+protocol
+						+ netBind
+						+ " ao_server="
+						+ linuxServer
+						+ " ipAddress="
+						+ ipAddress
+						+ " port="
+						+ httpPort
+						+ " net_protocol=tcp), app_protocol is "
+						+ bindProtocol
+						+ ", requested protocol is "
+						+ protocol
 					);
-				} else netBind=-1;
+				} else {
+					netBind = -1;
+				}
 			}
-		} catch(SQLException err) {
-			System.err.println("Error from query: "+pstmt.toString());
-			throw err;
-		} finally {
-			pstmt.close();
 		}
 
 		// Allocate the net_bind, if needed
@@ -2267,18 +2219,18 @@ final public class HttpdHandler {
 			netBind = conn.executeIntUpdate(
 				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?::\"com.aoindustries.net\".\"Port\",?::\"com.aoindustries.net\".\"Protocol\",?,true) RETURNING id",
 				packageName.toString(),
-				aoServer,
+				linuxServer,
 				ipAddress,
 				httpPort.getPort(),
 				httpPort.getProtocol().name(),
 				protocol
 			);
-			Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
+			Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BINDS,
 				business,
-				aoServer,
+				linuxServer,
 				false
 			);
 			// Default to open in public firewalld zone
@@ -2288,14 +2240,14 @@ final public class HttpdHandler {
 				+ "  (select id from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
 				+ ")",
 				netBind,
-				aoServer,
+				linuxServer,
 				FirewallZone.PUBLIC
 			);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_BIND_FIREWALLD_ZONES,
 				business,
-				aoServer,
+				linuxServer,
 				false
 			);
 		}
@@ -2308,6 +2260,7 @@ final public class HttpdHandler {
 				+ "    select\n"
 				+ "      net_bind\n"
 				+ "    from\n"
+				// TODO: Rename web."Bind", and web."HttpdServer" to web."Server"
 				+ "      web.\"HttpdBind\"\n"
 				+ "    where\n"
 				+ "      net_bind=?\n"
@@ -2317,150 +2270,146 @@ final public class HttpdHandler {
 			)
 		) {
 			// Get the list of web.HttpdServer and how many web.VirtualHost there are
-			int lowestPKey=-1;
+			int lowestId=-1;
 			int lowestCount=Integer.MAX_VALUE;
-			pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
-				"select\n"
-				+ "  hs.id,\n"
-				+ "  (\n"
-				+ "    select\n"
-				+ "      count(*)\n"
-				+ "    from\n"
-				+ "      web.\"HttpdBind\" hb,\n"
-				+ "      web.\"VirtualHost\" hsb\n"
-				+ "    where\n"
-				+ "      hs.id=hb.httpd_server\n"
-				+ "      and hb.net_bind=hsb.httpd_bind\n"
-				+ "  )\n"
-				+ "from\n"
-				+ "  web.\"HttpdServer\" hs\n"
-				+ "where\n"
-				+ "  hs.can_add_sites\n"
-				+ "  and hs.ao_server=?\n"
-				+ "  and (\n"
-				+ "    hs.is_shared\n"
-				+ "    or (\n"
-				+ "      account.is_account_or_parent(\n"
-				+ "        (select pk1.accounting from billing.\"Package\" pk1 where hs.package=pk1.id),\n"
-				+ "        (select accounting from billing.\"Package\" where name=?)\n"
-				+ "      )\n"
-				+ "    )\n"
-				+ "  )"
-			);
-			try {
-				pstmt.setInt(1, aoServer);
+			try (
+				PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
+					"select\n"
+					+ "  hs.id,\n"
+					+ "  (\n"
+					+ "    select\n"
+					+ "      count(*)\n"
+					+ "    from\n"
+					+ "      web.\"HttpdBind\" hb,\n"
+					+ "      web.\"VirtualHost\" hsb\n"
+					+ "    where\n"
+					+ "      hs.id=hb.httpd_server\n"
+					+ "      and hb.net_bind=hsb.httpd_bind\n"
+					+ "  )\n"
+					+ "from\n"
+					+ "  web.\"HttpdServer\" hs\n"
+					+ "where\n"
+					+ "  hs.can_add_sites\n"
+					+ "  and hs.ao_server=?\n"
+					+ "  and (\n"
+					+ "    hs.is_shared\n"
+					+ "    or (\n"
+					+ "      account.is_account_or_parent(\n"
+					+ "        (select pk1.accounting from billing.\"Package\" pk1 where hs.package=pk1.id),\n"
+					+ "        (select accounting from billing.\"Package\" where name=?)\n"
+					+ "      )\n"
+					+ "    )\n"
+					+ "  )"
+				)
+			) {
+				pstmt.setInt(1, linuxServer);
 				pstmt.setString(2, packageName.toString());
-				ResultSet results=pstmt.executeQuery();
-				try {
+				try (ResultSet results = pstmt.executeQuery()) {
 					while(results.next()) {
-						int id=results.getInt(1);
-						int useCount=results.getInt(2);
-						if(useCount<lowestCount) {
-							lowestPKey=id;
-							lowestCount=useCount;
+						int site = results.getInt(1);
+						int useCount = results.getInt(2);
+						if(useCount < lowestCount) {
+							lowestId = site;
+							lowestCount = useCount;
 						}
 					}
-				} finally {
-					results.close();
 				}
-			} finally {
-				pstmt.close();
 			}
-			if(lowestPKey==-1) throw new SQLException("Unable to determine which httpd_server to add the new httpd_bind to");
+			if(lowestId==-1) throw new SQLException("Unable to determine which httpd_server to add the new httpd_bind to");
 			// Insert into the DB
 			conn.executeUpdate(
 				"insert into web.\"HttpdBind\" values(?,?)",
 				netBind,
-				lowestPKey
+				lowestId
 			);
 		}
 		// Always invalidate these tables because adding site may grant permissions to these rows
-		Account.Name business = PackageHandler.getBusinessForPackage(conn, packageName);
+		Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_BINDS,
 			business,
-			aoServer,
+			linuxServer,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
 			business,
-			aoServer,
+			linuxServer,
 			false
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BIND_FIREWALLD_ZONES,
 			business,
-			aoServer,
+			linuxServer,
 			false
 		);
 
 		return netBind;
 	}
 
-	public static void removeHttpdSharedTomcat(
+	public static void removeSharedTomcat(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int sharedTomcat
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "removeHttpdSharedTomcat", id);
+		checkAccessSharedTomcat(conn, source, "removeSharedTomcat", sharedTomcat);
 
-		removeHttpdSharedTomcat(conn, invalidateList, id);
+		removeSharedTomcat(conn, invalidateList, sharedTomcat);
 	}
 
-	public static void removeHttpdSharedTomcat(
+	public static void removeSharedTomcat(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id
+		int sharedTomcat
 	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForHttpdSharedTomcat(conn, id);
-		int aoServer=getAOServerForHttpdSharedTomcat(conn, id);
+		Account.Name account = getAccountForSharedTomcat(conn, sharedTomcat);
+		int linuxServer = getLinuxServerForSharedTomcat(conn, sharedTomcat);
 
-		int tomcat4Worker=conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
-		int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
+		int tomcat4Worker = conn.executeIntQuery("select coalesce(tomcat4_worker, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
+		int tomcat4ShutdownPort = conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 
-		conn.executeUpdate("delete from \"web.tomcat\".\"SharedTomcat\" where id=?", id);
+		conn.executeUpdate("delete from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 
 		if(tomcat4Worker!=-1) {
 			conn.executeUpdate("delete from \"web.tomcat\".\"Worker\" where bind=?", tomcat4Worker);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, account, linuxServer, false);
 
 			conn.executeUpdate("delete from net.\"Bind\" where id=?", tomcat4Worker);
-			invalidateList.addTable(conn, Table.TableID.NET_BINDS, accounting, aoServer, false);
-			invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
+			invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
 		}
 
 		if(tomcat4ShutdownPort!=-1) {
 			conn.executeUpdate("delete from net.\"Bind\" where id=?", tomcat4ShutdownPort);
-			invalidateList.addTable(conn, Table.TableID.NET_BINDS, accounting, aoServer, false);
-			invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
+			invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
+			invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
 		}
 	}
 
-	public static void removeHttpdSite(
+	public static void removeSite(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int httpdSitePKey
+		int site
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "removeHttpdSite", httpdSitePKey);
+		checkAccessSite(conn, source, "removeSite", site);
 
-		removeHttpdSite(conn, invalidateList, httpdSitePKey);
+		removeSite(conn, invalidateList, site);
 	}
 
-	public static boolean isHttpdStaticSite(DatabaseConnection conn, int httpd_site) throws SQLException {
-		return conn.executeBooleanQuery("select (select httpd_site from web.\"StaticSite\" where httpd_site=?) is not null", httpd_site);
+	public static boolean isStaticSite(DatabaseConnection conn, int site) throws SQLException {
+		return conn.executeBooleanQuery("select (select httpd_site from web.\"StaticSite\" where httpd_site=?) is not null", site);
 	}
 
 	/**
@@ -2486,17 +2435,17 @@ final public class HttpdHandler {
 	 *           |                                   + net.Bind
 	 *           + web.StaticSite
 	 */
-	public static void removeHttpdSite(
+	public static void removeSite(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int httpdSitePKey
+		int site
 	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForHttpdSite(conn, httpdSitePKey);
-		int aoServer=getAOServerForHttpdSite(conn, httpdSitePKey);
-		String siteName=conn.executeStringQuery("select \"name\" from web.\"Site\" where id=?", httpdSitePKey);
+		Account.Name account = getAccountForSite(conn, site);
+		int linuxServer = getLinuxServerForSite(conn, site);
+		String siteName=conn.executeStringQuery("select \"name\" from web.\"Site\" where id=?", site);
 
 		// OperatingSystem settings
-		int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
 		PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
 
 		// Must not contain a CVS repository
@@ -2519,25 +2468,25 @@ final public class HttpdHandler {
 			+ "    cr.path=?\n"
 			+ "    or substring(cr.path from 1 for " + (siteDir.toString().length() + 1) + ")=?\n"
 			+ "  )",
-			aoServer,
+			linuxServer,
 			siteDir,
 			siteDir + "/"
 		);
 		if(count > 0) {
 			throw new SQLException(
-				"Site directory on Server #" + aoServer + " contains "
+				"Site directory on Server #" + linuxServer + " contains "
 				+ count + " CVS " + (count == 1 ? "repository" : "repositories")
 				+ ": " + siteDir
 			);
 		}
 
 		// web.Location
-		if(conn.executeUpdate("delete from web.\"Location\" where httpd_site=?", httpdSitePKey) > 0) {
-			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, accounting, aoServer, false);
+		if(conn.executeUpdate("delete from web.\"Location\" where httpd_site=?", site) > 0) {
+			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, account, linuxServer, false);
 		}
 
 		// web.VirtualHost
-		IntList httpdSiteBinds=conn.executeIntListQuery("select id from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
+		IntList httpdSiteBinds=conn.executeIntListQuery("select id from web.\"VirtualHost\" where httpd_site=?", site);
 		if(httpdSiteBinds.size() > 0) {
 			DnsService dnsService = MasterServer.getService(DnsService.class);
 			List<DomainName> tlds = dnsService.getDNSTLDs(conn);
@@ -2557,17 +2506,17 @@ final public class HttpdHandler {
 						httpdSiteURL
 					);
 					conn.executeUpdate("delete from web.\"VirtualHostName\" where id=?", httpdSiteURL);
-					invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, accounting, aoServer, false);
+					invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, account, linuxServer, false);
 					dnsService.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
 				}
 
 				int hb=conn.executeIntQuery("select httpd_bind from web.\"VirtualHost\" where id=?", httpdSiteBind);
 				if(!httpdBinds.contains(hb)) httpdBinds.add(hb);
 			}
-			conn.executeUpdate("delete from web.\"VirtualHost\" where httpd_site=?", httpdSitePKey);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, accounting, aoServer, false);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, accounting, aoServer, false);
-			invalidateList.addTable(conn, Table.TableID.RewriteRule, accounting, aoServer, false);
+			conn.executeUpdate("delete from web.\"VirtualHost\" where httpd_site=?", site);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, account, linuxServer, false);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, account, linuxServer, false);
+			invalidateList.addTable(conn, Table.TableID.RewriteRule, account, linuxServer, false);
 
 			for(int c=0;c<httpdBinds.size();c++) {
 				int httpdBind=httpdBinds.getInt(c);
@@ -2608,140 +2557,136 @@ final public class HttpdHandler {
 		}
 
 		// web.tomcat.Site
-		if(conn.executeBooleanQuery("select (select httpd_site from \"web.tomcat\".\"Site\" where httpd_site=? limit 1) is not null", httpdSitePKey)) {
+		if(conn.executeBooleanQuery("select (select httpd_site from \"web.tomcat\".\"Site\" where httpd_site=? limit 1) is not null", site)) {
 			// web.tomcat.ContextDataSource
-			IntList htdss=conn.executeIntListQuery("select htds.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextDataSource\" htds where htc.tomcat_site=? and htc.id=htds.tomcat_context", httpdSitePKey);
+			IntList htdss=conn.executeIntListQuery("select htds.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextDataSource\" htds where htc.tomcat_site=? and htc.id=htds.tomcat_context", site);
 			if(htdss.size() > 0) {
 				for(int c=0;c<htdss.size();c++) {
 					conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", htdss.getInt(c));
 				}
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_DATA_SOURCES, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_DATA_SOURCES, account, linuxServer, false);
 			}
 
 			// web.tomcat.ContextParameter
-			IntList htps=conn.executeIntListQuery("select htp.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextParameter\" htp where htc.tomcat_site=? and htc.id=htp.tomcat_context", httpdSitePKey);
+			IntList htps=conn.executeIntListQuery("select htp.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextParameter\" htp where htc.tomcat_site=? and htc.id=htp.tomcat_context", site);
 			if(htps.size() > 0) {
 				for(int c=0;c<htps.size();c++) {
 					conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where id=?", htps.getInt(c));
 				}
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_PARAMETERS, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_PARAMETERS, account, linuxServer, false);
 			}
 
 			// web.tomcat.Context
-			IntList htcs=conn.executeIntListQuery("select id from \"web.tomcat\".\"Context\" where tomcat_site=?", httpdSitePKey);
+			IntList htcs=conn.executeIntListQuery("select id from \"web.tomcat\".\"Context\" where tomcat_site=?", site);
 			if(htcs.size() > 0) {
 				for(int c=0;c<htcs.size();c++) {
 					conn.executeUpdate("delete from \"web.tomcat\".\"Context\" where id=?", htcs.getInt(c));
 				}
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
 			}
 
 			// web.tomcat.Worker
-			IntList httpdWorkers = conn.executeIntListQuery("select bind from \"web.tomcat\".\"Worker\" where \"tomcatSite\"=?", httpdSitePKey);
+			IntList httpdWorkers = conn.executeIntListQuery("select bind from \"web.tomcat\".\"Worker\" where \"tomcatSite\"=?", site);
 			if(httpdWorkers.size() > 0) {
 				for(int c=0;c<httpdWorkers.size();c++) {
 					int bind = httpdWorkers.getInt(c);
 					conn.executeUpdate("delete from \"web.tomcat\".\"Worker\" where bind=?", bind);
-					NetBindHandler.removeNetBind(conn, invalidateList, bind);
+					NetBindHandler.removeBind(conn, invalidateList, bind);
 				}
-				invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, accounting, aoServer, false);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, account, linuxServer, false);
 			}
 
 			// web.tomcat.SharedTomcatSite
-			if(conn.executeUpdate("delete from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?", httpdSitePKey) > 0) {
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, accounting, aoServer, false);
+			if(conn.executeUpdate("delete from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?", site) > 0) {
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
 			}
 
 			// web.tomcat.PrivateTomcatSite
-			if(conn.executeBooleanQuery("select (select tomcat_site from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
-				int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", httpdSitePKey);
+			if(conn.executeBooleanQuery("select (select tomcat_site from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=? limit 1) is not null", site)) {
+				int tomcat4ShutdownPort=conn.executeIntQuery("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", site);
 
-				conn.executeUpdate("delete from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", httpdSitePKey);
-				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, accounting, aoServer, false);
+				conn.executeUpdate("delete from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", site);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
 
 				if(tomcat4ShutdownPort!=-1) {
 					conn.executeUpdate("delete from net.\"Bind\" where id=?", tomcat4ShutdownPort);
-					invalidateList.addTable(conn, Table.TableID.NET_BINDS, accounting, aoServer, false);
-					invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, accounting, aoServer, false);
+					invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
+					invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
 				}
 			}
 
 			// web.jboss.Site
-			if(conn.executeBooleanQuery("select (select tomcat_site from \"web.jboss\".\"Site\" where tomcat_site=? limit 1) is not null", httpdSitePKey)) {
+			if(conn.executeBooleanQuery("select (select tomcat_site from \"web.jboss\".\"Site\" where tomcat_site=? limit 1) is not null", site)) {
 				// net.Bind
-				int jnp_bind=conn.executeIntQuery("select jnp_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int webserver_bind=conn.executeIntQuery("select webserver_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int rmi_bind=conn.executeIntQuery("select rmi_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				int jmx_bind=conn.executeIntQuery("select jmx_bind from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
+				int jnp_bind=conn.executeIntQuery("select jnp_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+				int webserver_bind=conn.executeIntQuery("select webserver_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+				int rmi_bind=conn.executeIntQuery("select rmi_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+				int hypersonic_bind=conn.executeIntQuery("select hypersonic_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+				int jmx_bind=conn.executeIntQuery("select jmx_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
 
-				conn.executeUpdate("delete from \"web.jboss\".\"Site\" where tomcat_site=?", httpdSitePKey);
-				invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, accounting, aoServer, false);
-				NetBindHandler.removeNetBind(conn, invalidateList, jnp_bind);
-				NetBindHandler.removeNetBind(conn, invalidateList, webserver_bind);
-				NetBindHandler.removeNetBind(conn, invalidateList, rmi_bind);
-				NetBindHandler.removeNetBind(conn, invalidateList, hypersonic_bind);
-				NetBindHandler.removeNetBind(conn, invalidateList, jmx_bind);
+				conn.executeUpdate("delete from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+				invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, account, linuxServer, false);
+				NetBindHandler.removeBind(conn, invalidateList, jnp_bind);
+				NetBindHandler.removeBind(conn, invalidateList, webserver_bind);
+				NetBindHandler.removeBind(conn, invalidateList, rmi_bind);
+				NetBindHandler.removeBind(conn, invalidateList, hypersonic_bind);
+				NetBindHandler.removeBind(conn, invalidateList, jmx_bind);
 			}
 
-			conn.executeUpdate("delete from \"web.tomcat\".\"Site\" where httpd_site=?", httpdSitePKey);
-			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, accounting, aoServer, false);
+			conn.executeUpdate("delete from \"web.tomcat\".\"Site\" where httpd_site=?", site);
+			invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, account, linuxServer, false);
 		}
 
 		// web.StaticSite
-		if(conn.executeUpdate("delete from web.\"StaticSite\" where httpd_site=?", httpdSitePKey) != 0) {
-			invalidateList.addTable(conn, Table.TableID.HTTPD_STATIC_SITES, accounting, aoServer, false);
+		if(conn.executeUpdate("delete from web.\"StaticSite\" where httpd_site=?", site) != 0) {
+			invalidateList.addTable(conn, Table.TableID.HTTPD_STATIC_SITES, account, linuxServer, false);
 		}
 
 		// web.Site
-		conn.executeUpdate("delete from web.\"Site\" where id=?", httpdSitePKey);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, accounting, aoServer, false);
+		conn.executeUpdate("delete from web.\"Site\" where id=?", site);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, account, linuxServer, false);
 	}
 
-	public static void removeHttpdServer(
-		DatabaseConnection conn,
-		InvalidateList invalidateList,
-		int id
-	) throws IOException, SQLException {
-		Account.Name accounting = getBusinessForHttpdServer(conn, id);
-		int aoServer = getAOServerForHttpdServer(conn, id);
+	public static void removeHttpdServer(DatabaseConnection conn, InvalidateList invalidateList, int httpdServer) throws IOException, SQLException {
+		Account.Name account = getAccountForHttpdServer(conn, httpdServer);
+		int linuxServer = getLinuxServerForHttpdServer(conn, httpdServer);
 
 		// web.Site
-		conn.executeUpdate("delete from web.\"HttpdServer\" where id=?", id);
-		invalidateList.addTable(conn, Table.TableID.HTTPD_SERVERS, accounting, aoServer, false);
+		conn.executeUpdate("delete from web.\"HttpdServer\" where id=?", httpdServer);
+		invalidateList.addTable(conn, Table.TableID.HTTPD_SERVERS, account, linuxServer, false);
 	}
 
-	public static void removeHttpdSiteAuthenticatedLocation(
+	public static void removeLocation(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int location
 	) throws IOException, SQLException {
-		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "removeHttpdSiteAuthenticatedLocation", httpd_site);
+		int site = conn.executeIntQuery("select httpd_site from web.\"Location\" where id=?", location);
+		checkAccessSite(conn, source, "removeLocation", site);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, httpd_site);
-		int aoServer=getAOServerForHttpdSite(conn, httpd_site);
+		Account.Name account = getAccountForSite(conn, site);
+		int linuxServer = getLinuxServerForSite(conn, site);
 
-		conn.executeUpdate("delete from web.\"Location\" where id=?", id);
+		conn.executeUpdate("delete from web.\"Location\" where id=?", location);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 	}
 
-	public static void removeHttpdSiteURL(
+	public static void removeVirtualHostName(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int virtualHostName
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteURL(conn, id);
-		checkAccessHttpdSite(conn, source, "removeHttpdSiteURL", hs);
-		if(conn.executeBooleanQuery("select is_primary from web.\"VirtualHostName\" where id=?", id)) throw new SQLException("Not allowed to remove the primary hostname: "+id);
+		int hs=getSiteForVirtualHostName(conn, virtualHostName);
+		checkAccessSite(conn, source, "removeVirtualHostName", hs);
+		if(conn.executeBooleanQuery("select is_primary from web.\"VirtualHostName\" where id=?", virtualHostName)) throw new SQLException("Not allowed to remove the primary hostname: "+virtualHostName);
 		if(
 			conn.executeBooleanQuery(
 				"select\n"
@@ -2750,61 +2695,60 @@ final public class HttpdHandler {
 				+ "  )=(\n"
 				+ "    select hs.\"name\"||'.'||ao.hostname from web.\"Site\" hs, linux.\"Server\" ao where hs.id=? and hs.ao_server=ao.server\n"
 				+ "  )",
-				id,
+				virtualHostName,
 				hs
 			)
-		) throw new SQLException("Not allowed to remove a test URL: "+id);
+		) throw new SQLException("Not allowed to remove a test URL: "+virtualHostName);
 
-		conn.executeUpdate("delete from web.\"VirtualHostName\" where id=?", id);
-		invalidateList.addTable(
-			conn,
+		conn.executeUpdate("delete from web.\"VirtualHostName\" where id=?", virtualHostName);
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_URLS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, hs),
+			getLinuxServerForSite(conn, hs),
 			false
 		);
 	}
 
-	public static void removeHttpdTomcatContext(
+	public static void removeContext(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int context
 	) throws IOException, SQLException {
-		int tomcat_site = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "removeHttpdTomcatContext", tomcat_site);
-		String path = conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", id);
-		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + id);
+		int tomcat_site = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "removeContext", tomcat_site);
+		String path = conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", context);
+		if(path.isEmpty()) throw new SQLException("Not allowed to remove the default context: " + context);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcat_site);
+		int linuxServer = getLinuxServerForSite(conn, tomcat_site);
 
-		if(conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where tomcat_context=?", id) > 0) {
+		if(conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where tomcat_context=?", context) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 		}
 
-		if(conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where tomcat_context=?", id) > 0) {
+		if(conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where tomcat_context=?", context) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_TOMCAT_PARAMETERS,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 		}
 
-		conn.executeUpdate("delete from \"web.tomcat\".\"Context\" where id=?", id);
+		conn.executeUpdate("delete from \"web.tomcat\".\"Context\" where id=?", context);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_CONTEXTS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 
@@ -2819,64 +2763,64 @@ final public class HttpdHandler {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 		}
 	}
 
-	public static void removeHttpdTomcatDataSource(
+	public static void removeContextDataSource(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int contextDataSource
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextDataSource\" where id=?", id);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "removeHttpdTomcatDataSource", tomcat_site);
+		int context = conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextDataSource\" where id=?", contextDataSource);
+		int tomcatSite = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "removeContextDataSource", tomcatSite);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
-		conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", id);
+		conn.executeUpdate("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", contextDataSource);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 	}
 
-	public static void removeHttpdTomcatParameter(
+	public static void removeContextParameter(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int contextParameter
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextParameter\" where id=?", id);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "removeHttpdTomcatParameter", tomcat_site);
+		int context = conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextParameter\" where id=?", contextParameter);
+		int tomcatSite = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "removeContextParameter", tomcatSite);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
-		conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where id=?", id);
+		conn.executeUpdate("delete from \"web.tomcat\".\"ContextParameter\" where id=?", contextParameter);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_PARAMETERS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 	}
 
-	public static void updateHttpdTomcatDataSource(
+	public static void updateContextDataSource(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int contextDataSource,
 		String name,
 		String driverClassName,
 		String url,
@@ -2887,12 +2831,12 @@ final public class HttpdHandler {
 		int maxWait,
 		String validationQuery
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextDataSource\" where id=?", id);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "updateHttpdTomcatDataSource", tomcat_site);
+		int context = conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextDataSource\" where id=?", contextDataSource);
+		int tomcatSite = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "updateContextDataSource", tomcatSite);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"ContextDataSource\" set name=?, driver_class_name=?, url=?, username=?, password=?, max_active=?, max_idle=?, max_wait=?, validation_query=? where id=?",
@@ -2905,33 +2849,33 @@ final public class HttpdHandler {
 			maxIdle,
 			maxWait,
 			validationQuery,
-			id
+			contextDataSource
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 	}
 
-	public static void updateHttpdTomcatParameter(
+	public static void updateContextParameter(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int contextParameter,
 		String name,
 		String value,
 		boolean override,
 		String description
 	) throws IOException, SQLException {
-		int tomcat_context=conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextParameter\" where id=?", id);
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", tomcat_context);
-		checkAccessHttpdSite(conn, source, "updateHttpdTomcatParameter", tomcat_site);
+		int context = conn.executeIntQuery("select tomcat_context from \"web.tomcat\".\"ContextParameter\" where id=?", contextParameter);
+		int tomcatSite = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "updateContextParameter", tomcatSite);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"ContextParameter\" set name=?, value=?, override=?, description=? where id=?",
@@ -2939,13 +2883,13 @@ final public class HttpdHandler {
 			value,
 			override,
 			description,
-			id
+			contextParameter
 		);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_PARAMETERS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 	}
@@ -2953,112 +2897,108 @@ final public class HttpdHandler {
 	public static void restartApache(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int linuxServer
 	) throws IOException, SQLException {
-		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
-		if(!canControl) throw new SQLException("Not allowed to restart Apache on "+aoServer);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_apache");
+		if(!canControl) throw new SQLException("Not allowed to restart Apache on "+linuxServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
 		daemonConnector.restartApache();
 	}
 
-	public static void setHttpdSharedTomcatIsManual(
+	public static void setSharedTomcatIsManual(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int sharedTomcat,
 		boolean isManual
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatIsManual", id);
-		if(isHttpdSharedTomcatDisabled(conn, id)) throw new SQLException("Unable to set is_manual flag: SharedTomcat disabled: "+id);
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatIsManual", sharedTomcat);
+		if(isSharedTomcatDisabled(conn, sharedTomcat)) throw new SQLException("Unable to set is_manual flag: SharedTomcat disabled: "+sharedTomcat);
 
 		// Update the database
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set is_manual=? where id=?",
 			isManual,
-			id
+			sharedTomcat
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
 
-	public static void setHttpdSharedTomcatMaxPostSize(
+	public static void setSharedTomcatMaxPostSize(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int sharedTomcat,
 		int maxPostSize
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatMaxPostSize", id);
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatMaxPostSize", sharedTomcat);
 
 		// Update the database
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set max_post_size=? where id=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
-			id
+			sharedTomcat
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
 
-	public static void setHttpdSharedTomcatUnpackWARs(
+	public static void setSharedTomcatUnpackWARs(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int sharedTomcat,
 		boolean unpackWARs
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatUnpackWARs", id);
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatUnpackWARs", sharedTomcat);
 
 		// Update the database
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set unpack_wars=? where id=?",
 			unpackWARs,
-			id
+			sharedTomcat
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
 
-	public static void setHttpdSharedTomcatAutoDeploy(
+	public static void setSharedTomcatAutoDeploy(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int sharedTomcat,
 		boolean autoDeploy
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatAutoDeploy", id);
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatAutoDeploy", sharedTomcat);
 
 		// Update the database
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set auto_deploy=? where id=?",
 			autoDeploy,
-			id
+			sharedTomcat
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			getAOServerForHttpdSharedTomcat(conn, id),
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
 			false
 		);
 	}
@@ -3075,14 +3015,14 @@ final public class HttpdHandler {
 		}
 	}
 
-	public static void setHttpdSharedTomcatVersion(
+	public static void setSharedTomcatVersion(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int sharedTomcat,
 		int version
 	) throws IOException, SQLException {
-		checkAccessHttpdSharedTomcat(conn, source, "setHttpdSharedTomcatVersion", id);
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatVersion", sharedTomcat);
 
 		// Make sure the version change is acceptable
 		checkUpgradeFrom(
@@ -3093,7 +3033,7 @@ final public class HttpdHandler {
 				+ "  \"web.tomcat\".\"SharedTomcat\" hst\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hst.version=tv.id\n"
 				+ "where hst.id=?",
-				id
+				sharedTomcat
 			)
 		);
 		checkUpgradeTo(
@@ -3109,8 +3049,8 @@ final public class HttpdHandler {
 		);
 
 		// Make sure operating system version matches
-		int aoServer = getAOServerForHttpdSharedTomcat(conn, id);
-		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int linuxServer = getLinuxServerForSharedTomcat(conn, sharedTomcat);
+		int fromOsv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
 		int toOsv = conn.executeIntQuery(
 			"select operating_system_version from distribution.\"SoftwareVersion\" where id=?",
 			version
@@ -3127,7 +3067,7 @@ final public class HttpdHandler {
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"SharedTomcat\" set version=? where id=?",
 			version,
-			id
+			sharedTomcat
 		);
 		// TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
 		// TODO: See web.tomcat.Version table
@@ -3136,30 +3076,28 @@ final public class HttpdHandler {
 			+ "  select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
 			+ ")",
 			version,
-			id
+			sharedTomcat
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SHARED_TOMCATS,
-			getBusinessForHttpdSharedTomcat(conn, id),
-			aoServer,
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			linuxServer,
 			false
 		);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_SITES,
-			InvalidateList.allBusinesses, // TODO: Could be more selective here
-			aoServer,
+			InvalidateList.allAccounts, // TODO: Could be more selective here
+			linuxServer,
 			false
 		);
 	}
 
-	public static void setHttpdSiteAuthenticatedLocationAttributes(
+	public static void setLocationAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int location,
 		String path,
 		boolean isRegularExpression,
 		String authName,
@@ -3168,9 +3106,9 @@ final public class HttpdHandler {
 		String require,
 		String handler
 	) throws IOException, SQLException {
-		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "setHttpdSiteAuthenticatedLocationAttributes", httpd_site);
-		if(isHttpdSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to set Location attributes, Site disabled: "+httpd_site);
+		int httpd_site=conn.executeIntQuery("select httpd_site from web.\"Location\" where id=?", location);
+		checkAccessSite(conn, source, "setLocationAttributes", httpd_site);
+		if(isSiteDisabled(conn, httpd_site)) throw new SQLException("Unable to set Location attributes, Site disabled: "+httpd_site);
 		String error = Location.validatePath(path);
 		if(error==null) error = Location.validateAuthName(authName);
 		if(error==null) error = Location.validateAuthGroupFile(authGroupFile);
@@ -3196,7 +3134,7 @@ final public class HttpdHandler {
 				authGroupFile==null ? "" : authGroupFile.toString(),
 				authUserFile==null ? "" : authUserFile.toString(),
 				require,
-				id
+				location
 			);
 		} else {
 			conn.executeUpdate(
@@ -3219,172 +3157,167 @@ final public class HttpdHandler {
 				authUserFile==null ? "" : authUserFile.toString(),
 				require,
 				handler,
-				id
+				location
 			);
 		}
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
-			getBusinessForHttpdSite(conn, httpd_site),
-			getAOServerForHttpdSite(conn, httpd_site),
+			getAccountForSite(conn, httpd_site),
+			getLinuxServerForSite(conn, httpd_site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBindIsManual(
+	public static void setVirtualHostIsManual(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int virtualHost,
 		boolean isManual
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBindIsManual", hs);
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set is_manual flag: VirtualHost disabled: "+id);
+		int site = getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "setVirtualHostIsManual", site);
+		if(isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("Unable to set is_manual flag: VirtualHost disabled: "+virtualHost);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set is_manual=? where id=?",
 			isManual,
-			id
+			virtualHost
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_BINDS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBindRedirectToPrimaryHostname(
+	public static void setVirtualHostRedirectToPrimaryHostname(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
-		boolean redirect_to_primary_hostname
+		int virtualHost,
+		boolean redirectToPrimaryHostname
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteBind(conn, id);
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBindRedirectToPrimaryHostname", hs);
-		if(isHttpdSiteBindDisabled(conn, id)) throw new SQLException("Unable to set redirect_to_primary_hostname flag: VirtualHost disabled: "+id);
+		int hs=getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "setVirtualHostRedirectToPrimaryHostname", hs);
+		if(isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("Unable to set redirect_to_primary_hostname flag: VirtualHost disabled: "+virtualHost);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set redirect_to_primary_hostname=? where id=?",
-			redirect_to_primary_hostname,
-			id
+			redirectToPrimaryHostname,
+			virtualHost
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_BINDS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, hs),
+			getLinuxServerForSite(conn, hs),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBindPredisableConfig(
+	public static void setVirtualHostPredisableConfig(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int hsb,
+		int virtualHost,
 		String config
 	) throws IOException, SQLException {
-		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb);
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBindPredisableConfig", hs);
+		int site = getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "setVirtualHostPredisableConfig", site);
 		if(config==null) {
-			if(isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to clear VirtualHost predisable config, bind disabled: "+hsb);
+			if(isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("Unable to clear VirtualHost predisable config, bind disabled: "+virtualHost);
 		} else {
-			if(!isHttpdSiteBindDisabled(conn, hsb)) throw new SQLException("Unable to set VirtualHost predisable config, bind not disabled: "+hsb);
+			if(!isVirtualHostDisabled(conn, virtualHost)) throw new SQLException("Unable to set VirtualHost predisable config, bind not disabled: "+virtualHost);
 		}
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"VirtualHost\" set predisable_config=? where id=?",
 			config,
-			hsb
+			virtualHost
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_BINDS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteIsManual(
+	public static void setSiteIsManual(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean isManual
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteIsManual", id);
-		if(isHttpdSiteDisabled(conn, id)) throw new SQLException("Unable to set is_manual flag: Site disabled: "+id);
+		checkAccessSite(conn, source, "setSiteIsManual", site);
+		if(isSiteDisabled(conn, site)) throw new SQLException("Unable to set is_manual flag: Site disabled: "+site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set is_manual=? where id=?",
 			isManual,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteServerAdmin(
+	public static void setSiteServerAdmin(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
-		Email emailAddress
+		int site,
+		// TODO: Support a reference to email.Address as an alternative?  Could help identify what used by
+		Email serverAdmin
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteServerAdmin", id);
-		if(isHttpdSiteDisabled(conn, id)) throw new SQLException("Unable to set server administrator: Site disabled: "+id);
+		checkAccessSite(conn, source, "setSiteServerAdmin", site);
+		if(isSiteDisabled(conn, site)) throw new SQLException("Unable to set server administrator: Site disabled: "+site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set server_admin=? where id=?",
-			emailAddress,
-			id
+			serverAdmin,
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSitePhpVersion(
+	public static void setSitePhpVersion(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		int phpVersion
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSitePhpVersion", id);
-		int aoServer = getAOServerForHttpdSite(conn, id);
+		checkAccessSite(conn, source, "setSitePhpVersion", site);
+		int linuxServer = getLinuxServerForSite(conn, site);
 		if(phpVersion != -1) {
-			if(isHttpdStaticSite(conn, id)) {
+			if(isStaticSite(conn, site)) {
 				// TODO: This would be better modeled by not having php_version on the web.Site table, but rather more specialized types of sites
 				// TODO: How to enable PHP on a per-site basis, so static site under mod_php apache doesn't get php?
 				throw new SQLException("May not enable PHP on a static site");
 			}
-			int osv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+			int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
 			// Version must be correct for this server
 			int tvOsv = conn.executeIntQuery(
 				"select coalesce(\n"
@@ -3402,23 +3335,23 @@ final public class HttpdHandler {
 		if(phpVersion == -1) {
 			updateCount = conn.executeUpdate(
 				"update web.\"Site\" set php_version=null where id=? and php_version is not null",
-				id
+				site
 			);
 		} else {
 			updateCount = conn.executeUpdate(
 				"update web.\"Site\" set php_version=? where id=? and php_version!=?",
 				phpVersion,
-				id,
+				site,
 				phpVersion
 			);
 		}
 		if(updateCount > 0) {
-			Account.Name accounting = getBusinessForHttpdSite(conn, id);
+			Account.Name account = getAccountForSite(conn, site);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_SITES,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 
@@ -3427,7 +3360,7 @@ final public class HttpdHandler {
 				+ "  select id from \"web.tomcat\".\"JkMount\"\n"
 				+ "  where (httpd_tomcat_site, path)=(?, '/*')\n"
 				+ ") is null",
-				id
+				site
 			);
 			boolean hasPhp;
 			if(phpVersion != -1) {
@@ -3448,7 +3381,7 @@ final public class HttpdHandler {
 					+ "    and hs.mod_php_version is not null\n"
 					+ "  limit 1\n"
 					+ ") is not null",
-					id
+					site
 				);
 			}
 			if(!useApache && hasPhp) {
@@ -3458,19 +3391,19 @@ final public class HttpdHandler {
 						+ "  select id from \"web.tomcat\".\"JkMount\"\n"
 						+ "  where (httpd_tomcat_site, path)=(?, '/*.php')\n"
 						+ ") is null",
-						id
+						site
 					)
 				) {
 					// Add /*.php to JkUnMounts
 					conn.executeUpdate(
 						"insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
-						id
+						site
 					);
 					invalidateList.addTable(
 						conn,
 						Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-						accounting,
-						aoServer,
+						account,
+						linuxServer,
 						false
 					);
 				}
@@ -3479,14 +3412,14 @@ final public class HttpdHandler {
 				if(
 					conn.executeUpdate(
 						"delete from \"web.tomcat\".\"JkMount\" where (httpd_tomcat_site, path, mount)=(?,'/*.php',FALSE)",
-						id
+						site
 					) > 0
 				) {
 					invalidateList.addTable(
 						conn,
 						Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-						accounting,
-						aoServer,
+						account,
+						linuxServer,
 						false
 					);
 				}
@@ -3494,16 +3427,16 @@ final public class HttpdHandler {
 		}
 	}
 
-	public static void setHttpdSiteEnableCgi(
+	public static void setSiteEnableCgi(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableCgi
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableCgi", id);
+		checkAccessSite(conn, source, "setSiteEnableCgi", site);
 
-		if(enableCgi && isHttpdStaticSite(conn, id)) {
+		if(enableCgi && isStaticSite(conn, site)) {
 			// TODO: This would be better modeled by not having enable_cgi on the web.Site table, but rather more specialized types of sites
 			throw new SQLException("May not enable CGI on a static site");
 		}
@@ -3513,34 +3446,34 @@ final public class HttpdHandler {
 			conn.executeUpdate(
 				"update web.\"Site\" set enable_cgi=? where id=? and enable_cgi != ?",
 				enableCgi,
-				id,
+				site,
 				enableCgi
 			) > 0
 		) {
-			Account.Name accounting = getBusinessForHttpdSite(conn, id);
-			int aoServer = getAOServerForHttpdSite(conn, id);
+			Account.Name account = getAccountForSite(conn, site);
+			int linuxServer = getLinuxServerForSite(conn, site);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_SITES,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
-			List<String> paths = conn.executeStringListQuery("select path from \"web.tomcat\".\"Context\" where tomcat_site=?", id);
+			List<String> paths = conn.executeStringListQuery("select path from \"web.tomcat\".\"Context\" where tomcat_site=?", site);
 			if(!paths.isEmpty()) {
 				for(String path : paths) {
 					if(enableCgi) {
 						// Add /cgi-bin to JkUnMounts
 						conn.executeUpdate(
 							"insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
-							id,
+							site,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
 					} else {
 						// Remove /cgi-bin from JkUnMounts
 						conn.executeUpdate(
 							"delete from \"web.tomcat\".\"JkMount\" where (httpd_tomcat_site, path, mount)=(?,?,FALSE)",
-							id,
+							site,
 							checkJkMountPath(path + "/cgi-bin/*")
 						);
 					}
@@ -3549,244 +3482,234 @@ final public class HttpdHandler {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 		}
 	}
 
-	public static void setHttpdSiteEnableSsi(
+	public static void setSiteEnableSsi(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableSsi
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableSsi", id);
+		checkAccessSite(conn, source, "setSiteEnableSsi", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set enable_ssi=? where id=?",
 			enableSsi,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteEnableHtaccess(
+	public static void setSiteEnableHtaccess(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableHtaccess
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableHtaccess", id);
+		checkAccessSite(conn, source, "setSiteEnableHtaccess", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set enable_htaccess=? where id=?",
 			enableHtaccess,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteEnableIndexes(
+	public static void setSiteEnableIndexes(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableIndexes
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableIndexes", id);
+		checkAccessSite(conn, source, "setSiteEnableIndexes", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set enable_indexes=? where id=?",
 			enableIndexes,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteEnableFollowSymlinks(
+	public static void setSiteEnableFollowSymlinks(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableFollowSymlinks
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableFollowSymlinks", id);
+		checkAccessSite(conn, source, "setSiteEnableFollowSymlinks", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set enable_follow_symlinks=? where id=?",
 			enableFollowSymlinks,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteEnableAnonymousFtp(
+	public static void setSiteEnableAnonymousFtp(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean enableAnonymousFtp
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteEnableAnonymousFtp", id);
+		checkAccessSite(conn, source, "setSiteEnableAnonymousFtp", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set enable_anonymous_ftp=? where id=?",
 			enableAnonymousFtp,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBlockTraceTrack(
+	public static void setSiteBlockTraceTrack(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean blockTraceTrack
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockTraceTrack", id);
+		checkAccessSite(conn, source, "setSiteBlockTraceTrack", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set block_trace_track=? where id=?",
 			blockTraceTrack,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBlockScm(
+	public static void setSiteBlockScm(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean blockScm
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockScm", id);
+		checkAccessSite(conn, source, "setSiteBlockScm", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set block_scm=? where id=?",
 			blockScm,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBlockCoreDumps(
+	public static void setSiteBlockCoreDumps(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean blockCoreDumps
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockCoreDumps", id);
+		checkAccessSite(conn, source, "setSiteBlockCoreDumps", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set block_core_dumps=? where id=?",
 			blockCoreDumps,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdSiteBlockEditorBackups(
+	public static void setSiteBlockEditorBackups(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int site,
 		boolean blockEditorBackups
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdSiteBlockEditorBackups", id);
+		checkAccessSite(conn, source, "setSiteBlockEditorBackups", site);
 
 		// Update the database
 		conn.executeUpdate(
 			"update web.\"Site\" set block_editor_backups=? where id=?",
 			blockEditorBackups,
-			id
+			site
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	@SuppressWarnings("deprecation") // Java 1.7: Do not suppress
-	public static int setHttpdTomcatContextAttributes(
+	public static int setContextAttributes(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int context,
 		String className,
 		boolean cookies,
 		boolean crossContext,
@@ -3801,13 +3724,13 @@ final public class HttpdHandler {
 		PosixPath workDir,
 		boolean serverXmlConfigured
 	) throws IOException, SQLException {
-		int tomcat_site=conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", id);
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatContextAttributes", tomcat_site);
-		if(isHttpdSiteDisabled(conn, tomcat_site)) throw new SQLException("Unable to set Context attributes, Site disabled: "+tomcat_site);
-		checkHttpdTomcatContext(
+		int tomcatSite = conn.executeIntQuery("select tomcat_site from \"web.tomcat\".\"Context\" where id=?", context);
+		checkAccessSite(conn, source, "setContextAttributes", tomcatSite);
+		if(isSiteDisabled(conn, tomcatSite)) throw new SQLException("Unable to set Context attributes, Site disabled: "+tomcatSite);
+		checkContext(
 			conn,
 			source,
-			tomcat_site,
+			tomcatSite,
 			className,
 			crossContext,
 			docBase,
@@ -3819,10 +3742,10 @@ final public class HttpdHandler {
 			serverXmlConfigured
 		);
 
-		Account.Name accounting = getBusinessForHttpdSite(conn, tomcat_site);
-		int aoServer = getAOServerForHttpdSite(conn, tomcat_site);
+		Account.Name account = getAccountForSite(conn, tomcatSite);
+		int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
-		String oldPath=conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", id);
+		String oldPath=conn.executeStringQuery("select path from \"web.tomcat\".\"Context\" where id=?", context);
 		if(oldPath.length()==0 && path.length() > 0) throw new SQLException("Not allowed to change the path of the default context: "+path);
 
 		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
@@ -3857,9 +3780,9 @@ final public class HttpdHandler {
 				pstmt.setBoolean(9, useNaming);
 				pstmt.setString(10, wrapperClass);
 				pstmt.setInt(11, debug);
-				pstmt.setString(12, ObjectUtils.toString(workDir));
+				pstmt.setString(12, Objects.toString(workDir, null));
 				pstmt.setBoolean(13, serverXmlConfigured);
-				pstmt.setInt(14, id);
+				pstmt.setInt(14, context);
 
 				pstmt.executeUpdate();
 			} catch(SQLException err) {
@@ -3876,7 +3799,7 @@ final public class HttpdHandler {
 				+ "where httpd_tomcat_site=? and substring(path from 1 for ?)=?",
 				path,
 				oldPath.length(),
-				tomcat_site,
+				tomcatSite,
 				oldPath.length() + 1,
 				oldPath + '/'
 			) > 0
@@ -3884,8 +3807,8 @@ final public class HttpdHandler {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
-				accounting,
-				aoServer,
+				account,
+				linuxServer,
 				false
 			);
 		}
@@ -3893,100 +3816,97 @@ final public class HttpdHandler {
 		invalidateList.addTable(
 			conn,
 			Table.TableID.HTTPD_TOMCAT_CONTEXTS,
-			accounting,
-			aoServer,
+			account,
+			linuxServer,
 			false
 		);
 
-		return id;
+		return context;
 	}
 
-	public static void setHttpdTomcatStdSiteMaxPostSize(
+	public static void setPrivateTomcatSiteMaxPostSize(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int privateTomcatSite,
 		int maxPostSize
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteMaxPostSize", id);
+		checkAccessSite(conn, source, "setPrivateTomcatSiteMaxPostSize", privateTomcatSite);
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
 			"update \"web.tomcat\".\"PrivateTomcatSite\" set max_post_size=? where httpd_site=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
-			id
+			privateTomcatSite
 		);
-		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + id);
+		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
 		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_STD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, privateTomcatSite),
+			getLinuxServerForSite(conn, privateTomcatSite),
 			false
 		);
 	}
 
-	public static void setHttpdTomcatStdSiteUnpackWARs(
+	public static void setPrivateTomcatSiteUnpackWARs(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int privateTomcatSite,
 		boolean unpackWARs
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteUnpackWARs", id);
+		checkAccessSite(conn, source, "setPrivateTomcatSiteUnpackWARs", privateTomcatSite);
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
 			"update \"web.tomcat\".\"PrivateTomcatSite\" set unpack_wars=? where httpd_site=?",
 			unpackWARs,
-			id
+			privateTomcatSite
 		);
-		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + id);
+		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
 		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_STD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, privateTomcatSite),
+			getLinuxServerForSite(conn, privateTomcatSite),
 			false
 		);
 	}
 
-	public static void setHttpdTomcatStdSiteAutoDeploy(
+	public static void setPrivateTomcatSiteAutoDeploy(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int privateTomcatSite,
 		boolean autoDeploy
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteAutoDeploy", id);
+		checkAccessSite(conn, source, "setPrivateTomcatSiteAutoDeploy", privateTomcatSite);
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
 			"update \"web.tomcat\".\"PrivateTomcatSite\" set auto_deploy=? where httpd_site=?",
 			autoDeploy,
-			id
+			privateTomcatSite
 		);
-		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + id);
+		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
 		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_STD_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, privateTomcatSite),
+			getLinuxServerForSite(conn, privateTomcatSite),
 			false
 		);
 	}
 
-	public static void setHttpdTomcatStdSiteVersion(
+	public static void setPrivateTomcatSiteVersion(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int privateTomcatSite,
 		int version
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatStdSiteVersion", id);
+		checkAccessSite(conn, source, "setHttpdTomcatStdSiteVersion", privateTomcatSite);
 
 		// Make sure the version change is acceptable
 		checkUpgradeFrom(
@@ -3998,7 +3918,7 @@ final public class HttpdHandler {
 				+ "  inner join \"web.tomcat\".\"Site\" hts on htss.tomcat_site=hts.httpd_site\n"
 				+ "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.id\n"
 				+ "where htss.tomcat_site=?",
-				id
+				privateTomcatSite
 			)
 		);
 		checkUpgradeTo(
@@ -4014,8 +3934,8 @@ final public class HttpdHandler {
 		);
 
 		// Make sure operating system version matches
-		int aoServer = getAOServerForHttpdSite(conn, id);
-		int fromOsv = ServerHandler.getOperatingSystemVersionForServer(conn, aoServer);
+		int linuxServer = getLinuxServerForSite(conn, privateTomcatSite);
+		int fromOsv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
 		int toOsv = conn.executeIntQuery(
 			"select operating_system_version from distribution.\"SoftwareVersion\" where id=?",
 			version
@@ -4034,60 +3954,57 @@ final public class HttpdHandler {
 		conn.executeUpdate(
 			"update \"web.tomcat\".\"Site\" set version=? where httpd_site=?",
 			version,
-			id
+			privateTomcatSite
 		);
 
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_SITES,
-			getBusinessForHttpdSite(conn, id),
-			aoServer,
+			getAccountForSite(conn, privateTomcatSite),
+			linuxServer,
 			false
 		);
 	}
 
-	public static void setPrimaryHttpdSiteURL(
+	public static void setPrimaryVirtualHostName(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int virtualHostName
 	) throws IOException, SQLException {
-		int hsb=conn.executeIntQuery("select httpd_site_bind from web.\"VirtualHostName\" where id=?", id);
-		int hs=getHttpdSiteForHttpdSiteBind(conn, hsb);
-		checkAccessHttpdSite(conn, source, "setPrimaryHttpdSiteURL", hs);
+		int virtualHost = conn.executeIntQuery("select httpd_site_bind from web.\"VirtualHostName\" where id=?", virtualHostName);
+		int site = getSiteForVirtualHost(conn, virtualHost);
+		checkAccessSite(conn, source, "setPrimaryVirtualHostName", site);
 
-		conn.executeUpdate("update web.\"VirtualHostName\" set is_primary=(id=?) where httpd_site_bind=?", id, hsb);
-		invalidateList.addTable(
-			conn,
+		conn.executeUpdate("update web.\"VirtualHostName\" set is_primary=(id=?) where httpd_site_bind=?", virtualHostName, virtualHost);
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_URLS,
-			getBusinessForHttpdSite(conn, hs),
-			getAOServerForHttpdSite(conn, hs),
+			getAccountForSite(conn, site),
+			getLinuxServerForSite(conn, site),
 			false
 		);
 	}
 
-	public static void setHttpdTomcatSiteBlockWebinf(
+	public static void setTomcatSiteBlockWebinf(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int tomcatSite,
 		boolean blockWebinf
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "setHttpdTomcatSiteBlockWebinf", id);
+		checkAccessSite(conn, source, "setTomcatSiteBlockWebinf", tomcatSite);
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
 			"update \"web.tomcat\".\"Site\" set block_webinf=? where httpd_site=?",
 			blockWebinf,
-			id
+			tomcatSite
 		);
-		if(updateCount == 0) throw new SQLException("Not a Site: #" + id);
+		if(updateCount == 0) throw new SQLException("Not a Site: #" + tomcatSite);
 		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_TOMCAT_SITES,
-			getBusinessForHttpdSite(conn, id),
-			getAOServerForHttpdSite(conn, id),
+			getAccountForSite(conn, tomcatSite),
+			getLinuxServerForSite(conn, tomcatSite),
 			false
 		);
 	}
@@ -4095,11 +4012,11 @@ final public class HttpdHandler {
 	public static void startApache(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int linuxServer
 	) throws IOException, SQLException {
-		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
-		if(!canControl) throw new SQLException("Not allowed to start Apache on "+aoServer);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_apache");
+		if(!canControl) throw new SQLException("Not allowed to start Apache on "+linuxServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
 		daemonConnector.startApache();
 	}
@@ -4107,11 +4024,11 @@ final public class HttpdHandler {
 	public static void stopApache(
 		DatabaseConnection conn,
 		RequestSource source,
-		int aoServer
+		int linuxServer
 	) throws IOException, SQLException {
-		boolean canControl=BusinessHandler.canBusinessServer(conn, source, aoServer, "can_control_apache");
-		if(!canControl) throw new SQLException("Not allowed to stop Apache on "+aoServer);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, aoServer);
+		boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_apache");
+		if(!canControl) throw new SQLException("Not allowed to stop Apache on "+linuxServer);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
 		conn.releaseConnection();
 		daemonConnector.stopApache();
 	}
@@ -4119,17 +4036,16 @@ final public class HttpdHandler {
 	public static void getAWStatsFile(
 		DatabaseConnection conn,
 		RequestSource source,
-		int id,
+		int site,
 		String path,
 		String queryString,
 		CompressedDataOutputStream out
 	) throws IOException, SQLException {
-		checkAccessHttpdSite(conn, source, "getAWStatsFile", id);
+		checkAccessSite(conn, source, "getAWStatsFile", site);
 
-		String siteName = getSiteNameForHttpdSite(conn, id);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-			conn,
-			getAOServerForHttpdSite(conn, id)
+		String siteName = getNameForSite(conn, site);
+		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
+			getLinuxServerForSite(conn, site)
 		);
 		conn.releaseConnection();
 		daemonConnector.getAWStatsFile(siteName, path, queryString, out);

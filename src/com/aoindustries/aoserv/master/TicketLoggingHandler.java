@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -70,7 +70,7 @@ final public class TicketLoggingHandler extends QueuedHandler {
 	@Override
 	protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
 		try {
-			Account.Name rootAccounting = BusinessHandler.getRootBusiness();
+			Account.Name rootAccounting = AccountHandler.getRootAccount();
 			Level level = record.getLevel();
 			// Generate the summary from level, prefix classname, method
 			StringBuilder tempSB = new StringBuilder();

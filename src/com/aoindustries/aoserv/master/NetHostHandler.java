@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2016, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -32,14 +32,14 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class ServerHandler {
+final public class NetHostHandler {
 
-	private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+	private static final Logger logger = LogFactory.getLogger(NetHostHandler.class);
 
-	private ServerHandler() {
+	private NetHostHandler() {
 	}
 
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<Integer>> usernameServers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<Integer>> userHosts;
 
 	/*
 	public static int addBackupServer(
@@ -57,9 +57,9 @@ final public class ServerHandler {
 		String contact_email
 	) throws IOException, SQLException {
 		// Security and validity checks
-		String accounting=UsernameHandler.getBusinessForUsername(conn, source.getUsername());
+		String account=UsernameHandler.getAccountForUsername(conn, source.getUsername());
 		if(
-			!conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_add_backup_server from account.\"Account\" where accounting=?", accounting)
+			!conn.executeBooleanQuery(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_add_backup_server from account.\"Account\" where accounting=?", account)
 		) throw new SQLException("Not allowed to add_backup_server: "+source.getUsername());
 
 		MasterServer.checkAccessHostname(conn, source, "addBackupServer", hostname);
@@ -78,7 +78,7 @@ final public class ServerHandler {
 			+ "  and sf.owner=pk.id",
 			farm
 		);
-		if(!BusinessHandler.isBusinessOrParent(conn, accounting, farm_owner)) throw new SQLException("Not able to access farm: "+farm);
+		if(!AccountHandler.isAccountOrParent(conn, account, farm_owner)) throw new SQLException("Not able to access farm: "+farm);
 
 		PackageHandler.checkAccessPackage(conn, source, "addBackupServer", owner);
 
@@ -88,7 +88,7 @@ final public class ServerHandler {
 		PasswordChecker.Result[] results = Administrator.checkPassword(Locale.getDefault(), username, password);
 		if(PasswordChecker.hasResults(Locale.getDefault(), results)) throw new SQLException("Password strength check failed: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 
-		int serverPKey = conn.executeIntUpdate(
+		int host = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  net."Host"\n"
 			+ "VALUES (\n"
@@ -104,28 +104,28 @@ final public class ServerHandler {
 			+ ") RETURNING id",
 			hostname,
 			farm,
-			PackageHandler.getBusinessForPackage(conn, owner),
+			PackageHandler.getAccountForPackage(conn, owner),
 			description,
 			os_version
 		);
-		invalidateList.addTable(conn, Table.TableID.SERVERS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.SERVERS, account, InvalidateList.allServers, false);
 
 		// Build a stack of parents, adding each business_server
 		Stack<String> bus=new Stack<String>();
-		String packageAccounting=PackageHandler.getBusinessForPackage(conn, owner);
-		String currentAccounting=packageAccounting;
+		String packageAccount=PackageHandler.getAccountForPackage(conn, owner);
+		String currentAccount=packageAccount;
 		while(true) {
-			bus.push(currentAccounting);
-			if(currentAccounting.equals(BusinessHandler.getRootBusiness())) break;
-			currentAccounting=BusinessHandler.getParentBusiness(conn, currentAccounting);
+			bus.push(currentAccount);
+			if(currentAccount.equals(AccountHandler.getRootAccount())) break;
+			currentAccount=AccountHandler.getParentAccount(conn, currentAccount);
 		}
 		while(!bus.isEmpty()) {
-			BusinessHandler.addBusinessServer(conn, invalidateList, bus.pop(), serverPKey, true);
+			AccountHandler.addBusinessServer(conn, invalidateList, bus.pop(), host, true);
 		}
 
 		UsernameHandler.addUsername(conn, source, invalidateList, PackageHandler.getNameForPackage(conn, owner), username, false);
 
-		BusinessHandler.addBusinessAdministrator(
+		AccountHandler.addAdministrator(
 			conn,
 			source,
 			invalidateList,
@@ -147,19 +147,19 @@ final public class ServerHandler {
 			null
 		);
 		conn.executeUpdate("insert into master.\"User\" values(?,true,false,false,false,false,false,false)", username);
-		invalidateList.addTable(conn, Table.TableID.MASTER_USERS, packageAccounting, InvalidateList.allServers, false);
-		conn.executeUpdate("insert into master.\"UserHost\"(username, server) values(?,?)", username, serverPKey);
-		invalidateList.addTable(conn, Table.TableID.MASTER_SERVERS, packageAccounting, InvalidateList.allServers, false);
-		BusinessHandler.setBusinessAdministratorPassword(conn, source, invalidateList, username, password);
+		invalidateList.addTable(conn, Table.TableID.MASTER_USERS, packageAccount, InvalidateList.allServers, false);
+		conn.executeUpdate("insert into master.\"UserHost\"(username, server) values(?,?)", username, host);
+		invalidateList.addTable(conn, Table.TableID.MASTER_SERVERS, packageAccount, InvalidateList.allServers, false);
+		AccountHandler.setAdministratorPassword(conn, source, invalidateList, username, password);
 
-		return serverPKey;
+		return host;
 	}*/
 
 	/*public static void checkAccessServer(DatabaseConnection conn, RequestSource source, String action, String server) throws IOException, SQLException {
 		if(!canAccessServer(conn, source, server)) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access server: action='"
 				+action
 				+", hostname="
@@ -170,15 +170,15 @@ final public class ServerHandler {
 		}
 	}*/
 
-	public static void checkAccessServer(DatabaseConnection conn, RequestSource source, String action, int server) throws IOException, SQLException {
-		if(!canAccessServer(conn, source, server)) {
+	public static void checkAccessHost(DatabaseConnection conn, RequestSource source, String action, int host) throws IOException, SQLException {
+		if(!canAccessHost(conn, source, host)) {
 			String message=
-				"business_administrator.username="
-				+source.getUsername()
+				"currentAdministrator="
+				+source.getCurrentAdministrator()
 				+" is not allowed to access server: action='"
 				+action
 				+", server.id="
-				+server
+				+host
 			;
 			throw new SQLException(message);
 		}
@@ -189,23 +189,23 @@ final public class ServerHandler {
 		return getAllowedServers(conn, source).contains(server);
 	}*/
 
-	public static boolean canAccessServer(DatabaseConnection conn, RequestSource source, int server) throws IOException, SQLException {
-		return getAllowedServers(conn, source).contains(server);
+	public static boolean canAccessHost(DatabaseConnection conn, RequestSource source, int host) throws IOException, SQLException {
+		return getAllowedHosts(conn, source).contains(host);
 	}
 
 	/**
 	 * Gets the servers that are allowed for the provided username.
 	 */
-	static List<Integer> getAllowedServers(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		synchronized(ServerHandler.class) {
-			com.aoindustries.aoserv.client.account.User.Name username=source.getUsername();
-			if(usernameServers==null) usernameServers=new HashMap<>();
-			List<Integer> SV=usernameServers.get(username);
+	static List<Integer> getAllowedHosts(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+		synchronized(NetHostHandler.class) {
+			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+			if(userHosts==null) userHosts=new HashMap<>();
+			List<Integer> SV=userHosts.get(currentAdministrator);
 			if(SV==null) {
 				SV=new SortedIntArrayList();
-					User mu = MasterServer.getUser(conn, source.getUsername());
+					User mu = MasterServer.getUser(conn, currentAdministrator);
 					if(mu!=null) {
-						UserHost[] masterServers = MasterServer.getUserHosts(conn, source.getUsername());
+						UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
 						if(masterServers.length!=0) {
 							for(UserHost masterServer : masterServers) {
 								SV.add(masterServer.getServerPKey());
@@ -226,28 +226,29 @@ final public class ServerHandler {
 								+ "  un.username=?\n"
 								+ "  and un.package=pk.name\n"
 								+ "  and pk.accounting=bs.accounting",
-								username
+								currentAdministrator
 							)
 						);
 					}
-				usernameServers.put(username, SV);
+				userHosts.put(currentAdministrator, SV);
 			}
 			return SV;
 		}
 	}
 
-	public static List<Account.Name> getBusinessesForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+	public static List<Account.Name> getAccountsForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
+		return conn.executeObjectCollectionQuery(new ArrayList<>(),
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where server=?",
-			server
+			host
 		);
 	}
 
+	// TODO: Move to LinuxServerHandler
 	final private static Map<Integer,Integer> failoverServers=new HashMap<>();
-	public static int getFailoverServer(DatabaseConnection conn, int aoServer) throws IOException, SQLException {
+	public static int getFailoverServer(DatabaseConnection conn, int linuxServer) throws IOException, SQLException {
 		synchronized(failoverServers) {
-			if(failoverServers.containsKey(aoServer)) return failoverServers.get(aoServer);
+			if(failoverServers.containsKey(linuxServer)) return failoverServers.get(linuxServer);
 			int failoverServer=conn.executeIntQuery(
 				"select\n"
 				+ "  coalesce(\n"
@@ -260,38 +261,39 @@ final public class ServerHandler {
 				+ "        server=?\n"
 				+ "    ), -1\n"
 				+ "  )",
-				aoServer
+				linuxServer
 			);
-			failoverServers.put(aoServer, failoverServer);
+			failoverServers.put(linuxServer, failoverServer);
 			return failoverServer;
 		}
 	}
 
-	final private static Map<Integer,String> farmsForServers=new HashMap<>();
-	public static String getFarmForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		Integer I=server;
-		synchronized(farmsForServers) {
-			String farm=farmsForServers.get(I);
+	final private static Map<Integer,String> farmForHosts = new HashMap<>();
+	public static String getFarmForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
+		Integer I=host;
+		synchronized(farmForHosts) {
+			String farm=farmForHosts.get(I);
 			if(farm==null) {
-				farm=conn.executeStringQuery("select farm from net.\"Host\" where id=?", server);
-				farmsForServers.put(I, farm);
+				farm=conn.executeStringQuery("select farm from net.\"Host\" where id=?", host);
+				farmForHosts.put(I, farm);
 			}
 			return farm;
 		}
 	}
 
-	final private static Map<Integer,DomainName> hostnamesForAOServers=new HashMap<>();
-	public static DomainName getHostnameForAOServer(DatabaseAccess database, int aoServer) throws IOException, SQLException {
-		Integer mapKey = aoServer;
-		synchronized(hostnamesForAOServers) {
-			DomainName hostname = hostnamesForAOServers.get(mapKey);
+	// TODO: Move to LinuxServerHandler
+	final private static Map<Integer,DomainName> hostnamesForLinuxServers = new HashMap<>();
+	public static DomainName getHostnameForLinuxServer(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
+		Integer mapKey = linuxServer;
+		synchronized(hostnamesForLinuxServers) {
+			DomainName hostname = hostnamesForLinuxServers.get(mapKey);
 			if(hostname == null) {
 				hostname = database.executeObjectQuery(
 					ObjectFactories.domainNameFactory,
 					"select hostname from linux.\"Server\" where server=?",
-					aoServer
+					linuxServer
 				);
-				hostnamesForAOServers.put(mapKey, hostname.intern());
+				hostnamesForLinuxServers.put(mapKey, hostname.intern());
 			}
 			return hostname;
 		}
@@ -300,33 +302,35 @@ final public class ServerHandler {
 	/**
 	 * Gets the operating system version for a server or <code>-1</code> if not available.
 	 */
-	public static int getOperatingSystemVersionForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce((select operating_system_version from net.\"Host\" where id=?), -1)", server);
+	public static int getOperatingSystemVersionForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
+		return conn.executeIntQuery("select coalesce((select operating_system_version from net.\"Host\" where id=?), -1)", host);
 	}
 
-	final private static Map<DomainName,Integer> serversForAOServers = new HashMap<>();
-	public static int getServerForAOServerHostname(DatabaseConnection conn, DomainName aoServerHostname) throws IOException, SQLException {
-		synchronized(serversForAOServers) {
-			Integer I = serversForAOServers.get(aoServerHostname);
-			int server;
+	// TODO: Move to LinuxServerHandler
+	final private static Map<DomainName,Integer> hostsForLinuxServerHostnames = new HashMap<>();
+	public static int getHostForLinuxServerHostname(DatabaseConnection conn, DomainName hostname) throws IOException, SQLException {
+		synchronized(hostsForLinuxServerHostnames) {
+			Integer I = hostsForLinuxServerHostnames.get(hostname);
+			int host;
 			if(I == null) {
-				server = conn.executeIntQuery("select server from linux.\"Server\" where hostname=?", aoServerHostname);
-				serversForAOServers.put(aoServerHostname, server);
+				host = conn.executeIntQuery("select server from linux.\"Server\" where hostname=?", hostname);
+				hostsForLinuxServerHostnames.put(hostname, host);
 			} else {
-				server = I;
+				host = I;
 			}
-			return server;
+			return host;
 		}
 	}
 
-	public static int getServerForPackageAndName(DatabaseAccess database, int pack, String name) throws IOException, SQLException {
-		return database.executeIntQuery("select id from net.\"Host\" where package=? and name=?", pack, name);
+	public static int getHostForPackageAndName(DatabaseAccess database, int packageId, String name) throws IOException, SQLException {
+		return database.executeIntQuery("select id from net.\"Host\" where package=? and name=?", packageId, name);
 	}
 
-	public static IntList getServers(DatabaseConnection conn) throws IOException, SQLException {
+	public static IntList getHosts(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.executeIntListQuery("select id from net.\"Host\"");
 	}
 
+	// TODO: Move to VirtualServerHandler
 	/**
 	 * Gets all of the Xen physical servers.
 	 */
@@ -339,64 +343,65 @@ final public class ServerHandler {
 		);
 	}
 
-	final private static Map<Integer,Boolean> aoServers=new HashMap<>();
-	public static boolean isAOServer(DatabaseConnection conn, int id) throws IOException, SQLException {
-		Integer I=id;
-		synchronized(aoServers) {
-			if(aoServers.containsKey(I)) return aoServers.get(I);
-			boolean isAOServer=conn.executeBooleanQuery(
+	// TODO: Move to LinuxServerHandler
+	final private static Map<Integer,Boolean> linuxServers = new HashMap<>();
+	public static boolean isLinuxServer(DatabaseConnection conn, int host) throws IOException, SQLException {
+		Integer I = host;
+		synchronized(linuxServers) {
+			if(linuxServers.containsKey(I)) return linuxServers.get(I);
+			boolean isLinuxServer = conn.executeBooleanQuery(
 				"select (select server from linux.\"Server\" where server=?) is not null",
-				id
+				host
 			);
-			aoServers.put(I, isAOServer);
-			return isAOServer;
+			linuxServers.put(I, isLinuxServer);
+			return isLinuxServer;
 		}
 	}
 
 	public static void invalidateTable(Table.TableID tableID) {
 		if(tableID==Table.TableID.AO_SERVERS) {
-			synchronized(aoServers) {
-				aoServers.clear();
+			synchronized(linuxServers) {
+				linuxServers.clear();
 			}
 		} else if(tableID==Table.TableID.BUSINESS_SERVERS) {
-			synchronized(ServerHandler.class) {
-				usernameServers=null;
+			synchronized(NetHostHandler.class) {
+				userHosts=null;
 			}
 		} else if(tableID==Table.TableID.MASTER_SERVERS) {
-			synchronized(ServerHandler.class) {
-				usernameServers=null;
+			synchronized(NetHostHandler.class) {
+				userHosts=null;
 			}
 		} else if(tableID==Table.TableID.SERVERS) {
 			synchronized(failoverServers) {
 				failoverServers.clear();
 			}
-			synchronized(farmsForServers) {
-				farmsForServers.clear();
+			synchronized(farmForHosts) {
+				farmForHosts.clear();
 			}
-			synchronized(hostnamesForAOServers) {
-				hostnamesForAOServers.clear();
+			synchronized(hostnamesForLinuxServers) {
+				hostnamesForLinuxServers.clear();
 			}
-			synchronized(serversForAOServers) {
-				serversForAOServers.clear();
+			synchronized(hostsForLinuxServerHostnames) {
+				hostsForLinuxServerHostnames.clear();
 			}
 		} else if(tableID==Table.TableID.SERVER_FARMS) {
 		}
 	}
 
-	private static final Object invalidateSyncLock=new Object();
+	private static final Object invalidateSyncLock = new Object();
 
 	/**
 	 * HashMap(server)->HashMap(Long(id))->RequestSource
 	 */
-	private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries=new HashMap<>();
+	private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries = new HashMap<>();
 
 	/**
 	 * HashMap(Host)->Long(lastID)
 	 */
-	private static final Map<Integer,Long> lastIDs=new HashMap<>();
+	private static final Map<Integer,Long> lastIDs = new HashMap<>();
 
-	public static Long addInvalidateSyncEntry(int server, RequestSource source) {
-		Integer S=server;
+	public static Long addInvalidateSyncEntry(int host, RequestSource source) {
+		Integer S=host;
 		synchronized(invalidateSyncLock) {
 			long id;
 			Long L=lastIDs.get(S);
@@ -413,8 +418,8 @@ final public class ServerHandler {
 		}
 	}
 
-	public static void removeInvalidateSyncEntry(int server, Long id) {
-		Integer S=server;
+	public static void removeInvalidateSyncEntry(int host, Long id) {
+		Integer S=host;
 		synchronized(invalidateSyncLock) {
 			Map<Long,RequestSource> ids=invalidateSyncEntries.get(S);
 			if(ids!=null) ids.remove(id);
@@ -422,8 +427,8 @@ final public class ServerHandler {
 		}
 	}
 
-	public static void waitForInvalidates(int server) {
-		Integer S=server;
+	public static void waitForInvalidates(int host) {
+		Integer S=host;
 		synchronized(invalidateSyncLock) {
 			Long L=lastIDs.get(S);
 			if(L!=null) {
@@ -469,7 +474,7 @@ final public class ServerHandler {
 								return;
 							}
 						} else {
-							System.err.println("waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: "+server);
+							System.err.println("waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: "+host);
 							Thread.dumpStack();
 							invalidateSyncLock.notify();
 							return;
@@ -483,14 +488,14 @@ final public class ServerHandler {
 	/**
 	 * Gets the package that owns the server.
 	 */
-	public static int getPackageForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeIntQuery("select package from net.\"Host\" where id=?", server);
+	public static int getPackageForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
+		return conn.executeIntQuery("select package from net.\"Host\" where id=?", host);
 	}
 
 	/**
 	 * Gets the per-package unique name of the server.
 	 */
-	public static String getNameForServer(DatabaseConnection conn, int server) throws IOException, SQLException {
-		return conn.executeStringQuery("select name from net.\"Host\" where id=?", server);
+	public static String getNameForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
+		return conn.executeStringQuery("select name from net.\"Host\" where id=?", host);
 	}
 }

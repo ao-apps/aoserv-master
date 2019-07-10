@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -34,11 +34,11 @@ final public class SignupHandler {
     /**
      * Creates a new <code>signup.Request</code>.
      */
-    public static int addSignupRequest(
+    public static int addRequest(
         DatabaseConnection conn,
         RequestSource source,
         InvalidateList invalidateList,
-        Account.Name accounting,
+        Account.Name account,
         InetAddress ip_address,
         int package_definition,
         String business_name,
@@ -63,7 +63,7 @@ final public class SignupHandler {
         String ba_state,
         String ba_country,
         String ba_zip,
-        User.Name ba_username,
+        User.Name administrator_user_name,
         String billing_contact,
         String billing_email,
         boolean billing_use_monthly,
@@ -76,15 +76,15 @@ final public class SignupHandler {
         Map<String,String> options
     ) throws IOException, SQLException {
         // Security checks
-        BusinessHandler.checkAccessBusiness(conn, source, "addSignupRequest", accounting);
-        PackageHandler.checkAccessPackageDefinition(conn, source, "addSignupRequest", package_definition);
-        CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", from);
-        CreditCardHandler.checkAccessEncryptionKey(conn, source, "addSignupRequest", recipient);
+        AccountHandler.checkAccessAccount(conn, source, "addRequest", account);
+        PackageHandler.checkAccessPackageDefinition(conn, source, "addRequest", package_definition);
+        PaymentHandler.checkAccessEncryptionKey(conn, source, "addRequest", from);
+        PaymentHandler.checkAccessEncryptionKey(conn, source, "addRequest", recipient);
 
         // Add the entry
         int requestId = conn.executeIntUpdate(
 			"INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING id",
-            accounting.toString(),
+            account.toString(),
             ip_address.toString(),
             package_definition,
             business_name,
@@ -109,7 +109,7 @@ final public class SignupHandler {
             ba_state,
             ba_country,
             ba_zip,
-            ba_username.toString(),
+            administrator_user_name.toString(),
             billing_contact,
             billing_email,
             billing_use_monthly,
@@ -119,9 +119,10 @@ final public class SignupHandler {
             recipient
 		);
 
-        // Add the signup_options
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"Option\" values(default,?,?,?)");
-        try {
+		// Add the signup_options
+        try (
+			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"Option\" values(default,?,?,?)")
+		) {
             for(String name : options.keySet()) {
                 String value = options.get(name);
                 pstmt.setInt(1, requestId);
@@ -130,16 +131,11 @@ final public class SignupHandler {
 
                 pstmt.executeUpdate();
             }
-        } catch(SQLException err) {
-            System.err.println("Error from query: "+pstmt.toString());
-            throw err;
-        } finally {
-            pstmt.close();
         }
 
         // Notify all clients of the update
-        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUESTS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
-        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allBusinesses, InvalidateList.allServers, false);
+        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUESTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+        invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
         return requestId;
     }
@@ -175,18 +171,16 @@ final public class SignupHandler {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
                                 if(database.executeUpdate("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
-                                    invalidateList.addTable(
-                                        database,
+                                    invalidateList.addTable(database,
                                         Table.TableID.SIGNUP_REQUESTS,
-                                        InvalidateList.allBusinesses,
-                                        InvalidateList.allServers,
+                                        InvalidateList.allAccounts,
+                                        InvalidateList.allHosts,
                                         false
                                     );
-                                    invalidateList.addTable(
-                                        database,
+                                    invalidateList.addTable(database,
                                         Table.TableID.SIGNUP_REQUEST_OPTIONS,
-                                        InvalidateList.allBusinesses,
-                                        InvalidateList.allServers,
+                                        InvalidateList.allAccounts,
+                                        InvalidateList.allHosts,
                                         false
                                     );
                                     MasterServer.invalidateTables(invalidateList, null);

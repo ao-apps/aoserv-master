@@ -46,18 +46,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The {@link CreditCardHandler} handles all the accesses to the <code>payment.CreditCard</code> table.
+ * The {@link PaymentHandler} handles all the accesses to the <code>payment.CreditCard</code> table.
  *
  * TODO: Deactivate immediately on expired card
  * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.
  *
  * @author  AO Industries, Inc.
  */
-final public class CreditCardHandler /*implements CronJob*/ {
+final public class PaymentHandler /*implements CronJob*/ {
 
-	private static final Logger logger = LogFactory.getLogger(ServerHandler.class);
+	private static final Logger logger = LogFactory.getLogger(NetHostHandler.class);
 
-	private CreditCardHandler() {
+	private PaymentHandler() {
 	}
 
 	/**
@@ -75,7 +75,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
-				System.out.print("Starting " + CreditCardHandler.class.getSimpleName() + ": ");
+				System.out.print("Starting " + PaymentHandler.class.getSimpleName() + ": ");
 				CronDaemon.addCronJob(synchronizeStoredCardsCronJob, logger);
 				CronDaemon.runImmediately(synchronizeStoredCardsCronJob);
 				started=true;
@@ -84,40 +84,40 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		}
 	}
 
-	public static void checkAccessCreditCard(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, action, Permission.Name.get_credit_cards);
-		BusinessHandler.checkAccessBusiness(
+	public static void checkAccessCreditCard(DatabaseConnection conn, RequestSource source, String action, int creditCard) throws IOException, SQLException {
+		AccountHandler.checkPermission(conn, source, action, Permission.Name.get_credit_cards);
+		AccountHandler.checkAccessAccount(
 			conn,
 			source,
 			action,
-			getBusinessForCreditCard(conn, id)
+			getAccountForCreditCard(conn, creditCard)
 		);
 	}
 
-	public static void checkAccessCreditCardProcessor(DatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
-		BusinessHandler.checkAccessBusiness(
+	public static void checkAccessProcessor(DatabaseConnection conn, RequestSource source, String action, String processor) throws IOException, SQLException {
+		AccountHandler.checkAccessAccount(
 			conn,
 			source,
 			action,
-			getBusinessForCreditCardProcessor(conn, processor)
+			getAccountForProcessor(conn, processor)
 		);
 	}
 
-	public static void checkAccessCreditCardTransaction(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
-		checkAccessCreditCardProcessor(
+	public static void checkAccessPayment(DatabaseConnection conn, RequestSource source, String action, int payment) throws IOException, SQLException {
+		checkAccessProcessor(
 			conn,
 			source,
 			action,
-			getCreditCardProcessorForCreditCardTransaction(conn, id)
+			getProcessorForPayment(conn, payment)
 		);
 	}
 
-	public static void checkAccessEncryptionKey(DatabaseConnection conn, RequestSource source, String action, int id) throws IOException, SQLException {
-		BusinessHandler.checkAccessBusiness(
+	public static void checkAccessEncryptionKey(DatabaseConnection conn, RequestSource source, String action, int encryptionKey) throws IOException, SQLException {
+		AccountHandler.checkAccessAccount(
 			conn,
 			source,
 			action,
-			getBusinessForEncryptionKey(conn, id)
+			getAccountForEncryptionKey(conn, encryptionKey)
 		);
 	}
 
@@ -128,8 +128,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		String processorName,
-		Account.Name accounting,
+		String processor,
+		Account.Name account,
 		String groupName,
 		String cardInfo, // TODO: Rename maskedCardNumber
 		Byte expirationMonth,
@@ -155,14 +155,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		int encryptionFrom,
 		int encryptionRecipient
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "addCreditCard", Permission.Name.add_credit_card);
-		BusinessHandler.checkAccessBusiness(conn, source, "addCreditCard", accounting);
+		AccountHandler.checkPermission(conn, source, "addCreditCard", Permission.Name.add_credit_card);
+		AccountHandler.checkAccessAccount(conn, source, "addCreditCard", account);
 		if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionFrom);
 		if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "addCreditCard", encryptionRecipient);
 
-		int id;
+		int creditCard;
 		if(encryptedCardNumber==null && encryptionFrom==-1 && encryptionRecipient==-1) {
-			id = conn.executeIntUpdate(
+			creditCard = conn.executeIntUpdate(
 				"INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -189,8 +189,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				+ "  principal_name,\n"
 				+ "  description\n"
 				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
-				processorName,
-				accounting,
+				processor,
+				account,
 				groupName,
 				cardInfo,
 				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
@@ -210,12 +210,12 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				state,
 				postalCode,
 				countryCode,
-				source.getUsername(),
+				source.getCurrentAdministrator(),
 				principalName,
 				description
 			);
 		} else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
-			id = conn.executeIntUpdate(
+			creditCard = conn.executeIntUpdate(
 				"INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -246,8 +246,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				+ "  encryption_card_number_from,\n"
 				+ "  encryption_card_number_recipient\n"
 				+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id",
-				processorName,
-				accounting,
+				processor,
+				account,
 				groupName,
 				cardInfo,
 				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
@@ -267,7 +267,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				state,
 				postalCode,
 				countryCode,
-				source.getUsername(),
+				source.getCurrentAdministrator(),
 				principalName,
 				description,
 				encryptedCardNumber,
@@ -277,88 +277,90 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		} else throw new SQLException("encryptedCardNumber, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, accounting, InvalidateList.allServers, false);
-		return id;
+		invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, account, InvalidateList.allHosts, false);
+		return creditCard;
 	}
 
 	public static void creditCardDeclined(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		String reason
 	) throws IOException, SQLException {
-		BankAccountHandler.checkAccounting(conn, source, "creditCardDeclined");
-		checkAccessCreditCard(conn, source, "creditCardDeclined", id);
+		BankAccountHandler.checkIsAccounting(conn, source, "creditCardDeclined");
+		checkAccessCreditCard(conn, source, "creditCardDeclined", creditCard);
 
 		conn.executeUpdate(
 			"update payment.\"CreditCard\" set active=false, deactivated_on=now(), deactivate_reason=? where id=?",
 			reason,
-			id
+			creditCard
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(
-			conn,
+		invalidateList.addTable(conn,
 			Table.TableID.CREDIT_CARDS,
-			CreditCardHandler.getBusinessForCreditCard(conn, id),
-			InvalidateList.allServers,
+			PaymentHandler.getAccountForCreditCard(conn, creditCard),
+			InvalidateList.allHosts,
 			false
 		);
 	}
 
-	public static Account.Name getBusinessForCreditCard(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+	public static Account.Name getAccountForCreditCard(DatabaseConnection conn, int creditCard) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountNameFactory,
 			"select accounting from payment.\"CreditCard\" where id=?",
-			id
+			creditCard
 		);
 	}
 
-	public static Account.Name getBusinessForCreditCardProcessor(DatabaseConnection conn, String processor) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+	public static Account.Name getAccountForProcessor(DatabaseConnection conn, String processor) throws IOException, SQLException {
+		return conn.executeObjectQuery(
+			ObjectFactories.accountNameFactory,
 			"select accounting from payment.\"Processor\" where provider_id=?",
 			processor
 		);
 	}
 
-	public static String getCreditCardProcessorForCreditCardTransaction(DatabaseConnection conn, int id) throws IOException, SQLException {
-		return conn.executeStringQuery("select processor_id from payment.\"Payment\" where id=?", id);
+	public static String getProcessorForPayment(DatabaseConnection conn, int payment) throws IOException, SQLException {
+		return conn.executeStringQuery("select processor_id from payment.\"Payment\" where id=?", payment);
 	}
 
-	public static Account.Name getBusinessForEncryptionKey(DatabaseConnection conn, int id) throws IOException, SQLException {
+	public static Account.Name getAccountForEncryptionKey(DatabaseConnection conn, int encryptionKey) throws IOException, SQLException {
 		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
 			"select accounting from pki.\"EncryptionKey\" where id=?",
-			id);
+			encryptionKey
+		);
 	}
 
 	public static void removeCreditCard(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int creditCard
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "removeCreditCard", Permission.Name.delete_credit_card);
-		checkAccessCreditCard(conn, source, "removeCreditCard", id);
+		AccountHandler.checkPermission(conn, source, "removeCreditCard", Permission.Name.delete_credit_card);
+		checkAccessCreditCard(conn, source, "removeCreditCard", creditCard);
 
-		removeCreditCard(conn, invalidateList, id);
+		removeCreditCard(conn, invalidateList, creditCard);
 	}
 
 	public static void removeCreditCard(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id
+		int creditCard
 	) throws IOException, SQLException {
 		// Grab values for later use
-		Account.Name business=getBusinessForCreditCard(conn, id);
+		Account.Name business=getAccountForCreditCard(conn, creditCard);
 
 		// Update the database
-		conn.executeUpdate("delete from payment.\"CreditCard\" where id=?", id);
+		conn.executeUpdate("delete from payment.\"CreditCard\" where id=?", creditCard);
 
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
 			business,
-			BusinessHandler.getServersForBusiness(conn, business),
+			AccountHandler.getHostsForAccount(conn, business),
 			false
 		);
 	}
@@ -367,7 +369,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		String cardInfo,
 		String firstName,
 		String lastName,
@@ -386,14 +388,14 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		String description
 	) throws IOException, SQLException {
 		// Permission checks
-		BusinessHandler.checkPermission(conn, source, "updateCreditCard", Permission.Name.edit_credit_card);
-		checkAccessCreditCard(conn, source, "updateCreditCard", id);
+		AccountHandler.checkPermission(conn, source, "updateCreditCard", Permission.Name.edit_credit_card);
+		checkAccessCreditCard(conn, source, "updateCreditCard", creditCard);
 		assert cardInfo != null || source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) < 0 : "Compatibility with older clients (before 1.82.0) that don't send any cardInfo";
 
 		updateCreditCard(
 			conn,
 			invalidateList,
-			id,
+			creditCard,
 			cardInfo,
 			firstName,
 			lastName,
@@ -416,7 +418,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 	public static void updateCreditCard(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		String cardInfo,
 		String firstName,
 		String lastName,
@@ -472,7 +474,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				postalCode,
 				countryCode,
 				description,
-				id
+				creditCard
 			);
 		} else {
 			conn.executeUpdate(
@@ -513,16 +515,16 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				postalCode,
 				countryCode,
 				description,
-				id
+				creditCard
 			);
 		}
 
-		Account.Name accounting = getBusinessForCreditCard(conn, id);
+		Account.Name account = getAccountForCreditCard(conn, creditCard);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
-			accounting,
-			BusinessHandler.getServersForBusiness(conn, accounting),
+			account,
+			AccountHandler.getHostsForAccount(conn, account),
 			false
 		);
 	}
@@ -531,7 +533,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		String maskedCardNumber,
 		Byte expirationMonth,
 		Short expirationYear,
@@ -540,8 +542,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		int encryptionRecipient
 	) throws IOException, SQLException {
 		// Permission checks
-		BusinessHandler.checkPermission(conn, source, "updateCreditCardNumberAndExpiration", Permission.Name.edit_credit_card);
-		checkAccessCreditCard(conn, source, "updateCreditCardNumberAndExpiration", id);
+		AccountHandler.checkPermission(conn, source, "updateCreditCardNumberAndExpiration", Permission.Name.edit_credit_card);
+		checkAccessCreditCard(conn, source, "updateCreditCardNumberAndExpiration", creditCard);
 
 		if(encryptionFrom!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionFrom);
 		if(encryptionRecipient!=-1) checkAccessEncryptionKey(conn, source, "updateCreditCardNumberAndExpiration", encryptionRecipient);
@@ -563,7 +565,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				maskedCardNumber,
 				expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
 				expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
-				id
+				creditCard
 			);
 		} else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
 			// Update row
@@ -585,16 +587,16 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				encryptedCardNumber,
 				encryptionFrom,
 				encryptionRecipient,
-				id
+				creditCard
 			);
 		} else throw new SQLException("encryptedCardNumber, encryptionFrom, and encryptionRecipient must either all be null or none null");
 
-		Account.Name accounting = getBusinessForCreditCard(conn, id);
+		Account.Name account = getAccountForCreditCard(conn, creditCard);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
-			accounting,
-			BusinessHandler.getServersForBusiness(conn, accounting),
+			account,
+			AccountHandler.getHostsForAccount(conn, account),
 			false
 		);
 	}
@@ -603,21 +605,21 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		Byte expirationMonth,
 		Short expirationYear
 	) throws IOException, SQLException {
 		// Permission checks
-		BusinessHandler.checkPermission(conn, source, "updateCreditCardExpiration", Permission.Name.edit_credit_card);
-		checkAccessCreditCard(conn, source, "updateCreditCardExpiration", id);
+		AccountHandler.checkPermission(conn, source, "updateCreditCardExpiration", Permission.Name.edit_credit_card);
+		checkAccessCreditCard(conn, source, "updateCreditCardExpiration", creditCard);
 
-		updateCreditCardExpiration(conn, invalidateList, id, expirationMonth, expirationYear);
+		updateCreditCardExpiration(conn, invalidateList, creditCard, expirationMonth, expirationYear);
 	}
 
 	public static void updateCreditCardExpiration(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id,
+		int creditCard,
 		Byte expirationMonth,
 		Short expirationYear
 	) throws IOException, SQLException {
@@ -632,15 +634,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			+ "  id=?",
 			expirationMonth == null ? DatabaseAccess.Null.SMALLINT : expirationMonth.shortValue(),
 			expirationYear == null ? DatabaseAccess.Null.SMALLINT : expirationYear,
-			id
+			creditCard
 		);
 
-		Account.Name accounting = getBusinessForCreditCard(conn, id);
+		Account.Name account = getAccountForCreditCard(conn, creditCard);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
-			accounting,
-			BusinessHandler.getServersForBusiness(conn, accounting),
+			account,
+			AccountHandler.getHostsForAccount(conn, account),
 			false
 		);
 	}
@@ -649,11 +651,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id
+		int creditCard
 	) throws IOException, SQLException {
 		// Permission checks
-		BusinessHandler.checkPermission(conn, source, "reactivateCreditCard", Permission.Name.edit_credit_card);
-		checkAccessCreditCard(conn, source, "reactivateCreditCard", id);
+		AccountHandler.checkPermission(conn, source, "reactivateCreditCard", Permission.Name.edit_credit_card);
+		checkAccessCreditCard(conn, source, "reactivateCreditCard", creditCard);
 
 		// Update row
 		conn.executeUpdate(
@@ -665,15 +667,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			+ "  deactivate_reason=null\n"
 			+ "where\n"
 			+ "  id=?",
-			id
+			creditCard
 		);
 
-		Account.Name accounting = getBusinessForCreditCard(conn, id);
+		Account.Name account = getAccountForCreditCard(conn, creditCard);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
-			accounting,
-			BusinessHandler.getServersForBusiness(conn, accounting),
+			account,
+			AccountHandler.getHostsForAccount(conn, account),
 			false
 		);
 	}
@@ -682,30 +684,31 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		Account.Name accounting,
-		int id
+		Account.Name account,
+		int creditCard
 	) throws IOException, SQLException {
 		// Permission checks
-		BusinessHandler.checkPermission(conn, source, "setCreditCardUseMonthly", Permission.Name.edit_credit_card);
+		AccountHandler.checkPermission(conn, source, "setCreditCardUseMonthly", Permission.Name.edit_credit_card);
+		AccountHandler.checkAccessAccount(conn, source, "setCreditCardUseMonthly", account);
 
-		if(id==-1) {
+		if(creditCard == -1) {
 			// Clear only
-			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=false where accounting=? and use_monthly", accounting);
+			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=false where accounting=? and use_monthly", account);
 		} else {
-			checkAccessCreditCard(conn, source, "setCreditCardUseMonthly", id);
+			checkAccessCreditCard(conn, source, "setCreditCardUseMonthly", creditCard);
 
 			// Make sure accounting codes match
-			if(!accounting.equals(getBusinessForCreditCard(conn, id))) throw new SQLException("credit card and business accounting codes do not match");
+			if(!account.equals(getAccountForCreditCard(conn, creditCard))) throw new SQLException("credit card and business accounting codes do not match");
 
 			// Perform clear and set in one SQL statement - I thinks myself clever right now.
-			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=(id=?) where accounting=? and use_monthly!=(id=?)", id, accounting, id);
+			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=(id=?) where accounting=? and use_monthly!=(id=?)", creditCard, account, creditCard);
 		}
 
 		invalidateList.addTable(
 			conn,
 			Table.TableID.CREDIT_CARDS,
-			accounting,
-			BusinessHandler.getServersForBusiness(conn, accounting),
+			account,
+			AccountHandler.getHostsForAccount(conn, account),
 			false
 		);
 	}
@@ -713,12 +716,12 @@ final public class CreditCardHandler /*implements CronJob*/ {
 	/**
 	 * Creates a new <code>Payment</code>.
 	 */
-	public static int addCreditCardTransaction(
+	public static int addPayment(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		String processor,
-		Account.Name accounting,
+		Account.Name account,
 		String groupName,
 		boolean testMode,
 		int duplicateWindow,
@@ -769,17 +772,17 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		long authorizationTime,
 		String authorizationPrincipalName
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "addCreditCardTransaction", Permission.Name.add_credit_card_transaction);
-		checkAccessCreditCardProcessor(conn, source, "addCreditCardTransaction", processor);
-		BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", accounting);
-		BusinessHandler.checkAccessBusiness(conn, source, "addCreditCardTransaction", creditCardAccounting);
-		UsernameHandler.checkAccessUsername(conn, source, "addCreditCardTransaction", creditCardCreatedBy);
+		AccountHandler.checkPermission(conn, source, "addPayment", Permission.Name.add_credit_card_transaction);
+		checkAccessProcessor(conn, source, "addPayment", processor);
+		AccountHandler.checkAccessAccount(conn, source, "addPayment", account);
+		AccountHandler.checkAccessAccount(conn, source, "addPayment", creditCardAccounting);
+		AccountUserHandler.checkAccessUser(conn, source, "addPayment", creditCardCreatedBy);
 
-		return addCreditCardTransaction(
+		return addPayment(
 			conn,
 			invalidateList,
 			processor,
-			accounting,
+			account,
 			groupName,
 			testMode,
 			duplicateWindow,
@@ -828,7 +831,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			creditCardCountryCode,
 			creditCardComments,
 			authorizationTime,
-			source.getUsername(),
+			source.getCurrentAdministrator(),
 			authorizationPrincipalName
 		);
 	}
@@ -836,11 +839,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
 	/**
 	 * Creates a new <code>Payment</code>.
 	 */
-	public static int addCreditCardTransaction(
+	public static int addPayment(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
 		String processor,
-		Account.Name accounting,
+		Account.Name account,
 		String groupName,
 		boolean testMode,
 		int duplicateWindow,
@@ -892,7 +895,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		User.Name authorizationUsername,
 		String authorizationPrincipalName
 	) throws IOException, SQLException {
-		int id = conn.executeIntUpdate(
+		int payment = conn.executeIntUpdate(
 			"INSERT INTO payment.\"Payment\" (\n"
 			+ "  processor_id,\n"
 			+ "  accounting,\n"
@@ -949,7 +952,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			+ "  status\n"
 			+ ") VALUES (?,?,?,?,?,?,?,?::numeric(9,2),?::numeric(9,2),?,?::numeric(9,2),?::numeric(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id", // TODO: Use enum for PROCESSING
 			processor,
-			accounting,
+			account,
 			groupName,
 			testMode,
 			duplicateWindow,
@@ -1003,15 +1006,15 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
-		return id;
+		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
+		return payment;
 	}
 
-	public static void creditCardTransactionSaleCompleted(
+	public static void paymentSaleCompleted(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int payment,
 		String authorizationCommunicationResult,
 		String authorizationProviderErrorCode,
 		String authorizationErrorCode,
@@ -1042,21 +1045,21 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		String captureProviderUniqueId,
 		String status
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "creditCardTransactionSaleCompleted", Permission.Name.credit_card_transaction_sale_completed);
-		checkAccessCreditCardTransaction(conn, source, "creditCardTransactionSaleCompleted", id);
+		AccountHandler.checkPermission(conn, source, "paymentSaleCompleted", Permission.Name.credit_card_transaction_sale_completed);
+		checkAccessPayment(conn, source, "paymentSaleCompleted", payment);
 		// TODO: Are the principal names required to be AOServ objects, or are they arbitrary application-specific values?
 		if(capturePrincipalName!=null) {
 			try {
-				UsernameHandler.checkAccessUsername(conn, source, "creditCardTransactionSaleCompleted", User.Name.valueOf(capturePrincipalName));
+				AccountUserHandler.checkAccessUser(conn, source, "paymentSaleCompleted", User.Name.valueOf(capturePrincipalName));
 			} catch(ValidationException e) {
 				throw new SQLException(e.getLocalizedMessage(), e);
 			}
 		}
 
-		creditCardTransactionSaleCompleted(
+		paymentSaleCompleted(
 			conn,
 			invalidateList,
-			id,
+			payment,
 			authorizationCommunicationResult,
 			authorizationProviderErrorCode,
 			authorizationErrorCode,
@@ -1079,7 +1082,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			avsResult,
 			approvalCode,
 			captureTime,
-			source.getUsername(),
+			source.getCurrentAdministrator(),
 			capturePrincipalName,
 			captureCommunicationResult,
 			captureProviderErrorCode,
@@ -1090,10 +1093,10 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		);
 	}
 
-	public static void creditCardTransactionSaleCompleted(
+	public static void paymentSaleCompleted(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id,
+		int payment,
 		String authorizationCommunicationResult,
 		String authorizationProviderErrorCode,
 		String authorizationErrorCode,
@@ -1125,8 +1128,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		String captureProviderUniqueId,
 		String status
 	) throws IOException, SQLException {
-		String processor = getCreditCardProcessorForCreditCardTransaction(conn, id);
-		Account.Name accounting = getBusinessForCreditCardProcessor(conn, processor);
+		String processor = getProcessorForPayment(conn, payment);
+		Account.Name account = getAccountForProcessor(conn, processor);
 
 		int updated = conn.executeUpdate(
 			"update\n"
@@ -1195,19 +1198,19 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			captureProviderErrorMessage,
 			captureProviderUniqueId,
 			status,
-			id
+			payment
 		);
-		if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status in ('PROCESSING', 'AUTHORIZED')");
+		if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+payment+" and status in ('PROCESSING', 'AUTHORIZED')");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
 	}
 
-	public static void creditCardTransactionAuthorizeCompleted(
+	public static void paymentAuthorizeCompleted(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int id,
+		int payment,
 		String authorizationCommunicationResult,
 		String authorizationProviderErrorCode,
 		String authorizationErrorCode,
@@ -1231,16 +1234,13 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		String approvalCode,
 		String status
 	) throws IOException, SQLException {
-		BusinessHandler.checkPermission(conn, source, "creditCardTransactionAuthorizeCompleted", Permission.Name.credit_card_transaction_authorize_completed);
-		checkAccessCreditCardTransaction(conn, source, "creditCardTransactionAuthorizeCompleted", id);
+		AccountHandler.checkPermission(conn, source, "paymentAuthorizeCompleted", Permission.Name.credit_card_transaction_authorize_completed);
+		checkAccessPayment(conn, source, "paymentAuthorizeCompleted", payment);
 
-		String processor = getCreditCardProcessorForCreditCardTransaction(conn, id);
-		Account.Name accounting = getBusinessForCreditCardProcessor(conn, processor);
-
-		creditCardTransactionAuthorizeCompleted(
+		paymentAuthorizeCompleted(
 			conn,
 			invalidateList,
-			id,
+			payment,
 			authorizationCommunicationResult,
 			authorizationProviderErrorCode,
 			authorizationErrorCode,
@@ -1266,10 +1266,10 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		);
 	}
 
-	public static void creditCardTransactionAuthorizeCompleted(
+	public static void paymentAuthorizeCompleted(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int id,
+		int payment,
 		String authorizationCommunicationResult,
 		String authorizationProviderErrorCode,
 		String authorizationErrorCode,
@@ -1293,8 +1293,8 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		String approvalCode,
 		String status
 	) throws IOException, SQLException {
-		String processor = getCreditCardProcessorForCreditCardTransaction(conn, id);
-		Account.Name accounting = getBusinessForCreditCardProcessor(conn, processor);
+		String processor = getProcessorForPayment(conn, payment);
+		Account.Name account = getAccountForProcessor(conn, processor);
 
 		int updated = conn.executeUpdate(
 			"update\n"
@@ -1347,16 +1347,16 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			avsResult,
 			approvalCode,
 			status,
-			id
+			payment
 		);
-		if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+id+" and status='PROCESSING'");
+		if(updated!=1) throw new SQLException("Unable to find payment.Payment with id="+payment+" and status='PROCESSING'");
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, accounting, InvalidateList.allServers, false);
+		invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
 	}
 
 	private static class AutomaticPayment {
-		final private Account.Name accounting;
+		final private Account.Name account;
 		final private BigDecimal amount;
 		final private int ccPkey;
 		final private String ccCardInfo;
@@ -1388,7 +1388,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		final private String ccpParam4;
 
 		private AutomaticPayment(
-			Account.Name accounting,
+			Account.Name account,
 			BigDecimal amount,
 			int ccPkey,
 			String ccCardInfo,
@@ -1419,7 +1419,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			String ccpParam3,
 			String ccpParam4
 		) {
-			this.accounting = accounting;
+			this.account = account;
 			this.amount = amount;
 			this.ccPkey = ccPkey;
 			this.ccCardInfo = ccCardInfo;
@@ -1459,7 +1459,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			try (
 				ProcessTimer timer=new ProcessTimer(
 					logger,
-					CreditCardHandler.class.getName(),
+					PaymentHandler.class.getName(),
 					"processAutomaticPayments",
 					"CreditCardHandler - Process Automatic Payments",
 					"Processes the automatic payments for the month",
@@ -1499,11 +1499,11 @@ final public class CreditCardHandler /*implements CronJob*/ {
 									// Look for duplicate accounting codes and report a warning
 									Account.Name lastAccounting = null;
 									while(results.next()) {
-										Account.Name accounting = Account.Name.valueOf(results.getString(1));
-										if(accounting.equals(lastAccounting)) {
-											logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", accounting);
+										Account.Name account = Account.Name.valueOf(results.getString(1));
+										if(account.equals(lastAccounting)) {
+											logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", account);
 										} else {
-											lastAccounting = accounting;
+											lastAccounting = account;
 											BigDecimal endofmonth = results.getBigDecimal(2);
 											BigDecimal current = results.getBigDecimal(3);
 											if(
@@ -1518,7 +1518,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 												if(results.wasNull()) expirationYear = null;
 												list.add(
 													new AutomaticPayment(
-														accounting,
+														account,
 														amount,
 														results.getInt(4),
 														results.getString(5),
@@ -1635,7 +1635,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 						// Only need to create the persistence once per DB transaction
 						MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
 						for(AutomaticPayment automaticPayment : automaticPayments) {
-							System.out.println("accounting="+automaticPayment.accounting);
+							System.out.println("accounting="+automaticPayment.account);
 							System.out.println("    amount="+automaticPayment.amount);
 							// Find the processor
 							CreditCardProcessor processor = new CreditCardProcessor(
@@ -1677,12 +1677,12 @@ final public class CreditCardHandler /*implements CronJob*/ {
 							} else {
 								paymentTypeName = null;
 							}
-							int transID = TransactionHandler.addTransaction(
+							int transID = BillingTransactionHandler.addTransaction(
 								conn,
 								invalidateList,
 								new Timestamp(lastMinuteOfTheMonth.getTimeInMillis()),
-								automaticPayment.accounting,
-								automaticPayment.accounting,
+								automaticPayment.account,
+								automaticPayment.account,
 								MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
 								TransactionType.PAYMENT,
 								"Monthly automatic billing",
@@ -1764,7 +1764,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 									// Update transaction as failed
 									//     TODO: Deactivate the card if this is the 3rd consecutive failure
 									//     TODO: Notify customer
-									TransactionHandler.transactionDeclined(
+									BillingTransactionHandler.transactionDeclined(
 										conn,
 										invalidateList,
 										transID,
@@ -1780,7 +1780,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 									switch(authorizationResult.getApprovalResult()) {
 										case HOLD : {
 											// Update transaction
-											TransactionHandler.transactionHeld(
+											BillingTransactionHandler.transactionHeld(
 												conn,
 												invalidateList,
 												transID,
@@ -1796,7 +1796,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 											// Update transaction as declined
 											//     TODO: Deactivate the card if this is the 3rd consecutive failure
 											//     TODO: Notify customer
-											TransactionHandler.transactionDeclined(
+											BillingTransactionHandler.transactionDeclined(
 												conn,
 												invalidateList,
 												transID,
@@ -1810,7 +1810,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 										}
 										case APPROVED : {
 											// Update transaction as successful
-											TransactionHandler.transactionApproved(
+											BillingTransactionHandler.transactionApproved(
 												conn,
 												invalidateList,
 												transID,
@@ -1861,7 +1861,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 		try (
 			ProcessTimer timer = new ProcessTimer(
 				logger,
-				CreditCardHandler.class.getName(),
+				PaymentHandler.class.getName(),
 				"synchronizeStoredCards",
 				"CreditCardHandler - Synchronize Stored Cards",
 				"Synchronizes any updated masked card numbers or expiration dates from the payment providers back to local persistence",
@@ -1877,7 +1877,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 			try {
 				boolean connRolledBack = false;
 				try {
-					if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
+					if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
 
 					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
 					List<MerchantServicesProvider> providers = conn.executeObjectListQuery(
@@ -1909,7 +1909,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 						+ "ORDER BY\n"
 						+ "  provider_id"
 					);
-					if(infoOut != null) infoOut.println(CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
+					if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
 
 					// Find all the stored cards
 					MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
@@ -1960,7 +1960,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 
 		@Override
 		public String getCronJobName() {
-			return CreditCardHandler.class.getSimpleName() + ".synchronizeStoredCards";
+			return PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards";
 		}
 
 		@Override
@@ -2059,7 +2059,7 @@ final public class CreditCardHandler /*implements CronJob*/ {
 				}
 			}
 		} else {
-			System.err.println("usage: " + CreditCardHandler.class.getName() + " [--verbose] [--quiet] [--dry-run] {synchronize|YYYY-MM}");
+			System.err.println("usage: " + PaymentHandler.class.getName() + " [--verbose] [--quiet] [--dry-run] {synchronize|YYYY-MM}");
 			exitStatus = SysExits.EX_USAGE;
 		}
 		System.exit(exitStatus);

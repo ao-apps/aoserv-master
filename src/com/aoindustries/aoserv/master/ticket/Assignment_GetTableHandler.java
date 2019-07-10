@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -81,7 +81,7 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
 				+ "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
 				+ "  )\n"
 				+ "  and ti.id=ta.ticket",
-				source.getUsername()
+				source.getCurrentAdministrator()
 			);
 		} else {
 			// Non-admins don't get any assignment details
