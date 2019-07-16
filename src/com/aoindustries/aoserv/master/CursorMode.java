@@ -1,16 +1,17 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 /**
- * The <code>TableHandler</code> handles all the accesses to the AOServ tables.
+ * The cursor mode used by a {@link TableHandler}.
  *
  * @author  AO Industries, Inc.
  */
 public enum CursorMode {
+
 	/**
 	 * The query will be performed as-is, no CURSOR and FETCH.
 	 * This has the potential to use more memory during larger queries, but
@@ -29,7 +30,7 @@ public enum CursorMode {
 	 * Automatic mode currently simply uses {@link #FETCH} when {@code !provideProgress}, otherwise
 	 * uses {@link #SELECT}.  This matches the old behavior, but much more crafty ideas follow.
 	 * <p>
-	 * TODO: In automatic mode, the first query for a give table and user is performed
+	 * TODO: In automatic mode, the first query for a given table and user is performed
 	 * with {@link #FETCH}, while subsequent queries will only use {@link #FETCH}
 	 * if the previous query returned more than {@link #AUTO_CURSOR_ABOVE} rows.
 	 * </p>
