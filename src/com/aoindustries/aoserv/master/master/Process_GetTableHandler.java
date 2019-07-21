@@ -9,10 +9,10 @@ import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AccountUserHandler;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
-import com.aoindustries.aoserv.master.AccountUserHandler;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import java.io.IOException;
@@ -49,7 +49,7 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 		Iterator<Process> I = processesCopy.iterator();
 		while(I.hasNext()) {
 			Process process = I.next();
-			com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveUser();
+			com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
 			if(
 				effectiveUser != null
 				&& AccountUserHandler.canAccessUser(conn, source, effectiveUser)

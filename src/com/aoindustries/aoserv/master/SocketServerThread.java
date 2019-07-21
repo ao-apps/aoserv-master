@@ -154,12 +154,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	 */
 	@Override
 	public String getSecurityMessageHeader() {
-		return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveUser()+" AuthUsr="+process.getAuthenticatedUser();
+		return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveAdministrator_username()+" AuthUsr="+process.getAuthenticatedAdministrator_username();
 	}
 
 	@Override
 	public com.aoindustries.aoserv.client.account.User.Name getCurrentAdministrator() {
-		return process.getEffectiveUser();
+		return process.getEffectiveAdministrator_username();
 	}
 
 	@Override
@@ -219,9 +219,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					+ ":"
 					+ socket.getLocalPort()
 					+ " as "
-					+ process.getEffectiveUser()
+					+ process.getEffectiveAdministrator_username()
 					+ " ("
-					+ process.getAuthenticatedUser()
+					+ process.getAuthenticatedAdministrator_username()
 					+ ")"
 				);
 				String password=in.readUTF();
@@ -376,8 +376,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 								message = MasterServer.authenticate(
 									conn,
 									socket.getInetAddress().getHostAddress(),
-									process.getEffectiveUser(),
-									process.getAuthenticatedUser(),
+									process.getEffectiveAdministrator_username(),
+									process.getAuthenticatedAdministrator_username(),
 									password
 								);
 							} catch(RuntimeException | IOException err) {
@@ -401,14 +401,14 @@ final public class SocketServerThread extends Thread implements RequestSource {
 								int daemonServer=process.getDaemonServer();
 								if(daemonServer!=-1) {
 									try {
-										if(MasterServer.getUser(conn, process.getEffectiveUser())==null) {
+										if(MasterServer.getUser(conn, process.getEffectiveAdministrator_username())==null) {
 											conn.releaseConnection();
 											out.writeBoolean(false);
 											out.writeUTF("Only master users may register a daemon server.");
 											out.flush();
 											isOK=false;
 										} else {
-											UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveUser());
+											UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveAdministrator_username());
 											conn.releaseConnection();
 											if(servers.length!=0) {
 												isOK=false;
@@ -420,7 +420,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 												}
 												if(!isOK) {
 													out.writeBoolean(false);
-													out.writeUTF("Master user ("+process.getEffectiveUser()+") not allowed to access server: "+daemonServer);
+													out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
 													out.flush();
 												}
 											}
