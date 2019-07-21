@@ -106,6 +106,7 @@ final public class WhoisHistoryService implements MasterService {
 			+ "    AND (\n"
 			+ "      SELECT ab.balance FROM billing.account_balances ab\n"
 			+ "      WHERE bu.accounting = ab.accounting AND ab.balance > '0'::numeric\n"
+			+ "      LIMIT 1\n"
 			+ "    ) IS NULL\n"
 			+ ") RETURNING account",
 			CLEANUP_AFTER_GOOD_ACCOUNT
@@ -136,6 +137,7 @@ final public class WhoisHistoryService implements MasterService {
 			+ "    AND (\n"
 			+ "      SELECT ab.balance FROM billing.account_balances ab\n"
 			+ "      WHERE bu.accounting = ab.accounting AND ab.balance != '0'::numeric\n"
+			+ "      LIMIT 1\n"
 			+ "    ) IS NULL\n"
 			+ ") RETURNING account",
 			CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
