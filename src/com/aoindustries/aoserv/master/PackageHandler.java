@@ -217,8 +217,8 @@ final public class PackageHandler {
 			version,
 			display,
 			description,
-			setupFee == null || setupFee.getUnscaledValue() == 0 ? null : setupFee.getCurrency().getCurrencyCode(),
-			setupFee == null || setupFee.getUnscaledValue() == 0 ? Null.NUMERIC : setupFee.getValue(),
+			setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
+			setupFee == null ? Null.NUMERIC : setupFee.getValue(),
 			setupFeeTransactionType,
 			monthlyRate.getCurrency().getCurrencyCode(),
 			monthlyRate.getValue(),
@@ -771,8 +771,8 @@ final public class PackageHandler {
 				resources[c],
 				soft_limits[c] == -1 ? Null.INTEGER : soft_limits[c],
 				hard_limits[c] == -1 ? Null.INTEGER : hard_limits[c],
-				additionalRate == null || additionalRate.getUnscaledValue() == 0 ? null : additionalRate.getCurrency().getCurrencyCode(),
-				additionalRate == null || additionalRate.getUnscaledValue() == 0 ? Null.NUMERIC : additionalRate.getValue(),
+				additionalRate == null ? null : additionalRate.getCurrency().getCurrencyCode(),
+				additionalRate == null ? Null.NUMERIC : additionalRate.getValue(),
 				additional_transaction_types[c]
 			);
 		}
