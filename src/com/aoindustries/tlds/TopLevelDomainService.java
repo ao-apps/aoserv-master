@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -73,16 +73,17 @@ public class TopLevelDomainService implements MasterService {
 		@Override
 		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
-				ProcessTimer timer = new ProcessTimer(
-					logger,
-					getClass().getName(),
-					"runCronJob",
-					TopLevelDomainService.class.getSimpleName() + " - Top Level Domain",
-					"Synchronizing database tables from auto-updating Java API",
-					5L * 60 * 1000, // 5 minutes
-					24L * 60 * 60 * 1000 // 24 hours
-				);
-				try {
+				try (
+					ProcessTimer timer = new ProcessTimer(
+						logger,
+						getClass().getName(),
+						"runCronJob",
+						TopLevelDomainService.class.getSimpleName() + " - Top Level Domain",
+						"Synchronizing database tables from auto-updating Java API",
+						5L * 60 * 1000, // 5 minutes
+						24L * 60 * 60 * 1000 // 24 hours
+					)
+				) {
 					MasterServer.executorService.submit(timer);
 
 					// Get the current TopLevelDomains snapshot
@@ -196,8 +197,6 @@ public class TopLevelDomainService implements MasterService {
 							conn.releaseConnection();
 						}
 					}
-				} finally {
-					timer.finished();
 				}
 			} catch(ThreadDeath TD) {
 				throw TD;
