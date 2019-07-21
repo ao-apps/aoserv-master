@@ -22,6 +22,7 @@ com.aoindustries.aoserv.master.backup.MysqlReplication_GetTableHandler
 com.aoindustries.aoserv.master.billing.Currency_GetTableHandler
 com.aoindustries.aoserv.master.billing.MonthlyCharge_GetTableHandler
 com.aoindustries.aoserv.master.billing.NoticeLog_GetTableHandler
+com.aoindustries.aoserv.master.billing.NoticeLogBalance_GetTableHandler
 com.aoindustries.aoserv.master.billing.NoticeType_GetTableHandler
 com.aoindustries.aoserv.master.billing.Package_GetTableHandler
 com.aoindustries.aoserv.master.billing.PackageCategory_GetTableHandler

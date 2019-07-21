@@ -238,6 +238,13 @@ final public class InvalidateList {
                 case NET_DEVICES :
                     addTable(conn, Table.TableID.IP_ADDRESSES, accounts, hosts, true);
                     break;
+                case NOTICE_LOG :
+                    addTable(conn, Table.TableID.NoticeLogBalance, accounts, hosts, false);
+                    break;
+                case NoticeLogBalance :
+					// Added for compatibility "balance" for pre-1.83.0 clients
+                    addTable(conn, Table.TableID.NOTICE_LOG, accounts, hosts, false);
+                    break;
                 case PACKAGE_DEFINITIONS :
                     addTable(conn, Table.TableID.PACKAGE_DEFINITION_LIMITS, accounts, hosts, true);
                     break;

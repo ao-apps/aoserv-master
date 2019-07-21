@@ -18,7 +18,6 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.Email;
-import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
@@ -643,48 +642,63 @@ final public class AccountHandler {
 	/**
 	 * Adds a notice log.
 	 */
-	public static void addNoticeLog(
+	public static int addNoticeLog(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		Account.Name account,
 		String billingContact,
 		String emailAddress,
-		int balance,
 		String type,
 		int transaction
 	) throws IOException, SQLException {
 		checkAccessAccount(conn, source, "addNoticeLog", account);
-		if(transaction!=NoticeLog.NO_TRANSACTION) BillingTransactionHandler.checkAccessTransaction(conn, source, "addNoticeLog", transaction);
+		if(transaction != NoticeLog.NO_TRANSACTION) BillingTransactionHandler.checkAccessTransaction(conn, source, "addNoticeLog", transaction);
 
-		conn.executeUpdate(
-			"insert into\n"
+		int id = conn.executeIntUpdate(
+			"INSERT INTO\n"
 			+ "  billing.\"NoticeLog\"\n"
 			+ "(\n"
 			+ "  accounting,\n"
 			+ "  billing_contact,\n"
 			+ "  billing_email,\n"
-			+ "  balance,\n"
 			+ "  notice_type,\n"
 			+ "  transid\n"
-			+ ") values(\n"
+			+ ") VALUES (\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
 			+ "  ?,\n"
-			+ "  ?::numeric(9,2),\n"
 			+ "  ?,\n"
 			+ "  ?\n"
-			+ ")",
+			+ ") RETURNING id",
 			account.toString(),
 			billingContact,
 			emailAddress,
-			SQLUtility.getDecimal(balance),
 			type,
 			(transaction == NoticeLog.NO_TRANSACTION) ? Null.INTEGER : transaction
 		);
-
-		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.NOTICE_LOG, account, InvalidateList.allHosts, false);
+
+		// Add current balances
+		if(
+			conn.executeUpdate(
+				"INSERT INTO billing.\"NoticeLog.balance\" (\"noticeLog\", \"balance.currency\", \"balance.value\")\n"
+				+ "SELECT\n"
+				+ "  ?,\n"
+				+ "  ab.currency,\n"
+				+ "  ab.balance\n"
+				+ "FROM\n"
+				+ "  billing.account_balances ab\n"
+				+ "WHERE\n"
+				+ "  ab.accounting=?",
+				id,
+				account.toString()
+			) > 0
+		) {
+			invalidateList.addTable(conn, Table.TableID.NoticeLogBalance, account, InvalidateList.allHosts, false);
+		}
+
+		return id;
 	}
 
 	public static void disableAccount(
@@ -809,7 +823,7 @@ final public class AccountHandler {
 		Account.Name template
 	) throws IOException, SQLException {
 		// Load the entire list of accounting codes
-		Set<Account.Name> codes=conn.executeObjectCollectionQuery(new HashSet<Account.Name>(),
+		Set<Account.Name> codes=conn.executeObjectCollectionQuery(new HashSet<>(),
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"Account\""
 		);
@@ -1703,7 +1717,7 @@ final public class AccountHandler {
 						addWeight(accountWeights, account, 5);
 					}
 					// Look for matches in web.VirtualHostName, 1 point each
-					List<Account.Name> site_accounts = conn.executeObjectCollectionQuery(new ArrayList<Account.Name>(),
+					List<Account.Name> site_accounts = conn.executeObjectCollectionQuery(new ArrayList<>(),
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  pk.accounting\n"
