@@ -17,6 +17,7 @@ import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.IntList;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -315,10 +316,13 @@ final public class AccountCleaner implements CronJob {
                     );
 					for (com.aoindustries.aoserv.client.account.User.Name administrator : administrators) {
 						Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
-						int balance = BillingTransactionHandler.getConfirmedAccountBalance(conn, account);
-						if(balance <= 0) {
-							AccountHandler.removeAdministrator(conn, invalidateList, administrator);
+						boolean hasBalance = false;
+						for(Money balance : BillingTransactionHandler.getConfirmedAccountBalance(conn, account)) {
+							if(balance.getUnscaledValue() > 0) {
+								hasBalance = true;
+							}
 						}
+						if(!hasBalance) AccountHandler.removeAdministrator(conn, invalidateList, administrator);
 					}
                 }
 

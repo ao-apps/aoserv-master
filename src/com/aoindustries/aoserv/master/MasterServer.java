@@ -10,6 +10,8 @@ import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.aosh.Command;
+import com.aoindustries.aoserv.client.billing.Currency;
+import com.aoindustries.aoserv.client.billing.MoneyUtil;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
 import com.aoindustries.aoserv.client.dns.Record;
@@ -55,9 +57,11 @@ import com.aoindustries.util.PolymorphicMultimap;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.Tuple2;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.Date;
@@ -1032,12 +1036,47 @@ public abstract class MasterServer {
 													boolean testMode = in.readBoolean();
 													int duplicateWindow = in.readCompressedInt();
 													String orderNumber = in.readNullUTF();
-													String currencyCode = in.readUTF();
-													String amount = in.readUTF();
-													String taxAmount = in.readNullUTF();
+													java.util.Currency currency = java.util.Currency.getInstance(in.readUTF());
+													Money amount;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														amount = new Money(currency, new BigDecimal(in.readUTF()));
+													} else {
+														amount = new Money(currency, in.readLong(), in.readCompressedInt());
+													}
+													Money taxAmount;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														String value = in.readNullUTF();
+														taxAmount = value == null ? null : new Money(currency, new BigDecimal(value));
+													} else {
+														if(in.readBoolean()) {
+															taxAmount = new Money(currency, in.readLong(), in.readCompressedInt());
+														} else {
+															taxAmount = null;
+														}
+													}
 													boolean taxExempt = in.readBoolean();
-													String shippingAmount = in.readNullUTF();
-													String dutyAmount = in.readNullUTF();
+													Money shippingAmount;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														String value = in.readNullUTF();
+														shippingAmount = value == null ? null : new Money(currency, new BigDecimal(value));
+													} else {
+														if(in.readBoolean()) {
+															shippingAmount = new Money(currency, in.readLong(), in.readCompressedInt());
+														} else {
+															shippingAmount = null;
+														}
+													}
+													Money dutyAmount;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														String value = in.readNullUTF();
+														dutyAmount = value == null ? null : new Money(currency, new BigDecimal(value));
+													} else {
+														if(in.readBoolean()) {
+															dutyAmount = new Money(currency, in.readLong(), in.readCompressedInt());
+														} else {
+															dutyAmount = null;
+														}
+													}
 													String shippingFirstName = in.readNullUTF();
 													String shippingLastName = in.readNullUTF();
 													String shippingCompanyName = in.readNullUTF();
@@ -1098,7 +1137,6 @@ public abstract class MasterServer {
 														testMode,
 														duplicateWindow,
 														orderNumber,
-														currencyCode,
 														amount,
 														taxAmount,
 														taxExempt,
@@ -1156,7 +1194,6 @@ public abstract class MasterServer {
 															testMode,
 															duplicateWindow,
 															orderNumber,
-															currencyCode,
 															amount,
 															taxAmount,
 															taxExempt,
@@ -2660,7 +2697,9 @@ public abstract class MasterServer {
 													Account.Name account = Account.Name.valueOf(in.readUTF());
 													String billingContact = in.readUTF().trim();
 													String emailAddress = in.readUTF().trim();
-													int balance = in.readCompressedInt();
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														in.readCompressedInt(); // balance ignored, current balance queried
+													}
 													String type = in.readUTF().trim();
 													int transid = in.readCompressedInt();
 													process.setCommand(
@@ -2668,22 +2707,27 @@ public abstract class MasterServer {
 														account,
 														billingContact,
 														emailAddress,
-														SQLUtility.getDecimal(balance),
 														type,
 														transid
 													);
-													AccountHandler.addNoticeLog(
+													int id = AccountHandler.addNoticeLog(
 														conn,
 														source,
 														invalidateList,
 														account,
 														billingContact,
 														emailAddress,
-														balance,
 														type,
 														transid
 													);
-													resp = Response.DONE;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														resp = Response.DONE;
+													} else {
+														resp = Response.of(
+															AoservProtocol.DONE,
+															id
+														);
+													}
 												}
 												break;
 											case PACKAGES :
@@ -2694,13 +2738,13 @@ public abstract class MasterServer {
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_122)<=0) {
 														// Try to find a package definition owned by the source accounting with matching rates and limits
 														String level=in.readUTF().trim();
-														int rate=in.readCompressedInt();
+														Money rate = new Money(Currency.USD, in.readCompressedInt(), 2);
 														int userLimit=in.readCompressedInt();
 														int additionalUserRate=in.readCompressedInt();
 														int popLimit=in.readCompressedInt();
 														int additionalPopRate=in.readCompressedInt();
 														Account.Name baAccounting = AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator());
-														packageDefinition=PackageHandler.findActivePackageDefinition(
+														packageDefinition = PackageHandler.findActivePackageDefinition(
 															conn,
 															baAccounting,
 															rate,
@@ -2712,7 +2756,7 @@ public abstract class MasterServer {
 																"Unable to find PackageDefinition: accounting="
 																+ baAccounting
 																+ ", rate="
-																+ SQLUtility.getDecimal(rate)
+																+ rate
 																+ ", userLimit="
 																+ (userLimit==-1?"unlimited":Integer.toString(userLimit))
 																+ ", popLimit="
@@ -2749,9 +2793,20 @@ public abstract class MasterServer {
 													String version = in.readUTF().trim();
 													String display = in.readUTF().trim();
 													String description = in.readUTF().trim();
-													int setupFee = in.readCompressedInt();
+													Money setupFee;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														int pennies = in.readCompressedInt();
+														setupFee = pennies == -1 || pennies == 0 ? null : new Money(Currency.USD, pennies, 2);
+													} else {
+														setupFee = MoneyUtil.readNullMoney(in);
+													}
 													String setupFeeTransactionType = in.readNullUTF();
-													int monthlyRate = in.readCompressedInt();
+													Money monthlyRate;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														monthlyRate = new Money(Currency.USD, in.readCompressedInt(), 2);
+													} else {
+														monthlyRate = MoneyUtil.readMoney(in);
+													}
 													String monthlyRateTransactionType = in.readUTF();
 													process.setCommand(
 														"add_package_definition",
@@ -2761,9 +2816,9 @@ public abstract class MasterServer {
 														version,
 														display,
 														description,
-														SQLUtility.getDecimal(setupFee),
+														setupFee,
 														setupFeeTransactionType,
-														SQLUtility.getDecimal(monthlyRate),
+														monthlyRate,
 														monthlyRateTransactionType
 													);
 													resp = Response.of(
@@ -3094,7 +3149,12 @@ public abstract class MasterServer {
 													String type = in.readUTF().trim();
 													String description = in.readUTF().trim();
 													int quantity = in.readCompressedInt();
-													int rate = in.readCompressedInt();
+													Money rate;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														rate = new Money(Currency.USD, in.readCompressedInt(), 2);
+													} else {
+														rate = MoneyUtil.readMoney(in);
+													}
 													String paymentType = in.readNullUTF();
 													String paymentInfo = in.readNullUTF();
 													String processor = in.readNullUTF();
@@ -3107,13 +3167,13 @@ public abstract class MasterServer {
 														type,
 														description,
 														SQLUtility.getMilliDecimal(quantity),
-														SQLUtility.getDecimal(rate),
+														rate,
 														paymentType,
 														paymentInfo,
 														processor,
-														payment_confirmed==Transaction.CONFIRMED?"Y"
-														:payment_confirmed==Transaction.NOT_CONFIRMED?"N"
-														:"W"
+														payment_confirmed == Transaction.CONFIRMED ? "Y"
+														: payment_confirmed == Transaction.NOT_CONFIRMED ? "N"
+														: "W"
 													);
 													resp = Response.of(
 														AoservProtocol.DONE,
@@ -5440,23 +5500,6 @@ public abstract class MasterServer {
 												tableID
 											);
 											resp = null;
-											sendInvalidateList = false;
-										}
-										break;
-									case GET_PENDING_PAYMENTS :
-										{
-											boolean provideProgress = in.readBoolean();
-											process.setCommand(
-												"get_pending_payments",
-												provideProgress
-											);
-											BillingTransactionHandler.getPendingPayments(
-												conn,
-												source,
-												out,
-												provideProgress
-											);
-											resp = Response.DONE;
 											sendInvalidateList = false;
 										}
 										break;
@@ -8598,13 +8641,18 @@ public abstract class MasterServer {
 											String[] resources = new String[count];
 											int[] soft_limits = new int[count];
 											int[] hard_limits = new int[count];
-											int[] additional_rates = new int[count];
+											Money[] additionalRates = new Money[count];
 											String[] additional_transaction_types = new String[count];
-											for(int c=0;c<count;c++) {
+											for(int c = 0; c < count; c++) {
 												resources[c] = in.readUTF().trim();
 												soft_limits[c] = in.readCompressedInt();
 												hard_limits[c] = in.readCompressedInt();
-												additional_rates[c] = in.readCompressedInt();
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+													int pennies = in.readCompressedInt();
+													additionalRates[c] = pennies == -1 || pennies == 0 ? null : new Money(Currency.USD, pennies, 2);
+												} else {
+													additionalRates[c] = MoneyUtil.readNullMoney(in);
+												}
 												additional_transaction_types[c] = in.readNullUTF();
 											}
 											process.setCommand(
@@ -8614,7 +8662,7 @@ public abstract class MasterServer {
 												resources,
 												soft_limits,
 												hard_limits,
-												additional_rates,
+												additionalRates,
 												additional_transaction_types
 											);
 											PackageHandler.setPackageDefinitionLimits(
@@ -8625,7 +8673,7 @@ public abstract class MasterServer {
 												resources,
 												soft_limits,
 												hard_limits,
-												additional_rates,
+												additionalRates,
 												additional_transaction_types
 											);
 											resp = Response.DONE;
@@ -9609,9 +9657,20 @@ public abstract class MasterServer {
 											String version=in.readUTF().trim();
 											String display=in.readUTF().trim();
 											String description=in.readUTF().trim();
-											int setupFee=in.readCompressedInt();
+											Money setupFee;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+												int pennies = in.readCompressedInt();
+												setupFee = pennies == -1 || pennies == 0 ? null : new Money(Currency.USD, pennies, 2);
+											} else {
+												setupFee = MoneyUtil.readNullMoney(in);
+											}
 											String setupFeeTransactionType=in.readNullUTF();
-											int monthlyRate=in.readCompressedInt();
+											Money monthlyRate;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+												monthlyRate = new Money(Currency.USD, in.readCompressedInt(), 2);
+											} else {
+												monthlyRate = MoneyUtil.readMoney(in);
+											}
 											String monthlyRateTransactionType=in.readUTF();
 											process.setCommand(
 												"update_package_definition",
@@ -9622,9 +9681,9 @@ public abstract class MasterServer {
 												version,
 												display,
 												description,
-												SQLUtility.getDecimal(setupFee),
+												setupFee,
 												setupFeeTransactionType,
-												SQLUtility.getDecimal(monthlyRate),
+												monthlyRate,
 												monthlyRateTransactionType
 											);
 											PackageHandler.updatePackageDefinition(
@@ -10956,12 +11015,16 @@ public abstract class MasterServer {
 		Account.Name account,
 		CompressedDataOutputStream out,
 		String sql,
-		String param1
+		String param1,
+		String param2,
+		Timestamp param3
 	) throws IOException, NoRowException, SQLException {
 		AccountHandler.checkAccessAccount(conn, source, action, account);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
+				pstmt.setString(2, param2);
+				pstmt.setTimestamp(3, param3);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
 						int pennies = SQLUtility.getPennies(results.getString(1));
@@ -10994,13 +11057,13 @@ public abstract class MasterServer {
 		CompressedDataOutputStream out,
 		String sql,
 		String param1,
-		Timestamp param2
+		String param2
 	) throws IOException, NoRowException, SQLException {
 		AccountHandler.checkAccessAccount(conn, source, action, account);
 		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
-				pstmt.setTimestamp(2, param2);
+				pstmt.setString(2, param2);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
 						int pennies = SQLUtility.getPennies(results.getString(1));

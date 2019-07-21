@@ -9,6 +9,7 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.master.Permission;
+import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.payment.PaymentType;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -28,6 +29,8 @@ import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.SysExits;
 import com.aoindustries.math.SafeMath;
+import com.aoindustries.util.i18n.CurrencyComparator;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -42,6 +45,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Currency;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -714,7 +720,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	/**
-	 * Creates a new <code>Payment</code>.
+	 * Creates a new {@link Payment}.
 	 */
 	public static int addPayment(
 		DatabaseConnection conn,
@@ -726,12 +732,11 @@ final public class PaymentHandler /*implements CronJob*/ {
 		boolean testMode,
 		int duplicateWindow,
 		String orderNumber,
-		String currencyCode,
-		String amount,
-		String taxAmount,
+		Money amount,
+		Money taxAmount,
 		boolean taxExempt,
-		String shippingAmount,
-		String dutyAmount,
+		Money shippingAmount,
+		Money dutyAmount,
 		String shippingFirstName,
 		String shippingLastName,
 		String shippingCompanyName,
@@ -787,7 +792,6 @@ final public class PaymentHandler /*implements CronJob*/ {
 			testMode,
 			duplicateWindow,
 			orderNumber,
-			currencyCode,
 			amount,
 			taxAmount,
 			taxExempt,
@@ -837,7 +841,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	/**
-	 * Creates a new <code>Payment</code>.
+	 * Creates a new {@link Payment}.
 	 */
 	public static int addPayment(
 		DatabaseConnection conn,
@@ -848,12 +852,11 @@ final public class PaymentHandler /*implements CronJob*/ {
 		boolean testMode,
 		int duplicateWindow,
 		String orderNumber,
-		String currencyCode,
-		String amount,
-		String taxAmount,
+		Money amount,
+		Money taxAmount,
 		boolean taxExempt,
-		String shippingAmount,
-		String dutyAmount,
+		Money shippingAmount,
+		Money dutyAmount,
 		String shippingFirstName,
 		String shippingLastName,
 		String shippingCompanyName,
@@ -895,6 +898,16 @@ final public class PaymentHandler /*implements CronJob*/ {
 		User.Name authorizationUsername,
 		String authorizationPrincipalName
 	) throws IOException, SQLException {
+		Currency currency = amount.getCurrency();
+		if(taxAmount != null && taxAmount.getCurrency() != currency) {
+			throw new SQLException("Currency mismatch: amount.currency = " + currency + ", taxAmount.currency = " + taxAmount.getCurrency());
+		}
+		if(shippingAmount != null && shippingAmount.getCurrency() != currency) {
+			throw new SQLException("Currency mismatch: amount.currency = " + currency + ", shippingAmount.currency = " + shippingAmount.getCurrency());
+		}
+		if(dutyAmount != null && dutyAmount.getCurrency() != currency) {
+			throw new SQLException("Currency mismatch: amount.currency = " + currency + ", dutyAmount.currency = " + dutyAmount.getCurrency());
+		}
 		int payment = conn.executeIntUpdate(
 			"INSERT INTO payment.\"Payment\" (\n"
 			+ "  processor_id,\n"
@@ -903,12 +916,12 @@ final public class PaymentHandler /*implements CronJob*/ {
 			+ "  test_mode,\n"
 			+ "  duplicate_window,\n"
 			+ "  order_number,\n"
-			+ "  currency_code,\n"
+			+ "  currency,\n"
 			+ "  amount,\n"
-			+ "  tax_amount,\n"
+			+ "  \"taxAmount\",\n"
 			+ "  tax_exempt,\n"
-			+ "  shipping_amount,\n"
-			+ "  duty_amount,\n"
+			+ "  \"shippingAmount\",\n"
+			+ "  \"dutyAmount\",\n"
 			+ "  shipping_first_name,\n"
 			+ "  shipping_last_name,\n"
 			+ "  shipping_company_name,\n"
@@ -950,19 +963,19 @@ final public class PaymentHandler /*implements CronJob*/ {
 			+ "  authorization_username,\n"
 			+ "  authorization_principal_name,\n"
 			+ "  status\n"
-			+ ") VALUES (?,?,?,?,?,?,?,?::numeric(9,2),?::numeric(9,2),?,?::numeric(9,2),?::numeric(9,2),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id", // TODO: Use enum for PROCESSING
+			+ ") VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'PROCESSING') RETURNING id", // TODO: Use enum for PROCESSING
 			processor,
 			account,
 			groupName,
 			testMode,
 			duplicateWindow,
 			orderNumber,
-			currencyCode,
+			currency.getCurrencyCode(),
 			amount,
-			taxAmount,
+			taxAmount == null ? DatabaseAccess.Null.NUMERIC : taxAmount.getValue(),
 			taxExempt,
-			shippingAmount,
-			dutyAmount,
+			shippingAmount == null ? DatabaseAccess.Null.NUMERIC : shippingAmount.getValue(),
+			dutyAmount == null ? DatabaseAccess.Null.NUMERIC : dutyAmount.getValue(),
 			shippingFirstName,
 			shippingLastName,
 			shippingCompanyName,
@@ -1357,104 +1370,104 @@ final public class PaymentHandler /*implements CronJob*/ {
 
 	private static class AutomaticPayment {
 		final private Account.Name account;
-		final private BigDecimal amount;
-		final private int ccPkey;
-		final private String ccCardInfo;
-		final private Byte ccExpirationMonth;
-		final private Short ccExpirationYear;
-		final private String ccPrincipalName;
-		final private String ccGroupName;
-		final private String ccProviderUniqueId;
-		final private String ccFirstName;
-		final private String ccLastName;
-		final private String ccCompanyName;
-		final private String ccEmail;
-		final private String ccPhone;
-		final private String ccFax;
-		final private String ccCustomerId;
-		final private String ccCustomerTaxId;
-		final private String ccStreetAddress1;
-		final private String ccStreetAddress2;
-		final private String ccCity;
-		final private String ccState;
-		final private String ccPostalCode;
-		final private String ccCountryCode;
-		final private String ccComments;
-		final private String ccpProviderId;
-		final private String ccpClassName;
-		final private String ccpParam1;
-		final private String ccpParam2;
-		final private String ccpParam3;
-		final private String ccpParam4;
+		final private Money amount;
+		final private int cc_id;
+		final private String cardInfo;
+		final private Byte expirationMonth;
+		final private Short expirationYear;
+		final private String principalName;
+		final private String groupName;
+		final private String cc_providerUniqueId;
+		final private String firstName;
+		final private String lastName;
+		final private String companyName;
+		final private String email;
+		final private String phone;
+		final private String fax;
+		final private String customerId;
+		final private String customerTaxId;
+		final private String streetAddress1;
+		final private String streetAddress2;
+		final private String city;
+		final private String state;
+		final private String postalCode;
+		final private String countryCode;
+		final private String description;
+		final private String ccp_providerId;
+		final private String ccp_className;
+		final private String ccp_param1;
+		final private String ccp_param2;
+		final private String ccp_param3;
+		final private String ccp_param4;
 
 		private AutomaticPayment(
 			Account.Name account,
-			BigDecimal amount,
-			int ccPkey,
-			String ccCardInfo,
-			Byte ccExpirationMonth,
-			Short ccExpirationYear,
-			String ccPrincipalName,
-			String ccGroupName,
-			String ccProviderUniqueId,
-			String ccFirstName,
-			String ccLastName,
-			String ccCompanyName,
-			String ccEmail,
-			String ccPhone,
-			String ccFax,
-			String ccCustomerId,
-			String ccCustomerTaxId,
-			String ccStreetAddress1,
-			String ccStreetAddress2,
-			String ccCity,
-			String ccState,
-			String ccPostalCode,
-			String ccCountryCode,
-			String ccComments,
-			String ccpProviderId,
-			String ccpClassName,
-			String ccpParam1,
-			String ccpParam2,
-			String ccpParam3,
-			String ccpParam4
+			Money amount,
+			int cc_id,
+			String cardInfo,
+			Byte expirationMonth,
+			Short expirationYear,
+			String principalName,
+			String groupName,
+			String cc_providerUniqueId,
+			String firstName,
+			String lastName,
+			String companyName,
+			String email,
+			String phone,
+			String fax,
+			String customerId,
+			String customerTaxId,
+			String streetAddress1,
+			String streetAddress2,
+			String city,
+			String state,
+			String postalCode,
+			String countryCode,
+			String description,
+			String ccp_providerId,
+			String ccp_className,
+			String ccp_param1,
+			String ccp_param2,
+			String ccp_param3,
+			String ccp_param4
 		) {
 			this.account = account;
 			this.amount = amount;
-			this.ccPkey = ccPkey;
-			this.ccCardInfo = ccCardInfo;
-			this.ccExpirationMonth = ccExpirationMonth;
-			this.ccExpirationYear = ccExpirationYear;
-			this.ccPrincipalName = ccPrincipalName;
-			this.ccGroupName = ccGroupName;
-			this.ccProviderUniqueId = ccProviderUniqueId;
-			this.ccFirstName = ccFirstName;
-			this.ccLastName = ccLastName;
-			this.ccCompanyName = ccCompanyName;
-			this.ccEmail = ccEmail;
-			this.ccPhone = ccPhone;
-			this.ccFax = ccFax;
-			this.ccCustomerId = ccCustomerId;
-			this.ccCustomerTaxId = ccCustomerTaxId;
-			this.ccStreetAddress1 = ccStreetAddress1;
-			this.ccStreetAddress2 = ccStreetAddress2;
-			this.ccCity = ccCity;
-			this.ccState = ccState;
-			this.ccPostalCode = ccPostalCode;
-			this.ccCountryCode = ccCountryCode;
-			this.ccComments = ccComments;
-			this.ccpProviderId = ccpProviderId;
-			this.ccpClassName = ccpClassName;
-			this.ccpParam1 = ccpParam1;
-			this.ccpParam2 = ccpParam2;
-			this.ccpParam3 = ccpParam3;
-			this.ccpParam4 = ccpParam4;
+			this.cc_id = cc_id;
+			this.cardInfo = cardInfo;
+			this.expirationMonth = expirationMonth;
+			this.expirationYear = expirationYear;
+			this.principalName = principalName;
+			this.groupName = groupName;
+			this.cc_providerUniqueId = cc_providerUniqueId;
+			this.firstName = firstName;
+			this.lastName = lastName;
+			this.companyName = companyName;
+			this.email = email;
+			this.phone = phone;
+			this.fax = fax;
+			this.customerId = customerId;
+			this.customerTaxId = customerTaxId;
+			this.streetAddress1 = streetAddress1;
+			this.streetAddress2 = streetAddress2;
+			this.city = city;
+			this.state = state;
+			this.postalCode = postalCode;
+			this.countryCode = countryCode;
+			this.description = description;
+			this.ccp_providerId = ccp_providerId;
+			this.ccp_className = ccp_className;
+			this.ccp_param1 = ccp_param1;
+			this.ccp_param2 = ccp_param2;
+			this.ccp_param3 = ccp_param3;
+			this.ccp_param4 = ccp_param4;
 		}
 	}
 
 	// TODO: infoOut, warningOut, verboseOut here, too
 	private static void processAutomaticPayments(int month, int year) {
-		System.err.println("DEBUG: month="+year+"-"+month);
+		System.err.println("DEBUG: month=" + year + "-" + month);
 		try {
 			try (
 				ProcessTimer timer=new ProcessTimer(
@@ -1495,65 +1508,78 @@ final public class PaymentHandler /*implements CronJob*/ {
 							(ResultSet results) -> {
 								try {
 									List<AutomaticPayment> list = new ArrayList<>();
-									BigDecimal total = BigDecimal.ZERO;
+									SortedMap<Currency,BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
 									// Look for duplicate accounting codes and report a warning
 									Account.Name lastAccounting = null;
 									while(results.next()) {
-										Account.Name account = Account.Name.valueOf(results.getString(1));
+										Account.Name account = Account.Name.valueOf(results.getString("accounting"));
 										if(account.equals(lastAccounting)) {
 											logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", account);
 										} else {
 											lastAccounting = account;
-											BigDecimal endofmonth = results.getBigDecimal(2);
-											BigDecimal current = results.getBigDecimal(3);
+											Currency currency = Currency.getInstance(results.getString("currency"));
+											BigDecimal endofmonth = results.getBigDecimal("endofmonth");
+											if(endofmonth == null) endofmonth = BigDecimal.ZERO;
+											BigDecimal current = results.getBigDecimal("current");
+											if(current == null) current = BigDecimal.ZERO;
 											if(
-												endofmonth.compareTo(BigDecimal.ZERO)>0
-												&& current.compareTo(BigDecimal.ZERO)>0
+												endofmonth.compareTo(BigDecimal.ZERO) > 0
+												&& current.compareTo(BigDecimal.ZERO) > 0
 											) {
 												BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
-												total = total.add(amount);
-												Byte expirationMonth = SafeMath.castByte(results.getShort(6));
+												BigDecimal total = totals.get(currency);
+												total = (total == null) ? amount : total.add(amount);
+												totals.put(currency, total);
+												
+												Byte expirationMonth = SafeMath.castByte(results.getShort("expirationMonth"));
 												if(results.wasNull()) expirationMonth = null;
-												Short expirationYear = results.getShort(7);
+												Short expirationYear = results.getShort("expirationYear");
 												if(results.wasNull()) expirationYear = null;
 												list.add(
 													new AutomaticPayment(
 														account,
-														amount,
-														results.getInt(4),
-														results.getString(5),
+														new Money(currency, amount),
+														results.getInt("cc_id"),
+														results.getString("cardInfo"),
 														expirationMonth,
 														expirationYear,
-														results.getString(8),
-														results.getString(9),
-														results.getString(10),
-														results.getString(11),
-														results.getString(12),
-														results.getString(13),
-														results.getString(14),
-														results.getString(15),
-														results.getString(16),
-														results.getString(17),
-														results.getString(18),
-														results.getString(19),
-														results.getString(20),
-														results.getString(21),
-														results.getString(22),
-														results.getString(23),
-														results.getString(24),
-														results.getString(25),
-														results.getString(26),
-														results.getString(27),
-														results.getString(28),
-														results.getString(29),
-														results.getString(30),
-														results.getString(31)
+														results.getString("principalName"),
+														results.getString("groupName"),
+														results.getString("cc_providerUniqueId"),
+														results.getString("firstName"),
+														results.getString("lastName"),
+														results.getString("companyName"),
+														results.getString("email"),
+														results.getString("phone"),
+														results.getString("fax"),
+														results.getString("customerId"),
+														results.getString("customerTaxId"),
+														results.getString("streetAddress1"),
+														results.getString("streetAddress2"),
+														results.getString("city"),
+														results.getString("state"),
+														results.getString("postalCode"),
+														results.getString("countryCode"),
+														results.getString("description"),
+														results.getString("ccp_providerId"),
+														results.getString("ccp_className"),
+														results.getString("ccp_param1"),
+														results.getString("ccp_param2"),
+														results.getString("ccp_param3"),
+														results.getString("ccp_param4")
 													)
 												);
 											}
 										}
 									}
-									System.out.println("Processing a total of $" + total);
+									if(totals.isEmpty()) {
+										assert list.isEmpty();
+										System.out.println("Nothing to process");
+									} else {
+										for(Map.Entry<Currency,BigDecimal> entry : totals.entrySet()) {
+											System.out.println("Processing a total of " + new Money(entry.getKey(), entry.getValue()));
+										}
+									}
 									return list;
 								} catch(ValidationException e) {
 									throw new SQLException(e.getLocalizedMessage(), e);
@@ -1561,75 +1587,94 @@ final public class PaymentHandler /*implements CronJob*/ {
 							},
 							"select\n"
 							+ "  bu.accounting,\n"
-							+ "  endofmonth.balance as endofmonth,\n"
-							+ "  current.balance as current,\n"
-							+ "  cc.id,\n"
-							+ "  cc.card_info,\n"
+							+ "  c.\"currencyCode\" AS currency,\n"
+							+ "  endofmonth.balance AS endofmonth,\n"
+							+ "  current.balance AS current,\n"
+							+ "  cc.id as cc_id,\n"
+							+ "  cc.card_info as cardInfo,\n"
 							+ "  cc.\"expirationMonth\",\n"
 							+ "  cc.\"expirationYear\",\n"
-							+ "  cc.principal_name,\n"
-							+ "  cc.group_name,\n"
-							+ "  cc.provider_unique_id,\n"
-							+ "  cc.first_name,\n"
-							+ "  cc.last_name,\n"
-							+ "  cc.company_name,\n"
+							+ "  cc.principal_name as \"principalName\",\n"
+							+ "  cc.group_name as \"groupName\",\n"
+							+ "  cc.provider_unique_id as \"cc_providerUniqueId\",\n"
+							+ "  cc.first_name as \"firstName\",\n"
+							+ "  cc.last_name as \"lastName\",\n"
+							+ "  cc.company_name as \"companyName\",\n"
 							+ "  cc.email,\n"
 							+ "  cc.phone,\n"
 							+ "  cc.fax,\n"
 							+ "  cc.\"customerId\",\n"
-							+ "  cc.customer_tax_id,\n"
-							+ "  cc.street_address1,\n"
-							+ "  cc.street_address2,\n"
+							+ "  cc.customer_tax_id as \"customerTaxId\",\n"
+							+ "  cc.street_address1 as \"streetAddress1\",\n"
+							+ "  cc.street_address2 as \"streetAddress2\",\n"
 							+ "  cc.city,\n"
 							+ "  cc.state,\n"
-							+ "  cc.postal_code,\n"
-							+ "  cc.country_code,\n"
+							+ "  cc.postal_code as \"postalCode\",\n"
+							+ "  cc.country_code as \"countryCode\",\n"
 							+ "  cc.description,\n"
-							+ "  ccp.provider_id,\n"
-							+ "  ccp.class_name,\n"
-							+ "  ccp.param1,\n"
-							+ "  ccp.param2,\n"
-							+ "  ccp.param3,\n"
-							+ "  ccp.param4\n"
+							+ "  ccp.provider_id as \"ccp_providerId\",\n"
+							+ "  ccp.class_name as \"ccp_className\",\n"
+							+ "  ccp.param1 as \"ccp_param1\",\n"
+							+ "  ccp.param2 as \"ccp_param2\",\n"
+							+ "  ccp.param3 as \"ccp_param3\",\n"
+							+ "  ccp.param4 as \"ccp_param4\"\n"
 							+ "from\n"
 							+ "  account.\"Account\" bu,\n"
-							+ "  (\n"
-							+ "    select\n"
+							+ "  billing.\"Currency\" c\n"
+							+ "  INNER JOIN payment.\"CreditCard\" cc ON bu.accounting=cc.accounting\n"
+							+ "  INNER JOIN payment.\"Processor\" ccp ON cc.processor_id=ccp.provider_id\n"
+							+ "  LEFT JOIN (\n"
+							+ "    SELECT\n"
 							+ "      bu.accounting,\n"
-							+ "      coalesce(sum(cast((tr.rate*tr.quantity) as numeric(9,2))), 0) as balance\n"
-							+ "    from\n"
+							+ "      tr.\"rate.currency\" AS currency,\n"
+							+ "      sum(\n"
+							+ "        round(\n"
+							+ "          tr.quantity * tr.\"rate.value\",\n"
+							+ "          c2.\"fractionDigits\"\n"
+							+ "        )\n"
+							+ "      ) AS balance\n"
+							+ "    FROM\n"
 							+ "                account.\"Account\"     bu\n"
-							+ "      left join billing.\"Transaction\" tr on bu.accounting = tr.accounting\n"
-							+ "    where\n"
-							+ "      tr.payment_confirmed!='N'\n"
-							+ "      and tr.time<?\n"
-							+ "    group by\n"
-							+ "      bu.accounting\n"
-							+ "  ) as endofmonth,\n"
-							+ "  (\n"
-							+ "    select\n"
+							+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
+							+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
+							+ "    WHERE\n"
+							+ "      tr.payment_confirmed != 'N'\n"
+							+ "      AND tr.time < ?\n"
+							+ "    GROUP BY\n"
 							+ "      bu.accounting,\n"
-							+ "      coalesce(sum(cast((tr.rate*tr.quantity) as numeric(9,2))), 0) as balance\n"
-							+ "    from\n"
+							+ "      tr.\"rate.currency\"\n"
+							+ "  ) AS endofmonth ON (bu.accounting, c.\"currencyCode\")=(endofmonth.accounting, endofmonth.currency)\n"
+							+ "  LEFT JOIN (\n"
+							+ "    SELECT\n"
+							+ "      bu.accounting,\n"
+							+ "      tr.\"rate.currency\" AS currency,\n"
+							+ "      sum(\n"
+							+ "        round(\n"
+							+ "          tr.quantity * tr.\"rate.value\",\n"
+							+ "          c2.\"fractionDigits\"\n"
+							+ "        )\n"
+							+ "      ) AS balance\n"
+							+ "    FROM\n"
 							+ "                account.\"Account\"     bu\n"
-							+ "      left join billing.\"Transaction\" tr on bu.accounting = tr.accounting\n"
-							+ "    where\n"
-							+ "      tr.payment_confirmed!='N'\n"
-							+ "    group by\n"
-							+ "      bu.accounting\n"
-							+ "  ) as current,\n"
-							+ "  payment.\"CreditCard\" cc,\n"
-							+ "  payment.\"Processor\" ccp\n"
-							+ "where\n"
-							+ "  bu.accounting=cc.accounting\n"
-							+ "  and bu.accounting=endofmonth.accounting\n"
-							+ "  and bu.accounting=current.accounting\n"
-							+ "  and cc.use_monthly\n"
-							+ "  and cc.active\n"
-							+ "  and cc.processor_id=ccp.provider_id\n"
-							+ "  and ccp.enabled\n"
-							+ "order by\n"
-							+ "  bu.accounting",
+							+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
+							+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
+							+ "    WHERE\n"
+							+ "      tr.payment_confirmed != 'N'\n"
+							+ "    GROUP BY\n"
+							+ "      bu.accounting,\n"
+							+ "      tr.\"rate.currency\"\n"
+							+ "  ) AS current ON (bu.accounting, c.\"currencyCode\")=(current.accounting, current.currency)\n"
+							+ "WHERE\n"
+							+ "  cc.use_monthly\n"
+							+ "  AND cc.active\n"
+							+ "  AND ccp.enabled\n"
+							+ "  AND (\n"
+							+ "    endofmonth.balance IS NOT NULL\n"
+							+ "    OR current.balance IS NOT NULL\n"
+							+ "  )\n"
+							+ "ORDER BY\n"
+							+ "  bu.accounting,\n"
+							+ "  t.\"rate.currency\"",
 							new Timestamp(beginningOfNextMonth.getTimeInMillis())
 						);
 						// Only need to create the persistence once per DB transaction
@@ -1640,12 +1685,12 @@ final public class PaymentHandler /*implements CronJob*/ {
 							// Find the processor
 							CreditCardProcessor processor = new CreditCardProcessor(
 								MerchantServicesProviderFactory.getMerchantServicesProvider(
-									automaticPayment.ccpProviderId,
-									automaticPayment.ccpClassName,
-									automaticPayment.ccpParam1,
-									automaticPayment.ccpParam2,
-									automaticPayment.ccpParam3,
-									automaticPayment.ccpParam4
+									automaticPayment.ccp_providerId,
+									automaticPayment.ccp_className,
+									automaticPayment.ccp_param1,
+									automaticPayment.ccp_param2,
+									automaticPayment.ccp_param3,
+									automaticPayment.ccp_param4
 								),
 								masterPersistenceMechanism
 							);
@@ -1653,7 +1698,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 
 							// Add as pending transaction
 							String paymentTypeName;
-							String cardInfo = automaticPayment.ccCardInfo;
+							String cardInfo = automaticPayment.cardInfo;
 							// TODO: Use some sort of shared API for this
 							if(
 								cardInfo.startsWith("34")
@@ -1690,7 +1735,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 								automaticPayment.amount.negate(),
 								paymentTypeName,
 								CreditCard.getCardNumberDisplay(cardInfo),
-								automaticPayment.ccpProviderId,
+								automaticPayment.ccp_providerId,
 								com.aoindustries.aoserv.client.billing.Transaction.WAITING_CONFIRMATION
 							);
 							conn.commit();
@@ -1704,8 +1749,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 									InetAddress.getLocalHost().getHostAddress(),
 									120, // duplicateWindow
 									Integer.toString(transID), // orderNumber
-									Currency.getInstance("USD"),
-									automaticPayment.amount,
+									automaticPayment.amount.getCurrency(),
+									automaticPayment.amount.getValue(),
 									null, // taxAmount
 									false, // taxExempt
 									null, // shippingAmount
@@ -1726,31 +1771,31 @@ final public class PaymentHandler /*implements CronJob*/ {
 									"Monthly automatic billing"
 								),
 								new CreditCard(
-									Integer.toString(automaticPayment.ccPkey),
-									automaticPayment.ccPrincipalName,
-									automaticPayment.ccGroupName,
-									automaticPayment.ccpProviderId,
-									automaticPayment.ccProviderUniqueId,
+									Integer.toString(automaticPayment.cc_id),
+									automaticPayment.principalName,
+									automaticPayment.groupName,
+									automaticPayment.ccp_providerId,
+									automaticPayment.cc_providerUniqueId,
 									null, // cardNumber
-									automaticPayment.ccCardInfo,
-									automaticPayment.ccExpirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.ccExpirationMonth,
-									automaticPayment.ccExpirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.ccExpirationYear,
+									automaticPayment.cardInfo,
+									automaticPayment.expirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.expirationMonth,
+									automaticPayment.expirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.expirationYear,
 									null, // cardCode
-									automaticPayment.ccFirstName,
-									automaticPayment.ccLastName,
-									automaticPayment.ccCompanyName,
-									automaticPayment.ccEmail,
-									automaticPayment.ccPhone,
-									automaticPayment.ccFax,
-									automaticPayment.ccCustomerId,
-									automaticPayment.ccCustomerTaxId,
-									automaticPayment.ccStreetAddress1,
-									automaticPayment.ccStreetAddress2,
-									automaticPayment.ccCity,
-									automaticPayment.ccState,
-									automaticPayment.ccPostalCode,
-									automaticPayment.ccCountryCode,
-									automaticPayment.ccComments
+									automaticPayment.firstName,
+									automaticPayment.lastName,
+									automaticPayment.companyName,
+									automaticPayment.email,
+									automaticPayment.phone,
+									automaticPayment.fax,
+									automaticPayment.customerId,
+									automaticPayment.customerTaxId,
+									automaticPayment.streetAddress1,
+									automaticPayment.streetAddress2,
+									automaticPayment.city,
+									automaticPayment.state,
+									automaticPayment.postalCode,
+									automaticPayment.countryCode,
+									automaticPayment.description
 								)
 							);
 

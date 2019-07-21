@@ -5,6 +5,7 @@
  */
 package com.aoindustries.aoserv.master.billing;
 
+import com.aoindustries.aoserv.client.billing.Currency;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -60,31 +61,38 @@ public class TransactionHandler {
 		@Override
 		public void getObject(DatabaseConnection conn, RequestSource source, CompressedDataInputStream in, CompressedDataOutputStream out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 			int transid = in.readCompressedInt();
-			if(masterUser != null) {
-				assert masterServers != null;
-				if(masterServers.length == 0) {
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+				if(masterUser != null) {
+					assert masterServers != null;
+					if(masterServers.length == 0) {
+						MasterServer.writeObject(
+							conn,
+							source,
+							out,
+							new Transaction(),
+							QUERY_MASTER + " WHERE transid=? AND \"rate.currency\"=?",
+							transid,
+							Currency.USD.getCurrencyCode()
+						);
+					} else {
+						out.writeShort(AoservProtocol.DONE);
+					}
+				} else {
 					MasterServer.writeObject(
 						conn,
 						source,
 						out,
 						new Transaction(),
-						QUERY_MASTER + " where transid=?",
-						transid
+						QUERY_ADMINISTRATOR + "\n"
+						+ "  AND tr.transid=?\n"
+						+ "  AND \"rate.currency\"=?",
+						source.getCurrentAdministrator(),
+						transid,
+						Currency.USD.getCurrencyCode()
 					);
-				} else {
-					out.writeShort(AoservProtocol.DONE);
 				}
 			} else {
-				MasterServer.writeObject(
-					conn,
-					source,
-					out,
-					new Transaction(),
-					QUERY_ADMINISTRATOR + "\n"
-					+ "  and tr.transid=?",
-					source.getCurrentAdministrator(),
-					transid
-				);
+				throw new IOException("GetObject for Transaction only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
 			}
 		}
 	}
@@ -98,15 +106,28 @@ public class TransactionHandler {
 
 		@Override
 		protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new Transaction(),
-				QUERY_MASTER
-			);
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new Transaction(),
+					QUERY_MASTER + " WHERE \"rate.currency\"=?",
+					Currency.USD.getCurrencyCode()
+				);
+			} else {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new Transaction(),
+					QUERY_MASTER
+				);
+			}
 		}
 
 		@Override
@@ -116,16 +137,31 @@ public class TransactionHandler {
 
 		@Override
 		protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new Transaction(),
-				QUERY_ADMINISTRATOR,
-				source.getCurrentAdministrator()
-			);
+			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new Transaction(),
+					QUERY_ADMINISTRATOR + "\n"
+					+ "  AND \"rate.currency\"=?",
+					source.getCurrentAdministrator(),
+					Currency.USD.getCurrencyCode()
+				);
+			} else {
+				MasterServer.writeObjects(
+					conn,
+					source,
+					out,
+					provideProgress,
+					CursorMode.FETCH,
+					new Transaction(),
+					QUERY_ADMINISTRATOR,
+					source.getCurrentAdministrator()
+				);
+			}
 		}
 	}
 }

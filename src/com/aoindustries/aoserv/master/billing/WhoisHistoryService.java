@@ -88,7 +88,8 @@ final public class WhoisHistoryService implements MasterService {
 		Set<Account.Name> accountsAffected = new HashSet<>();
 
 		// Open account that have balance <= $0.00 and entry is older than one year
-		List<Account.Name> deletedGoodStanding = conn.executeObjectListUpdate(ObjectFactories.accountNameFactory,
+		List<Account.Name> deletedGoodStanding = conn.executeObjectListUpdate(
+			ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
 			+ "    wha.id\n"
@@ -96,14 +97,16 @@ final public class WhoisHistoryService implements MasterService {
 			+ "               billing.\"WhoisHistoryAccount\" wha\n"
 			+ "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
 			+ "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
-			+ "    LEFT  JOIN billing.account_balances        ab  ON bu.accounting        = ab.accounting\n"
 			+ "  WHERE\n"
 			// entry is older than interval
 			+ "    (now() - wh.\"time\") > ?::interval\n"
 			// open account
 			+ "    AND bu.canceled IS NULL\n"
 			// balance is <= $0.00
-			+ "    AND (ab.accounting IS NULL OR ab.balance <= '0.00'::numeric(9,2))\n"
+			+ "    AND (\n"
+			+ "      SELECT ab.balance FROM billing.account_balances ab\n"
+			+ "      WHERE bu.accounting = ab.accounting AND ab.balance > '0'::numeric\n"
+			+ "    ) IS NULL\n"
 			+ ") RETURNING account",
 			CLEANUP_AFTER_GOOD_ACCOUNT
 		);
@@ -113,7 +116,8 @@ final public class WhoisHistoryService implements MasterService {
 		}
 
 		// Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
-		List<Account.Name> deletedCanceledZero = conn.executeObjectListUpdate(ObjectFactories.accountNameFactory,
+		List<Account.Name> deletedCanceledZero = conn.executeObjectListUpdate(
+			ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
 			+ "    wha.id\n"
@@ -121,7 +125,6 @@ final public class WhoisHistoryService implements MasterService {
 			+ "               billing.\"WhoisHistoryAccount\" wha\n"
 			+ "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
 			+ "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
-			+ "    LEFT  JOIN billing.account_balances        ab  ON bu.accounting        = ab.accounting\n"
 			+ "  WHERE\n"
 			// entry is older than interval
 			+ "    (now() - wh.\"time\") > ?::interval\n"
@@ -130,7 +133,10 @@ final public class WhoisHistoryService implements MasterService {
 			// has not had any accounting billing.Transaction for interval
 			+ "    AND (SELECT tr.transid FROM billing.\"Transaction\" tr WHERE bu.accounting = tr.accounting AND tr.\"time\" >= (now() - ?::interval) LIMIT 1) IS NULL\n"
 			// balance is $0.00
-			+ "    AND (ab.accounting IS NULL OR ab.balance = '0.00'::numeric(9,2))\n"
+			+ "    AND (\n"
+			+ "      SELECT ab.balance FROM billing.account_balances ab\n"
+			+ "      WHERE bu.accounting = ab.accounting AND ab.balance != '0'::numeric\n"
+			+ "    ) IS NULL\n"
 			+ ") RETURNING account",
 			CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
 			CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS

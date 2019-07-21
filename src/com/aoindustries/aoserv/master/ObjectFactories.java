@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -16,9 +16,11 @@ import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Currency;
 import java.util.Locale;
 
 /**
@@ -94,6 +96,14 @@ final public class ObjectFactories {
 		try {
 			return com.aoindustries.aoserv.client.linux.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
+	};
+
+    public static final ObjectFactory<Money> moneyFactory = (ResultSet result) -> {
+		try {
+			return new Money(Currency.getInstance(result.getString(1)), result.getBigDecimal(2));
+		} catch(NumberFormatException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);
 		}
 	};

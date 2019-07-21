@@ -17,6 +17,7 @@ import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.ObjectFactory;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
@@ -24,9 +25,9 @@ import java.security.acl.Group;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Currency;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Stores the information directly in the master server.  Each instance should be used only within a single database transaction.
@@ -296,6 +297,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 			if(expirationMonth == CreditCard.UNKNOWN_EXPRIATION_MONTH) expirationMonth = null;
 			Short expirationYear = creditCard.getExpirationYear(); // TODO: 2.0: Nullable Short
 			if(expirationYear == CreditCard.UNKNOWN_EXPRIATION_YEAR) expirationYear = null;
+			Currency currency = transactionRequest.getCurrency();
             int payment = PaymentHandler.addPayment(
                 conn,
                 invalidateList,
@@ -305,12 +307,11 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 transactionRequest.getTestMode(),
                 transactionRequest.getDuplicateWindow(),
                 transactionRequest.getOrderNumber(),
-                transactionRequest.getCurrency().getCurrencyCode(),
-                Objects.toString(transactionRequest.getAmount(), null),
-                Objects.toString(transactionRequest.getTaxAmount(), null),
+                new Money(currency, transactionRequest.getAmount()),
+                transactionRequest.getTaxAmount() == null ? null : new Money(currency, transactionRequest.getTaxAmount()),
                 transactionRequest.getTaxExempt(),
-                Objects.toString(transactionRequest.getShippingAmount(), null),
-                Objects.toString(transactionRequest.getDutyAmount(), null),
+                transactionRequest.getShippingAmount() == null ? null : new Money(currency, transactionRequest.getShippingAmount()),
+                transactionRequest.getDutyAmount() == null ? null : new Money(currency, transactionRequest.getDutyAmount()),
                 transactionRequest.getShippingFirstName(),
                 transactionRequest.getShippingLastName(),
                 transactionRequest.getShippingCompanyName(),

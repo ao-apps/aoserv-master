@@ -8,20 +8,14 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.billing.Resource;
-import com.aoindustries.aoserv.client.master.User;
-import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntList;
+import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -189,31 +183,33 @@ final public class PackageHandler {
 		String version,
 		String display,
 		String description,
-		int setupFee,
+		Money setupFee,
 		String setupFeeTransactionType,
-		int monthlyRate,
+		Money monthlyRate,
 		String monthlyRateTransactionType
 	) throws IOException, SQLException {
 		AccountHandler.checkAccessAccount(conn, source, "addPackageDefinition", account);
-		if(AccountHandler.isAccountDisabled(conn, account)) throw new SQLException("Unable to add PackageDefinition, Account disabled: "+account);
+		if(AccountHandler.isAccountDisabled(conn, account)) throw new SQLException("Unable to add PackageDefinition, Account disabled: " + account);
 
 		int packageDefinition = conn.executeIntUpdate(
 			"INSERT INTO\n"
 			+ "  billing.\"PackageDefinition\"\n"
 			+ "VALUES (\n"
-			+ "  default,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  ?,\n"
-			+ "  false,\n"
-			+ "  false\n"
+			+ "  default,\n" // id
+			+ "  ?,\n" // accounting
+			+ "  ?,\n" // category
+			+ "  ?,\n" // name
+			+ "  ?,\n" // version
+			+ "  ?,\n" // display
+			+ "  ?,\n" // description
+			+ "  ?,\n" // setupFee.currency
+			+ "  ?,\n" // setupFee.value
+			+ "  ?,\n" // setup_fee_transaction_type
+			+ "  ?,\n" // monthlyRate.currency
+			+ "  ?,\n" // monthlyRate.value
+			+ "  ?,\n" // monthly_rate_transaction_type
+			+ "  false,\n" // active
+			+ "  false\n" // approved
 			+ ") RETURNING id",
 			account.toString(),
 			category,
@@ -221,9 +217,11 @@ final public class PackageHandler {
 			version,
 			display,
 			description,
-			setupFee <= 0 ? Null.NUMERIC : new BigDecimal(SQLUtility.getDecimal(setupFee)),
+			setupFee == null || setupFee.getUnscaledValue() == 0 ? null : setupFee.getCurrency().getCurrencyCode(),
+			setupFee == null || setupFee.getUnscaledValue() == 0 ? Null.NUMERIC : setupFee.getValue(),
 			setupFeeTransactionType,
-			new BigDecimal(SQLUtility.getDecimal(monthlyRate)),
+			monthlyRate.getCurrency().getCurrencyCode(),
+			monthlyRate.getValue(),
 			monthlyRateTransactionType
 		);
 
@@ -280,9 +278,11 @@ final public class PackageHandler {
 			+ "  version,\n"
 			+ "  display,\n"
 			+ "  description,\n"
-			+ "  setup_fee,\n"
+			+ "  \"setupFee.currency\",\n"
+			+ "  \"setupFee.value\",\n"
 			+ "  setup_fee_transaction_type,\n"
-			+ "  monthly_rate,\n"
+			+ "  \"monthlyRate.currency\",\n"
+			+ "  \"monthlyRate.value\",\n"
 			+ "  monthly_rate_transaction_type\n"
 			+ ") SELECT\n"
 			+ "  accounting,\n"
@@ -291,9 +291,11 @@ final public class PackageHandler {
 			+ "  ?,\n"
 			+ "  display,\n"
 			+ "  description,\n"
-			+ "  setup_fee,\n"
+			+ "  \"setupFee.currency\",\n"
+			+ "  \"setupFee.value\",\n"
 			+ "  setup_fee_transaction_type,\n"
-			+ "  monthly_rate,\n"
+			+ "  \"monthlyRate.currency\",\n"
+			+ "  \"monthlyRate.value\",\n"
 			+ "  monthly_rate_transaction_type\n"
 			+ "FROM\n"
 			+ "  billing.\"PackageDefinition\"\n"
@@ -311,14 +313,16 @@ final public class PackageHandler {
 			+ "  resource,\n"
 			+ "  soft_limit,\n"
 			+ "  hard_limit,\n"
-			+ "  additional_rate,\n"
+			+ "  \"additionalRate.currency\",\n"
+			+ "  \"additionalRate.value\",\n"
 			+ "  additional_transaction_type\n"
 			+ ") select\n"
 			+ "  ?,\n"
 			+ "  resource,\n"
 			+ "  soft_limit,\n"
 			+ "  hard_limit,\n"
-			+ "  additional_rate,\n"
+			+ "  \"additionalRate.currency\",\n"
+			+ "  \"additionalRate.value\",\n"
 			+ "  additional_transaction_type\n"
 			+ "from\n"
 			+ "  billing.\"PackageDefinitionLimit\"\n"
@@ -359,9 +363,9 @@ final public class PackageHandler {
 		String version,
 		String display,
 		String description,
-		int setupFee,
+		Money setupFee,
 		String setupFeeTransactionType,
-		int monthlyRate,
+		Money monthlyRate,
 		String monthlyRateTransactionType
 	) throws IOException, SQLException {
 		// Security checks
@@ -369,7 +373,7 @@ final public class PackageHandler {
 		AccountHandler.checkAccessAccount(conn, source, "updatePackageDefinition", account);
 		if(isPackageDefinitionApproved(conn, packageDefinition)) throw new SQLException("Not allowed to update an approved PackageDefinition: "+packageDefinition);
 
-		PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+		conn.executeUpdate(
 			"update\n"
 			+ "  billing.\"PackageDefinition\"\n"
 			+ "set\n"
@@ -379,31 +383,28 @@ final public class PackageHandler {
 			+ "  version=?,\n"
 			+ "  display=?,\n"
 			+ "  description=?,\n"
-			+ "  setup_fee=?,\n"
+			+ "  \"setupFee.currency\"=?,\n"
+			+ "  \"setupFee.value\"=?,\n"
 			+ "  setup_fee_transaction_type=?,\n"
-			+ "  monthly_rate=?,\n"
+			+ "  \"monthlyRate.currency\"=?,\n"
+			+ "  \"monthlyRate.value\"=?,\n"
 			+ "  monthly_rate_transaction_type=?\n"
 			+ "where\n"
-			+ "  id=?"
+			+ "  id=?",
+			account.toString(),
+			category,
+			name,
+			version,
+			display,
+			description,
+			setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
+			setupFee == null ? Null.NUMERIC : setupFee.getValue(),
+			setupFeeTransactionType,
+			monthlyRate.getCurrency().getCurrencyCode(),
+			monthlyRate.getValue(),
+			monthlyRateTransactionType,
+			packageDefinition
 		);
-		try {
-			pstmt.setString(1, account.toString());
-			pstmt.setString(2, category);
-			pstmt.setString(3, name);
-			pstmt.setString(4, version);
-			pstmt.setString(5, display);
-			pstmt.setString(6, description);
-			pstmt.setBigDecimal(7, setupFee<=0 ? null : new BigDecimal(SQLUtility.getDecimal(setupFee)));
-			pstmt.setString(8, setupFeeTransactionType);
-			pstmt.setBigDecimal(9, new BigDecimal(SQLUtility.getDecimal(monthlyRate)));
-			pstmt.setString(10, monthlyRateTransactionType);
-			pstmt.setInt(11, packageDefinition);
-			pstmt.executeUpdate();
-		} catch(SQLException err) {
-			throw new WrappedSQLException(err, pstmt);
-		} finally {
-			pstmt.close();
-		}
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -539,98 +540,6 @@ final public class PackageHandler {
 		return conn.executeIntQuery("select coalesce(disable_log, -1) from billing.\"Package\" where name=?", packageName);
 	}
 
-	// TODO: Unused? 2019-07-10
-	public static List<Account.Name> getPackages(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		User masterUser=MasterServer.getUser(conn, currentAdministrator);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
-		if(masterUser!=null) {
-			if(masterServers.length==0) {
-				return conn.executeObjectListQuery(
-					ObjectFactories.accountNameFactory,
-					"select name from billing.\"Package\""
-				);
-			} else {
-				return conn.executeObjectListQuery(
-					ObjectFactories.accountNameFactory,
-					"select\n"
-					+ "  pk.name\n"
-					+ "from\n"
-					+ "  master.\"UserHost\" ms,\n"
-					+ "  account.\"AccountHost\" bs,\n"
-					+ "  billing.\"Package\" pk\n"
-					+ "where\n"
-					+ "  ms.username=?\n"
-					+ "  and ms.server=bs.server\n"
-					+ "  and bs.accounting=pk.accounting\n"
-					+ "group by\n"
-					+ "  pk.name",
-					currentAdministrator
-				);
-			}
-		} else {
-			return conn.executeObjectListQuery(
-				ObjectFactories.accountNameFactory,
-				"select\n"
-				+ "  pk2.name\n"
-				+ "from\n"
-				+ "  account.\"User\" un,\n"
-				+ "  billing.\"Package\" pk1,\n"
-				+ TableHandler.BU1_PARENTS_JOIN
-				+ "  billing.\"Package\" pk2\n"
-				+ "where\n"
-				+ "  un.username=?\n"
-				+ "  and un.package=pk1.name\n"
-				+ "  and (\n"
-				+ TableHandler.PK1_BU1_PARENTS_WHERE
-				+ "  )\n"
-				+ "  and bu1.accounting=pk2.accounting",
-				currentAdministrator
-			);
-		}
-	}
-
-	// TODO: Unused? 2019-07-10
-	public static IntList getIntPackages(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		User masterUser=MasterServer.getUser(conn, currentAdministrator);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
-		if(masterUser!=null) {
-			if(masterServers.length==0) return conn.executeIntListQuery("select id from billing.\"Package\"");
-			else return conn.executeIntListQuery(
-				"select\n"
-				+ "  pk.id\n"
-				+ "from\n"
-				+ "  master.\"UserHost\" ms,\n"
-				+ "  account.\"AccountHost\" bs,\n"
-				+ "  billing.\"Package\" pk\n"
-				+ "where\n"
-				+ "  ms.username=?\n"
-				+ "  and ms.server=bs.server\n"
-				+ "  and bs.accounting=pk.accounting\n"
-				+ "group by\n"
-				+ "  pk.id",
-				currentAdministrator
-			);
-		} else return conn.executeIntListQuery(
-			"select\n"
-			+ "  pk2.id\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk1,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\" pk2\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk1.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK1_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=pk2.accounting",
-			currentAdministrator
-		);
-	}
-
 	public static void invalidateTable(Table.TableID tableID) {
 		if(tableID==Table.TableID.PACKAGES) {
 			synchronized(PackageHandler.class) {
@@ -662,7 +571,10 @@ final public class PackageHandler {
 		return conn.executeBooleanQuery("select (select id from billing.\"Package\" where name=? limit 1) is null", packageName);
 	}
 
-	public static int findActivePackageDefinition(DatabaseConnection conn, Account.Name account, int rate, int userLimit, int popLimit) throws IOException, SQLException {
+	/**
+	 * Used for compatibility with older clients.
+	 */
+	public static int findActivePackageDefinition(DatabaseConnection conn, Account.Name account, Money rate, int userLimit, int popLimit) throws IOException, SQLException {
 		return conn.executeIntQuery(
 			"select\n"
 			+ "  coalesce(\n"
@@ -675,7 +587,8 @@ final public class PackageHandler {
 			+ "        package_definitions_limits pop_pdl\n"
 			+ "      where\n"
 			+ "        pd.accounting=?\n"
-			+ "        and pd.monthly_rate=?\n"
+			+ "        and pd.\"monthlyRate.currency\"=?\n"
+			+ "        and pd.\"monthlyRate.value\"=?\n"
 			+ "        and pd.id=user_pdl.package_definition\n"
 			+ "        and user_pdl.resource=?\n"
 			+ "        and pd.id=pop_pdl.package_definition\n"
@@ -684,7 +597,8 @@ final public class PackageHandler {
 			+ "    ), -1\n"
 			+ "  )",
 			account,
-			SQLUtility.getDecimal(rate),
+			rate.getCurrency().getCurrencyCode(),
+			rate.getValue(),
 			Resource.USER,
 			Resource.EMAIL
 		);
@@ -822,7 +736,7 @@ final public class PackageHandler {
 		String[] resources,
 		int[] soft_limits,
 		int[] hard_limits,
-		int[] additional_rates,
+		Money[] additionalRates,
 		String[] additional_transaction_types
 	) throws IOException, SQLException {
 		checkAccessPackageDefinition(conn, source, "setPackageDefinitionLimits", packageDefinition);
@@ -832,6 +746,7 @@ final public class PackageHandler {
 		// Update the database
 		conn.executeUpdate("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition);
 		for(int c=0;c<resources.length;c++) {
+			Money additionalRate = additionalRates[c];
 			conn.executeUpdate(
 				"insert into\n"
 				+ "  billing.\"PackageDefinitionLimit\"\n"
@@ -840,21 +755,24 @@ final public class PackageHandler {
 				+ "  resource,\n"
 				+ "  soft_limit,\n"
 				+ "  hard_limit,\n"
-				+ "  additional_rate,\n"
+				+ "  \"additionalRate.currency\",\n"
+				+ "  \"additionalRate.value\",\n"
 				+ "  additional_transaction_type\n"
 				+ ") values(\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  ?::integer,\n"
-				+ "  ?::integer,\n"
-				+ "  ?::numeric(9,2),\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
+				+ "  ?,\n"
 				+ "  ?\n"
 				+ ")",
 				packageDefinition,
 				resources[c],
-				soft_limits[c]==-1 ? null : Integer.toString(soft_limits[c]),
-				hard_limits[c]==-1 ? null : Integer.toString(hard_limits[c]),
-				additional_rates[c]<=0 ? null : SQLUtility.getDecimal(additional_rates[c]),
+				soft_limits[c] == -1 ? Null.INTEGER : soft_limits[c],
+				hard_limits[c] == -1 ? Null.INTEGER : hard_limits[c],
+				additionalRate == null || additionalRate.getUnscaledValue() == 0 ? null : additionalRate.getCurrency().getCurrencyCode(),
+				additionalRate == null || additionalRate.getUnscaledValue() == 0 ? Null.NUMERIC : additionalRate.getValue(),
 				additional_transaction_types[c]
 			);
 		}

@@ -6,16 +6,19 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.billing.Currency;
 import com.aoindustries.aoserv.client.billing.Transaction;
 import com.aoindustries.aoserv.client.billing.TransactionSearchCriteria;
-import com.aoindustries.aoserv.client.billing.TransactionType;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
+import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.StringUtility;
+import com.aoindustries.util.i18n.Money;
+import com.aoindustries.util.i18n.Monies;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -58,7 +61,7 @@ final public class BillingTransactionHandler {
 		String type,
 		String description,
 		int quantity,
-		int rate,
+		Money rate,
 		String paymentType,
 		String paymentInfo,
 		String processor,
@@ -80,7 +83,7 @@ final public class BillingTransactionHandler {
 			type,
 			description,
 			new BigDecimal(SQLUtility.getMilliDecimal(quantity)),
-			new BigDecimal(SQLUtility.getDecimal(rate)),
+			rate,
 			paymentType,
 			paymentInfo,
 			processor,
@@ -101,7 +104,7 @@ final public class BillingTransactionHandler {
 		String type,
 		String description,
 		BigDecimal quantity,
-		BigDecimal rate,
+		Money rate,
 		String paymentType,
 		String paymentInfo,
 		String processor,
@@ -110,7 +113,7 @@ final public class BillingTransactionHandler {
 		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
 		int transaction = conn.executeIntUpdate(
-			"INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
+			"INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
 			time,
 			account,
 			sourceAccount,
@@ -118,7 +121,8 @@ final public class BillingTransactionHandler {
 			type,
 			description,
 			quantity,
-			rate,
+			rate.getCurrency().getCurrencyCode(),
+			rate.getValue(),
 			paymentType,
 			paymentInfo,
 			processor,
@@ -139,16 +143,23 @@ final public class BillingTransactionHandler {
 		CompressedDataOutputStream out,
 		Account.Name account
 	) throws IOException, SQLException {
-		// TODO: release conn before writing to out
-		MasterServer.writePenniesCheckBusiness(
-			conn,
-			source,
-			"getAccountBalance",
-			account,
-			out,
-			"select coalesce(sum(cast((rate*quantity) as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed!='N'",
-			account.toString()
-		);
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			// TODO: release conn before writing to out
+			MasterServer.writePenniesCheckBusiness(
+				conn,
+				source,
+				"getAccountBalance",
+				account,
+				out,
+				"SELECT coalesce(sum(cast((quantity * \"rate.value\") as numeric(9,2))), 0)\n"
+				+ "FROM billing.\"Transaction\"\n"
+				+ "WHERE accounting=? AND \"rate.currency\"=? AND payment_confirmed!='N'",
+				account.toString(),
+				Currency.USD.getCurrencyCode()
+			);
+		} else {
+			throw new IOException("getAccountBalance only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
+		}
 	}
 
 	/**
@@ -161,17 +172,24 @@ final public class BillingTransactionHandler {
 		Account.Name account,
 		long before
 	) throws IOException, SQLException {
-		// TODO: release conn before writing to out
-		MasterServer.writePenniesCheckBusiness(
-			conn,
-			source,
-			"getAccountBalanceBefore",
-			account,
-			out,
-			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed!='N'",
-			account.toString(),
-			new Timestamp(before)
-		);
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			// TODO: release conn before writing to out
+			MasterServer.writePenniesCheckBusiness(
+				conn,
+				source,
+				"getAccountBalanceBefore",
+				account,
+				out,
+				"SELECT coalesce(sum(cast((quantity * \"rate.value\") as numeric(9,2))), 0)\n"
+				+ "FROM billing.\"Transaction\"\n"
+				+ "WHERE accounting=? AND \"rate.currency\"=? and \"time\"<? AND payment_confirmed!='N'",
+				account.toString(),
+				Currency.USD.getCurrencyCode(),
+				new Timestamp(before)
+			);
+		} else {
+			throw new IOException("getAccountBalanceBefore only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
+		}
 	}
 
 	/**
@@ -183,28 +201,51 @@ final public class BillingTransactionHandler {
 		CompressedDataOutputStream out,
 		Account.Name account
 	) throws IOException, SQLException {
-		// TODO: release conn before writing to out
-		MasterServer.writePenniesCheckBusiness(
-			conn,
-			source,
-			"getConfirmedAccountBalance",
-			account,
-			out,
-			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
-			account.toString()
-		);
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			// TODO: release conn before writing to out
+			MasterServer.writePenniesCheckBusiness(
+				conn,
+				source,
+				"getConfirmedAccountBalance",
+				account,
+				out,
+				"SELECT coalesce(sum(cast((quantity * \"rate.value\") as numeric(9,2))), 0)\n"
+				+ "FROM billing.\"Transaction\"\n"
+				+ "WHERE accounting=? AND \"rate.currency\"=? AND payment_confirmed='Y'",
+				account.toString(),
+				Currency.USD.getCurrencyCode()
+			);
+		} else {
+			throw new IOException("getConfirmedAccountBalance only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
+		}
 	}
 
 	/**
 	 * Gets the confirmed balance for one account.
 	 */
-	public static int getConfirmedAccountBalance(
+	public static Monies getConfirmedAccountBalance(
 		DatabaseConnection conn,
 		Account.Name account
 	) throws IOException, SQLException {
-		return SQLUtility.getPennies(
-			conn.executeStringQuery(
-				"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and payment_confirmed='Y'",
+		return Monies.of(
+			conn.executeObjectCollectionQuery(
+				new ArrayList<>(),
+				ObjectFactories.moneyFactory,
+				"SELECT\n"
+				+ "  t.\"rate.currency\"\n"
+				+ "  sum(\n"
+				+ "    round(\n"
+				+ "      t.quantity * t.\"rate.value\",\n"
+				+ "      c.\"fractionDigits\"\n"
+				+ "    )\n"
+				+ "  )\n"
+				+ "FROM\n"
+				+ "  billing.\"Transaction\" t\n"
+				+ "  INNER JOIN billing.\"Currency\" c ON t.\"rate.currency\" = c.\"currencyCode\"\n"
+				+ "WHERE\n"
+				+ "  t.accounting=?\n"
+				+ "  AND t.payment_confirmed='Y'\n"
+				+ "GROUP BY t.\"rate.currency\"",
 				account.toString()
 			)
 		);
@@ -220,44 +261,23 @@ final public class BillingTransactionHandler {
 		Account.Name account,
 		long before
 	) throws IOException, SQLException {
-		// TODO: release conn before writing to out
-		MasterServer.writePenniesCheckBusiness(
-			conn,
-			source,
-			"getConfirmedAccountBalanceBefore",
-			account,
-			out,
-			"select coalesce(sum(cast(rate*quantity as numeric(9,2))), 0) from billing.\"Transaction\" where accounting=? and time<? and payment_confirmed='Y'",
-			account.toString(),
-			new Timestamp(before)
-		);
-	}
-
-	/**
-	 * Gets all pending payments.
-	 */
-	public static void getPendingPayments(
-		DatabaseConnection conn,
-		RequestSource source,
-		CompressedDataOutputStream out, 
-		boolean provideProgress
-	) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
-		if(mu!=null && mu.canAccessAccounting()) {
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
 			// TODO: release conn before writing to out
-			MasterServer.writeObjects(
+			MasterServer.writePenniesCheckBusiness(
 				conn,
 				source,
+				"getConfirmedAccountBalanceBefore",
+				account,
 				out,
-				provideProgress,
-				CursorMode.AUTO,
-				new Transaction(),
-				"select * from billing.\"Transaction\" where type=? and payment_confirmed='W'",
-				TransactionType.PAYMENT
+				"SELECT coalesce(sum(cast((quantity * \"rate.value\") as numeric(9,2))), 0)\n"
+				+ "FROM billing.\"Transaction\"\n"
+				+ "WHERE accounting=? AND \"rate.currency\"=? and \"time\"<? AND payment_confirmed='Y'",
+				account.toString(),
+				Currency.USD.getCurrencyCode(),
+				new Timestamp(before)
 			);
 		} else {
-			conn.releaseConnection();
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+			throw new IOException("getConfirmedAccountBalanceBefore only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
 		}
 	}
 
@@ -271,11 +291,29 @@ final public class BillingTransactionHandler {
 		boolean provideProgress,
 		Account.Name account
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		User masterUser=MasterServer.getUser(conn, currentAdministrator);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
-		if(masterUser!=null) {
-			if(masterServers.length==0) {
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+			User masterUser=MasterServer.getUser(conn, currentAdministrator);
+			UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+			if(masterUser!=null) {
+				if(masterServers.length==0) {
+					// TODO: release conn before writing to out
+					MasterServer.writeObjects(
+						conn,
+						source,
+						out,
+						provideProgress,
+						CursorMode.AUTO,
+						new Transaction(),
+						"SELECT * FROM billing.\"Transaction\" WHERE accounting=? AND \"rate.currency\"=?",
+						account,
+						Currency.USD.getCurrencyCode()
+					);
+				}else {
+					conn.releaseConnection();
+					MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+				}
+			} else {
 				// TODO: release conn before writing to out
 				MasterServer.writeObjects(
 					conn,
@@ -284,40 +322,29 @@ final public class BillingTransactionHandler {
 					provideProgress,
 					CursorMode.AUTO,
 					new Transaction(),
-					"select * from billing.\"Transaction\" where accounting=?",
-					account
+					"SELECT\n"
+					+ "  tr.*\n"
+					+ "FROM\n"
+					+ "  account.\"User\" un1,\n"
+					+ "  billing.\"Package\" pk1,\n"
+					+ TableHandler.BU1_PARENTS_JOIN
+					+ "  billing.\"Transaction\" tr\n"
+					+ "WHERE\n"
+					+ "  un1.username=?\n"
+					+ "  AND un1.package=pk1.name\n"
+					+ "  AND (\n"
+					+ TableHandler.PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  AND bu1.accounting=tr.accounting\n"
+					+ "  AND tr.accounting=?\n"
+					+ "  AND tr.\"rate.currency\"=?",
+					currentAdministrator,
+					account,
+					Currency.USD.getCurrencyCode()
 				);
-			}else {
-				conn.releaseConnection();
-				MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 			}
 		} else {
-			// TODO: release conn before writing to out
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.AUTO,
-				new Transaction(),
-				"select\n"
-				+ "  tr.*\n"
-				+ "from\n"
-				+ "  account.\"User\" un1,\n"
-				+ "  billing.\"Package\" pk1,\n"
-				+ TableHandler.BU1_PARENTS_JOIN
-				+ "  billing.\"Transaction\" tr\n"
-				+ "where\n"
-				+ "  un1.username=?\n"
-				+ "  and un1.package=pk1.name\n"
-				+ "  and (\n"
-				+ TableHandler.PK1_BU1_PARENTS_WHERE
-				+ "  )\n"
-				+ "  and bu1.accounting=tr.accounting\n"
-				+ "  and tr.accounting=?",
-				currentAdministrator,
-				account
-			);
+			throw new IOException("getTransactionsForAccount only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
 		}
 	}
 
@@ -331,19 +358,24 @@ final public class BillingTransactionHandler {
 		boolean provideProgress,
 		com.aoindustries.aoserv.client.account.User.Name administrator
 	) throws IOException, SQLException {
-		AccountUserHandler.checkAccessUser(conn, source, "getTransactionsForAdministrator", source.getCurrentAdministrator());
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			AccountUserHandler.checkAccessUser(conn, source, "getTransactionsForAdministrator", source.getCurrentAdministrator());
 
-		// TODO: release conn before writing to out
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.FETCH,
-			new Transaction(),
-			"select * from billing.\"Transaction\" where username=?",
-			administrator
-		);
+			// TODO: release conn before writing to out
+			MasterServer.writeObjects(
+				conn,
+				source,
+				out,
+				provideProgress,
+				CursorMode.FETCH,
+				new Transaction(),
+				"SELECT * FROM billing.\"Transaction\" WHERE username=? AND \"rate.currency\"=?",
+				administrator,
+				Currency.USD.getCurrencyCode()
+			);
+		} else {
+			throw new IOException("getTransactionsForAdministrator only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
+		}
 	}
 
 	public static void getTransactionsSearch(
@@ -353,144 +385,139 @@ final public class BillingTransactionHandler {
 		boolean provideProgress,
 		TransactionSearchCriteria criteria
 	) throws IOException, SQLException {
-		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		User masterUser=MasterServer.getUser(conn, currentAdministrator);
-		UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
-		StringBuilder sql;
-		final List<Object> params = new ArrayList<>();
-		boolean whereDone;
-		if(masterUser!=null) {
-			if(masterServers.length==0) {
-				sql=new StringBuilder(
-					"select\n"
-					+ "  tr.*\n"
-					+ "from\n"
-					+ "  billing.\"Transaction\" tr\n"
-				);
-				whereDone=false;
+		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+			User masterUser=MasterServer.getUser(conn, currentAdministrator);
+			UserHost[] masterServers=masterUser==null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+			StringBuilder sql;
+			final List<Object> params = new ArrayList<>();
+			if(masterUser!=null) {
+				if(masterServers.length==0) {
+					sql = new StringBuilder(
+						"SELECT\n"
+						+ "  tr.*\n"
+						+ "FROM\n"
+						+ "  billing.\"Transaction\" tr\n"
+						+ "WHERE\n"
+						+ "  tr.\"rate.currency\"=?"
+					);
+					params.add(Currency.USD.getCurrencyCode());
+				} else {
+					conn.releaseConnection();
+					MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+					return;
+				}
 			} else {
-				conn.releaseConnection();
-				MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-				return;
+				sql = new StringBuilder(
+					"SELECT\n"
+					+ "  tr.*\n"
+					+ "FROM\n"
+					+ "  account.\"User\" un1,\n"
+					+ "  billing.\"Package\" pk1,\n"
+					+ TableHandler.BU1_PARENTS_JOIN
+					+ "  billing.\"Transaction\" tr\n"
+					+ "WHERE\n"
+					+ "  un1.username=?\n"
+					+ "  AND un1.package=pk1.name\n"
+					+ "  AND (\n"
+					+ TableHandler.PK1_BU1_PARENTS_WHERE
+					+ "  )\n"
+					+ "  AND bu1.accounting=tr.accounting\n"
+					+ "  AND tr.\"rate.currency\"=?"
+				);
+				params.add(source.getCurrentAdministrator());
+				params.add(Currency.USD.getCurrencyCode());
+			}
+
+			if (criteria.getAfter() != TransactionSearchCriteria.ANY) {
+				sql.append("  AND tr.time>=?\n");
+				params.add(new Timestamp(criteria.getAfter()));
+			}
+			if (criteria.getBefore() != TransactionSearchCriteria.ANY) {
+				sql.append("  AND tr.time<?\n");
+				params.add(new Timestamp(criteria.getBefore()));
+			}
+			if (criteria.getTransid() != TransactionSearchCriteria.ANY) {
+				sql.append("  AND tr.transid=?\n");
+				params.add(criteria.getTransid());
+			}
+			if (criteria.getAccount() != null) {
+				sql.append("  AND tr.accounting=?\n");
+				params.add(criteria.getAccount());
+			}
+			if (criteria.getSourceAccount() != null) {
+				sql.append("  AND tr.source_accounting=?\n");
+				params.add(criteria.getSourceAccount());
+			}
+			if (criteria.getAdministrator() != null) {
+				sql.append("  AND tr.username=?\n");
+				params.add(criteria.getAdministrator());
+			}
+			if (criteria.getType() != null) {
+				sql.append("  AND tr.type=?\n");
+				params.add(criteria.getType());
+			}
+
+			// description words
+			if (criteria.getDescription() != null && criteria.getDescription().length() > 0) {
+				String[] descriptionWords = StringUtility.splitString(criteria.getDescription());
+				for (String descriptionWord : descriptionWords) {
+					sql.append("  AND lower(tr.description) like ('%' || lower(?) || '%')\n");
+					params.add(descriptionWord);
+				}
+			}
+
+			if (criteria.getPaymentType() != null) {
+				sql.append("  AND tr.payment_type=?\n");
+				params.add(criteria.getPaymentType());
+			}
+
+			// payment_info words
+			if (criteria.getPaymentInfo() != null && criteria.getPaymentInfo().length() > 0) {
+				String[] paymentInfoWords = StringUtility.splitString(criteria.getPaymentInfo());
+				for (String paymentInfoWord : paymentInfoWords) {
+					sql.append("  AND lower(tr.payment_info) like ('%' || lower(?) || '%')\n");
+					params.add(paymentInfoWord);
+				}
+			}
+
+			// payment_confirmed
+			if (criteria.getPaymentConfirmed() != TransactionSearchCriteria.ANY) {
+				sql.append("  AND tr.payment_confirmed=?\n");
+				String dbValue;
+				switch(criteria.getPaymentConfirmed()) {
+					case Transaction.CONFIRMED :
+						dbValue = "Y";
+						break;
+					case Transaction.NOT_CONFIRMED :
+						dbValue = "N";
+						break;
+					case Transaction.WAITING_CONFIRMATION :
+						dbValue = "W";
+						break;
+					default :
+						throw new AssertionError();
+				}
+				params.add(dbValue);
+			}
+
+			Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+			try (
+				PreparedStatement pstmt = dbConn.prepareStatement(
+					sql.toString(),
+					provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
+					ResultSet.CONCUR_READ_ONLY
+				)
+			) {
+				DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
+				try (ResultSet results = pstmt.executeQuery()) {
+					// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
+					// TODO: release conn before writing to out
+					MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
+				}
 			}
 		} else {
-			sql=new StringBuilder(
-				"select\n"
-				+ "  tr.*\n"
-				+ "from\n"
-				+ "  account.\"User\" un1,\n"
-				+ "  billing.\"Package\" pk1,\n"
-				+ TableHandler.BU1_PARENTS_JOIN
-				+ "  billing.\"Transaction\" tr\n"
-				+ "where\n"
-				+ "  un1.username=?\n"
-				+ "  and un1.package=pk1.name\n"
-				+ "  and (\n"
-				+ TableHandler.PK1_BU1_PARENTS_WHERE
-				+ "  )\n"
-				+ "  and bu1.accounting=tr.accounting\n"
-			);
-			params.add(source.getCurrentAdministrator());
-			whereDone=true;
-		}
-
-		if (criteria.getAfter() != TransactionSearchCriteria.ANY) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.time>=?\n");
-			params.add(new Timestamp(criteria.getAfter()));
-			whereDone=true;
-		}
-		if (criteria.getBefore() != TransactionSearchCriteria.ANY) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.time<?\n");
-			params.add(new Timestamp(criteria.getBefore()));
-			whereDone=true;
-		}
-		if (criteria.getTransID() != TransactionSearchCriteria.ANY) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.transid=?\n");
-			params.add(criteria.getTransID());
-			whereDone=true;
-		}
-		if (criteria.getBusiness() != null) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.accounting=?\n");
-			params.add(criteria.getBusiness());
-			whereDone=true;
-		}
-		if (criteria.getSourceBusiness() != null) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.source_accounting=?\n");
-			params.add(criteria.getSourceBusiness());
-			whereDone=true;
-		}
-		if (criteria.getBusinessAdministrator() != null) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.username=?\n");
-			params.add(criteria.getBusinessAdministrator());
-			whereDone=true;
-		}
-		if (criteria.getType() != null) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.type=?\n");
-			params.add(criteria.getType());
-			whereDone=true;
-		}
-
-		// description words
-		if (criteria.getDescription() != null && criteria.getDescription().length() > 0) {
-			String[] descriptionWords = StringUtility.splitString(criteria.getDescription());
-			for (String descriptionWord : descriptionWords) {
-				sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.description) like ('%' || lower(?) || '%')\n");
-				params.add(descriptionWord);
-				whereDone=true;
-			}
-		}
-
-		if (criteria.getPaymentType() != null) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.payment_type=?\n");
-			params.add(criteria.getPaymentType());
-			whereDone=true;
-		}
-
-		// payment_info words
-		if (criteria.getPaymentInfo() != null && criteria.getPaymentInfo().length() > 0) {
-			String[] paymentInfoWords = StringUtility.splitString(criteria.getPaymentInfo());
-			for (String paymentInfoWord : paymentInfoWords) {
-				sql.append(whereDone?"  and ":"where\n  ").append("lower(tr.payment_info) like ('%' || lower(?) || '%')\n");
-				params.add(paymentInfoWord);
-				whereDone=true;
-			}
-		}
-
-		// payment_confirmed
-		if (criteria.getPaymentConfirmed() != TransactionSearchCriteria.ANY) {
-			sql.append(whereDone?"  and ":"where\n  ").append("tr.payment_confirmed=?\n");
-			String dbValue;
-			switch(criteria.getPaymentConfirmed()) {
-				case Transaction.CONFIRMED :
-					dbValue = "Y";
-					break;
-				case Transaction.NOT_CONFIRMED :
-					dbValue = "N";
-					break;
-				case Transaction.WAITING_CONFIRMATION :
-					dbValue = "W";
-					break;
-				default :
-					throw new AssertionError();
-			}
-			params.add(dbValue);
-			whereDone=true;
-		}
-
-		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
-		try (
-			PreparedStatement pstmt = dbConn.prepareStatement(
-				sql.toString(),
-				provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
-				ResultSet.CONCUR_READ_ONLY
-			)
-		) {
-			DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
-			try (ResultSet results = pstmt.executeQuery()) {
-				// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
-				// TODO: release conn before writing to out
-				MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
-			}
+			throw new IOException("getTransactionsSearch only supported for protocol < " + AoservProtocol.Version.VERSION_1_83_0);
 		}
 	}
 
