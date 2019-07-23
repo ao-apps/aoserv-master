@@ -939,7 +939,7 @@ public final class OriginalClusterOptimizer {
                     System.out.print(selectedSecondaries[d]);
                 }
                 System.out.print(" Mapped "+mapped+", skipped "+skipped);
-                if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
+                if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.formatDecimal2(skipped*100/mapped));
                 if(timeSince>0) System.out.print(", "+(callCounter*1000/timeSince)+" calls/sec");
                 System.out.println();
                 /*

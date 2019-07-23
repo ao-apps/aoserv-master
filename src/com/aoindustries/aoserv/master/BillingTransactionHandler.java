@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataOutputStream;
-import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.i18n.Monies;
@@ -82,7 +81,7 @@ final public class BillingTransactionHandler {
 			administrator,
 			type,
 			description,
-			new BigDecimal(SQLUtility.getMilliDecimal(quantity)),
+			BigDecimal.valueOf(quantity, 3),
 			rate,
 			paymentType,
 			paymentInfo,

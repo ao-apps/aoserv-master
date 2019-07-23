@@ -233,16 +233,17 @@ final public class WhoisHistoryService implements MasterService {
 		@Override
 		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
-				ProcessTimer timer = new ProcessTimer(
-					logger,
-					getClass().getName(),
-					"runCronJob",
-					WhoisHistoryService.class.getSimpleName() + " - Whois History",
-					"Looking up whois and cleaning old records",
-					TIMER_MAX_TIME,
-					TIMER_REMINDER_INTERVAL
-				);
-				try {
+				try (
+					ProcessTimer timer = new ProcessTimer(
+						logger,
+						getClass().getName(),
+						"runCronJob",
+						WhoisHistoryService.class.getSimpleName() + " - Whois History",
+						"Looking up whois and cleaning old records",
+						TIMER_MAX_TIME,
+						TIMER_REMINDER_INTERVAL
+					)
+				) {
 					MasterServer.executorService.submit(timer);
 
 					// Start the transaction
@@ -426,8 +427,6 @@ final public class WhoisHistoryService implements MasterService {
 						conn.releaseConnection();
 					}
 					MasterServer.invalidateTables(invalidateList, null);
-				} finally {
-					timer.finished();
 				}
 			} catch(ThreadDeath TD) {
 				throw TD;

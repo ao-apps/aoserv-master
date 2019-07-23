@@ -267,7 +267,7 @@ final public class TicketHandler /*implements Runnable*/ {
                 "Account:   "+account+"\n"+
                 "Username:   "+username+"\n"+
                 "Type:       "+type+"\n"+
-                "Deadline:   "+(deadline==-1?"":SQLUtility.getDate(deadline))+"\n"+
+                "Deadline:   "+(deadline==-1?"":SQLUtility.formatDate(deadline, timeZone))+"\n"+
                 "Technology: "+(technology==null?"":technology)+"\n"+
                 "\n\n"+
                 details+"\n\n"+

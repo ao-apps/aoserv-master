@@ -266,16 +266,17 @@ final public class ClusterHandler implements CronJob {
     private static void updateMappings() {
         synchronized(updateMappingsLock) {
             try {
-                ProcessTimer timer=new ProcessTimer(
-                    logger,
-                    ClusterHandler.class.getName(),
-                    "runCronJob",
-                    "ClusterHandler - Find Virtual Host Mapping",
-                    "Finding the current mapping of virtual servers onto physical servers",
-                    TIMER_MAX_TIME,
-                    TIMER_REMINDER_INTERVAL
-                );
-                try {
+				try (
+					ProcessTimer timer = new ProcessTimer(
+						logger,
+						ClusterHandler.class.getName(),
+						"runCronJob",
+						"ClusterHandler - Find Virtual Host Mapping",
+						"Finding the current mapping of virtual servers onto physical servers",
+						TIMER_MAX_TIME,
+						TIMER_REMINDER_INTERVAL
+					)
+				) {
                     MasterServer.executorService.submit(timer);
 
                     // Query the servers in parallel
@@ -384,8 +385,6 @@ final public class ClusterHandler implements CronJob {
 						newSecondaryMappings,
 						newAutoMappings
 					);
-                } finally {
-                    timer.finished();
                 }
             } catch(ThreadDeath TD) {
                 throw TD;

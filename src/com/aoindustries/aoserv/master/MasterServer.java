@@ -3166,7 +3166,7 @@ public abstract class MasterServer {
 														administrator,
 														type,
 														description,
-														SQLUtility.getMilliDecimal(quantity),
+														SQLUtility.formatDecimal3(quantity),
 														rate,
 														paymentType,
 														paymentInfo,
@@ -11027,7 +11027,7 @@ public abstract class MasterServer {
 				pstmt.setTimestamp(3, param3);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
-						int pennies = SQLUtility.getPennies(results.getString(1));
+						int pennies = SQLUtility.parseDecimal2(results.getString(1));
 						if(results.next()) throw new SQLException("More than one row in result set");
 						out.writeByte(AoservProtocol.DONE);
 						out.writeCompressedInt(pennies);
@@ -11066,7 +11066,7 @@ public abstract class MasterServer {
 				pstmt.setString(2, param2);
 				try (ResultSet results = pstmt.executeQuery()) {
 					if(results.next()) {
-						int pennies = SQLUtility.getPennies(results.getString(1));
+						int pennies = SQLUtility.parseDecimal2(results.getString(1));
 						if(results.next()) throw new SQLException("More than one row in result set");
 						out.writeByte(AoservProtocol.DONE);
 						out.writeCompressedInt(pennies);

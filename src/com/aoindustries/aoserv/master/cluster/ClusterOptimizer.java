@@ -100,10 +100,10 @@ public final class ClusterOptimizer {
 			}
 		}
 		System.out.println("Virtual Servers:");
-		System.out.println("    Total Processor Cores: " + SQLUtility.getMilliDecimal(totalVirtualProcessorAllocation));
+		System.out.println("    Total Processor Cores: " + SQLUtility.formatDecimal3(totalVirtualProcessorAllocation));
 		System.out.println("    Total Primary RAM....: " + totalMinimumRam + " MB (" + StringUtility.getApproximateSize(totalMinimumRam*1048576)+')');
 		System.out.println("    Total Disk Space.....: " + totalVirtualDisk + " extents (" + StringUtility.getApproximateSize(totalVirtualDisk*EXTENTS_SIZE)+')');
-		System.out.println("    Total Disk Arrays....: " + SQLUtility.getMilliDecimal(totalVirtualDiskWeight));
+		System.out.println("    Total Disk Arrays....: " + SQLUtility.formatDecimal3(totalVirtualDiskWeight));
 	}
 
 	private static long lastMapDisplayedTime = -1;
@@ -123,7 +123,7 @@ public final class ClusterOptimizer {
 					System.out.print(virtualServers[d].selectedSecondaryServerIndex);
 				}
 				System.out.print(" Mapped "+mapped+", skipped "+skipped);
-				if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.getDecimal(skipped*100/mapped));
+				if(mapped!=0) System.out.print(", skip/map ratio: "+SQLUtility.formatDecimal2(skipped*100/mapped));
 				if(timeSince>0) System.out.print(", "+(callCounter/timeSince)+" calls/ms");
 				System.out.println();
 				displaySkipTypes();
@@ -156,13 +156,13 @@ public final class ClusterOptimizer {
 					VirtualServer virtualServer = virtualServers[virtualServerIndex];
 					System.out.println("        "+virtualServer.hostname+":");
 					System.out.println("            Processor Cores.: "+virtualServer.processorCores);
-					System.out.println("            Processor Weight: "+SQLUtility.getMilliDecimal(virtualServer.processorWeight));
+					System.out.println("            Processor Weight: "+SQLUtility.formatDecimal3(virtualServer.processorWeight));
 					System.out.println("            Primary RAM.....: "+virtualServer.primaryRam);
 					for(VirtualDisk virtualDisk : virtualServer.virtualDisks) {
 						System.out.println("            Device: "+virtualDisk.device);
 						System.out.println("                32MB Extents..: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
 						System.out.println("                Primary Type..: "+virtualDisk.primaryDiskType);
-						System.out.println("                Primary Weight: "+SQLUtility.getMilliDecimal(virtualDisk.primaryWeight));
+						System.out.println("                Primary Weight: "+SQLUtility.formatDecimal3(virtualDisk.primaryWeight));
 						System.out.println("                Primary Device: "+virtualDisk.selectedPrimaryDisk.device);
 					}
 				}
@@ -181,13 +181,13 @@ public final class ClusterOptimizer {
 						}
 						System.out.println("            "+secondaryVirtualServer.hostname);
 						System.out.println("                Processor Cores.: "+secondaryVirtualServer.processorCores);
-						System.out.println("                Processor Weight: "+SQLUtility.getMilliDecimal(secondaryVirtualServer.processorWeight));
+						System.out.println("                Processor Weight: "+SQLUtility.formatDecimal3(secondaryVirtualServer.processorWeight));
 						System.out.println("                Secondary RAM...: "+secondaryVirtualServer.secondaryRam);
 						for(VirtualDisk virtualDisk : secondaryVirtualServer.virtualDisks) {
 							System.out.println("                Device: "+virtualDisk.device);
 							System.out.println("                    32MB Extents....: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
 							System.out.println("                    Secondary Type..: "+virtualDisk.secondaryDiskType);
-							System.out.println("                    Secondary Weight: "+SQLUtility.getMilliDecimal(virtualDisk.secondaryWeight));
+							System.out.println("                    Secondary Weight: "+SQLUtility.formatDecimal3(virtualDisk.secondaryWeight));
 							System.out.println("                    Secondary Device: "+virtualDisk.selectedSecondaryDisk.device);
 						}
 					}
