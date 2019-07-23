@@ -44,6 +44,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Currency;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -1483,7 +1484,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 				MasterServer.executorService.submit(timer);
 
 				// Find the beginning of the next month (for transaction search)
-				Calendar beginningOfNextMonth = Calendar.getInstance();
+				GregorianCalendar beginningOfNextMonth = new GregorianCalendar(com.aoindustries.aoserv.client.billing.Transaction.BILLING_TIME_ZONE);
 				beginningOfNextMonth.set(Calendar.YEAR, year);
 				beginningOfNextMonth.set(Calendar.MONTH, month-1);
 				beginningOfNextMonth.set(Calendar.DAY_OF_MONTH, 1);
@@ -2136,17 +2137,17 @@ final public class PaymentHandler /*implements CronJob*/ {
 	/*
 	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		// Find last month
-		Calendar cal = Calendar.getInstance();
-		cal.set(Calendar.YEAR, year);
-		cal.set(Calendar.MONTH, month-1);
-		cal.set(Calendar.DAY_OF_MONTH, 1);
-		cal.set(Calendar.HOUR_OF_DAY, 0);
-		cal.set(Calendar.MINUTE, 0);
-		cal.set(Calendar.SECOND, 0);
-		cal.set(Calendar.MILLISECOND, 0);
-		cal.add(Calendar.MONTH, -1);
+		GregorianCalendar gcal = new GregorianCalendar(Transaction.BILLING_TIME_ZONE);
+		gcal.set(Calendar.YEAR, year);
+		gcal.set(Calendar.MONTH, month-1);
+		gcal.set(Calendar.DAY_OF_MONTH, 1);
+		gcal.set(Calendar.HOUR_OF_DAY, 0);
+		gcal.set(Calendar.MINUTE, 0);
+		gcal.set(Calendar.SECOND, 0);
+		gcal.set(Calendar.MILLISECOND, 0);
+		gcal.add(Calendar.MONTH, -1);
 		// Process for last month
-		processAutomaticPayments(cal.get(Calendar.MONTH)+1, cal.get(Calendar.YEAR));
+		processAutomaticPayments(gcal.get(Calendar.MONTH) + 1, gcal.get(Calendar.YEAR));
 	}
 	*/
 }
