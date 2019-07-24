@@ -13,6 +13,7 @@ import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.payment.PaymentType;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.client.schema.Type;
 import com.aoindustries.creditcards.AuthorizationResult;
 import com.aoindustries.creditcards.CreditCard;
 import com.aoindustries.creditcards.CreditCardProcessor;
@@ -1484,7 +1485,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 				MasterServer.executorService.submit(timer);
 
 				// Find the beginning of the next month (for transaction search)
-				GregorianCalendar beginningOfNextMonth = new GregorianCalendar(com.aoindustries.aoserv.client.billing.Transaction.BILLING_TIME_ZONE);
+				GregorianCalendar beginningOfNextMonth = new GregorianCalendar(Type.DATE_TIME_ZONE);
 				beginningOfNextMonth.set(Calendar.YEAR, year);
 				beginningOfNextMonth.set(Calendar.MONTH, month-1);
 				beginningOfNextMonth.set(Calendar.DAY_OF_MONTH, 1);
@@ -2137,7 +2138,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	/*
 	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		// Find last month
-		GregorianCalendar gcal = new GregorianCalendar(Transaction.BILLING_TIME_ZONE);
+		GregorianCalendar gcal = new GregorianCalendar(Type.DATE_TIME_ZONE);
 		gcal.set(Calendar.YEAR, year);
 		gcal.set(Calendar.MONTH, month-1);
 		gcal.set(Calendar.DAY_OF_MONTH, 1);
