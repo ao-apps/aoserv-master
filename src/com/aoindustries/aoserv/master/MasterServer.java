@@ -5844,7 +5844,7 @@ public abstract class MasterServer {
 										{
 											boolean provideProgress = in.readBoolean();
 											TransactionSearchCriteria criteria = new TransactionSearchCriteria();
-											criteria.read(in);
+											criteria.read(in, source.getProtocolVersion());
 											process.setCommand(
 												"get_transactions_search",
 												provideProgress,
