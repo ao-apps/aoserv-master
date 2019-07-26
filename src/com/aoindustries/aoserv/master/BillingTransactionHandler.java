@@ -54,6 +54,8 @@ final public class BillingTransactionHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
+		char timeType,
+		Timestamp time,
 		Account.Name account,
 		Account.Name sourceAccount,
 		com.aoindustries.aoserv.client.account.User.Name administrator,
@@ -75,7 +77,8 @@ final public class BillingTransactionHandler {
 		return addTransaction(
 			conn,
 			invalidateList,
-			new Timestamp(System.currentTimeMillis()),
+			timeType,
+			time,
 			account,
 			sourceAccount,
 			administrator,
@@ -96,6 +99,7 @@ final public class BillingTransactionHandler {
 	public static int addTransaction(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
+		char timeType,
 		Timestamp time,
 		Account.Name account,
 		Account.Name sourceAccount,
@@ -111,22 +115,57 @@ final public class BillingTransactionHandler {
 	) throws IOException, SQLException {
 		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to add Transaction for user '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
-		int transaction = conn.executeIntUpdate(
-			"INSERT INTO billing.\"Transaction\" VALUES (?,default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
-			time,
-			account,
-			sourceAccount,
-			administrator,
-			type,
-			description,
-			quantity,
-			rate.getCurrency().getCurrencyCode(),
-			rate.getValue(),
-			paymentType,
-			paymentInfo,
-			processor,
-			payment_confirmed==Transaction.CONFIRMED?"Y":payment_confirmed==Transaction.NOT_CONFIRMED?"N":"W"
-		);
+		int transaction;
+		if(time == null) {
+			String function;
+			if(timeType == 'D') {
+				function = "CURRENT_DATE";
+			} else if(timeType == 'T') {
+				function = "NOW()";
+			} else {
+				throw new IllegalArgumentException("Unexpected value for timeType: " + timeType);
+			}
+			transaction = conn.executeIntUpdate(
+				"INSERT INTO billing.\"Transaction\" VALUES (" + function + ",default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
+				account,
+				sourceAccount,
+				administrator,
+				type,
+				description,
+				quantity,
+				rate.getCurrency().getCurrencyCode(),
+				rate.getValue(),
+				paymentType,
+				paymentInfo,
+				processor,
+				payment_confirmed==Transaction.CONFIRMED?"Y":payment_confirmed==Transaction.NOT_CONFIRMED?"N":"W"
+			);
+		} else {
+			String cast;
+			if(timeType == 'D') {
+				cast = "::date";
+			} else if(timeType == 'T') {
+				cast = "";
+			} else {
+				throw new IllegalArgumentException("Unexpected value for timeType: " + timeType);
+			}
+			transaction = conn.executeIntUpdate(
+				"INSERT INTO billing.\"Transaction\" VALUES (?" + cast + ",default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
+				time,
+				account,
+				sourceAccount,
+				administrator,
+				type,
+				description,
+				quantity,
+				rate.getCurrency().getCurrencyCode(),
+				rate.getValue(),
+				paymentType,
+				paymentInfo,
+				processor,
+				payment_confirmed==Transaction.CONFIRMED?"Y":payment_confirmed==Transaction.NOT_CONFIRMED?"N":"W"
+			);
+		}
 
 		// Notify all clients of the updates
 		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, AccountHandler.getHostsForAccount(conn, account), false);

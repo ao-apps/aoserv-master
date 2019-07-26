@@ -34,6 +34,7 @@ import com.aoindustries.aoserv.client.pki.Certificate;
 import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.client.schema.Type;
 import com.aoindustries.aoserv.client.ticket.Language;
 import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
@@ -3143,6 +3144,44 @@ public abstract class MasterServer {
 												break;
 											case TRANSACTIONS :
 												{
+													char timeType;
+													Timestamp time;
+													String commandArg;
+													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+														timeType = 'T';
+														time = null;
+														commandArg = "now";
+													} else {
+														timeType = (char)in.readByte();
+														if(timeType == 'D') {
+															Long millis = in.readNullLong();
+															if(millis == null) {
+																time = null;
+																commandArg = "today";
+															} else {
+																time = new Timestamp(millis);
+																commandArg = SQLUtility.formatDate(millis, Type.DATE_TIME_ZONE);
+															}
+														} else if(timeType == 'T') {
+															time = in.readNullTimestamp();
+															if(time == null) {
+																commandArg = "now";
+															} else {
+																int nanos = time.getNanos();
+																if(nanos == 0) {
+																	commandArg = SQLUtility.formatDateTime(time);
+																} else {
+																	// TODO: Make a SQLUtility.formatDateTimeNanos?
+																	StringBuilder nanoStr = new StringBuilder();
+																	nanoStr.append(nanos);
+																	while(nanoStr.length() < 9) nanoStr.insert(0, '0');
+																	commandArg = SQLUtility.formatDateTime(time) + '.' + nanoStr;
+																}
+															}
+														} else {
+															throw new IOException("Unexpected value for timeType: " + timeType);
+														}
+													}
 													Account.Name account = Account.Name.valueOf(in.readUTF());
 													Account.Name sourceAccount = Account.Name.valueOf(in.readUTF());
 													com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
@@ -3160,7 +3199,8 @@ public abstract class MasterServer {
 													String processor = in.readNullUTF();
 													byte payment_confirmed = in.readByte();
 													process.setCommand(
-														Command.ADD_TRANSACTION,
+														Command.BILLING_TRANSACTION_ADD,
+														commandArg,
 														account,
 														sourceAccount,
 														administrator,
@@ -3181,6 +3221,8 @@ public abstract class MasterServer {
 															conn,
 															source,
 															invalidateList,
+															timeType,
+															time,
 															account,
 															sourceAccount,
 															administrator,

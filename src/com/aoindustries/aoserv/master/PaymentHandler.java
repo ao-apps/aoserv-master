@@ -1496,8 +1496,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 				beginningOfNextMonth.add(Calendar.MONTH, 1);
 
 				// Find the last minute of the current month
-				Calendar lastMinuteOfTheMonth = (Calendar)beginningOfNextMonth.clone();
-				lastMinuteOfTheMonth.add(Calendar.MINUTE, -1);
+				Calendar lastSecondOfTheMonth = (Calendar)beginningOfNextMonth.clone();
+				lastSecondOfTheMonth.add(Calendar.SECOND, -1);
 
 				// Start the transaction
 				InvalidateList invalidateList=new InvalidateList();
@@ -1727,7 +1727,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 							int transID = BillingTransactionHandler.addTransaction(
 								conn,
 								invalidateList,
-								new Timestamp(lastMinuteOfTheMonth.getTimeInMillis()),
+								'T',
+								new Timestamp(lastSecondOfTheMonth.getTimeInMillis()),
 								automaticPayment.account,
 								automaticPayment.account,
 								MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
