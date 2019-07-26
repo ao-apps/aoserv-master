@@ -973,7 +973,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 			duplicateWindow,
 			orderNumber,
 			currency.getCurrencyCode(),
-			amount,
+			amount.getValue(),
 			taxAmount == null ? DatabaseAccess.Null.NUMERIC : taxAmount.getValue(),
 			taxExempt,
 			shippingAmount == null ? DatabaseAccess.Null.NUMERIC : shippingAmount.getValue(),
