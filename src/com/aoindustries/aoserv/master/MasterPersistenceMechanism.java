@@ -25,6 +25,7 @@ import java.security.acl.Group;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Currency;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -390,6 +391,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             TransactionResult.CommunicationResult captureCommunicationResult = captureResult.getCommunicationResult();
             TransactionResult.ErrorCode captureErrorCode = captureResult.getErrorCode();
 
+			long captureTime = transaction.getCaptureTime();
+
 			TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
             PaymentHandler.paymentSaleCompleted(
                 conn,
@@ -416,7 +419,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 authorizationResult.getProviderAvsResult(),
                 avsResult==null ? null : avsResult.name(),
                 authorizationResult.getApprovalCode(),
-                transaction.getCaptureTime(),
+                captureTime == 0 ? null : new Timestamp(captureTime),
                 MASTER_BUSINESS_ADMINISTRATOR,
                 transaction.getCapturePrincipalName(),
                 captureCommunicationResult==null ? null : captureCommunicationResult.name(),

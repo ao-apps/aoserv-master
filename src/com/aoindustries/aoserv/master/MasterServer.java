@@ -3768,7 +3768,13 @@ public abstract class MasterServer {
 											String providerAvsResult = in.readNullUTF();
 											String avsResult = in.readNullUTF();
 											String approvalCode = in.readNullUTF();
-											long captureTime = in.readLong();
+											Timestamp captureTime;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+												long l = in.readLong();
+												captureTime = l == -1 ? null : new Timestamp(l);
+											} else {
+												captureTime = in.readNullTimestamp();
+											}
 											String capturePrincipalName = in.readNullUTF();
 											String captureCommunicationResult = in.readNullUTF();
 											String captureProviderErrorCode = in.readNullUTF();
@@ -3800,7 +3806,7 @@ public abstract class MasterServer {
 												providerAvsResult,
 												avsResult,
 												approvalCode,
-												captureTime == 0 ? null : new java.util.Date(captureTime),
+												captureTime,
 												capturePrincipalName,
 												captureCommunicationResult,
 												captureProviderErrorCode,
@@ -8215,11 +8221,16 @@ public abstract class MasterServer {
 											currentThread.setPriority(Thread.MIN_PRIORITY+1);
 
 											int linuxServer = in.readCompressedInt();
-											long time = in.readLong();
+											Timestamp time;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+												time = new Timestamp(in.readLong());
+											} else {
+												time = in.readTimestamp();
+											}
 											process.setCommand(
 												"set_last_distro_time",
 												linuxServer,
-												new java.util.Date(time)
+												time
 											);
 											LinuxServerHandler.setLastDistroTime(
 												conn,

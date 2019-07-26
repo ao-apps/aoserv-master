@@ -467,13 +467,13 @@ final public class BillingTransactionHandler {
 				params.add(Currency.USD.getCurrencyCode());
 			}
 
-			if (criteria.getAfter() != TransactionSearchCriteria.ANY) {
+			if (criteria.getAfter() != null) {
 				sql.append("  AND tr.time>=?\n");
-				params.add(new Timestamp(criteria.getAfter()));
+				params.add(criteria.getAfter());
 			}
-			if (criteria.getBefore() != TransactionSearchCriteria.ANY) {
+			if (criteria.getBefore() != null) {
 				sql.append("  AND tr.time<?\n");
-				params.add(new Timestamp(criteria.getBefore()));
+				params.add(criteria.getBefore());
 			}
 			if (criteria.getTransid() != TransactionSearchCriteria.ANY) {
 				sql.append("  AND tr.transid=?\n");

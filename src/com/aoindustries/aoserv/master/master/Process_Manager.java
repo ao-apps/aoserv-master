@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,6 +9,8 @@ import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.net.InetAddress;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,13 +35,15 @@ final public class Process_Manager {
 		boolean is_secure
 	) {
 		synchronized(Process_Manager.class) {
-			long time = System.currentTimeMillis();
+			Instant now = Instant.now();
+			Timestamp ts = new Timestamp(now.getEpochSecond() * 1000);
+			ts.setNanos(now.getNano());
 			Process process = new Process(
 				nextPID++,
 				host,
 				protocol,
 				is_secure,
-				time
+				ts
 			);
 			processes.add(process);
 			return process;

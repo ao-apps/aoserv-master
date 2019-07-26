@@ -111,7 +111,7 @@ final public class LinuxServerHandler {
 		RequestSource source,
 		InvalidateList invalidateList,
 		int linuxServer,
-		long time
+		Timestamp time
 	) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		User mu = MasterServer.getUser(conn, currentAdministrator);
@@ -119,7 +119,7 @@ final public class LinuxServerHandler {
 		NetHostHandler.checkAccessHost(conn, source, "setLastDistroTime", linuxServer);
 		conn.executeUpdate(
 			"update linux.\"Server\" set last_distro_time=? where server=?",
-			new Timestamp(time),
+			time,
 			linuxServer
 		);
 		invalidateList.addTable(
