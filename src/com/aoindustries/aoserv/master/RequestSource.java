@@ -7,6 +7,7 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.security.SmallIdentifier;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 
@@ -17,7 +18,7 @@ public interface RequestSource {
 
 	void cachesInvalidated(IntList tableList) throws IOException;
 
-	long getConnectorID();
+	SmallIdentifier getConnectorID();
 
 	InvalidateCacheEntry getNextInvalidatedTables();
 

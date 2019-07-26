@@ -551,7 +551,7 @@ final public class EmailHandler {
 				packageName,
 				host,
 				type,
-				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration)
+				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
 			);
 		} else {
 			smtpRelay = conn.executeIntUpdate(
@@ -560,7 +560,7 @@ final public class EmailHandler {
 				linuxServer,
 				host,
 				type,
-				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration)
+				duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
 			);
 		}
 
@@ -1265,7 +1265,7 @@ final public class EmailHandler {
 		int linuxServer = getLinuxServerForSmtpRelay(conn, smtpRelay);
 		Timestamp expiration=conn.executeTimestampQuery("select expiration from email.\"SmtpRelay\" where id=?", smtpRelay);
 		long exp=expiration==null?-1:expiration.getTime();
-		long min=minDuration==-1?-1:(System.currentTimeMillis()+minDuration);
+		long min=minDuration==-1?-1:(System.currentTimeMillis()+minDuration); // TODO: Timestamp nanosecond precision
 		conn.executeUpdate(
 			"update email.\"SmtpRelay\" set last_refreshed=now(), refresh_count=refresh_count+1, expiration=? where id=?",
 			exp==-1 || min==-1

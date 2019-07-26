@@ -120,9 +120,6 @@ final public class ReportGenerator implements CronJob {
 				try {
 					boolean connRolledBack=false;
 					try {
-						long currentTimeMillis=System.currentTimeMillis();
-						Timestamp now=new Timestamp(currentTimeMillis);
-
 						// Do not make the run twice in one day
 						if(
 							conn.executeBooleanQuery(
@@ -133,9 +130,8 @@ final public class ReportGenerator implements CronJob {
 								+ "    from\n"
 								+ "      backup.\"BackupReport\"\n"
 								+ "    where\n"
-								+ "      ?::date=date\n"
-								+ "  )",
-								now
+								+ "      CURRENT_DATE = date\n"
+								+ "  )"
 							)
 						) {
 							// HashMap keyed on host, containing HashMaps keyed on package, containing TempBackupReport objects
@@ -258,7 +254,7 @@ final public class ReportGenerator implements CronJob {
 							}*/
 
 							// Add these stats to the table
-							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,?::date,?,?::int8);");
+							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,CURRENT_DATE,?,?::int8);");
 							try {
 								Iterator<Integer> hostKeys = stats.keySet().iterator();
 								while(hostKeys.hasNext()) {
@@ -268,9 +264,8 @@ final public class ReportGenerator implements CronJob {
 										TempBackupReport tbr=packages.get(packageKeys.next());
 										pstmt.setInt(1, tbr.host);
 										pstmt.setInt(2, tbr.packageNum);
-										pstmt.setTimestamp(3, now);
-										pstmt.setInt(4, tbr.fileCount);
-										pstmt.setLong(5, tbr.diskSize);
+										pstmt.setInt(3, tbr.fileCount);
+										pstmt.setLong(4, tbr.diskSize);
 										pstmt.addBatch();
 									}
 								}

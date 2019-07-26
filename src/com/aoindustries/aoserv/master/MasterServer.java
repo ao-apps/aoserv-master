@@ -50,6 +50,7 @@ import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
+import com.aoindustries.security.SmallIdentifier;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntArrayList;
@@ -143,12 +144,6 @@ public abstract class MasterServer {
 	 */
 	protected final int serverPort;
 
-	/**
-	 * The last connector ID that was returned.
-	 */
-	private static final Object lastIDLock = new Object();
-	private static long lastID=-1;
-
 	private static final AtomicInteger concurrency = new AtomicInteger();
 
 	private static final AtomicInteger maxConcurrency = new AtomicInteger();
@@ -202,14 +197,24 @@ public abstract class MasterServer {
 		return serverBind;
 	}
 
-	public static long getNextConnectorID() {
-		synchronized(lastIDLock) {
-			long time=System.currentTimeMillis();
-			long id;
-			if(lastID<time) id=time;
-			else id=lastID+1;
-			lastID=id;
-			return id;
+	// TODO: Make be Identifier for full 128-bit
+	public static SmallIdentifier getNextConnectorID() {
+		while(true) {
+			SmallIdentifier id = new SmallIdentifier();
+			// Avoid the small chance of conflicting with -1 send to indicate that no id yet assigned
+			if(id.getValue() != -1) {
+				boolean found = false;
+				synchronized(cacheListeners) {
+					// TODO: Keep a map of cacheListeners to avoid this sequential scan?
+					for(RequestSource source : cacheListeners) {
+						if(source.getConnectorID().equals(id)) {
+							found = true;
+							break;
+						}
+					}
+				}
+				if(!found) return id;
+			}
 		}
 	}
 
@@ -10171,7 +10176,7 @@ public abstract class MasterServer {
 		invalidateList.invalidateMasterCaches();
 
 		// Values used inside the loops
-		long invalidateSourceConnectorID=invalidateSource==null?-1:invalidateSource.getConnectorID();
+		SmallIdentifier invalidateSourceConnectorID = invalidateSource == null ? null : invalidateSource.getConnectorID();
 
 		IntList tableList=new IntArrayList();
 		final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
@@ -10184,7 +10189,7 @@ public abstract class MasterServer {
 		while(I.hasNext()) {
 			try {
 				RequestSource source=I.next();
-				if(invalidateSourceConnectorID!=source.getConnectorID()) {
+				if(invalidateSourceConnectorID != null && invalidateSourceConnectorID.equals(source.getConnectorID())) {
 					tableList.clear();
 					// Build the list with a connection, but don't send until the connection is released
 					try {

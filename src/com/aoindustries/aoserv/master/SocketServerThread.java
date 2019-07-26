@@ -14,6 +14,7 @@ import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.security.SmallIdentifier;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.StringUtility;
@@ -139,8 +140,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public long getConnectorID() {
-		return process.getConnectorID();
+	public SmallIdentifier getConnectorID() {
+		return new SmallIdentifier(process.getConnectorID());
 	}
 
 	@Override
@@ -225,7 +226,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					+ ")"
 				);
 				String password=in.readUTF();
-				long existingID=in.readLong();
+				long existingIDLong = in.readLong();
+				SmallIdentifier existingID = existingIDLong == -1 ? null : new SmallIdentifier(existingIDLong);
 
 				switch(protocolVersion) {
 					case VERSION_1_83_0 :
@@ -437,11 +439,11 @@ final public class SocketServerThread extends Thread implements RequestSource {
 								}
 								if(isOK) {
 									out.writeBoolean(true);
-									if(existingID==-1) {
-										process.setConnectorID(MasterServer.getNextConnectorID());
+									if(existingID == null) {
+										process.setConnectorID(MasterServer.getNextConnectorID().getValue()); // TODO: Switch to Identifier for 128-bit
 										out.writeLong(process.getConnectorID());
 									} else {
-										process.setConnectorID(existingID);
+										process.setConnectorID(existingID.getValue());
 									}
 									// Command sequence starts at a random value
 									final long startSeq;

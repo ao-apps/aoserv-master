@@ -349,7 +349,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
                 creditCard.getPostalCode(),
                 creditCard.getCountryCode(),
                 creditCard.getComments(),
-                System.currentTimeMillis(),
+                System.currentTimeMillis(), // TODO: Timestamp nanosecond precision
                 MASTER_BUSINESS_ADMINISTRATOR,
                 principal==null ? null : principal.getName()
             );
@@ -375,7 +375,6 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
     @Override
     public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {
         try {
-            //long currentTime = System.currentTimeMillis();
             //String providerId = transaction.getProviderId();
 
             AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
