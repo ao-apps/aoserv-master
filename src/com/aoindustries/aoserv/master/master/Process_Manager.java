@@ -7,12 +7,15 @@ package com.aoindustries.aoserv.master.master;
 
 import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.security.Identifier;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author  AO Industries, Inc.
@@ -25,50 +28,56 @@ final public class Process_Manager {
 	private Process_Manager() {
 	}
 
-	private static final List<Process> processes = new ArrayList<>();
+	// Once all clients are >= 1.83.0, change key to Identifier
+	private static final Map<Long,Process> processes = new LinkedHashMap<>();
 
-	private static long nextPID = 1;
-
-	public static Process createProcess(
-		InetAddress host,
-		String protocol,
-		boolean is_secure
-	) {
-		synchronized(Process_Manager.class) {
-			Instant now = Instant.now();
-			Timestamp ts = new Timestamp(now.getEpochSecond() * 1000);
-			ts.setNanos(now.getNano());
-			Process process = new Process(
-				nextPID++,
-				host,
-				protocol,
-				is_secure,
-				ts
-			);
-			processes.add(process);
-			return process;
+	public static Process createProcess(InetAddress host, String protocol, boolean is_secure) {
+		Instant now = Instant.now();
+		Timestamp ts = new Timestamp(now.getEpochSecond() * 1000);
+		ts.setNanos(now.getNano());
+		while(true) {
+			Identifier id = new Identifier();
+			Long idLo = id.getLo();
+			synchronized(processes) {
+				if(
+					// For clients < 1.83.0, only the low-order bits are sent to be compatible with their 64-bit IDs.
+					// Once protocols < 1.83.0 are no longer supported, can change this:
+					// !processes.containsKey(id)
+					!processes.containsKey(idLo)
+				) {
+					Process process = new Process(
+						id,
+						host,
+						protocol,
+						is_secure,
+						ts
+					);
+					processes.put(idLo, process);
+					return process;
+				}
+			}
 		}
 	}
 
 	public static void removeProcess(Process process) {
-		synchronized(Process_Manager.class) {
-			int size = processes.size();
-			for(int c = 0; c < size; c++) {
-				Process mp = processes.get(c);
-				if(mp.getProcessID() == process.getProcessID()) {
-					processes.remove(c);
-					return;
-				}
-			}
-			throw new IllegalStateException("Unable to find process #" + process.getProcessID() + " in the process list");
+		Identifier id = process.getId();
+		Long idLo = id.getLo();
+		synchronized(processes) {
+			Process removed = processes.remove(
+				// For clients < 1.83.0, only the low-order bits are sent to be compatible with their 64-bit IDs.
+				// Once protocols < 1.83.0 are no longer supported, can change this:
+				// id
+				idLo
+			);
+			if(removed == null) throw new IllegalStateException("Unable to find process " + id + " in the process list");
 		}
 	}
 
 	public static List<Process> getSnapshot() throws IOException, SQLException {
-		List<Process> processesCopy=new ArrayList<>(processes.size());
-		synchronized(Process_Manager.class) {
-			processesCopy.addAll(processes);
+		synchronized(processes) {
+			List<Process> processesCopy = new ArrayList<>(processes.size());
+			processesCopy.addAll(processes.values());
+			return processesCopy;
 		}
-		return processesCopy;
 	}
 }
