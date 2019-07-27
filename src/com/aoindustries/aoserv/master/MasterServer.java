@@ -21,7 +21,6 @@ import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.linux.User.Gecos;
-import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.mysql.Database;
@@ -40,21 +39,24 @@ import com.aoindustries.aoserv.client.web.Location;
 import com.aoindustries.aoserv.client.web.tomcat.Context;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryService;
 import com.aoindustries.aoserv.master.dns.DnsService;
+import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.IoUtils;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
-import com.aoindustries.security.SmallIdentifier;
+import com.aoindustries.security.Identifier;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
+import com.aoindustries.util.MinimalList;
 import com.aoindustries.util.PolymorphicMultimap;
 import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.util.StringUtility;
@@ -79,11 +81,11 @@ import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -132,7 +134,8 @@ public abstract class MasterServer {
 	 * The central list of all objects that are notified of
 	 * cache updates.
 	 */
-	private static final List<RequestSource> cacheListeners=new ArrayList<>();
+	private static final Map<Identifier,List<RequestSource>> cacheListeners = new LinkedHashMap<>();
+	private static int cacheListenersSize = 0;
 
 	/**
 	 * The address that this server will bind to.
@@ -161,8 +164,17 @@ public abstract class MasterServer {
 	}
 
 	private static void addCacheListener(RequestSource source) {
+		Identifier connectorId = source.getConnectorId();
+		if(connectorId == null) throw new AssertionError("source does not have a connectorId");
 		synchronized(cacheListeners) {
-			cacheListeners.add(source);
+			cacheListeners.put(
+				connectorId,
+				MinimalList.add(
+					cacheListeners.get(connectorId),
+					source
+				)
+			);
+			cacheListenersSize++;
 		}
 	}
 
@@ -197,23 +209,25 @@ public abstract class MasterServer {
 		return serverBind;
 	}
 
-	// TODO: Make be Identifier for full 128-bit
-	public static SmallIdentifier getNextConnectorID() {
+	public static Identifier getNextConnectorId(AoservProtocol.Version protocolVersion) {
 		while(true) {
-			SmallIdentifier id = new SmallIdentifier();
-			// Avoid the small chance of conflicting with -1 send to indicate that no id yet assigned
-			if(id.getValue() != -1) {
-				boolean found = false;
-				synchronized(cacheListeners) {
-					// TODO: Keep a map of cacheListeners to avoid this sequential scan?
-					for(RequestSource source : cacheListeners) {
-						if(source.getConnectorID().equals(id)) {
-							found = true;
-							break;
-						}
-					}
+			Identifier nextConnectorId;
+			if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+				byte[] bytes = new byte[8];
+				random.nextBytes(bytes);
+				long idLo = IoUtils.bufferToLong(bytes);
+				// Avoid the small chance of conflicting with -1 used to communicate null from clients < 1.83.0
+				if(idLo == -1) {
+					continue;
 				}
-				if(!found) return id;
+				nextConnectorId = new Identifier(0, idLo);
+			} else {
+				nextConnectorId = new Identifier();
+			}
+			synchronized(cacheListeners) {
+				if(!cacheListeners.containsKey(nextConnectorId)) {
+					return nextConnectorId;
+				}
 			}
 		}
 	}
@@ -227,8 +241,8 @@ public abstract class MasterServer {
 
 	abstract public String getProtocol();
 
-	private static final Random random = new SecureRandom();
-	public static Random getRandom() {
+	private static final SecureRandom random = new SecureRandom();
+	public static SecureRandom getRandom() {
 		return random;
 	}
 
@@ -10187,27 +10201,38 @@ public abstract class MasterServer {
 		invalidateList.invalidateMasterCaches();
 
 		// Values used inside the loops
-		SmallIdentifier invalidateSourceConnectorID = invalidateSource == null ? null : invalidateSource.getConnectorID();
+		Identifier invalidateSourceConnectorId = invalidateSource == null ? null : invalidateSource.getConnectorId();
 
-		IntList tableList=new IntArrayList();
-		final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-		// Grab a copy of cacheListeners to help avoid deadlock
-		List<RequestSource> listenerCopy=new ArrayList<>(cacheListeners.size());
+		IntList tableList = new IntArrayList();
+		final DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
+		// Grab a copy of cacheListeners to maximize concurrency
+		List<RequestSource> listenerCopy;
 		synchronized(cacheListeners) {
-			listenerCopy.addAll(cacheListeners);
+			listenerCopy = new ArrayList<>(cacheListenersSize);
+			for(List<RequestSource> sources : cacheListeners.values()) {
+				listenerCopy.addAll(sources);
+			}
+			assert listenerCopy.size() == cacheListenersSize;
 		}
-		Iterator<RequestSource> I=listenerCopy.iterator();
+		Iterator<RequestSource> I = listenerCopy.iterator();
 		while(I.hasNext()) {
 			try {
-				RequestSource source=I.next();
-				if(invalidateSourceConnectorID != null && invalidateSourceConnectorID.equals(source.getConnectorID())) {
+				RequestSource source = I.next();
+				Identifier connectorId = source.getConnectorId();
+				if(connectorId == null) throw new AssertionError("source does not have a connectorId");
+				// Notify all clients other than the source of this invalidation.  The invalidation for this source
+				// is immediately send in the response.
+				if(
+					invalidateSourceConnectorId == null
+					|| !invalidateSourceConnectorId.equals(connectorId)
+				) {
 					tableList.clear();
 					// Build the list with a connection, but don't send until the connection is released
 					try {
 						try {
 							for(Table.TableID tableID : tableIDs) {
-								int clientTableID=TableHandler.convertToClientTableID(conn, source, tableID);
-								if(clientTableID!=-1) {
+								int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
+								if(clientTableID != -1) {
 									List<Account.Name> affectedBusinesses = invalidateList.getAffectedAccounts(tableID);
 									List<Integer> affectedHosts = invalidateList.getAffectedHosts(tableID);
 									if(
@@ -10257,8 +10282,6 @@ public abstract class MasterServer {
 												}
 											}
 										}
-
-
 										// Send the invalidate through
 										if(businessMatches && serverMatches) tableList.add(clientTableID);
 									}
@@ -10504,13 +10527,21 @@ public abstract class MasterServer {
 	}
 
 	private static void removeCacheListener(RequestSource source) {
+		Identifier connectorId = source.getConnectorId();
+		if(connectorId == null) throw new AssertionError("source does not have a connectorId");
 		synchronized(cacheListeners) {
-			int size=cacheListeners.size();
-			for(int c=0;c<size;c++) {
-				RequestSource O=cacheListeners.get(c);
-				if(O==source) {
-					cacheListeners.remove(c);
-					break;
+			// Remove now since normally there will only be a single source for a given ID
+			List<RequestSource> sources = cacheListeners.remove(connectorId);
+			if(sources != null) {
+				for(int i = 0, size = sources.size(); i < size; i++) {
+					if(sources.get(i) == source) {
+						sources.remove(i);
+						cacheListenersSize--;
+					}
+				}
+				if(!sources.isEmpty()) {
+					// Add back since there is still a source
+					cacheListeners.put(connectorId, sources);
 				}
 			}
 		}

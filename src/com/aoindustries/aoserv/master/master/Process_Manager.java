@@ -5,9 +5,8 @@
  */
 package com.aoindustries.aoserv.master.master;
 
-import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.net.InetAddress;
-import com.aoindustries.security.Identifier;
+import com.aoindustries.security.SmallIdentifier;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -28,23 +27,16 @@ final public class Process_Manager {
 	private Process_Manager() {
 	}
 
-	// Once all clients are >= 1.83.0, change key to Identifier
-	private static final Map<Long,Process> processes = new LinkedHashMap<>();
+	private static final Map<SmallIdentifier,Process> processes = new LinkedHashMap<>();
 
 	public static Process createProcess(InetAddress host, String protocol, boolean is_secure) {
 		Instant now = Instant.now();
 		Timestamp ts = new Timestamp(now.getEpochSecond() * 1000);
 		ts.setNanos(now.getNano());
 		while(true) {
-			Identifier id = new Identifier();
-			Long idLo = id.getLo();
+			SmallIdentifier id = new SmallIdentifier();
 			synchronized(processes) {
-				if(
-					// For clients < 1.83.0, only the low-order bits are sent to be compatible with their 64-bit IDs.
-					// Once protocols < 1.83.0 are no longer supported, can change this:
-					// !processes.containsKey(id)
-					!processes.containsKey(idLo)
-				) {
+				if(!processes.containsKey(id)) {
 					Process process = new Process(
 						id,
 						host,
@@ -52,7 +44,7 @@ final public class Process_Manager {
 						is_secure,
 						ts
 					);
-					processes.put(idLo, process);
+					processes.put(id, process);
 					return process;
 				}
 			}
@@ -60,16 +52,9 @@ final public class Process_Manager {
 	}
 
 	public static void removeProcess(Process process) {
-		Identifier id = process.getId();
-		Long idLo = id.getLo();
 		synchronized(processes) {
-			Process removed = processes.remove(
-				// For clients < 1.83.0, only the low-order bits are sent to be compatible with their 64-bit IDs.
-				// Once protocols < 1.83.0 are no longer supported, can change this:
-				// id
-				idLo
-			);
-			if(removed == null) throw new IllegalStateException("Unable to find process " + id + " in the process list");
+			Process removed = processes.remove(process.getId());
+			if(removed == null) throw new IllegalStateException("Unable to find process " + process.getId() + " in the process list");
 		}
 	}
 

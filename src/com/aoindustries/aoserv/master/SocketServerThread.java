@@ -5,16 +5,16 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.CompressedDataInputStream;
 import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
-import com.aoindustries.security.SmallIdentifier;
+import com.aoindustries.security.Identifier;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.StringUtility;
@@ -85,15 +85,15 @@ final public class SocketServerThread extends Thread implements RequestSource {
 		try {
 			this.server = server;
 			this.socket = socket;
-			this.in=new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
-			this.out=new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-			InetAddress host=InetAddress.valueOf(socket.getInetAddress().getHostAddress());
-			process=Process_Manager.createProcess(
+			this.in = new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
+			this.out = new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+			InetAddress host = InetAddress.valueOf(socket.getInetAddress().getHostAddress());
+			process = Process_Manager.createProcess(
 				host,
 				server.getProtocol(),
 				server.isSecure()
 			);
-			isClosed=false;
+			isClosed = false;
 		} catch(ValidationException e) {
 			throw new IOException(e.getLocalizedMessage(), e);
 		}
@@ -140,8 +140,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
-	public SmallIdentifier getConnectorID() {
-		return new SmallIdentifier(process.getConnectorID());
+	public Identifier getConnectorId() {
+		return process.getConnectorId();
 	}
 
 	@Override
@@ -225,9 +225,14 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					+ process.getAuthenticatedAdministrator_username()
 					+ ")"
 				);
-				String password=in.readUTF();
-				long existingIDLong = in.readLong();
-				SmallIdentifier existingID = existingIDLong == -1 ? null : new SmallIdentifier(existingIDLong);
+				String password = in.readUTF();
+				Identifier existingId;
+				if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+					long existingIdLong = in.readLong();
+					existingId = existingIdLong == -1 ? null : new Identifier(0, existingIdLong);
+				} else {
+					existingId = in.readNullIdentifier();
+				}
 
 				switch(protocolVersion) {
 					case VERSION_1_83_0 :
@@ -439,11 +444,18 @@ final public class SocketServerThread extends Thread implements RequestSource {
 								}
 								if(isOK) {
 									out.writeBoolean(true);
-									if(existingID == null) {
-										process.setConnectorID(MasterServer.getNextConnectorID().getValue()); // TODO: Switch to Identifier for 128-bit
-										out.writeLong(process.getConnectorID());
+									if(existingId == null) {
+										Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
+										process.setConnectorId(connectorId);
+										if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+											assert connectorId.getHi() == 0;
+											assert connectorId.getLo() != -1;
+											out.writeLong(connectorId.getLo());
+										} else {
+											out.writeIdentifier(connectorId);
+										}
 									} else {
-										process.setConnectorID(existingID.getValue());
+										process.setConnectorId(existingId);
 									}
 									// Command sequence starts at a random value
 									final long startSeq;

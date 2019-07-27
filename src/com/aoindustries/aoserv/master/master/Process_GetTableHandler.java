@@ -5,7 +5,6 @@
  */
 package com.aoindustries.aoserv.master.master;
 
-import com.aoindustries.aoserv.client.master.Process;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
