@@ -22,9 +22,9 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.Email;
 import com.aoindustries.util.StringUtility;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -140,10 +140,10 @@ final public class TicketHandler /*implements Runnable*/ {
     public static int generateTicketId(
         DatabaseConnection conn
     ) throws IOException, SQLException {
-        Random random = MasterServer.getRandom();
+        SecureRandom secureRandom = MasterServer.getSecureRandom();
         for(int range=1000000; range<1000000000; range *= 10) {
             for(int attempt=0; attempt<1000; attempt++) {
-                int ticket = random.nextInt(range);
+                int ticket = secureRandom.nextInt(range);
                 if(conn.executeBooleanQuery("select (select id from ticket.\"Ticket\" where id=?) is null", ticket)) return ticket;
             }
         }
@@ -1587,7 +1587,7 @@ final public class TicketHandler /*implements Runnable*/ {
                     if(orAddys.length>0) {
                         MailMessage msg=new MailMessage(MasterConfiguration.getTicketSmtpServer());
                         msg.from("support@aoindustries.com");
-                        msg.to(orAddys[MasterServer.getRandom().nextInt(orAddys.length)]);
+                        msg.to(orAddys[MasterServer.getFastRandom().nextInt(orAddys.length)]);
                         msg.setSubject(subject);
                         PrintStream email=msg.getPrintStream();
 

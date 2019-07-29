@@ -461,7 +461,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 									// Command sequence starts at a random value
 									final long startSeq;
 									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-										startSeq = MasterServer.getRandom().nextLong();
+										startSeq = MasterServer.getSecureRandom().nextLong();
 										out.writeLong(startSeq);
 									} else {
 										startSeq = 0;

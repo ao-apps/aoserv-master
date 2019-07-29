@@ -15,11 +15,11 @@ import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Random;
 import java.util.logging.Logger;
 
 /**
@@ -323,9 +323,9 @@ final public class DaemonHandler {
 			}
 
 			// Generate the key
-			Random random=MasterServer.getRandom();
+			SecureRandom secureRandom = MasterServer.getSecureRandom();
 			while(true) {
-				key=random.nextLong();
+				key=secureRandom.nextLong();
 				Long L = key;
 				if(!recentKeys.containsKey(L)) {
 					recentKeys.put(L, System.currentTimeMillis());

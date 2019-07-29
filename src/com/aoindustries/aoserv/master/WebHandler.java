@@ -1139,7 +1139,7 @@ final public class WebHandler {
 					"insert into \"web.tomcat\".\"PrivateTomcatSite\" values(?,?,?,?,true,true)",
 					httpdSitePKey,
 					shutdownPort,
-					new Identifier(MasterServer.getRandom()).toString(),
+					new Identifier(MasterServer.getSecureRandom()).toString(),
 					PrivateTomcatSite.DEFAULT_MAX_POST_SIZE
 				);
 			} else {
@@ -1384,7 +1384,7 @@ final public class WebHandler {
 				groupServer,
 				hwBindPKey,
 				shutdownBindPKey,
-				new Identifier(MasterServer.getRandom()).toString(),
+				new Identifier(MasterServer.getSecureRandom()).toString(),
 				SharedTomcat.DEFAULT_MAX_POST_SIZE
 			);
 		} else {

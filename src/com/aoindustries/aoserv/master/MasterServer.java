@@ -87,6 +87,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -215,7 +216,7 @@ public abstract class MasterServer {
 			Identifier nextConnectorId;
 			if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
 				byte[] bytes = new byte[8];
-				random.nextBytes(bytes);
+				secureRandom.nextBytes(bytes);
 				long idLo = IoUtils.bufferToLong(bytes);
 				// Avoid the small chance of conflicting with -1 used to communicate null from clients < 1.83.0
 				if(idLo == -1) {
@@ -223,7 +224,7 @@ public abstract class MasterServer {
 				}
 				nextConnectorId = new Identifier(0, idLo);
 			} else {
-				nextConnectorId = new Identifier();
+				nextConnectorId = new Identifier(secureRandom);
 			}
 			synchronized(cacheListeners) {
 				if(!cacheListeners.containsKey(nextConnectorId)) {
@@ -242,9 +243,20 @@ public abstract class MasterServer {
 
 	abstract public String getProtocol();
 
-	private static final SecureRandom random = new SecureRandom();
-	public static SecureRandom getRandom() {
-		return random;
+	/**
+	 * A single random number generator is shared by all master resources to provide better randomness.
+	 */
+	private static final SecureRandom secureRandom = new SecureRandom();
+	public static SecureRandom getSecureRandom() {
+		return secureRandom;
+	}
+
+	/**
+	 * A fast pseudo-random number generated seeded by secure random.
+	 */
+	private static final Random fastRandom = new Random(IoUtils.bufferToLong(secureRandom.generateSeed(8)));
+	public static Random getFastRandom() {
+		return fastRandom;
 	}
 
 	public static int getRequestConcurrency() {
@@ -293,7 +305,7 @@ public abstract class MasterServer {
 
 		static final Response DONE = Response.of(AoservProtocol.DONE);
 
-		static Response of(int resp1) {
+		static Response of(byte resp1) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -302,7 +314,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, int resp2) {
+		static Response of(byte resp1, int resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -312,7 +324,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, long resp2) {
+		static Response of(byte resp1, long resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -322,7 +334,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, boolean resp2) {
+		static Response of(byte resp1, boolean resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -332,7 +344,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, String resp2) {
+		static Response of(byte resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -342,7 +354,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, String resp2, String resp3) {
+		static Response of(byte resp1, String resp2, String resp3) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -353,19 +365,19 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, Account.Name resp2) {
+		static Response of(byte resp1, Account.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
-		static Response of(int resp1, Database.Name resp2) {
+		static Response of(byte resp1, Database.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
-		static Response of(int resp1, com.aoindustries.aoserv.client.postgresql.Database.Name resp2) {
+		static Response of(byte resp1, com.aoindustries.aoserv.client.postgresql.Database.Name resp2) {
 			return of(resp1, resp2.toString());
 		}
 
-		static Response of(int resp1, long resp2, String resp3) {
+		static Response of(byte resp1, long resp2, String resp3) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -376,7 +388,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, long[] resp2) {
+		static Response of(byte resp1, long[] resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -386,7 +398,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, InboxAttributes resp2) {
+		static Response of(byte resp1, InboxAttributes resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -397,7 +409,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response of(int resp1, String resp2, String resp3, String resp4) {
+		static Response of(byte resp1, String resp2, String resp3, String resp4) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -409,7 +421,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response ofNullLongString(int resp1, String resp2) {
+		static Response ofNullLongString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -419,7 +431,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response ofLongString(int resp1, String resp2) {
+		static Response ofLongString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
@@ -430,7 +442,7 @@ public abstract class MasterServer {
 		}
 
 		static Response of(
-			int resp1,
+			byte resp1,
 			String resp2,
 			HostAddress resp3,
 			int resp4,
@@ -448,7 +460,7 @@ public abstract class MasterServer {
 			};
 		}
 
-		static Response ofNullString(int resp1, String resp2) {
+		static Response ofNullString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
 				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {

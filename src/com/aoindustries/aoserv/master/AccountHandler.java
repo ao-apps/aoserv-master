@@ -24,6 +24,7 @@ import com.aoindustries.util.StringUtility;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -803,14 +804,14 @@ final public class AccountHandler {
 	 * Generates a random, unused support code.
 	 */
 	public static String generateSupportCode(DatabaseConnection conn) throws IOException, SQLException {
-		Random random = MasterServer.getRandom();
+		SecureRandom secureRandom = MasterServer.getSecureRandom();
 		StringBuilder SB = new StringBuilder(11);
 		for(int range=1000000; range<1000000000; range *= 10) {
 			for(int attempt=0; attempt<1000; attempt++) {
 				SB.setLength(0);
-				SB.append((char)('a'+random.nextInt('z'+1-'a')));
-				SB.append((char)('a'+random.nextInt('z'+1-'a')));
-				SB.append(random.nextInt(range));
+				SB.append((char)('a'+secureRandom.nextInt('z'+1-'a')));
+				SB.append((char)('a'+secureRandom.nextInt('z'+1-'a')));
+				SB.append(secureRandom.nextInt(range));
 				String supportCode = SB.toString();
 				if(conn.executeBooleanQuery("select (select support_code from account.\"Administrator\" where support_code=?) is null", supportCode)) return supportCode;
 			}
