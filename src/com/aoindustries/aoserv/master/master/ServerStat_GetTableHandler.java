@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -122,7 +122,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 			addStat(objs, ServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
 			addStat(objs, ServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
 
-			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), ", "), "Supported AoservProtocol version numbers");
+			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), "\n"), "Supported AoservProtocol version numbers");
 
 			addStat(objs, ServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
 			addStat(objs, ServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
