@@ -10561,13 +10561,16 @@ public abstract class MasterServer {
 			// Remove now since normally there will only be a single source for a given ID
 			List<RequestSource> sources = cacheListeners.remove(connectorId);
 			if(sources != null) {
+				List<RequestSource> otherSources = MinimalList.emptyList();
 				for(int i = 0, size = sources.size(); i < size; i++) {
-					if(sources.get(i) == source) {
-						sources.remove(i);
+					RequestSource elem = sources.get(i);
+					if(elem == source) {
 						cacheListenersSize--;
+					} else {
+						otherSources = MinimalList.add(otherSources, elem);
 					}
 				}
-				if(!sources.isEmpty()) {
+				if(!otherSources.isEmpty()) {
 					// Add back since there is still a source
 					cacheListeners.put(connectorId, sources);
 				}
