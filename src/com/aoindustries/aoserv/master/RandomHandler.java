@@ -75,8 +75,10 @@ public final class RandomHandler {
 			long available = fifoOut.available();
 			int addCount = numBytes;
 			if(available < addCount) addCount = (int)available;
-			fifoOut.write(entropy, 0, addCount);
-			fifoOut.flush();
+			if(addCount > 0) {
+				fifoOut.write(entropy, 0, addCount);
+				fifo.flush();
+			}
 		}
 	}
 
@@ -93,11 +95,14 @@ public final class RandomHandler {
 			FifoFileInputStream fifoIn = fifo.getInputStream();
 			long available = fifoIn.available();
 			if(available < numBytes) numBytes = (int)available;
-			int pos = 0;
-			while(pos < numBytes) {
-				int ret = fifoIn.read(entropy, pos, numBytes - pos);
-				if(ret == -1) throw new EOFException("Unexpected EOF");
-				pos += ret;
+			if(numBytes > 0) {
+				int pos = 0;
+				while(pos < numBytes) {
+					int ret = fifoIn.read(entropy, pos, numBytes - pos);
+					if(ret == -1) throw new EOFException("Unexpected EOF");
+					pos += ret;
+				}
+				fifo.flush();
 			}
 			return numBytes;
 		}
