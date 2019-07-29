@@ -54,6 +54,7 @@ import com.aoindustries.net.Protocol;
 import com.aoindustries.security.Identifier;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
+import com.aoindustries.util.BufferManager;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.MinimalList;
@@ -3332,14 +3333,19 @@ public abstract class MasterServer {
 										}
 									case ADD_MASTER_ENTROPY :
 										{
-											int numBytes=in.readCompressedInt();
-											byte[] entropy=new byte[numBytes];
-											for(int c=0;c<numBytes;c++) entropy[c]=in.readByte();
-											process.setCommand(
-												"add_master_entropy",
-												numBytes
-											);
-											RandomHandler.addMasterEntropy(conn, source, entropy);
+											int numBytes = in.readCompressedInt();
+											boolean useBufferManager = numBytes <= BufferManager.BUFFER_SIZE;
+											byte[] entropy = useBufferManager ? BufferManager.getBytes() : new byte[numBytes];
+											try {
+												IoUtils.readFully(in, entropy, 0, numBytes);
+												process.setCommand(
+													"add_master_entropy",
+													numBytes
+												);
+												RandomHandler.addMasterEntropy(conn, source, entropy, numBytes);
+											} finally {
+												if(useBufferManager) BufferManager.release(entropy, true);
+											}
 											resp = Response.DONE;
 											sendInvalidateList=false;
 										}
@@ -5083,13 +5089,19 @@ public abstract class MasterServer {
 												"get_master_entropy",
 												numBytes
 											);
-											byte[] bytes = RandomHandler.getMasterEntropy(conn, source, numBytes);
-											conn.releaseConnection();
-											out.writeByte(AoservProtocol.DONE);
-											out.writeCompressedInt(bytes.length);
-											for(int c=0;c<bytes.length;c++) out.writeByte(bytes[c]);
-											resp = null;
-											sendInvalidateList = false;
+											boolean useBufferManager = numBytes <= BufferManager.BUFFER_SIZE;
+											byte[] entropy = useBufferManager ? BufferManager.getBytes() : new byte[numBytes];
+											try {
+												numBytes = RandomHandler.getMasterEntropy(conn, source, entropy, numBytes);
+												conn.releaseConnection();
+												out.writeByte(AoservProtocol.DONE);
+												out.writeCompressedInt(numBytes);
+												out.write(entropy, 0, numBytes);
+												resp = null;
+												sendInvalidateList = false;
+											} finally {
+												if(useBufferManager) BufferManager.release(entropy, true);
+											}
 										}
 										break;
 									case GET_MASTER_ENTROPY_NEEDED :
