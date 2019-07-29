@@ -3336,17 +3336,25 @@ public abstract class MasterServer {
 											int numBytes = in.readCompressedInt();
 											boolean useBufferManager = numBytes <= BufferManager.BUFFER_SIZE;
 											byte[] entropy = useBufferManager ? BufferManager.getBytes() : new byte[numBytes];
+											long entropyNeeded;
 											try {
 												IoUtils.readFully(in, entropy, 0, numBytes);
 												process.setCommand(
 													"add_master_entropy",
 													numBytes
 												);
-												RandomHandler.addMasterEntropy(conn, source, entropy, numBytes);
+												entropyNeeded = RandomHandler.addMasterEntropy(conn, source, entropy, numBytes);
 											} finally {
 												if(useBufferManager) BufferManager.release(entropy, true);
 											}
-											resp = Response.DONE;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_1) < 0) {
+												resp = Response.DONE;
+											} else {
+												resp = Response.of(
+													AoservProtocol.DONE,
+													entropyNeeded
+												);
+											}
 											sendInvalidateList=false;
 										}
 										break;

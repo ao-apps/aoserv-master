@@ -61,7 +61,7 @@ public final class RandomHandler {
 		}
 	}
 
-	public static void addMasterEntropy(
+	public static long addMasterEntropy(
 		DatabaseConnection conn,
 		RequestSource source,
 		byte[] entropy,
@@ -79,6 +79,7 @@ public final class RandomHandler {
 				fifoOut.write(entropy, 0, addCount);
 				fifo.flush();
 			}
+			return fifo.getOutputStream().available();
 		}
 	}
 
@@ -114,9 +115,9 @@ public final class RandomHandler {
 	) throws IOException, SQLException {
 		checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
 
-		FifoFile file = getFifoFile();
-		synchronized(file) {
-			return file.getOutputStream().available();
+		FifoFile fifo = getFifoFile();
+		synchronized(fifo) {
+			return fifo.getOutputStream().available();
 		}
 	}
 
