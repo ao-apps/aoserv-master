@@ -51,7 +51,8 @@ final public class PkiCertificateHandler {
 	public static List<Certificate.Check> check(
 		DatabaseConnection conn,
 		RequestSource source,
-		int certificate
+		int certificate,
+		boolean allowCached
 	) throws IOException, SQLException {
 		// Check access
 		checkAccessCertificate(conn, source, "check", certificate);
@@ -60,6 +61,6 @@ final public class PkiCertificateHandler {
 			getLinuxServerForCertificate(conn, certificate)
 		);
 		conn.releaseConnection();
-		return daemonConnector.checkSslCertificate(certificate);
+		return daemonConnector.checkSslCertificate(certificate, allowCached);
 	}
 }

@@ -3618,14 +3618,22 @@ public abstract class MasterServer {
 									case CHECK_SSL_CERTIFICATE :
 										{
 											int sslCertificate = in.readCompressedInt();
+											boolean allowCached;
+											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+												allowCached = true;
+											} else {
+												allowCached = in.readBoolean();
+											}
 											process.setCommand(
-												Command.CHECK_SSL_CERTIFICATE,
-												sslCertificate
+												Command.PKI_CERTIFICATE_CHECK,
+												sslCertificate,
+												allowCached
 											);
 											List<Certificate.Check> results = PkiCertificateHandler.check(
 												conn,
 												source,
-												sslCertificate
+												sslCertificate,
+												allowCached
 											);
 											conn.releaseConnection();
 											out.writeByte(AoservProtocol.NEXT);
