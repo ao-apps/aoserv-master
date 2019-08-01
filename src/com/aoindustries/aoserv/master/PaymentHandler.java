@@ -1495,9 +1495,14 @@ final public class PaymentHandler /*implements CronJob*/ {
 				beginningOfNextMonth.set(Calendar.MILLISECOND, 0);
 				beginningOfNextMonth.add(Calendar.MONTH, 1);
 
-				// Find the last minute of the current month
-				Calendar lastSecondOfTheMonth = (Calendar)beginningOfNextMonth.clone();
-				lastSecondOfTheMonth.add(Calendar.SECOND, -1);
+				// Find the last microsecond of the current month - PostgreSQL has microsecond precision
+				Timestamp lastMicrosecondOfMonth;
+				{
+					Calendar lastSecondOfTheMonth = (Calendar)beginningOfNextMonth.clone();
+					lastSecondOfTheMonth.add(Calendar.SECOND, -1);
+					lastMicrosecondOfMonth = new Timestamp(lastSecondOfTheMonth.getTimeInMillis());
+					lastMicrosecondOfMonth.setNanos(999999000);
+				}
 
 				// Start the transaction
 				InvalidateList invalidateList=new InvalidateList();
@@ -1728,7 +1733,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 								conn,
 								invalidateList,
 								'T',
-								new Timestamp(lastSecondOfTheMonth.getTimeInMillis()),
+								lastMicrosecondOfMonth,
 								automaticPayment.account,
 								automaticPayment.account,
 								MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
