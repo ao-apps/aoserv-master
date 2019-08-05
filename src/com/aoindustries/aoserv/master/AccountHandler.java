@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 /**
@@ -100,6 +99,14 @@ final public class AccountHandler {
 
 		// Account must not already be canceled
 		if(isAccountCanceled(conn, account)) throw new SQLException("Unable to cancel Account, Account already canceled: "+account);
+
+		// May not be the root account
+		if(account.equals(getRootAccount())) throw new SQLException("Not allowed to cancel the root account: "+account);
+
+		// May not have any active sub-account
+		for(Account.Name childAccount : getChildAccounts(conn, account)) {
+			if(!isAccountCanceled(conn, childAccount)) throw new SQLException("Unable to cancel Account, sub-Account not canceled: " + childAccount);
+		}
 
 		// Update the database
 		conn.executeUpdate(
@@ -1531,6 +1538,15 @@ final public class AccountHandler {
 		return conn.executeObjectQuery(
 			ObjectFactories.accountNameFactory,
 			"select parent from account.\"Account\" where accounting=?",
+			account
+		);
+	}
+
+	public static List<Account.Name> getChildAccounts(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
+		return conn.executeObjectCollectionQuery(
+			new ArrayList<>(),
+			ObjectFactories.accountNameFactory,
+			"select accounting from account.\"Account\" where parent=?",
 			account
 		);
 	}
