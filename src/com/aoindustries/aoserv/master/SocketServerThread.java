@@ -10,8 +10,8 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataInputStream;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableInput;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.security.Identifier;
@@ -43,24 +43,24 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	private static final Logger logger = LogFactory.getLogger(SocketServerThread.class);
 
 	/**
-	 * The <code>TCPServer</code> that created this <code>SocketServerThread</code>.
+	 * The <code>{@link TCPServer}</code> that created this <code>SocketServerThread</code>.
 	 */
 	private final TCPServer server;
 
 	/**
-	 * The <code>Socket</code> that is connected.
+	 * The <code>{@link Socket}</code> that is connected.
 	 */
 	private final Socket socket;
 
 	/**
-	 * The <code>CompressedCompressedDataInputStream</code> that is being read from.
+	 * The <code>{@link StreamableInput}</code> that is being read from.
 	 */
-	private final CompressedDataInputStream in;
+	private final StreamableInput in;
 
 	/**
-	 * The <code>CompressedDataOutputStream</code> that is being written to.
+	 * The <code>{@link StreamableOutput}</code> that is being written to.
 	 */
-	private final CompressedDataOutputStream out;
+	private final StreamableOutput out;
 
 	/**
 	 * The version of the protocol the client is running.
@@ -76,7 +76,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	 */
 	private final Process process;
 
-	private boolean isClosed=true;
+	private boolean isClosed = true;
 
 	/**
 	 * Creates a new, running <code>AOServServerThread</code>.
@@ -85,8 +85,8 @@ final public class SocketServerThread extends Thread implements RequestSource {
 		try {
 			this.server = server;
 			this.socket = socket;
-			this.in = new CompressedDataInputStream(new BufferedInputStream(socket.getInputStream()));
-			this.out = new CompressedDataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+			this.in = new StreamableInput(new BufferedInputStream(socket.getInputStream()));
+			this.out = new StreamableOutput(new BufferedOutputStream(socket.getOutputStream()));
 			InetAddress host = InetAddress.valueOf(socket.getInetAddress().getHostAddress());
 			process = Process_Manager.createProcess(
 				host,
@@ -564,11 +564,9 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				} else {
 					logger.log(Level.FINE, null, err);
 				}
-			} catch(SQLException err) {
-				logger.log(Level.SEVERE, null, err);
 			} catch(ThreadDeath TD) {
 				throw TD;
-			} catch(Throwable T) {
+			} catch(RuntimeException | SQLException T) {
 				logger.log(Level.SEVERE, null, T);
 			} finally {
 				// Close the socket

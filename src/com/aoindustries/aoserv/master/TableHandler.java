@@ -17,8 +17,8 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataInputStream;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableInput;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -197,8 +197,8 @@ final public class TableHandler {
 		void getObject(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataInputStream in,
-			CompressedDataOutputStream out,
+			StreamableInput in,
+			StreamableOutput out,
 			Table.TableID tableID,
 			User masterUser,
 			UserHost[] masterServers
@@ -283,8 +283,8 @@ final public class TableHandler {
 	public static void getObject(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataInputStream in,
-		CompressedDataOutputStream out,
+		StreamableInput in,
+		StreamableOutput out,
 		Table.TableID tableID
 	) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
@@ -408,7 +408,7 @@ final public class TableHandler {
 		void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -479,7 +479,7 @@ final public class TableHandler {
 		public void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -504,7 +504,7 @@ final public class TableHandler {
 		abstract protected void getTableMaster(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser
@@ -518,7 +518,7 @@ final public class TableHandler {
 		abstract protected void getTableDaemon(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -533,7 +533,7 @@ final public class TableHandler {
 		abstract protected void getTableAdministrator(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID
 		) throws IOException, SQLException;
@@ -548,7 +548,7 @@ final public class TableHandler {
 		public void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -563,7 +563,7 @@ final public class TableHandler {
 		abstract protected void getTablePublic(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID
 		) throws IOException, SQLException;
@@ -585,7 +585,7 @@ final public class TableHandler {
 		final public void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -607,7 +607,7 @@ final public class TableHandler {
 		abstract protected void getTableHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -624,7 +624,7 @@ final public class TableHandler {
 		protected void getTableHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -652,7 +652,7 @@ final public class TableHandler {
 		abstract protected void getTableMasterHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser
@@ -669,7 +669,7 @@ final public class TableHandler {
 		abstract protected void getTableDaemonHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID,
 			User masterUser,
@@ -687,7 +687,7 @@ final public class TableHandler {
 		abstract protected void getTableAdministratorHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
-			CompressedDataOutputStream out,
+			StreamableOutput out,
 			boolean provideProgress,
 			Table.TableID tableID
 		) throws IOException, SQLException;
@@ -699,7 +699,7 @@ final public class TableHandler {
 	public static void getTable(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		final Table.TableID tableID
 	) throws IOException, SQLException {
@@ -724,7 +724,7 @@ final public class TableHandler {
 	public static void getOldTable(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		String tableName
 	) throws IOException, SQLException {

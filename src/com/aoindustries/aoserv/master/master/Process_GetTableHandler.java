@@ -13,7 +13,7 @@ import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	}
 
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		MasterServer.writeObjectsSynced(
 			source,
 			out,
@@ -42,7 +42,7 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 		);
 	}
 
-	private void getTableFiltered(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		List<Process> processesCopy = Process_Manager.getSnapshot();
 		List<Process> filtered = new ArrayList<>();
 		Iterator<Process> I = processesCopy.iterator();
@@ -58,12 +58,12 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	}
 
 	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		getTableFiltered(conn, source, out, provideProgress, tableID);
 	}
 
 	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		getTableFiltered(conn, source, out, provideProgress, tableID);
 	}
 }

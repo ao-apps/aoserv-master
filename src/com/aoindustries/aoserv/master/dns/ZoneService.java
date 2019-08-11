@@ -17,7 +17,7 @@ import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 				return EnumSet.of(Table.TableID.DNS_ZONES);
 			}
 
-			private void getTableUnfiltered(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+			private void getTableUnfiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 				MasterServer.writeObjects(
 					conn,
 					source,
@@ -57,12 +57,12 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 			}
 
 			@Override
-			protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+			protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 				getTableUnfiltered(conn, source, out, provideProgress, tableID);
 			}
 
 			@Override
-			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 				if(masterUser.isDNSAdmin()) {
 					getTableUnfiltered(conn, source, out, provideProgress, tableID);
 				} else {
@@ -71,7 +71,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 			}
 
 			@Override
-			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 				MasterServer.writeObjects(
 					conn,
 					source,

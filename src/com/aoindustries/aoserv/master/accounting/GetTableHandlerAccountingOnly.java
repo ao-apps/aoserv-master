@@ -1,11 +1,10 @@
 /*
- * Copyright 2018 by AO Industries, Inc.,
+ * Copyright 2018, 2019 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master.accounting;
 
-import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -14,11 +13,10 @@ import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author  AO Industries, Inc.
@@ -27,7 +25,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 
 	/**
 	 * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
-	 * calls {@link #getTableAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
+	 * calls {@link #getTableAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
 	 * Otherwise, writes an empty table.
 	 *
 	 * @see BankAccountHandler#isBankAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
@@ -36,7 +34,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 	default void getTable(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		Table.TableID tableID,
 		User masterUser,
@@ -45,8 +43,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 		if(BankAccountHandler.isBankAccounting(conn, source)) {
 			getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
 		} else {
-			List<AOServObject<?,?>> emptyList = Collections.emptyList();
-			MasterServer.writeObjects(source, out, provideProgress, emptyList);
+			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 		}
 	}
 
@@ -59,7 +56,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 	void getTableAccounting(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		Table.TableID tableID,
 		User masterUser

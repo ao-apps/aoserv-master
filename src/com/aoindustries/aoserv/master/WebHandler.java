@@ -27,7 +27,7 @@ import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.Port;
@@ -4039,7 +4039,7 @@ final public class WebHandler {
 		int site,
 		String path,
 		String queryString,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		checkAccessSite(conn, source, "getAWStatsFile", site);
 

@@ -19,7 +19,7 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
 import com.aoindustries.validation.ValidationException;
@@ -416,7 +416,7 @@ final public class MysqlHandler {
 	public static void dumpDatabase(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		int database,
 		boolean gzip
 	) throws IOException, SQLException {
@@ -1167,7 +1167,7 @@ final public class MysqlHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		int mysqlServer,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		AccountHandler.checkPermission(conn, source, "getMasterStatus", Permission.Name.get_mysql_master_status);
 		// Check access
@@ -1188,7 +1188,7 @@ final public class MysqlHandler {
 		DatabaseConnection conn,
 		RequestSource source,
 		int failoverMySQLReplication,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		AccountHandler.checkPermission(conn, source, "getSlaveStatus", Permission.Name.get_mysql_slave_status);
 		// Check access
@@ -1248,7 +1248,7 @@ final public class MysqlHandler {
 		RequestSource source,
 		int database,
 		int mysqlSlave,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		AccountHandler.checkPermission(conn, source, "getTableStatus", Permission.Name.get_mysql_table_status);
 		// Check access
@@ -1327,7 +1327,7 @@ final public class MysqlHandler {
 		int database,
 		int mysqlSlave,
 		List<Table_Name> tableNames,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		AccountHandler.checkPermission(conn, source, "checkTables", Permission.Name.check_mysql_tables);
 		// Check access

@@ -8,7 +8,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.accounting.BankTransaction;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -39,7 +39,7 @@ final public class BankAccountHandler {
 	public static void getTransactionsForAccount(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		String account
 	) throws IOException, SQLException {

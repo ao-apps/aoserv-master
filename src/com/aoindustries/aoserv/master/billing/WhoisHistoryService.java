@@ -27,7 +27,7 @@ import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.lang.ProcessResult;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.util.Tuple2;
@@ -354,7 +354,7 @@ final public class WhoisHistoryService implements MasterService {
 										output = result.getStdout();
 										error = result.getStderr();
 										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
-									} catch(Throwable err) {
+									} catch(RuntimeException | IOException err) {
 										exitStatus = null;
 										output = "";
 										error = err.toString();
@@ -428,9 +428,7 @@ final public class WhoisHistoryService implements MasterService {
 					}
 					MasterServer.invalidateTables(invalidateList, null);
 				}
-			} catch(ThreadDeath TD) {
-				throw TD;
-			} catch(Throwable T) {
+			} catch(RuntimeException | IOException | SQLException T) {
 				logger.log(Level.SEVERE, null, T);
 			}
 		}
@@ -581,7 +579,7 @@ final public class WhoisHistoryService implements MasterService {
 			}
 
 			@Override
-			protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+			protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// Use join and id from WhoisHistoryAccount
 					MasterServer.writeObjects(
@@ -624,13 +622,13 @@ final public class WhoisHistoryService implements MasterService {
 			}
 
 			@Override
-			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 				// The servers don't need access to this information
 				MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 			}
 
 			@Override
-			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// Use join and id from WhoisHistoryAccount
 					MasterServer.writeObjects(

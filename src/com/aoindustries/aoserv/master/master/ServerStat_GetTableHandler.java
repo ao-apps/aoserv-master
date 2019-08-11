@@ -22,10 +22,10 @@ import com.aoindustries.aoserv.master.RandomHandler;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
 import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.util.BufferManager;
 import com.aoindustries.util.StringUtility;
@@ -71,7 +71,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 	}
 
 	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		List<ServerStat> objs;
 		try {
 			// Create the list of objects first

@@ -22,7 +22,7 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
@@ -1051,7 +1051,7 @@ final public class EmailHandler {
 				conn.releaseConnection();
 				return daemonConnector.getImapFolderSizes(user, folderNames);
 			} catch(IOException err) {
-				logger.log(Level.SEVERE, "userServer="+userServer+", linuxServer="+linuxServer+", username="+user+", folderNames="+folderNames, err);
+				logger.log(Level.SEVERE, "userServer="+userServer+", linuxServer="+linuxServer+", username="+user+", folderNames="+Arrays.asList(folderNames), err);
 				DaemonHandler.flagDaemonAsDown(linuxServer);
 			}
 		}
@@ -1173,7 +1173,7 @@ final public class EmailHandler {
 	public static void getSpamMessagesForSmtpRelay(
 		DatabaseConnection conn,
 		RequestSource source, 
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		int esr
 	) throws IOException, SQLException {

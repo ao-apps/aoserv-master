@@ -14,7 +14,7 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.i18n.Monies;
@@ -178,7 +178,7 @@ final public class BillingTransactionHandler {
 	public static void getAccountBalance(
 		DatabaseConnection conn,
 		RequestSource source, 
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		Account.Name account
 	) throws IOException, SQLException {
 		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
@@ -206,7 +206,7 @@ final public class BillingTransactionHandler {
 	public static void getAccountBalanceBefore(
 		DatabaseConnection conn,
 		RequestSource source, 
-		CompressedDataOutputStream out, 
+		StreamableOutput out, 
 		Account.Name account,
 		long before
 	) throws IOException, SQLException {
@@ -236,7 +236,7 @@ final public class BillingTransactionHandler {
 	public static void getConfirmedAccountBalance(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		Account.Name account
 	) throws IOException, SQLException {
 		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
@@ -295,7 +295,7 @@ final public class BillingTransactionHandler {
 	public static void getConfirmedAccountBalanceBefore(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		Account.Name account,
 		long before
 	) throws IOException, SQLException {
@@ -325,7 +325,7 @@ final public class BillingTransactionHandler {
 	public static void getTransactionsForAccount(
 		DatabaseConnection conn,
 		RequestSource source, 
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		Account.Name account
 	) throws IOException, SQLException {
@@ -392,7 +392,7 @@ final public class BillingTransactionHandler {
 	public static void getTransactionsForAdministrator(
 		DatabaseConnection conn,
 		RequestSource source, 
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		com.aoindustries.aoserv.client.account.User.Name administrator
 	) throws IOException, SQLException {
@@ -419,7 +419,7 @@ final public class BillingTransactionHandler {
 	public static void getTransactionsSearch(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		TransactionSearchCriteria criteria
 	) throws IOException, SQLException {

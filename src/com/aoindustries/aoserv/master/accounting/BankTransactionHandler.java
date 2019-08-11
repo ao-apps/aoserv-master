@@ -16,8 +16,8 @@ import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataInputStream;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableInput;
+import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -54,7 +54,7 @@ public class BankTransactionHandler {
 		}
 
 		@Override
-		public void getObject(DatabaseConnection conn, RequestSource source, CompressedDataInputStream in, CompressedDataOutputStream out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+		public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 			int bankTransaction = in.readCompressedInt();
 			if(BankAccountHandler.isBankAccounting(conn, source)) {
 				MasterServer.writeObject(
@@ -81,7 +81,7 @@ public class BankTransactionHandler {
 		}
 
 		@Override
-		public void getTableAccounting(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+		public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 			MasterServer.writeObjects(
 				conn,
 				source,

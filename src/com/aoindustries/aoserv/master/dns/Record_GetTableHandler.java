@@ -14,7 +14,7 @@ import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -31,7 +31,7 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 		return EnumSet.of(Table.TableID.DNS_RECORDS);
 	}
 
-	private void getTableUnfiltered(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	private void getTableUnfiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,
@@ -44,12 +44,12 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 	}
 
 	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 		getTableUnfiltered(conn, source, out, provideProgress, tableID);
 	}
 
 	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		if(masterUser.isDNSAdmin()) {
 			getTableUnfiltered(conn, source, out, provideProgress, tableID);
 		} else {
@@ -58,7 +58,7 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 	}
 
 	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		MasterServer.writeObjects(
 			conn,
 			source,

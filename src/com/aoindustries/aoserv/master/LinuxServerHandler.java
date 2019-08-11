@@ -9,7 +9,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.util.IntList;
@@ -60,7 +60,7 @@ final public class LinuxServerHandler {
 		RequestSource source,
 		int linuxServer,
 		String filename,
-		CompressedDataOutputStream out
+		StreamableOutput out
 	) throws IOException, SQLException {
 		NetHostHandler.checkAccessHost(conn, source, "getMrtgFile", linuxServer);
 		if(filename.indexOf('/')!=-1 || filename.contains("..")) throw new SQLException("Invalidate filename: "+filename);

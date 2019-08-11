@@ -14,7 +14,7 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.util.IntList;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -326,7 +326,7 @@ final public class PostgresqlHandler {
 	public static void dumpDatabase(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		int database,
 		boolean gzip
 	) throws IOException, SQLException {

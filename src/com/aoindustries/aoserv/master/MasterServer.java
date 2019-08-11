@@ -42,8 +42,8 @@ import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
-import com.aoindustries.io.CompressedDataInputStream;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableInput;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.io.IoUtils;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
@@ -301,14 +301,14 @@ public abstract class MasterServer {
 	// TODO: Make this an interface to leverage lambdas
 	static abstract class Response {
 
-		abstract void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException;
+		abstract void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException;
 
 		static final Response DONE = Response.of(AoservProtocol.DONE);
 
 		static Response of(byte resp1) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 				}
 			};
@@ -317,7 +317,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, int resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeCompressedInt(resp2);
 				}
@@ -327,7 +327,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, long resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLong(resp2);
 				}
@@ -337,7 +337,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, boolean resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeBoolean(resp2);
 				}
@@ -347,7 +347,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 				}
@@ -357,7 +357,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, String resp2, String resp3) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 					out.writeUTF(resp3);
@@ -380,7 +380,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, long resp2, String resp3) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLong(resp2);
 					out.writeUTF(resp3);
@@ -391,7 +391,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, long[] resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					for(int c=0;c<resp2.length;c++) out.writeLong(resp2[c]);
 				}
@@ -401,7 +401,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, InboxAttributes resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeBoolean(resp2!=null);
 					if(resp2!=null) resp2.write(out, protocolVersion);
@@ -412,7 +412,7 @@ public abstract class MasterServer {
 		static Response of(byte resp1, String resp2, String resp3, String resp4) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 					out.writeUTF(resp3);
@@ -424,7 +424,7 @@ public abstract class MasterServer {
 		static Response ofNullLongString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeNullLongUTF(resp2);
 				}
@@ -434,7 +434,7 @@ public abstract class MasterServer {
 		static Response ofLongString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeLongUTF(resp2);
 				}
@@ -450,7 +450,7 @@ public abstract class MasterServer {
 		) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeUTF(resp2);
 					out.writeUTF(resp3.toString());
@@ -463,7 +463,7 @@ public abstract class MasterServer {
 		static Response ofNullString(byte resp1, String resp2) {
 			return new Response() {
 				@Override
-				void writeResponse(CompressedDataOutputStream out, AoservProtocol.Version protocolVersion) throws IOException {
+				void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException {
 					out.writeByte(resp1);
 					out.writeNullUTF(resp2);
 				}
@@ -482,8 +482,8 @@ public abstract class MasterServer {
 	final boolean handleRequest(
 		RequestSource source,
 		long seq,
-		CompressedDataInputStream in,
-		CompressedDataOutputStream out,
+		StreamableInput in,
+		StreamableOutput out,
 		Process process
 	) throws IOException, SQLException {
 		// Time is not added for the cache invalidation connection
@@ -10230,7 +10230,7 @@ public abstract class MasterServer {
 	 * that initiated this request.
 	 * <p>
 	 * TODO: We need a way to convert invalidations of current tables to old table mappings.
-	 * This would be the counterpart to {@link TableHandler#getOldTable(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, java.lang.String)}.
+	 * This would be the counterpart to {@link TableHandler#getOldTable(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, java.lang.String)}.
 	 * </p>
 	 */
 	public static void invalidateTables(
@@ -10597,7 +10597,7 @@ public abstract class MasterServer {
 	 */
 	public static <T extends AOServObject<?,?>> long writeObjects(
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		T obj,
 		ResultSet results
@@ -10617,10 +10617,10 @@ public abstract class MasterServer {
 			}
 			out.writeByte(AoservProtocol.NEXT);
 			if(version.compareTo(AoservProtocol.Version.VERSION_1_81_19) < 0) {
-				if(progressCount > CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE) {
+				if(progressCount > StreamableOutput.MAX_COMPRESSED_INT_VALUE) {
 					throw new IOException(
-						"Too many rows to send via " + CompressedDataOutputStream.class.getSimpleName() + ".writeCompressedInt: "
-						+ progressCount + " > " + CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE
+						"Too many rows to send via " + StreamableOutput.class.getSimpleName() + ".writeCompressedInt: "
+						+ progressCount + " > " + StreamableOutput.MAX_COMPRESSED_INT_VALUE
 						+ ", please upgrade to client " + AoservProtocol.Version.VERSION_1_81_19 + " or newer.");
 				}
 				out.writeCompressedInt((int)progressCount);
@@ -10662,7 +10662,7 @@ public abstract class MasterServer {
 	 */
 	public static long writeObjects(
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		Collection<? extends AOServWritable> objs
 	) throws IOException {
@@ -10691,7 +10691,7 @@ public abstract class MasterServer {
 	 */
 	public static long writeObjectsSynced(
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		Collection<? extends AOServWritable> objs
 	) throws IOException {
@@ -10916,7 +10916,7 @@ public abstract class MasterServer {
 	public static void writeObject(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		AOServObject<?,?> obj,
 		String sql,
 		Object ... params
@@ -10947,12 +10947,12 @@ public abstract class MasterServer {
 	 *
 	 * @return  The number of rows written
 	 *
-	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	private static long fetchObjects(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		AOServObject<?,?> obj,
 		String sql,
@@ -11003,10 +11003,10 @@ public abstract class MasterServer {
 					}
 					out.writeByte(AoservProtocol.NEXT);
 					if(version.compareTo(AoservProtocol.Version.VERSION_1_81_19) < 0) {
-						if(progressCount > CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE) {
+						if(progressCount > StreamableOutput.MAX_COMPRESSED_INT_VALUE) {
 							throw new IOException(
-								"Too many rows to send via " + CompressedDataOutputStream.class.getSimpleName() + ".writeCompressedInt: "
-								+ progressCount + " > " + CompressedDataOutputStream.MAX_COMPRESSED_INT_VALUE
+								"Too many rows to send via " + StreamableOutput.class.getSimpleName() + ".writeCompressedInt: "
+								+ progressCount + " > " + StreamableOutput.MAX_COMPRESSED_INT_VALUE
 								+ ", please upgrade to client " + AoservProtocol.Version.VERSION_1_81_19 + " or newer.");
 						}
 						out.writeCompressedInt((int)progressCount);
@@ -11061,12 +11061,12 @@ public abstract class MasterServer {
 	 *
 	 * @return  The number of rows written
 	 *
-	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	private static long selectObjects(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		AOServObject<?,?> obj,
 		String sql,
@@ -11093,8 +11093,8 @@ public abstract class MasterServer {
 
 	/**
 	 * Performs a query and writes all rows of the result set.
-	 * Calls either {@link #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) selectObjects}
-	 * or {@link #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) fetchObjects}
+	 * Calls either {@link #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) selectObjects}
+	 * or {@link #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) fetchObjects}
 	 * based on the {@link CursorMode}.
 	 * <p>
 	 * In particular, implements the {@link CursorMode#AUTO} mode for cursor selection.
@@ -11103,13 +11103,13 @@ public abstract class MasterServer {
 	 * @return  The number of rows written
 	 *
 	 * @see  CursorMode#AUTO
-	 * @see  #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
-	 * @see  #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 * @see  #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 * @see  #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
 	 */
 	public static long writeObjects(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		boolean provideProgress,
 		CursorMode cursorMode,
 		AOServObject<?,?> obj,
@@ -11145,7 +11145,7 @@ public abstract class MasterServer {
 		RequestSource source,
 		String action,
 		Account.Name account,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		String sql,
 		String param1,
 		String param2,
@@ -11186,7 +11186,7 @@ public abstract class MasterServer {
 		RequestSource source,
 		String action,
 		Account.Name account,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		String sql,
 		String param1,
 		String param2

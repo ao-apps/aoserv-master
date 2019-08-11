@@ -47,7 +47,7 @@ public enum CursorMode {
 	 * skip cursor on the first query.  Hint: cache rultuples to bigint.
 	 * </p>
 	 *
-	 * @see  MasterServer#writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.CompressedDataOutputStream, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  MasterServer#writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	AUTO;
 

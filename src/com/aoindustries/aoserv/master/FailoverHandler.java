@@ -17,7 +17,7 @@ import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.BitRateProvider;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.HostAddress;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple2;
@@ -272,7 +272,7 @@ final public class FailoverHandler implements CronJob {
 	public static void getFileReplicationLogs(
 		DatabaseConnection conn,
 		RequestSource source,
-		CompressedDataOutputStream out,
+		StreamableOutput out,
 		int fileReplication,
 		int maxRows
 	) throws IOException, SQLException {
@@ -358,9 +358,7 @@ final public class FailoverHandler implements CronJob {
 	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
 			MasterDatabase.getDatabase().executeUpdate("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
-		} catch(ThreadDeath TD) {
-			throw TD;
-		} catch(Throwable T) {
+		} catch(RuntimeException | IOException | SQLException T) {
 			logger.log(Level.SEVERE, null, T);
 		}
 	}

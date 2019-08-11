@@ -20,7 +20,7 @@ import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.CompressedDataOutputStream;
+import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -52,7 +52,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 			}
 
 			@Override
-			protected void getTableMaster(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+			protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
 				MasterServer.writeObjects(
 					conn,
 					source,
@@ -65,7 +65,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 			}
 
 			@Override
-			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+			protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 				MasterServer.writeObjects(
 					conn,
 					source,
@@ -86,7 +86,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 			}
 
 			@Override
-			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, CompressedDataOutputStream out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+			protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 				MasterServer.writeObjects(
 					conn,
 					source,
