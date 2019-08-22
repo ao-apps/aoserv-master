@@ -655,6 +655,7 @@ final public class LinuxAccountHandler {
 						|| group.equals(Group.MEMCACHED)
 						|| group.equals(Group.NGINX)
 						|| group.equals(Group.POLKITD)
+						|| group.equals(Group.REDIS)
 						|| group.equals(Group.SSH_KEYS)
 						|| group.equals(Group.SYSTEMD_BUS_PROXY)
 						|| group.equals(Group.SYSTEMD_NETWORK)
@@ -772,6 +773,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(User.MEMCACHED,         ANY_SYSTEM_UID, Group.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.NGINX,             ANY_SYSTEM_UID, Group.NGINX,             "Nginx web server",            "/var/lib/nginx",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.POLKITD,           ANY_SYSTEM_UID, Group.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.REDIS,             ANY_SYSTEM_UID, Group.REDIS,             "Redis Database Server",       "/var/lib/redis",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.SASLAUTH,          ANY_SYSTEM_UID, Group.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.UNBOUND,           ANY_SYSTEM_UID, Group.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
