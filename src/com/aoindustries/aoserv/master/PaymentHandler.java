@@ -1626,8 +1626,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 							+ "  ccp.param3 as \"ccp_param3\",\n"
 							+ "  ccp.param4 as \"ccp_param4\"\n"
 							+ "from\n"
-							+ "  account.\"Account\" bu,\n"
-							+ "  billing.\"Currency\" c\n"
+							+ "  account.\"Account\" bu\n"
+							+ "  CROSS JOIN billing.\"Currency\" c\n"
 							+ "  INNER JOIN payment.\"CreditCard\" cc ON bu.accounting=cc.accounting\n"
 							+ "  INNER JOIN payment.\"Processor\" ccp ON cc.processor_id=ccp.provider_id\n"
 							+ "  LEFT JOIN (\n"
@@ -1681,7 +1681,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 							+ "  )\n"
 							+ "ORDER BY\n"
 							+ "  bu.accounting,\n"
-							+ "  t.\"rate.currency\"",
+							+ "  c.\"currencyCode\"",
 							new Timestamp(beginningOfNextMonth.getTimeInMillis())
 						);
 						// Only need to create the persistence once per DB transaction
