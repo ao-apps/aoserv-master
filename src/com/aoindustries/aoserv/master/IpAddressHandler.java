@@ -138,7 +138,7 @@ final public class IpAddressHandler {
 		int host = getHostForIpAddress(conn, dhcpAddress);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::inet where id=?", inetAddress, dhcpAddress);
+		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" where id=?", inetAddress, dhcpAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -374,7 +374,7 @@ final public class IpAddressHandler {
 	}
 
 	public static int getWildcardIpAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?::inet", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIpAddress(DatabaseConnection conn, int host) throws IOException, SQLException {
@@ -385,7 +385,7 @@ final public class IpAddressHandler {
 			+ "  net.\"IpAddress\" ia,\n"
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
-			+ "  ia.\"inetAddress\"=?::inet\n"
+			+ "  ia.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"\n"
 			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
