@@ -39,7 +39,13 @@ public class InboxAddress_GetTableHandler extends TableHandler.GetTableHandlerBy
 			provideProgress,
 			CursorMode.AUTO,
 			new InboxAddress(),
-			"select * from email.\"InboxAddress\""
+			"SELECT\n"
+			+ "  ia.*,\n"
+			// Protocol conversion <= 1.30:
+			+ "  us.username\n"
+			+ "FROM\n"
+			+ "  email.\"InboxAddress\" ia\n"
+			+ "  INNER JOIN linux.\"UserServer\" us ON ia.linux_server_account = us.id"
 		);
 	}
 
@@ -52,18 +58,22 @@ public class InboxAddress_GetTableHandler extends TableHandler.GetTableHandlerBy
 			provideProgress,
 			CursorMode.AUTO,
 			new InboxAddress(),
-			"select\n"
-			+ "  laa.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  email.\"Domain\" ed,\n"
-			+ "  email.\"Address\" ea,\n"
-			+ "  email.\"InboxAddress\" laa\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=ed.ao_server\n"
-			+ "  and ed.id=ea.domain\n"
-			+ "  and ea.id=laa.email_address",
+			"SELECT\n"
+			+ "  ia.*,\n"
+			// Protocol conversion <= 1.30:
+			+ "  us.username\n"
+			+ "FROM\n"
+			+ "  master.\"UserHost\"    ms,\n"
+			+ "  email.\"Domain\"       ed,\n"
+			+ "  email.\"Address\"      ea,\n"
+			+ "  email.\"InboxAddress\" ia,\n"
+			+ "  linux.\"UserServer\"   us\n"
+			+ "WHERE\n"
+			+ "      ms.username             = ?\n"
+			+ "  AND ms.server               = ed.ao_server\n"
+			+ "  AND ed.id                   = ea.domain\n"
+			+ "  AND ea.id                   = ia.email_address\n"
+			+ "  AND ia.linux_server_account = us.id",
 			source.getCurrentAdministrator()
 		);
 	}
@@ -77,26 +87,30 @@ public class InboxAddress_GetTableHandler extends TableHandler.GetTableHandlerBy
 			provideProgress,
 			CursorMode.AUTO,
 			new InboxAddress(),
-			"select\n"
-			+ "  laa.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk1,\n"
+			"SELECT\n"
+			+ "  ia.*,\n"
+			// Protocol conversion <= 1.30:
+			+ "  us.username\n"
+			+ "FROM\n"
+			+ "  account.\"User\"       un,\n"
+			+ "  billing.\"Package\"    pk1,\n"
 			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\" pk2,\n"
-			+ "  email.\"Domain\" ed,\n"
-			+ "  email.\"Address\" ea,\n"
-			+ "  email.\"InboxAddress\" laa\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk1.name\n"
-			+ "  and (\n"
+			+ "  billing.\"Package\"    pk2,\n"
+			+ "  email.\"Domain\"       ed,\n"
+			+ "  email.\"Address\"      ea,\n"
+			+ "  email.\"InboxAddress\" ia,\n"
+			+ "  linux.\"UserServer\"   us\n"
+			+ "WHERE\n"
+			+ "      un.username             = ?\n"
+			+ "  AND un.package              = pk1.name\n"
+			+ "  AND (\n"
 			+ TableHandler.PK1_BU1_PARENTS_WHERE
 			+ "  )\n"
-			+ "  and bu1.accounting=pk2.accounting\n"
-			+ "  and pk2.name=ed.package\n"
-			+ "  and ed.id=ea.domain\n"
-			+ "  and ea.id=laa.email_address",
+			+ "  AND bu1.accounting          = pk2.accounting\n"
+			+ "  AND pk2.name                = ed.package\n"
+			+ "  AND ed.id                   = ea.domain\n"
+			+ "  AND ea.id                   = ia.email_address\n"
+			+ "  AND ia.linux_server_account = us.id",
 			source.getCurrentAdministrator()
 		);
 	}
