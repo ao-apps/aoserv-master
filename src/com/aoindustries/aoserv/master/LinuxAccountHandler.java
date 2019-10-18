@@ -771,7 +771,7 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(User.CLAMSCAN,          ANY_SYSTEM_UID, Group.CLAMSCAN,          "Clamav scanner user",         "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.CLAMUPDATE,        ANY_SYSTEM_UID, Group.CLAMUPDATE,        "Clamav database update user", "/var/lib/clamav",  Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.MEMCACHED,         ANY_SYSTEM_UID, Group.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.NGINX,             ANY_SYSTEM_UID, Group.NGINX,             "Nginx web server",            "/var/lib/nginx",   Shell.NOLOGIN, null);
+					addCentos7SystemUser(User.NGINX,             ANY_SYSTEM_UID, Group.NGINX,             "nginx user",                  "/var/cache/nginx", Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.POLKITD,           ANY_SYSTEM_UID, Group.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.REDIS,             ANY_SYSTEM_UID, Group.REDIS,             "Redis Database Server",       "/var/lib/redis",   Shell.NOLOGIN, null);
 					addCentos7SystemUser(User.SASLAUTH,          ANY_SYSTEM_UID, Group.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
