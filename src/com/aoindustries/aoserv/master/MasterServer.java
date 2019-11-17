@@ -42,9 +42,9 @@ import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
+import com.aoindustries.io.IoUtils;
 import com.aoindustries.io.stream.StreamableInput;
 import com.aoindustries.io.stream.StreamableOutput;
-import com.aoindustries.io.IoUtils;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
@@ -10356,7 +10356,7 @@ public abstract class MasterServer {
 	 * @throws NoServiceException when no services are of the given class
 	 * @throws ServiceNotStartedException when no services of the given class are started
 	 */
-	public static <T> T getService(Class<? extends T> clazz) throws MasterServiceException {
+	public static <T> T getService(Class<T> clazz) throws MasterServiceException {
 		List<Map.Entry<T,MasterServiceState>> entries = serviceRegistry.getEntries(clazz);
 		if(!entries.isEmpty()) {
 			for(Map.Entry<T,MasterServiceState> entry : entries) {
@@ -10377,7 +10377,7 @@ public abstract class MasterServer {
 	 *
 	 * @return  The list of services or an empty list when none found
 	 */
-	public static <T> List<T> getStartedServices(Class<? extends T> clazz) {
+	public static <T> List<T> getStartedServices(Class<T> clazz) {
 		return serviceRegistry.getKeysFilterEntry(
 			clazz,
 			(Map.Entry<T, MasterServiceState> e) -> e.getValue().started
@@ -10391,7 +10391,7 @@ public abstract class MasterServer {
 	 *
 	 * @throws ServiceNotStartedException when a matching service is not started
 	 */
-	public static <T> List<T> getServices(Class<? extends T> clazz) throws ServiceNotStartedException {
+	public static <T> List<T> getServices(Class<T> clazz) throws ServiceNotStartedException {
 		// Make sure all are started
 		int[] notStartedCount = new int[1];
 		List<T> matches = serviceRegistry.getKeysFilterEntry(
