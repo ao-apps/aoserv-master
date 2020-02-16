@@ -3863,7 +3863,7 @@ final public class WebHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update \"web.tomcat\".\"PrivateTomcatSite\" set max_post_size=? where httpd_site=?",
+			"update \"web.tomcat\".\"PrivateTomcatSite\" set max_post_size=? where tomcat_site=?",
 			maxPostSize==-1 ? DatabaseAccess.Null.INTEGER : maxPostSize,
 			privateTomcatSite
 		);
@@ -3888,7 +3888,7 @@ final public class WebHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update \"web.tomcat\".\"PrivateTomcatSite\" set unpack_wars=? where httpd_site=?",
+			"update \"web.tomcat\".\"PrivateTomcatSite\" set unpack_wars=? where tomcat_site=?",
 			unpackWARs,
 			privateTomcatSite
 		);
@@ -3913,7 +3913,7 @@ final public class WebHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update \"web.tomcat\".\"PrivateTomcatSite\" set auto_deploy=? where httpd_site=?",
+			"update \"web.tomcat\".\"PrivateTomcatSite\" set auto_deploy=? where tomcat_site=?",
 			autoDeploy,
 			privateTomcatSite
 		);
@@ -3938,7 +3938,7 @@ final public class WebHandler {
 
 		// Update the database
 		int updateCount = conn.executeUpdate(
-			"update \"web.tomcat\".\"PrivateTomcatSite\" set \"tomcatAuthentication\"=? where httpd_site=?",
+			"update \"web.tomcat\".\"PrivateTomcatSite\" set \"tomcatAuthentication\"=? where tomcat_site=?",
 			tomcatAuthentication,
 			privateTomcatSite
 		);
