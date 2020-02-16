@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2014, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7602,6 +7602,26 @@ public abstract class MasterServer {
 											sendInvalidateList = true;
 										}
 										break;
+									case web_tomcat_SharedTomcat_tomcatAuthentication_set :
+										{
+											int sharedTomcat = in.readCompressedInt();
+											boolean tomcatAuthentication = in.readBoolean();
+											process.setCommand(
+												Command.web_tomcat_SharedTomcat_tomcatAuthentication_set,
+												sharedTomcat,
+												tomcatAuthentication
+											);
+											WebHandler.setSharedTomcatTomcatAuthentication(
+												conn,
+												source,
+												invalidateList,
+												sharedTomcat,
+												tomcatAuthentication
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
 									case SET_HTTPD_SHARED_TOMCAT_VERSION :
 										{
 											int sharedTomcat = in.readCompressedInt();
@@ -8131,6 +8151,26 @@ public abstract class MasterServer {
 												invalidateList,
 												privateTomcatSite,
 												autoDeploy
+											);
+											resp = Response.DONE;
+											sendInvalidateList = true;
+										}
+										break;
+									case web_tomcat_PrivateTomcatSite_tomcatAuthentication_set :
+										{
+											int privateTomcatSite = in.readCompressedInt();
+											boolean tomcatAuthentication = in.readBoolean();
+											process.setCommand(
+												Command.web_tomcat_PrivateTomcatSite_tomcatAuthentication_set,
+												privateTomcatSite,
+												tomcatAuthentication
+											);
+											WebHandler.setPrivateTomcatSiteTomcatAuthentication(
+												conn,
+												source,
+												invalidateList,
+												privateTomcatSite,
+												tomcatAuthentication
 											);
 											resp = Response.DONE;
 											sendInvalidateList = true;

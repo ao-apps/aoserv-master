@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -1136,7 +1136,7 @@ final public class WebHandler {
 					MINIMUM_AUTO_PORT_NUMBER
 				);
 				conn.executeUpdate(
-					"insert into \"web.tomcat\".\"PrivateTomcatSite\" values(?,?,?,?,true,true)",
+					"insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, tomcat4_shutdown_port, tomcat4_shutdown_key, max_post_size) values(?,?,?,?)",
 					httpdSitePKey,
 					shutdownPort,
 					new Identifier(MasterServer.getSecureRandom()).toString(),
@@ -1144,7 +1144,7 @@ final public class WebHandler {
 				);
 			} else {
 				conn.executeUpdate(
-					"insert into \"web.tomcat\".\"PrivateTomcatSite\" values(?,null,null,?,true,true)",
+					"insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, max_post_size) values(?,?)",
 					httpdSitePKey,
 					SharedTomcat.DEFAULT_MAX_POST_SIZE
 				);
@@ -1361,21 +1361,26 @@ final public class WebHandler {
 			sharedTomcat = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"SharedTomcat\"\n"
-				+ "VALUES(\n"
-				+ "  default,\n" // id
+				+ "(\n"
+				+ "  name,\n"
+				+ "  ao_server,\n"
+				+ "  version,\n"
+				+ "  linux_server_account,\n"
+				+ "  linux_server_group,\n"
+				+ "  tomcat4_worker,\n"
+				+ "  tomcat4_shutdown_port,\n"
+				+ "  tomcat4_shutdown_key,\n"
+				+ "  max_post_size\n"
+				+ ") VALUES(\n"
 				+ "  ?,\n" // name
 				+ "  ?,\n" // ao_server
 				+ "  ?,\n" // version
 				+ "  ?,\n" // linux_server_account
 				+ "  ?,\n" // linux_server_group
-				+ "  null,\n" // disable_log
 				+ "  ?,\n" // tomcat4_worker
 				+ "  ?,\n" // tomcat4_shutdown_port
 				+ "  ?,\n" // tomcat4_shutdown_key
-				+ "  false,\n" // is_manual
-				+ "  ?,\n" // max_post_size
-				+ "  true,\n" // unpack_wars
-				+ "  true\n" // auto_deploy
+				+ "  ?\n"  // max_post_size
 				+ ") RETURNING id",
 				name,
 				linuxServer,
@@ -1391,21 +1396,20 @@ final public class WebHandler {
 			sharedTomcat = conn.executeIntUpdate(
 				"INSERT INTO\n"
 				+ "  \"web.tomcat\".\"SharedTomcat\"\n"
-				+ "VALUES (\n"
-				+ "  default,\n" // id
+				+ "(\n"
+				+ "  name,\n"
+				+ "  ao_server,\n"
+				+ "  version,\n"
+				+ "  linux_server_account,\n"
+				+ "  linux_server_group,\n"
+				+ "  max_post_size\n"
+				+ ") VALUES(\n"
 				+ "  ?,\n" // name
 				+ "  ?,\n" // ao_server
 				+ "  ?,\n" // version
 				+ "  ?,\n" // linux_server_account
 				+ "  ?,\n" // linux_server_group
-				+ "  null,\n" // disable_log
-				+ "  null,\n" // tomcat4_worker
-				+ "  null,\n" // tomcat4_shutdown_port
-				+ "  null,\n" // tomcat4_shutdown_key
-				+ "  false,\n" // is_manual
-				+ "  ?,\n" // max_post_size
-				+ "  true,\n" // unpack_wars
-				+ "  true\n" // auto_deploy
+				+ "  ?\n"  // max_post_size
 				+ ") RETURNING id",
 				name,
 				linuxServer,
@@ -3003,6 +3007,30 @@ final public class WebHandler {
 		);
 	}
 
+	public static void setSharedTomcatTomcatAuthentication(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int sharedTomcat,
+		boolean tomcatAuthentication
+	) throws IOException, SQLException {
+		checkAccessSharedTomcat(conn, source, "setSharedTomcatTomcatAuthentication", sharedTomcat);
+
+		// Update the database
+		conn.executeUpdate(
+			"update \"web.tomcat\".\"SharedTomcat\" set \"tomcatAuthentication\"=? where id=?",
+			tomcatAuthentication,
+			sharedTomcat
+		);
+
+		invalidateList.addTable(conn,
+			Table.TableID.HTTPD_SHARED_TOMCATS,
+			getAccountForSharedTomcat(conn, sharedTomcat),
+			getLinuxServerForSharedTomcat(conn, sharedTomcat),
+			false
+		);
+	}
+
 	private static void checkUpgradeFrom(String fromVersion) throws SQLException {
 		if(!Version.canUpgradeFrom(fromVersion)) {
 			throw new SQLException("In-place Tomcat upgrades and downgrades are only supported from Tomcat 4.1 and newer, not supported from version \"" + fromVersion + "\".");
@@ -3887,6 +3915,31 @@ final public class WebHandler {
 		int updateCount = conn.executeUpdate(
 			"update \"web.tomcat\".\"PrivateTomcatSite\" set auto_deploy=? where httpd_site=?",
 			autoDeploy,
+			privateTomcatSite
+		);
+		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
+		if(updateCount != 1) throw new SQLException("Unexpected updateCount: " + updateCount);
+		invalidateList.addTable(conn,
+			Table.TableID.HTTPD_TOMCAT_STD_SITES,
+			getAccountForSite(conn, privateTomcatSite),
+			getLinuxServerForSite(conn, privateTomcatSite),
+			false
+		);
+	}
+
+	public static void setPrivateTomcatSiteTomcatAuthentication(
+		DatabaseConnection conn,
+		RequestSource source,
+		InvalidateList invalidateList,
+		int privateTomcatSite,
+		boolean tomcatAuthentication
+	) throws IOException, SQLException {
+		checkAccessSite(conn, source, "setPrivateTomcatSiteTomcatAuthentication", privateTomcatSite);
+
+		// Update the database
+		int updateCount = conn.executeUpdate(
+			"update \"web.tomcat\".\"PrivateTomcatSite\" set \"tomcatAuthentication\"=? where httpd_site=?",
+			tomcatAuthentication,
 			privateTomcatSite
 		);
 		if(updateCount == 0) throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
