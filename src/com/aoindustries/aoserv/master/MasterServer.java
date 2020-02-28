@@ -108,7 +108,7 @@ import java.util.logging.Logger;
  */
 public abstract class MasterServer {
 
-	private static final Logger logger = LogFactory.getLogger(MasterServer.class);
+	private static final Logger logger = Logger.getLogger(MasterServer.class.getName());
 
 	private static final int SERVICE_RETRY_INTERVAL = 60 * 1000; // One minute
 
@@ -10460,6 +10460,11 @@ public abstract class MasterServer {
 	 */
 	public static void main(String[] args) {
 		try {
+			// Configure logging
+			//LogManager logManager = LogManager.getLogManager();
+			//logManager.reset();
+			//logManager.getLogger("").addHandler(TicketLoggingHandler.getHandler(, ));
+
 			// Configure the SSL
 			String trustStorePath=MasterConfiguration.getSSLTruststorePath();
 			if(trustStorePath!=null && trustStorePath.length()>0) {

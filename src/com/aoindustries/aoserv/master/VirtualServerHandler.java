@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2013, 2014, 2015, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2012, 2013, 2014, 2015, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -20,7 +20,7 @@ import java.sql.SQLException;
  */
 final public class VirtualServerHandler {
 
-	// private static final Logger logger = LogFactory.getLogger(VirtualServerHandler.class);
+	// private static final Logger logger = Logger.getLogger(VirtualServerHandler.class.getName());
 
 	private VirtualServerHandler() {
 	}

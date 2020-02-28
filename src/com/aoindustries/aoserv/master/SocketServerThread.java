@@ -40,7 +40,7 @@ import javax.net.ssl.SSLHandshakeException;
  */
 final public class SocketServerThread extends Thread implements RequestSource {
 
-	private static final Logger logger = LogFactory.getLogger(SocketServerThread.class);
+	private static final Logger logger = Logger.getLogger(SocketServerThread.class.getName());
 
 	/**
 	 * The <code>{@link TCPServer}</code> that created this <code>SocketServerThread</code>.

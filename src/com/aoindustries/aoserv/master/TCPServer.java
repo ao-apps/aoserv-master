@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013, 2018 by AO Industries, Inc.,
+ * Copyright 2000-2013, 2018, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  */
 public class TCPServer extends MasterServer implements Runnable {
 
-    private static final Logger logger = LogFactory.getLogger(TCPServer.class);
+    private static final Logger logger = Logger.getLogger(TCPServer.class.getName());
 
     /**
      * The protocol of this server.

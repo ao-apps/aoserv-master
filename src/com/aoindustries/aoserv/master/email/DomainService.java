@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -12,7 +12,6 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.LogFactory;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -40,7 +39,7 @@ import java.util.logging.Logger;
  */
 public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 
-	private static final Logger logger = LogFactory.getLogger(DomainService.class);
+	private static final Logger logger = Logger.getLogger(DomainService.class.getName());
 
 	// <editor-fold desc="GetTableHandler" defaultstate="collapsed">
 	@Override

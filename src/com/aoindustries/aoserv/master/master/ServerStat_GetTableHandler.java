@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.master.ServerStat;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.DaemonHandler;
-import com.aoindustries.aoserv.master.LogFactory;
 import com.aoindustries.aoserv.master.MasterDatabase;
 import static com.aoindustries.aoserv.master.MasterServer.getRequestConcurrency;
 import static com.aoindustries.aoserv.master.MasterServer.getRequestConnections;
@@ -44,7 +43,7 @@ import java.util.logging.Logger;
  */
 public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	private static final Logger logger = LogFactory.getLogger(ServerStat_GetTableHandler.class);
+	private static final Logger logger = Logger.getLogger(ServerStat_GetTableHandler.class.getName());
 
 	@Override
 	public Set<Table.TableID> getTableIds() {

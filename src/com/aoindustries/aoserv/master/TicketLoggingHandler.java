@@ -1,25 +1,22 @@
 /*
- * Copyright 2009-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.Account;
+import com.aoindustries.aoserv.client.reseller.Category;
 import com.aoindustries.aoserv.client.ticket.Language;
 import com.aoindustries.aoserv.client.ticket.Priority;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.logging.QueuedHandler;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.logging.Formatter;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
@@ -29,156 +26,132 @@ import java.util.logging.LogRecord;
  * 
  * @author  AO Industries, Inc.
  */
-final public class TicketLoggingHandler extends QueuedHandler {
-
-	private static final List<TicketLoggingHandler> handlers = new ArrayList<>();
-
-	/**
-	 * Only one TicketLoggingHandler will be created per unique summaryPrefix and category.
-	 */
-	public static Handler getHandler(String summaryPrefix, int category) {
-		synchronized(handlers) {
-			for(TicketLoggingHandler handler : handlers) {
-				if(
-					handler.summaryPrefix.equals(summaryPrefix)
-					&& handler.category==category
-				) return handler;
-			}
-			TicketLoggingHandler handler = new TicketLoggingHandler(summaryPrefix, category);
-			handlers.add(handler);
-			return handler;
-		}
-	}
+public class TicketLoggingHandler extends QueuedHandler {
 
 	private final String summaryPrefix;
 	private final int category;
 
-	private TicketLoggingHandler(String summaryPrefix, int category) {
-		super(
-			"Console logger for "+summaryPrefix,
-			"Ticket logger for "+summaryPrefix
-		);
+	/**
+	 * Public constructor required so can be specified in <code>logging.properties</code>.
+	 */
+	public TicketLoggingHandler() {
+		this("AOServ Master", Category.AOSERV_MASTER_PKEY);
+	}
+
+	public TicketLoggingHandler(String summaryPrefix, int category) {
+		super("Ticket logger for " + summaryPrefix);
 		this.summaryPrefix = summaryPrefix;
 		this.category = category;
 	}
 
 	@Override
-	protected boolean useCustomLogging(LogRecord record) {
-		return record.getLevel().intValue()>Level.FINE.intValue();
-	}
+	protected void backgroundPublish(Formatter formatter, LogRecord record, String fullReport) throws IOException, SQLException {
+		Account.Name rootAccounting = AccountHandler.getRootAccount();
+		Level level = record.getLevel();
+		// Generate the summary from level, prefix classname, method
+		StringBuilder tempSB = new StringBuilder();
+		tempSB.append('[').append(level).append(']');
+		if(summaryPrefix != null && summaryPrefix.length() > 0) tempSB.append(' ').append(summaryPrefix);
+		tempSB.append(" - ").append(record.getSourceClassName()).append(" - ").append(record.getSourceMethodName());
+		String summary = tempSB.toString();
 
-	@Override
-	protected void doCustomLogging(Formatter formatter, LogRecord record, String fullReport) {
+		// Start the transaction
+		InvalidateList invalidateList = new InvalidateList();
+		DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
 		try {
-			Account.Name rootAccounting = AccountHandler.getRootAccount();
-			Level level = record.getLevel();
-			// Generate the summary from level, prefix classname, method
-			StringBuilder tempSB = new StringBuilder();
-			tempSB.append('[').append(level).append(']');
-			if(summaryPrefix!=null && summaryPrefix.length()>0) tempSB.append(' ').append(summaryPrefix);
-			tempSB.append(" - ").append(record.getSourceClassName()).append(" - ").append(record.getSourceMethodName());
-			String summary = tempSB.toString();
-
-			// Start the transaction
-			InvalidateList invalidateList=new InvalidateList();
-			DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
+			boolean connRolledBack = false;
 			try {
-				boolean connRolledBack=false;
-				try {
-					// Look for an existing ticket to append
-					int existingTicket = conn.executeIntQuery(
-						"select\n"
-						+ "  coalesce(\n"
-						+ "    (\n"
-						+ "      select\n"
-						+ "        id\n"
-						+ "      from\n"
-						+ "        ticket.\"Ticket\"\n"
-						+ "      where\n"
-						+ "        status in (?,?,?)\n"
-						+ "        and brand=?\n"
-						+ "        and accounting=?\n"
-						+ "        and language=?\n"
-						+ "        and ticket_type=?\n"
-						+ "        and summary=?\n"
-						+ "        and category=?\n"
-						+ "      order by\n"
-						+ "        open_date desc,\n"
-						+ "        id desc\n"
-						+ "      limit 1\n"
-						+ "    ), -1\n"
-						+ "  )",
-						Status.OPEN,
-						Status.HOLD,
-						Status.BOUNCED,
+				// Look for an existing ticket to append
+				int existingTicket = conn.executeIntQuery(
+					"select\n"
+					+ "  coalesce(\n"
+					+ "    (\n"
+					+ "      select\n"
+					+ "        id\n"
+					+ "      from\n"
+					+ "        ticket.\"Ticket\"\n"
+					+ "      where\n"
+					+ "        status in (?,?,?)\n"
+					+ "        and brand=?\n"
+					+ "        and accounting=?\n"
+					+ "        and language=?\n"
+					+ "        and ticket_type=?\n"
+					+ "        and summary=?\n"
+					+ "        and category=?\n"
+					+ "      order by\n"
+					+ "        open_date desc,\n"
+					+ "        id desc\n"
+					+ "      limit 1\n"
+					+ "    ), -1\n"
+					+ "  )",
+					Status.OPEN,
+					Status.HOLD,
+					Status.BOUNCED,
+					rootAccounting,
+					rootAccounting,
+					Language.EN,
+					TicketType.LOGS,
+					summary,
+					category
+				);
+				if(existingTicket != -1) {
+					TicketHandler.addTicketAnnotation(
+						conn,
+						invalidateList,
+						existingTicket,
+						null,
+						com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
+						fullReport
+					);
+				} else {
+					// The priority depends on the log level
+					String priorityName;
+					int intLevel = level.intValue();
+					if     (intLevel <= Level.CONFIG .intValue()) priorityName = Priority.LOW;    // FINE    < level <= CONFIG
+					else if(intLevel <= Level.INFO   .intValue()) priorityName = Priority.NORMAL; // CONFIG  < level <=INFO
+					else if(intLevel <= Level.WARNING.intValue()) priorityName = Priority.HIGH;   // INFO    < level <=WARNING
+					else                                          priorityName = Priority.URGENT; // WARNING < level
+					TicketHandler.addTicket(
+						conn,
+						invalidateList,
+						rootAccounting,
 						rootAccounting,
 						rootAccounting,
 						Language.EN,
+						null,
+						category,
 						TicketType.LOGS,
+						null,
 						summary,
-						category
+						fullReport,
+						null,
+						priorityName,
+						null,
+						Status.OPEN,
+						-1,
+						Collections.emptySet(),
+						"",
+						""
 					);
-					if(existingTicket!=-1) {
-						TicketHandler.addTicketAnnotation(
-							conn,
-							invalidateList,
-							existingTicket,
-							null,
-							com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
-							fullReport
-						);
-					} else {
-						// The priority depends on the log level
-						String priorityName;
-						int intLevel = level.intValue();
-						if(intLevel<=Level.CONFIG.intValue()) priorityName = Priority.LOW;           // FINE < level <= CONFIG
-						else if(intLevel<=Level.INFO.intValue()) priorityName = Priority.NORMAL;     // CONFIG < level <=INFO
-						else if(intLevel<=Level.WARNING.intValue()) priorityName = Priority.HIGH;    // INFO < level <=WARNING
-						else priorityName = Priority.URGENT;                                         // WARNING < level
-						TicketHandler.addTicket(
-							conn,
-							invalidateList,
-							rootAccounting,
-							rootAccounting,
-							rootAccounting,
-							Language.EN,
-							null,
-							category,
-							TicketType.LOGS,
-							null,
-							summary,
-							fullReport,
-							null,
-							priorityName,
-							null,
-							Status.OPEN,
-							-1,
-							Collections.emptySet(),
-							"",
-							""
-						);
-					}
-				} catch(RuntimeException | IOException err) {
-					if(conn.rollback()) {
-						connRolledBack=true;
-						invalidateList=null;
-					}
-					throw err;
-				} catch(SQLException err) {
-					if(conn.rollbackAndClose()) {
-						connRolledBack=true;
-						invalidateList=null;
-					}
-					throw err;
-				} finally {
-					if(!connRolledBack && !conn.isClosed()) conn.commit();
 				}
+			} catch(RuntimeException | IOException err) {
+				if(conn.rollback()) {
+					connRolledBack = true;
+					invalidateList = null;
+				}
+				throw err;
+			} catch(SQLException err) {
+				if(conn.rollbackAndClose()) {
+					connRolledBack = true;
+					invalidateList = null;
+				}
+				throw err;
 			} finally {
-				conn.releaseConnection();
+				if(!connRolledBack && !conn.isClosed()) conn.commit();
 			}
-			MasterServer.invalidateTables(invalidateList, null);
-		} catch(Exception err) {
-			ErrorPrinter.printStackTraces(err);
+		} finally {
+			conn.releaseConnection();
 		}
+		MasterServer.invalidateTables(invalidateList, null);
 	}
 }

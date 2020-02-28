@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  */
 public final class BackupHandler {
 
-    private static final Logger logger = LogFactory.getLogger(BackupHandler.class);
+    private static final Logger logger = Logger.getLogger(BackupHandler.class.getName());
 
     private BackupHandler() {
     }

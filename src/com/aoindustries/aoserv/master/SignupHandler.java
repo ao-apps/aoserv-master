@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -20,6 +20,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * The <code>SignupHandler</code> handles all the accesses to the signup tables.
@@ -28,7 +29,9 @@ import java.util.logging.Level;
  */
 final public class SignupHandler {
 
-    private SignupHandler() {
+	private static final Logger logger = Logger.getLogger(SignupHandler.class.getName());
+
+	private SignupHandler() {
     }
 
     /**
@@ -188,7 +191,7 @@ final public class SignupHandler {
                             } catch(ThreadDeath TD) {
                                 throw TD;
                             } catch(Throwable T) {
-                                LogFactory.getLogger(getClass()).log(Level.SEVERE, null, T);
+                                logger.log(Level.SEVERE, null, T);
                             }
                         }
 
@@ -196,7 +199,8 @@ final public class SignupHandler {
                         public int getCronJobThreadPriority() {
                             return Thread.NORM_PRIORITY-2;
                         }
-                    }, LogFactory.getLogger(SignupHandler.class)
+                    },
+					logger
                 );
                 cronDaemonAdded = true;
                 System.out.println("Done");

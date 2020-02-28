@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -38,7 +38,7 @@ import java.util.logging.Logger;
  */
 final public class ClusterHandler implements CronJob {
 
-    private static final Logger logger = LogFactory.getLogger(ClusterHandler.class);
+    private static final Logger logger = Logger.getLogger(ClusterHandler.class.getName());
 
     /**
      * The maximum time for a processing pass.
@@ -352,11 +352,11 @@ final public class ClusterHandler implements CronJob {
 										);
 									} catch(Exception exception) {
 										if(c==9) throw exception;
-										LogFactory.getLogger(ClusterHandler.class).log(Level.SEVERE, null, exception);
+										logger.log(Level.SEVERE, null, exception);
 										try {
 											Thread.sleep(2000);
 										} catch(InterruptedException err) {
-											LogFactory.getLogger(ClusterHandler.class).log(Level.WARNING, null, err);
+											logger.log(Level.WARNING, null, err);
 										}
 									}
 								}

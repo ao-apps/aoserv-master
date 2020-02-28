@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -35,7 +35,7 @@ import java.util.logging.Logger;
  */
 final public class FailoverHandler implements CronJob {
 
-	private static final Logger logger = LogFactory.getLogger(FailoverHandler.class);
+	private static final Logger logger = Logger.getLogger(FailoverHandler.class.getName());
 
 	public static int addFileReplicationLog(
 		DatabaseConnection conn,

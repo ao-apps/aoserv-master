@@ -1,11 +1,10 @@
 /*
- * Copyright 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.tlds;
 
-import com.aoindustries.aoserv.master.LogFactory;
 import com.aoindustries.aoserv.master.MasterDatabase;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
@@ -33,7 +32,7 @@ import java.util.logging.Logger;
  */
 public class TopLevelDomainService implements MasterService {
 
-	private static final Logger logger = LogFactory.getLogger(TopLevelDomainService.class);
+	private static final Logger logger = Logger.getLogger(TopLevelDomainService.class.getName());
 
 	@Override
 	public void start() {

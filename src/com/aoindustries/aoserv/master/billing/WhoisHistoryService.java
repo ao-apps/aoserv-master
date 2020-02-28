@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -13,7 +13,6 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.InvalidateList;
-import com.aoindustries.aoserv.master.LogFactory;
 import com.aoindustries.aoserv.master.MasterDatabase;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
@@ -64,7 +63,7 @@ import java.util.logging.Logger;
 //       IpAddress.hostname (for unmanaged servers, too?
 final public class WhoisHistoryService implements MasterService {
 
-	private static final Logger logger = LogFactory.getLogger(WhoisHistoryService.class);
+	private static final Logger logger = Logger.getLogger(WhoisHistoryService.class.getName());
 
 	private static final boolean DEBUG = false;
 
