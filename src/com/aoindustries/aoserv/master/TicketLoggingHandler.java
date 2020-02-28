@@ -8,7 +8,6 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.reseller.Category;
 import com.aoindustries.aoserv.client.ticket.Language;
-import com.aoindustries.aoserv.client.ticket.Priority;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -105,12 +104,7 @@ public class TicketLoggingHandler extends QueuedHandler {
 					);
 				} else {
 					// The priority depends on the log level
-					String priorityName;
-					int intLevel = level.intValue();
-					if     (intLevel <= Level.CONFIG .intValue()) priorityName = Priority.LOW;    // FINE    < level <= CONFIG
-					else if(intLevel <= Level.INFO   .intValue()) priorityName = Priority.NORMAL; // CONFIG  < level <=INFO
-					else if(intLevel <= Level.WARNING.intValue()) priorityName = Priority.HIGH;   // INFO    < level <=WARNING
-					else                                          priorityName = Priority.URGENT; // WARNING < level
+					String priorityName = com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.getPriorityName(level);
 					TicketHandler.addTicket(
 						conn,
 						invalidateList,
