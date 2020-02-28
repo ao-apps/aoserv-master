@@ -20,7 +20,6 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * The <code>AOServDaemonHandler</code> handles all the accesses to the daemons.
@@ -28,8 +27,6 @@ import java.util.logging.Logger;
  * @author  AO Industries, Inc.
  */
 final public class DaemonHandler {
-
-	private static final Logger logger = Logger.getLogger(DaemonHandler.class.getName());
 
 	private DaemonHandler() {
 	}
@@ -156,7 +153,7 @@ final public class DaemonHandler {
 		synchronized(DaemonHandler.class) {
 			AOServDaemonConnector O=connectors.get(I);
 			if(O!=null) return O;
-			AOServDaemonConnector conn=AOServDaemonConnector.getConnector(
+			AOServDaemonConnector conn = AOServDaemonConnector.getConnector(
 				getDaemonConnectAddress(database, linuxServer),
 				MasterConfiguration.getLocalIp(),
 				getDaemonConnectorPort(database, linuxServer),
@@ -165,8 +162,7 @@ final public class DaemonHandler {
 				getDaemonConnectorPoolSize(database, linuxServer),
 				AOPool.DEFAULT_MAX_CONNECTION_AGE,
 				MasterConfiguration.getSSLTruststorePath(),
-				MasterConfiguration.getSSLTruststorePassword(),
-				logger
+				MasterConfiguration.getSSLTruststorePassword()
 			);
 			connectors.put(I, conn);
 			return conn;
