@@ -19,8 +19,8 @@ import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.net.Email;
-import com.aoindustries.util.StringUtility;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -256,7 +256,7 @@ final public class TicketHandler /*implements Runnable*/ {
             status,
             statusTimeout==-1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(statusTimeout),
 			// TODO: Array
-            StringUtility.join(contactEmails, ", "),
+            Strings.join(contactEmails, ", "),
             contactPhoneNumbers,
             internalNotes
         );
@@ -866,7 +866,7 @@ final public class TicketHandler /*implements Runnable*/ {
             ActionType.SET_CONTACT_EMAILS,
             oldValue,
 			// TODO: Array
-            StringUtility.join(contactEmails, ", ")
+            Strings.join(contactEmails, ", ")
         );
 
         // Notify all clients of the update
@@ -1582,11 +1582,11 @@ final public class TicketHandler /*implements Runnable*/ {
     /*
     public static void sendEmail(String to, String subject, String message, String cellMessage) {
         if(to!=null) {
-            List<String> tos = StringUtility.splitStringCommaSpace(to);
+            List<String> tos = Strings.splitStringCommaSpace(to);
             int len = tos.size();
             for (int i = 0; i<len; i++) {
                 try {
-                    String[] orAddys=StringUtility.splitString(tos.get(i), '|');
+                    String[] orAddys=Strings.splitString(tos.get(i), '|');
                     if(orAddys.length>0) {
                         MailMessage msg=new MailMessage(MasterConfiguration.getTicketSmtpServer());
                         msg.from("support@aoindustries.com");
@@ -1774,7 +1774,7 @@ final public class TicketHandler /*implements Runnable*/ {
                                     String password=MasterConfiguration.getTicketSource("imap", c, "password");
                                     String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
                                     String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
-                                    List<String> ignore_recipients=StringUtility.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
+                                    List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
                                     String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
                                     if(assign_to!=null) assign_to=assign_to.trim();
 
@@ -1967,18 +1967,18 @@ final public class TicketHandler /*implements Runnable*/ {
             }
         } else if(content instanceof String) {
             if(SB.length()>0) SB.append(PART_SEPARATOR);
-            SB.append(StringUtility.wordWrap((String)content, 100));
+            SB.append(Strings.wordWrap((String)content, 100));
         } else if(content instanceof Part) {
             Part part=(Part)content;
             if(part.isMimeType("multipart/*")) {
                 getMessageBody0(part.getContent(), SB);
             } else {
                 if(SB.length()>0) SB.append(PART_SEPARATOR);
-                SB.append(StringUtility.wordWrap(part.getContent().toString(), 100));
+                SB.append(Strings.wordWrap(part.getContent().toString(), 100));
             }
         } else {
             if(SB.length()>0) SB.append(PART_SEPARATOR);
-            SB.append(StringUtility.wordWrap(content.toString(), 100));
+            SB.append(Strings.wordWrap(content.toString(), 100));
         }
     }*/
     // </editor-fold>

@@ -25,9 +25,9 @@ import com.aoindustries.io.FifoFile;
 import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.io.stream.StreamableOutput;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.sql.AOConnectionPool;
 import com.aoindustries.util.BufferManager;
-import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.ThreadUtility;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -96,7 +96,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 			addStat(objs, ServerStat.DAEMON_DOWN_COUNT, Integer.toString(DaemonHandler.getDownDaemonCount()), "Number of daemons that are currently unavailable");
 			addStat(objs, ServerStat.DAEMON_MAX_CONCURRENCY, Integer.toString(DaemonHandler.getDaemonMaxConcurrency()), "Peak number of active daemon connections");
 			addStat(objs, ServerStat.DAEMON_POOL_SIZE, Integer.toString(DaemonHandler.getDaemonPoolSize()), "Maximum number of daemon connections");
-			addStat(objs, ServerStat.DAEMON_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
+			addStat(objs, ServerStat.DAEMON_TOTAL_TIME, Strings.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
 			addStat(objs, ServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
 
 			AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
@@ -105,7 +105,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 			addStat(objs, ServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
 			addStat(objs, ServerStat.DB_MAX_CONCURRENCY, Integer.toString(dbPool.getMaxConcurrency()), "Peak number of active database connections");
 			addStat(objs, ServerStat.DB_POOL_SIZE, Integer.toString(dbPool.getPoolSize()), "Maximum number of database connections");
-			addStat(objs, ServerStat.DB_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
+			addStat(objs, ServerStat.DB_TOTAL_TIME, Strings.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
 			addStat(objs, ServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
 
 			FifoFile entropyFile=RandomHandler.getFifoFile();
@@ -121,17 +121,17 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 			addStat(objs, ServerStat.MEMORY_FREE, Long.toString(Runtime.getRuntime().freeMemory()), "Free virtual machine memory in bytes");
 			addStat(objs, ServerStat.MEMORY_TOTAL, Long.toString(Runtime.getRuntime().totalMemory()), "Total virtual machine memory in bytes");
 
-			addStat(objs, ServerStat.PROTOCOL_VERSION, StringUtility.join(AoservProtocol.Version.values(), "\n"), "Supported AoservProtocol version numbers");
+			addStat(objs, ServerStat.PROTOCOL_VERSION, Strings.join(AoservProtocol.Version.values(), "\n"), "Supported AoservProtocol version numbers");
 
 			addStat(objs, ServerStat.REQUEST_CONCURRENCY, Integer.toString(getRequestConcurrency()), "Current number of client requests being processed");
 			addStat(objs, ServerStat.REQUEST_CONNECTIONS, Long.toString(getRequestConnections()), "Number of connections received from clients");
 			addStat(objs, ServerStat.REQUEST_MAX_CONCURRENCY, Integer.toString(getRequestMaxConcurrency()), "Peak number of client requests being processed");
-			addStat(objs, ServerStat.REQUEST_TOTAL_TIME, StringUtility.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
+			addStat(objs, ServerStat.REQUEST_TOTAL_TIME, Strings.getDecimalTimeLengthString(getRequestTotalTime()), "Total time spent processing client requests");
 			addStat(objs, ServerStat.REQUEST_TRANSACTIONS, Long.toString(getRequestTransactions()), "Number of client requests processed");
 
 			addStat(objs, ServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
 
-			addStat(objs, ServerStat.UPTIME, StringUtility.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
+			addStat(objs, ServerStat.UPTIME, Strings.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
 		} catch(IOException err) {
 			logger.log(Level.SEVERE, null, err);
 			String message = err.getMessage();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -15,7 +15,7 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
-import com.aoindustries.util.StringUtility;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.i18n.Monies;
 import java.io.IOException;
@@ -498,7 +498,7 @@ final public class BillingTransactionHandler {
 
 			// description words
 			if (criteria.getDescription() != null && criteria.getDescription().length() > 0) {
-				String[] descriptionWords = StringUtility.splitString(criteria.getDescription());
+				String[] descriptionWords = Strings.splitString(criteria.getDescription());
 				for (String descriptionWord : descriptionWords) {
 					sql.append("  AND lower(tr.description) like ('%' || lower(?) || '%')\n");
 					params.add(descriptionWord);
@@ -512,7 +512,7 @@ final public class BillingTransactionHandler {
 
 			// payment_info words
 			if (criteria.getPaymentInfo() != null && criteria.getPaymentInfo().length() > 0) {
-				String[] paymentInfoWords = StringUtility.splitString(criteria.getPaymentInfo());
+				String[] paymentInfoWords = Strings.splitString(criteria.getPaymentInfo());
 				for (String paymentInfoWord : paymentInfoWords) {
 					sql.append("  AND lower(tr.payment_info) like ('%' || lower(?) || '%')\n");
 					params.add(paymentInfoWord);

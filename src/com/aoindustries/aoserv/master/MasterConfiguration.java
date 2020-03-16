@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8,9 +8,9 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.io.AOPool;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.util.PropertiesUtils;
-import com.aoindustries.util.StringUtility;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -54,7 +54,7 @@ public final class MasterConfiguration {
     }
 
     public static List<String> getProtocols() throws IOException {
-        return StringUtility.splitStringCommaSpace(getProperty("aoserv.master.protocols"));
+        return Strings.splitStringCommaSpace(getProperty("aoserv.master.protocols"));
     }
 
     /**
@@ -69,12 +69,12 @@ public final class MasterConfiguration {
     }
 
     public static List<String> getBinds(String protocol) throws IOException {
-        return StringUtility.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
+        return Strings.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
     }
 
     public static List<Integer> getPorts(String protocol) throws IOException {
         String ports = getProperty("aoserv.master."+protocol+".ports");
-        List<String> strings = StringUtility.splitStringCommaSpace(ports);
+        List<String> strings = Strings.splitStringCommaSpace(ports);
         List<Integer> ints = new ArrayList<>(strings.size());
         for(int c=0,len=strings.size();c<len;c++) {
             ints.add(Integer.parseInt(strings.get(c)));

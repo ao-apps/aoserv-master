@@ -45,6 +45,7 @@ import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.IoUtils;
 import com.aoindustries.io.stream.StreamableInput;
 import com.aoindustries.io.stream.StreamableOutput;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.HostAddress;
@@ -60,7 +61,6 @@ import com.aoindustries.util.IntList;
 import com.aoindustries.util.MinimalList;
 import com.aoindustries.util.PolymorphicMultimap;
 import com.aoindustries.util.SortedArrayList;
-import com.aoindustries.util.StringUtility;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
@@ -3148,7 +3148,7 @@ public abstract class MasterServer {
 														type,
 														fromAddress,
 														summary,
-														StringUtility.firstLineOnly(details, 60),
+														Strings.firstLineOnly(details, 60),
 														clientPriority,
 														contactEmails,
 														contactPhoneNumbers
@@ -3565,7 +3565,7 @@ public abstract class MasterServer {
 												"add_ticket_annotation",
 												ticketID,
 												summary,
-												StringUtility.firstLineOnly(details, 60)
+												Strings.firstLineOnly(details, 60)
 											);
 											TicketHandler.addTicketAnnotation(
 												conn,

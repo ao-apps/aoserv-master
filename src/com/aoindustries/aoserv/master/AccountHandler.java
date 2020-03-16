@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -17,10 +17,10 @@ import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.net.Email;
 import com.aoindustries.util.IntList;
 import com.aoindustries.util.SortedArrayList;
-import com.aoindustries.util.StringUtility;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
@@ -527,11 +527,11 @@ final public class AccountHandler {
 			sendInvoice,
 			billingContact,
 			// TODO: Remove once set table validated
-			StringUtility.join(billingEmail, ", "),
+			Strings.join(billingEmail, ", "),
 			billingEmailFormat,
 			technicalContact,
 			// TODO: Remove once set table validated
-			StringUtility.join(technicalEmail, ", "),
+			Strings.join(technicalEmail, ", "),
 			technicalEmailFormat
 		);
 		short index = 0;
@@ -1649,7 +1649,7 @@ final public class AccountHandler {
 							List<String> uniqueAddresses=new ArrayList<>();
 							foundAddresses.clear();
 							// billing contacts
-							List<String> addresses=StringUtility.splitStringCommaSpace(results.getString(2));
+							List<String> addresses=Strings.splitStringCommaSpace(results.getString(2));
 							for (String address : addresses) {
 								String addy = address.toLowerCase();
 								if(!foundAddresses.contains(addy)) {
@@ -1658,7 +1658,7 @@ final public class AccountHandler {
 								}
 							}
 							// technical contacts
-							addresses=StringUtility.splitStringCommaSpace(results.getString(3));
+							addresses=Strings.splitStringCommaSpace(results.getString(3));
 							for (String address : addresses) {
 								String addy = address.toLowerCase();
 								if(!foundAddresses.contains(addy)) {

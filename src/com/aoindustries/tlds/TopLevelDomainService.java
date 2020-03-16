@@ -13,7 +13,7 @@ import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.util.StringUtility;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.util.logging.ProcessTimer;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -161,7 +161,7 @@ public class TopLevelDomainService implements MasterService {
 										snapshot.isBootstrap(),
 										snapshot.getLastUpdateSuccessful(),
 										new Timestamp(snapshot.getLastSuccessfulUpdateTime()),
-										StringUtility.join(snapshot.getComments(), "\n"),
+										Strings.join(snapshot.getComments(), "\n"),
 										inserted - delete_for_update,
 										delete_for_update,
 										deleted

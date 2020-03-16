@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -720,8 +720,8 @@ public final class VirtualServer implements Comparable<VirtualServer> {
         if(processorCores!=other.processorCores) return false;
         if(processorWeight!=other.processorWeight) return false;
         if(virtualDisks.length!=other.virtualDisks.length) return false;
-        if(!StringUtility.equals(primaryServerHostname, other.primaryServerHostname)) return false;
-        if(!StringUtility.equals(secondaryServerHostname, other.secondaryServerHostname)) return false;
+        if(!Strings.equals(primaryServerHostname, other.primaryServerHostname)) return false;
+        if(!Strings.equals(secondaryServerHostname, other.secondaryServerHostname)) return false;
         for(int c=0;c<virtualDisks.length;c++) {
             if(!virtualDisks[c].equals(other.virtualDisks[c])) return false;
         }

@@ -1,12 +1,12 @@
 /*
- * Copyright 2007-2013, 2019 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master.cluster;
 
+import com.aoindustries.lang.Strings;
 import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.util.StringUtility;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -874,8 +874,8 @@ public final class OriginalClusterOptimizer {
         }
         System.out.println("Servers:");
         System.out.println("    Total Processor Cores........: " + totalProcessorCores);
-        System.out.println("    Total RAM....................: " + totalRam + " MB (" + StringUtility.getApproximateSize(totalRam*1048576)+")");
-        System.out.println("    Total Disk Space.............: " + totalDisk + " extents (" + StringUtility.getApproximateSize(totalDisk*EXTENTS_SIZE)+")");
+        System.out.println("    Total RAM....................: " + totalRam + " MB (" + Strings.getApproximateSize(totalRam*1048576)+")");
+        System.out.println("    Total Disk Space.............: " + totalDisk + " extents (" + Strings.getApproximateSize(totalDisk*EXTENTS_SIZE)+")");
         System.out.println("    Total Disk Arrays............: " + totalDiskArrays);
 
         List<VirtualServer> virtualServers = getVirtualServers();
@@ -893,8 +893,8 @@ public final class OriginalClusterOptimizer {
         }
         System.out.println("Virtual Servers:");
         System.out.println("    Total Minimum Processor Cores: " + totalVirtualProcessorCores);
-        System.out.println("    Total Minimum RAM............: " + totalMinimumRam + " MB (" + StringUtility.getApproximateSize(totalMinimumRam*1048576)+")");
-        System.out.println("    Total Virtual Disk Space.....: " + totalVirtualDisk + " extents (" + StringUtility.getApproximateSize(totalVirtualDisk*2*EXTENTS_SIZE)+")");
+        System.out.println("    Total Minimum RAM............: " + totalMinimumRam + " MB (" + Strings.getApproximateSize(totalMinimumRam*1048576)+")");
+        System.out.println("    Total Virtual Disk Space.....: " + totalVirtualDisk + " extents (" + Strings.getApproximateSize(totalVirtualDisk*2*EXTENTS_SIZE)+")");
         System.out.println("    Total Virtual Disk Arrays....: " + totalVirtualDiskArrays);
         
         /*

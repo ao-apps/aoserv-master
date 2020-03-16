@@ -12,12 +12,12 @@ import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableInput;
 import com.aoindustries.io.stream.StreamableOutput;
+import com.aoindustries.lang.Strings;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.security.Identifier;
 import com.aoindustries.util.IntArrayList;
 import com.aoindustries.util.IntList;
-import com.aoindustries.util.StringUtility;
 import com.aoindustries.validation.ValidationException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -505,7 +505,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 							"Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
 							+protocolVersion
 							+", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-							+StringUtility.join(AoservProtocol.Version.values(), ", ")
+							+Strings.join(AoservProtocol.Version.values(), ", ")
 							+".  Please upgrade the client code to match the server."
 						);
 						out.flush();

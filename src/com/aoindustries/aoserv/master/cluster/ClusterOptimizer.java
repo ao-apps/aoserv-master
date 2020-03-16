@@ -1,12 +1,12 @@
 /*
- * Copyright 2007-2009, 2019 by AO Industries, Inc.,
+ * Copyright 2007-2009, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master.cluster;
 
+import com.aoindustries.lang.Strings;
 import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.util.StringUtility;
 
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
@@ -83,8 +83,8 @@ public final class ClusterOptimizer {
 		}
 		System.out.println("Servers:");
 		System.out.println("    Total Processor Cores: " + totalProcessorCores);
-		System.out.println("    Total RAM............: " + totalRam + " MB (" + StringUtility.getApproximateSize(totalRam*1048576)+')');
-		System.out.println("    Total Disk Space.....: " + totalDisk + " extents (" + StringUtility.getApproximateSize(totalDisk*EXTENTS_SIZE)+')');
+		System.out.println("    Total RAM............: " + totalRam + " MB (" + Strings.getApproximateSize(totalRam*1048576)+')');
+		System.out.println("    Total Disk Space.....: " + totalDisk + " extents (" + Strings.getApproximateSize(totalDisk*EXTENTS_SIZE)+')');
 		System.out.println("    Total Disk Arrays....: " + totalDiskArrays);
 
 		long totalVirtualProcessorAllocation = 0;
@@ -101,8 +101,8 @@ public final class ClusterOptimizer {
 		}
 		System.out.println("Virtual Servers:");
 		System.out.println("    Total Processor Cores: " + SQLUtility.formatDecimal3(totalVirtualProcessorAllocation));
-		System.out.println("    Total Primary RAM....: " + totalMinimumRam + " MB (" + StringUtility.getApproximateSize(totalMinimumRam*1048576)+')');
-		System.out.println("    Total Disk Space.....: " + totalVirtualDisk + " extents (" + StringUtility.getApproximateSize(totalVirtualDisk*EXTENTS_SIZE)+')');
+		System.out.println("    Total Primary RAM....: " + totalMinimumRam + " MB (" + Strings.getApproximateSize(totalMinimumRam*1048576)+')');
+		System.out.println("    Total Disk Space.....: " + totalVirtualDisk + " extents (" + Strings.getApproximateSize(totalVirtualDisk*EXTENTS_SIZE)+')');
 		System.out.println("    Total Disk Arrays....: " + SQLUtility.formatDecimal3(totalVirtualDiskWeight));
 	}
 
@@ -160,7 +160,7 @@ public final class ClusterOptimizer {
 					System.out.println("            Primary RAM.....: "+virtualServer.primaryRam);
 					for(VirtualDisk virtualDisk : virtualServer.virtualDisks) {
 						System.out.println("            Device: "+virtualDisk.device);
-						System.out.println("                32MB Extents..: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
+						System.out.println("                32MB Extents..: "+virtualDisk.extents+" ("+Strings.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
 						System.out.println("                Primary Type..: "+virtualDisk.primaryDiskType);
 						System.out.println("                Primary Weight: "+SQLUtility.formatDecimal3(virtualDisk.primaryWeight));
 						System.out.println("                Primary Device: "+virtualDisk.selectedPrimaryDisk.device);
@@ -185,7 +185,7 @@ public final class ClusterOptimizer {
 						System.out.println("                Secondary RAM...: "+secondaryVirtualServer.secondaryRam);
 						for(VirtualDisk virtualDisk : secondaryVirtualServer.virtualDisks) {
 							System.out.println("                Device: "+virtualDisk.device);
-							System.out.println("                    32MB Extents....: "+virtualDisk.extents+" ("+StringUtility.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
+							System.out.println("                    32MB Extents....: "+virtualDisk.extents+" ("+Strings.getApproximateSize(virtualDisk.extents*EXTENTS_SIZE)+')');
 							System.out.println("                    Secondary Type..: "+virtualDisk.secondaryDiskType);
 							System.out.println("                    Secondary Weight: "+SQLUtility.formatDecimal3(virtualDisk.secondaryWeight));
 							System.out.println("                    Secondary Device: "+virtualDisk.selectedSecondaryDisk.device);
