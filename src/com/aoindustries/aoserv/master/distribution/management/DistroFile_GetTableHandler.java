@@ -1,5 +1,5 @@
 /*
- * Copyright 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -14,9 +14,9 @@ import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
+import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
-import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;

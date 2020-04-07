@@ -11,15 +11,14 @@ import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
+import com.aoindustries.collections.IntList;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.BitRateProvider;
 import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.HostAddress;
-import com.aoindustries.util.IntList;
 import com.aoindustries.util.Tuple2;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -319,22 +318,12 @@ final public class FailoverHandler implements CronJob {
 	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==45 && hour==1;
 
 	@Override
-	public Schedule getCronJobSchedule() {
+	public Schedule getSchedule() {
 		return schedule;
 	}
 
 	@Override
-	public CronJobScheduleMode getCronJobScheduleMode() {
-		return CronJobScheduleMode.SKIP;
-	}
-
-	@Override
-	public String getCronJobName() {
-		return "FailoverHandler";
-	}
-
-	@Override
-	public int getCronJobThreadPriority() {
+	public int getThreadPriority() {
 		return Thread.NORM_PRIORITY-1;
 	}
 
@@ -355,7 +344,7 @@ final public class FailoverHandler implements CronJob {
 	}
 
 	@Override
-	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
 			MasterDatabase.getDatabase().executeUpdate("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
 		} catch(RuntimeException | IOException | SQLException T) {

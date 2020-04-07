@@ -15,7 +15,6 @@ import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -1642,22 +1641,17 @@ final public class TicketHandler /*implements Runnable*/ {
                 CronDaemon.addCronJob(
                     new CronJob() {
 						@Override
-                        public Schedule getCronJobSchedule() {
+                        public Schedule getSchedule() {
                             return schedule;
                         }
 
 						@Override
-                        public CronJobScheduleMode getCronJobScheduleMode() {
-                            return CronJobScheduleMode.SKIP;
-                        }
-
-						@Override
-                        public String getCronJobName() {
+                        public String getName() {
                             return "Clean log ticket.Ticket";
                         }
 
 						@Override
-                        public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                        public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
@@ -1710,7 +1704,7 @@ final public class TicketHandler /*implements Runnable*/ {
                         }
 
 						@Override
-                        public int getCronJobThreadPriority() {
+                        public int getThreadPriority() {
                             return Thread.NORM_PRIORITY-2;
                         }
                     },

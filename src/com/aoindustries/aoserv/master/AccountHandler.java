@@ -15,12 +15,12 @@ import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.payment.CountryCode;
 import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.collections.IntList;
+import com.aoindustries.collections.SortedArrayList;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Strings;
 import com.aoindustries.net.Email;
-import com.aoindustries.util.IntList;
-import com.aoindustries.util.SortedArrayList;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
@@ -1649,7 +1649,7 @@ final public class AccountHandler {
 							List<String> uniqueAddresses=new ArrayList<>();
 							foundAddresses.clear();
 							// billing contacts
-							List<String> addresses=Strings.splitStringCommaSpace(results.getString(2));
+							List<String> addresses=Strings.splitCommaSpace(results.getString(2));
 							for (String address : addresses) {
 								String addy = address.toLowerCase();
 								if(!foundAddresses.contains(addy)) {
@@ -1658,7 +1658,7 @@ final public class AccountHandler {
 								}
 							}
 							// technical contacts
-							addresses=Strings.splitStringCommaSpace(results.getString(3));
+							addresses=Strings.splitCommaSpace(results.getString(3));
 							for (String address : addresses) {
 								String addy = address.toLowerCase();
 								if(!foundAddresses.contains(addy)) {

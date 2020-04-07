@@ -9,7 +9,6 @@ import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.logging.ProcessTimer;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -79,27 +77,17 @@ final public class ReportGenerator implements CronJob {
 		&& hour==BackupReport.BACKUP_REPORT_HOUR;
 
 	@Override
-	public Schedule getCronJobSchedule() {
+	public Schedule getSchedule() {
 		return schedule;
 	}
 
 	@Override
-	public CronJobScheduleMode getCronJobScheduleMode() {
-		return CronJobScheduleMode.SKIP;
-	}
-
-	@Override
-	public String getCronJobName() {
-		return "ReportGenerator";
-	}
-
-	@Override
-	public int getCronJobThreadPriority() {
+	public int getThreadPriority() {
 		return Thread.NORM_PRIORITY-2;
 	}
 
 	@Override
-	public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
 			try (
 				ProcessTimer timer=new ProcessTimer(

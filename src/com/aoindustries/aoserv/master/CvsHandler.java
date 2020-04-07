@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2002-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,8 +10,8 @@ import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.scm.CvsRepository;
+import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.util.IntList;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;

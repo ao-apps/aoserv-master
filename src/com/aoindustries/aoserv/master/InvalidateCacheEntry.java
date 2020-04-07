@@ -1,11 +1,11 @@
 /*
- * Copyright 2001-2013, 2017, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2017, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.util.IntList;
+import com.aoindustries.collections.IntList;
 
 /**
  * Invalidate requests are place into a queue and then processed by concurrent threads.

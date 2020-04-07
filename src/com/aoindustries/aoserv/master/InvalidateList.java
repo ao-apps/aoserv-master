@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -8,11 +8,11 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.dns.DnsService;
+import com.aoindustries.collections.IntArrayList;
+import com.aoindustries.collections.IntCollection;
+import com.aoindustries.collections.IntList;
+import com.aoindustries.collections.SortedArrayList;
 import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.util.IntArrayList;
-import com.aoindustries.util.IntCollection;
-import com.aoindustries.util.IntList;
-import com.aoindustries.util.SortedArrayList;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;

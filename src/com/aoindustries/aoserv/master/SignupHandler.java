@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
@@ -154,22 +153,17 @@ final public class SignupHandler {
                 CronDaemon.addCronJob(
                     new CronJob() {
 						@Override
-                        public Schedule getCronJobSchedule() {
+                        public Schedule getSchedule() {
                             return schedule;
                         }
 
 						@Override
-                        public CronJobScheduleMode getCronJobScheduleMode() {
-                            return CronJobScheduleMode.SKIP;
-                        }
-
-						@Override
-                        public String getCronJobName() {
+                        public String getName() {
                             return "Remove completed signups";
                         }
 
 						@Override
-                        public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+                        public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
                             try {
                                 InvalidateList invalidateList = new InvalidateList();
                                 MasterDatabase database = MasterDatabase.getDatabase();
@@ -196,7 +190,7 @@ final public class SignupHandler {
                         }
 
 						@Override
-                        public int getCronJobThreadPriority() {
+                        public int getThreadPriority() {
                             return Thread.NORM_PRIORITY-2;
                         }
                     },

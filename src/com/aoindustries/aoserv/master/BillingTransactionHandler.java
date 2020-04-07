@@ -498,7 +498,7 @@ final public class BillingTransactionHandler {
 
 			// description words
 			if (criteria.getDescription() != null && criteria.getDescription().length() > 0) {
-				String[] descriptionWords = Strings.splitString(criteria.getDescription());
+				String[] descriptionWords = Strings.split(criteria.getDescription());
 				for (String descriptionWord : descriptionWords) {
 					sql.append("  AND lower(tr.description) like ('%' || lower(?) || '%')\n");
 					params.add(descriptionWord);
@@ -512,7 +512,7 @@ final public class BillingTransactionHandler {
 
 			// payment_info words
 			if (criteria.getPaymentInfo() != null && criteria.getPaymentInfo().length() > 0) {
-				String[] paymentInfoWords = Strings.splitString(criteria.getPaymentInfo());
+				String[] paymentInfoWords = Strings.split(criteria.getPaymentInfo());
 				for (String paymentInfoWord : paymentInfoWords) {
 					sql.append("  AND lower(tr.payment_info) like ('%' || lower(?) || '%')\n");
 					params.add(paymentInfoWord);

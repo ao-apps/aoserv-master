@@ -10,7 +10,6 @@ import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Strings;
@@ -48,29 +47,19 @@ public class TopLevelDomainService implements MasterService {
 		 * Runs hourly, at 18 minutes after the hour.
 		 */
 		@Override
-		public Schedule getCronJobSchedule() {
+		public Schedule getSchedule() {
 			return (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute == 18;
 		}
 
 		@Override
-		public CronJobScheduleMode getCronJobScheduleMode() {
-			return CronJobScheduleMode.SKIP;
-		}
-
-		@Override
-		public String getCronJobName() {
-			return getClass().getSimpleName();
-		}
-
-		@Override
-		public int getCronJobThreadPriority() {
+		public int getThreadPriority() {
 			return Thread.NORM_PRIORITY - 1;
 		}
 
 		private volatile long lastUpdatedTime = Long.MIN_VALUE;
 
 		@Override
-		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+		public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
 				try (
 					ProcessTimer timer = new ProcessTimer(

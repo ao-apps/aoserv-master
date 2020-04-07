@@ -10,13 +10,12 @@ import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.dns.DnsService;
+import com.aoindustries.collections.IntList;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.ErrorPrinter;
-import com.aoindustries.util.IntList;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.logging.ProcessTimer;
 import com.aoindustries.validation.ValidationException;
@@ -73,27 +72,17 @@ final public class AccountCleaner implements CronJob {
     private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==25 && hour==5;
 
 	@Override
-    public Schedule getCronJobSchedule() {
+    public Schedule getSchedule() {
         return schedule;
     }
 
 	@Override
-    public CronJobScheduleMode getCronJobScheduleMode() {
-        return CronJobScheduleMode.SKIP;
-    }
-
-	@Override
-    public String getCronJobName() {
-        return "AccountCleaner";
-    }
-
-	@Override
-    public int getCronJobThreadPriority() {
+    public int getThreadPriority() {
         return Thread.NORM_PRIORITY-1;
     }
 
 	@Override
-    public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+    public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
         try {
             try (
 				ProcessTimer timer = new ProcessTimer(

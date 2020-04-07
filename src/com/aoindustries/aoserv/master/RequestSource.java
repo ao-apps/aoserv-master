@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2013, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2001-2013, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -7,8 +7,8 @@ package com.aoindustries.aoserv.master;
 
 import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
+import com.aoindustries.collections.IntList;
 import com.aoindustries.security.Identifier;
-import com.aoindustries.util.IntList;
 import java.io.IOException;
 
 /**

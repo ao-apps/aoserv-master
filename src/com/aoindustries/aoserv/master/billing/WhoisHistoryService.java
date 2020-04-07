@@ -21,7 +21,6 @@ import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.CronJobScheduleMode;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -204,22 +203,12 @@ final public class WhoisHistoryService implements MasterService {
 	private final CronJob cronJob = new CronJob() {
 
 		@Override
-		public Schedule getCronJobSchedule() {
+		public Schedule getSchedule() {
 			return schedule;
 		}
 
 		@Override
-		public CronJobScheduleMode getCronJobScheduleMode() {
-			return CronJobScheduleMode.SKIP;
-		}
-
-		@Override
-		public String getCronJobName() {
-			return getClass().getSimpleName();
-		}
-
-		@Override
-		public int getCronJobThreadPriority() {
+		public int getThreadPriority() {
 			return Thread.NORM_PRIORITY - 1;
 		}
 
@@ -230,7 +219,7 @@ final public class WhoisHistoryService implements MasterService {
 		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring, with some older
 		//       records left around for billing purposes like done here.
 		@Override
-		public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+		public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
 				try (
 					ProcessTimer timer = new ProcessTimer(

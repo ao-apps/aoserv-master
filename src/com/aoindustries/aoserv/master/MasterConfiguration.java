@@ -54,7 +54,7 @@ public final class MasterConfiguration {
     }
 
     public static List<String> getProtocols() throws IOException {
-        return Strings.splitStringCommaSpace(getProperty("aoserv.master.protocols"));
+        return Strings.splitCommaSpace(getProperty("aoserv.master.protocols"));
     }
 
     /**
@@ -69,12 +69,12 @@ public final class MasterConfiguration {
     }
 
     public static List<String> getBinds(String protocol) throws IOException {
-        return Strings.splitStringCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
+        return Strings.splitCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
     }
 
     public static List<Integer> getPorts(String protocol) throws IOException {
         String ports = getProperty("aoserv.master."+protocol+".ports");
-        List<String> strings = Strings.splitStringCommaSpace(ports);
+        List<String> strings = Strings.splitCommaSpace(ports);
         List<Integer> ints = new ArrayList<>(strings.size());
         for(int c=0,len=strings.size();c<len;c++) {
             ints.add(Integer.parseInt(strings.get(c)));
