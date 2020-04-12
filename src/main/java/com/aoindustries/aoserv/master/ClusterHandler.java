@@ -37,98 +37,98 @@ import java.util.logging.Logger;
  */
 final public class ClusterHandler implements CronJob {
 
-    private static final Logger logger = Logger.getLogger(ClusterHandler.class.getName());
+	private static final Logger logger = Logger.getLogger(ClusterHandler.class.getName());
 
-    /**
-     * The maximum time for a processing pass.
-     */
-    private static final long TIMER_MAX_TIME = 60L * 1000L; // Five minutes
+	/**
+	 * The maximum time for a processing pass.
+	 */
+	private static final long TIMER_MAX_TIME = 60L * 1000L; // Five minutes
 
-    /**
-     * The interval in which the administrators will be reminded.
-     */
-    private static final long TIMER_REMINDER_INTERVAL = 60L * 60L * 1000L; // One hour
+	/**
+	 * The interval in which the administrators will be reminded.
+	 */
+	private static final long TIMER_REMINDER_INTERVAL = 60L * 60L * 1000L; // One hour
 
-    private static boolean started=false;
+	private static boolean started=false;
 
-    public static void start() {
-        synchronized(System.out) {
-            if(!started) {
-                System.out.print("Starting " + ClusterHandler.class.getSimpleName() + ": ");
-                CronDaemon.addCronJob(new ClusterHandler(), logger);
-                started=true;
-                System.out.println("Done");
-                // Run immediately to populate mapping on start-up
-                MasterServer.executorService.submit(() -> {
+	public static void start() {
+		synchronized(System.out) {
+			if(!started) {
+				System.out.print("Starting " + ClusterHandler.class.getSimpleName() + ": ");
+				CronDaemon.addCronJob(new ClusterHandler(), logger);
+				started=true;
+				System.out.println("Done");
+				// Run immediately to populate mapping on start-up
+				MasterServer.executorService.submit(() -> {
 					updateMappings();
 				});
-            }
-        }
-    }
+			}
+		}
+	}
 
-    private ClusterHandler() {
-    }
+	private ClusterHandler() {
+	}
 
 	/**
 	 * Runs every minute
 	 */
-    private static final Schedule schedule = (int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) -> true;
+	private static final Schedule schedule = (int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) -> true;
 
 	@Override
-    public Schedule getSchedule() {
-        return schedule;
-    }
+	public Schedule getSchedule() {
+		return schedule;
+	}
 
 	@Override
-    public int getThreadPriority() {
-        return Thread.NORM_PRIORITY + 1;
-    }
+	public int getThreadPriority() {
+		return Thread.NORM_PRIORITY + 1;
+	}
 
 	@Override
-    public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-        updateMappings();
-    }
+	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+		updateMappings();
+	}
 
-    public static class ClusterException extends IOException {
+	public static class ClusterException extends IOException {
 
-        private static final long serialVersionUID = 1L;
+		private static final long serialVersionUID = 1L;
 
-        public ClusterException() {
-            super();
-        }
+		public ClusterException() {
+			super();
+		}
 
-        public ClusterException(String message) {
-            super(message);
-        }
+		public ClusterException(String message) {
+			super(message);
+		}
 
-        public ClusterException(Throwable cause) {
-            super(cause);
-        }
+		public ClusterException(Throwable cause) {
+			super(cause);
+		}
 
-        public ClusterException(String message, Throwable cause) {
-            super(message, cause);
-        }
-    }
+		public ClusterException(String message, Throwable cause) {
+			super(message, cause);
+		}
+	}
 
-    private static final Object mappingsLock = new Object();
+	private static final Object mappingsLock = new Object();
 
 	/**
 	 * The set of virtual servers that have primary DRBD roles on a per physical
 	 * server basis.
 	 */
-    private static Map<Integer,Set<Integer>> primaryMappings = Collections.emptyMap();
+	private static Map<Integer,Set<Integer>> primaryMappings = Collections.emptyMap();
 
 	/**
 	 * The set of virtual servers that have secondary DRBD roles on a per physical
 	 * server basis.
 	 */
-    private static Map<Integer,Set<Integer>> secondaryMappings = Collections.emptyMap();
+	private static Map<Integer,Set<Integer>> secondaryMappings = Collections.emptyMap();
 
 	/**
 	 * The set of virtual servers that have Xen auto start links on a per physical
 	 * server basis.
 	 */
-    private static Map<Integer,Set<Integer>> autoMappings = Collections.emptyMap();
+	private static Map<Integer,Set<Integer>> autoMappings = Collections.emptyMap();
 
 	private static void setMappings(
 		Map<Integer,Set<Integer>> newPrimaryMappings,
@@ -142,29 +142,29 @@ final public class ClusterHandler implements CronJob {
 		}
 	}
 
-    public static int getPrimaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
+	public static int getPrimaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
 		// Must be a cluster admin
 		checkClusterAdmin(conn, source, "getPrimaryPhysicalServer");
 		return getPrimaryPhysicalServer(virtualServer);
 	}
-	
+
 	/**
-     * Gets the id of the physical server that is currently the primary for
+	 * Gets the id of the physical server that is currently the primary for
 	 * the virtual server.  If there is no primary (Secondary/Secondary role),
 	 * will use the physical server that has Xen auto start configured.
-     */
-    public static int getPrimaryPhysicalServer(int virtualServer) throws ClusterException {
-        Integer virtualServerInt = virtualServer;
-        int physicalServer = -1;
-        boolean physicalServerFound = false;
-        synchronized(mappingsLock) {
-            for(Map.Entry<Integer,Set<Integer>> entry : primaryMappings.entrySet()) {
-                if(entry.getValue().contains(virtualServerInt)) {
-                    if(physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " primary found on more than one physical server");
-                    physicalServer = entry.getKey();
-                    physicalServerFound = true;
-                }
-            }
+	 */
+	public static int getPrimaryPhysicalServer(int virtualServer) throws ClusterException {
+		Integer virtualServerInt = virtualServer;
+		int physicalServer = -1;
+		boolean physicalServerFound = false;
+		synchronized(mappingsLock) {
+			for(Map.Entry<Integer,Set<Integer>> entry : primaryMappings.entrySet()) {
+				if(entry.getValue().contains(virtualServerInt)) {
+					if(physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " primary found on more than one physical server");
+					physicalServer = entry.getKey();
+					physicalServerFound = true;
+				}
+			}
 			if(!physicalServerFound) {
 				for(Map.Entry<Integer,Set<Integer>> entry : autoMappings.entrySet()) {
 					if(entry.getValue().contains(virtualServerInt)) {
@@ -174,35 +174,35 @@ final public class ClusterHandler implements CronJob {
 					}
 				}
 			}
-        }
-        if(!physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " primary not found on any physical server");
-        return physicalServer;
-    }
+		}
+		if(!physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " primary not found on any physical server");
+		return physicalServer;
+	}
 
-    public static int getSecondaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
+	public static int getSecondaryPhysicalServer(DatabaseConnection conn, RequestSource source, int virtualServer) throws IOException, SQLException {
 		// Must be a cluster admin
 		checkClusterAdmin(conn, source, "getSecondaryPhysicalServer");
 		return getSecondaryPhysicalServer(virtualServer);
 	}
 
 	/**
-     * Gets the id of the physical server that is currently the secondary for
+	 * Gets the id of the physical server that is currently the secondary for
 	 * the virtual server.  If there are two secondaries (Secondary/Secondary role),
 	 * will use the physical server that does not have Xen auto start configured.
-     */
-    public static int getSecondaryPhysicalServer(int virtualServer) throws ClusterException {
-        Integer virtualServerInt = virtualServer;
-        synchronized(mappingsLock) {
+	 */
+	public static int getSecondaryPhysicalServer(int virtualServer) throws ClusterException {
+		Integer virtualServerInt = virtualServer;
+		synchronized(mappingsLock) {
 			// Find the set of all physical servers that have this as secondary
 			Set<Integer> physicalServers = new HashSet<>();
-            for(Map.Entry<Integer,Set<Integer>> entry : secondaryMappings.entrySet()) {
-                if(entry.getValue().contains(virtualServerInt)) {
+			for(Map.Entry<Integer,Set<Integer>> entry : secondaryMappings.entrySet()) {
+				if(entry.getValue().contains(virtualServerInt)) {
 					physicalServers.add(entry.getKey());
-                }
-            }
+				}
+			}
 			// None found
 			if(physicalServers.isEmpty()) {
-		        throw new ClusterException("Virtual server #" + virtualServer + " secondary not found on any physical server");
+				throw new ClusterException("Virtual server #" + virtualServer + " secondary not found on any physical server");
 			}
 			// If there is only one secondary, use it if not auto
 			else if(physicalServers.size()==1) {
@@ -246,15 +246,15 @@ final public class ClusterHandler implements CronJob {
 			}
 			// Error if more than two
 			else {
-		        throw new ClusterException("Virtual server #" + virtualServer + " secondary found on more than two physical servers: " + physicalServers);
+				throw new ClusterException("Virtual server #" + virtualServer + " secondary found on more than two physical servers: " + physicalServers);
 			}
-        }
-    }
+		}
+	}
 
 	private static final Object updateMappingsLock = new Object();
-    private static void updateMappings() {
-        synchronized(updateMappingsLock) {
-            try {
+	private static void updateMappings() {
+		synchronized(updateMappingsLock) {
+			try {
 				try (
 					ProcessTimer timer = new ProcessTimer(
 						logger,
@@ -266,16 +266,16 @@ final public class ClusterHandler implements CronJob {
 						TIMER_REMINDER_INTERVAL
 					)
 				) {
-                    MasterServer.executorService.submit(timer);
+					MasterServer.executorService.submit(timer);
 
-                    // Query the servers in parallel
-                    final MasterDatabase database = MasterDatabase.getDatabase();
-                    IntList xenPhysicalServers = NetHostHandler.getEnabledXenPhysicalServers(database);
-                    Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
-                    for(final Integer xenPhysicalServer : xenPhysicalServers) {
-                        futures.put(
-                            xenPhysicalServer,
-                            MasterServer.executorService.submit(() -> {
+					// Query the servers in parallel
+					final MasterDatabase database = MasterDatabase.getDatabase();
+					IntList xenPhysicalServers = NetHostHandler.getEnabledXenPhysicalServers(database);
+					Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
+					for(final Integer xenPhysicalServer : xenPhysicalServers) {
+						futures.put(
+							xenPhysicalServer,
+							MasterServer.executorService.submit(() -> {
 								// Try up to ten times
 								for(int c=0;c<10;c++) {
 									try {
@@ -351,44 +351,44 @@ final public class ClusterHandler implements CronJob {
 								}
 								throw new AssertionError("Exception should have been thrown when c==9");
 							})
-                        );
-                    }
-                    Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<>(futures.size()*4/3+1);
-                    Map<Integer,Set<Integer>> newSecondaryMappings = new HashMap<>(futures.size()*4/3+1);
-                    Map<Integer,Set<Integer>> newAutoMappings = new HashMap<>(futures.size()*4/3+1);
-                    for(Map.Entry<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
-                        Integer xenPhysicalServer = future.getKey();
-                        try {
+						);
+					}
+					Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<>(futures.size()*4/3+1);
+					Map<Integer,Set<Integer>> newSecondaryMappings = new HashMap<>(futures.size()*4/3+1);
+					Map<Integer,Set<Integer>> newAutoMappings = new HashMap<>(futures.size()*4/3+1);
+					for(Map.Entry<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
+						Integer xenPhysicalServer = future.getKey();
+						try {
 							Tuple3<Set<Integer>,Set<Integer>,Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
-                            newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
-                            newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
-                            newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
-                        } catch(ThreadDeath TD) {
-                            throw TD;
-                        } catch(Throwable T) {
-                            logger.log(Level.SEVERE, "xenPhysicalServer="+xenPhysicalServer, T);
-                        }
-                    }
+							newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
+							newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
+							newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
+						} catch(ThreadDeath TD) {
+							throw TD;
+						} catch(Throwable T) {
+							logger.log(Level.SEVERE, "xenPhysicalServer="+xenPhysicalServer, T);
+						}
+					}
 					setMappings(
 						newPrimaryMappings,
 						newSecondaryMappings,
 						newAutoMappings
 					);
-                }
-            } catch(ThreadDeath TD) {
-                throw TD;
-            } catch(Throwable T) {
-                logger.log(Level.SEVERE, null, T);
-            }
-        }
-    }
+				}
+			} catch(ThreadDeath TD) {
+				throw TD;
+			} catch(Throwable T) {
+				logger.log(Level.SEVERE, null, T);
+			}
+		}
+	}
 
 	public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-        User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
-        return mu!=null && mu.isClusterAdmin();
-    }
+		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+		return mu!=null && mu.isClusterAdmin();
+	}
 
 	public static void checkClusterAdmin(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
-        if(!isClusterAdmin(conn, source)) throw new SQLException("Cluster administration not allowed, '"+action+"'");
-    }
+		if(!isClusterAdmin(conn, source)) throw new SQLException("Cluster administration not allowed, '"+action+"'");
+	}
 }
