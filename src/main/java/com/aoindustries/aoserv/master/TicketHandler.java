@@ -43,12 +43,6 @@ final public class TicketHandler /*implements Runnable*/ {
 	// <editor-fold desc="Security">
 	/**
 	 * To be able to access a ticket action, must both have access to its 
-	 * @param conn
-	 * @param source
-	 * @param action
-	 * @return
-	 * @throws java.io.IOException
-	 * @throws java.sql.SQLException
 	 */
 	public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int action) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

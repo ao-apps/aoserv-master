@@ -275,17 +275,7 @@ final public class DaemonHandler {
 	private static long lastKeyCleanTime = -1;
 
 	/**
-	 * @param conn
-	 * @param linuxServer
 	 * @param connectAddress Overridden connect address or <code>null</code> to use the default
-	 * @param daemonCommandCode
-	 * @param param1
-	 * @param param2
-	 * @param param3
-	 * @param param4
-	 * @return
-	 * @throws java.io.IOException
-	 * @throws java.sql.SQLException
 	 */
 	public static Server.DaemonAccess grantDaemonAccess(
 		DatabaseConnection conn,

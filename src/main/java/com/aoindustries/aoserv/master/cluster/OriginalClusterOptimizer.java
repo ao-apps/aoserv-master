@@ -14,10 +14,13 @@ import java.util.List;
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
  *
- * TODO: Provide separate control over secondary processor type, currently only secondary architecture and number of cores are considered.
- * TODO: Have separate core count and CPU weight.  Cores<=count on box, sum of primary weight <= # of cores on box, each virtualServer adds cores*weight to overall weight.
- * TODO: Make sure can actually map extents and spindle counts to drives.
- * TODO: If two virtual servers are interchangeable, don't try both combinations - implications?
+ * <ul>
+ * <li>TODO: Provide separate control over secondary processor type, currently only secondary architecture and number of cores are considered.</li>
+ * <li>TODO: Have separate core count and CPU weight.  Cores&lt;=count on box, sum of primary weight &lt;= # of cores on box, each virtualServer adds cores*weight to overall weight.</li>
+ * <li>TODO: Make sure can actually map extents and spindle counts to drives.</li>
+ * <li>TODO: If two virtual servers are interchangeable, don't try both combinations - implications?</li>
+ * </ul>
+ *
  * @author  AO Industries, Inc.
  */
 public final class OriginalClusterOptimizer {

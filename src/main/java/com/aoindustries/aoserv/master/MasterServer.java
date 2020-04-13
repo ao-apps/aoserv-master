@@ -10797,7 +10797,7 @@ public abstract class MasterServer {
 	}
 
 	/**
-	 * @see  #checkAccessHostname(MasterDatabaseConnection,RequestSource,String,String,String[])
+	 * @see  #checkAccessHostname(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, java.lang.String, java.lang.String, java.util.List)
 	 */
 	public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
 		checkAccessHostname(conn, source, action, hostname, MasterServer.getService(DnsService.class).getDNSTLDs(conn));

@@ -208,8 +208,7 @@ final public class TableHandler {
 	private static final ConcurrentMap<Table.TableID,GetObjectHandler> getObjectHandlers = new ConcurrentHashMap<>();
 
 	/**
-	 * This is available, but recommend registering via {@link ServiceLoader}
-	 * or {@link MasterService#getGetObjectHandlers()}.
+	 * This is available, but recommend registering via {@link ServiceLoader}.
 	 */
 	public static int addGetObjectHandler(GetObjectHandler handler) {
 		int numTables = 0;
@@ -419,8 +418,7 @@ final public class TableHandler {
 	private static final ConcurrentMap<Table.TableID,GetTableHandler> getTableHandlers = new ConcurrentHashMap<>();
 
 	/**
-	 * This is available, but recommend registering via {@link ServiceLoader}
-	 * or {@link MasterService#getGetTableHandlers()}.
+	 * This is available, but recommend registering via {@link ServiceLoader}.
 	 */
 	public static int addGetTableHandler(GetTableHandler handler) {
 		int numTables = 0;

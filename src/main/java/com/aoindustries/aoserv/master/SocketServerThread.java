@@ -151,7 +151,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 
 	/**
 	 * Logs a security message to <code>System.err</code>.
-	 * Also sends email messages to <code>aoserv.server.
+	 * Also sends email messages to <code>aoserv.server</code>.
 	 */
 	@Override
 	public String getSecurityMessageHeader() {
