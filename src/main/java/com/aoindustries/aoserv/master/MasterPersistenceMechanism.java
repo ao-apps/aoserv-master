@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2013, 2015, 2017, 2018, 2019 by AO Industries, Inc.,
+ * Copyright 2007-2013, 2015, 2017, 2018, 2019, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -119,17 +119,17 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	);
 
 	final private DatabaseConnection conn;
-    final private InvalidateList invalidateList;
+	final private InvalidateList invalidateList;
 
-    public MasterPersistenceMechanism(DatabaseConnection conn, InvalidateList invalidateList) {
-        this.conn = conn;
-        this.invalidateList = invalidateList;
-    }
+	public MasterPersistenceMechanism(DatabaseConnection conn, InvalidateList invalidateList) {
+		this.conn = conn;
+		this.invalidateList = invalidateList;
+	}
 
-    @Override
-    public String storeCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
-    }
+	@Override
+	public String storeCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
+		throw new SQLException("Method not implemented for direct master server persistence.");
+	}
 
 	@Override
 	public CreditCard getCreditCard(Principal principal, String persistenceUniqueId) throws SQLException {
@@ -214,9 +214,9 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	@Override
 	public void updateCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
 		try {
-            PaymentHandler.updateCreditCard(
-                conn,
-                invalidateList,
+			PaymentHandler.updateCreditCard(
+				conn,
+				invalidateList,
 				Integer.parseInt(creditCard.getPersistenceUniqueId()),
 				creditCard.getMaskedCardNumber(),
 				creditCard.getFirstName(),
@@ -234,223 +234,223 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 				creditCard.getPostalCode(),
 				creditCard.getCountryCode(),
 				creditCard.getComments()
-            );
-            conn.commit();
-        } catch(IOException err) {
-            throw new SQLException(err);
-        }
+			);
+			conn.commit();
+		} catch(IOException err) {
+			throw new SQLException(err);
+		}
 	}
 
 	@Override
-    public void updateCardNumber(
+	public void updateCardNumber(
 		Principal principal,
 		CreditCard creditCard,
 		String cardNumber,
 		byte expirationMonth,
 		short expirationYear
 	) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
-    }
+		throw new SQLException("Method not implemented for direct master server persistence.");
+	}
 
-    @Override
-    public void updateExpiration(
+	@Override
+	public void updateExpiration(
 		Principal principal,
 		CreditCard creditCard,
 		byte expirationMonth,
 		short expirationYear
 	) throws SQLException {
 		try {
-            PaymentHandler.updateCreditCardExpiration(
-                conn,
-                invalidateList,
+			PaymentHandler.updateCreditCardExpiration(
+				conn,
+				invalidateList,
 				Integer.parseInt(creditCard.getPersistenceUniqueId()),
 				expirationMonth,
 				expirationYear
-            );
-            conn.commit();
-        } catch(IOException err) {
-            throw new SQLException(err);
-        }
-    }
+			);
+			conn.commit();
+		} catch(IOException err) {
+			throw new SQLException(err);
+		}
+	}
 
-    @Override
-    public void deleteCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
-    }
+	@Override
+	public void deleteCreditCard(Principal principal, CreditCard creditCard) throws SQLException {
+		throw new SQLException("Method not implemented for direct master server persistence.");
+	}
 
-    @Override
-    public String insertTransaction(Principal principal, Group group, Transaction transaction) throws SQLException {
-        try {
-            //String providerId = transaction.getProviderId();
-            TransactionRequest transactionRequest = transaction.getTransactionRequest();
-            CreditCard creditCard = transaction.getCreditCard();
-            // Get the createdBy from the credit card persistence mechanism
-            com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = conn.executeObjectQuery(
+	@Override
+	public String insertTransaction(Principal principal, Group group, Transaction transaction) throws SQLException {
+		try {
+			//String providerId = transaction.getProviderId();
+			TransactionRequest transactionRequest = transaction.getTransactionRequest();
+			CreditCard creditCard = transaction.getCreditCard();
+			// Get the createdBy from the credit card persistence mechanism
+			com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = conn.executeObjectQuery(
 				ObjectFactories.userNameFactory,
 				"select created_by from payment.\"CreditCard\" where id=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);
-            Account.Name ccBusiness = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
-                "select accounting from payment.\"CreditCard\" where id=?::integer",
-                creditCard.getPersistenceUniqueId()
-            );
+			Account.Name ccBusiness = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+				"select accounting from payment.\"CreditCard\" where id=?::integer",
+				creditCard.getPersistenceUniqueId()
+			);
 			Byte expirationMonth = creditCard.getExpirationMonth(); // TODO: 2.0: Nullable Byte
 			if(expirationMonth == CreditCard.UNKNOWN_EXPRIATION_MONTH) expirationMonth = null;
 			Short expirationYear = creditCard.getExpirationYear(); // TODO: 2.0: Nullable Short
 			if(expirationYear == CreditCard.UNKNOWN_EXPRIATION_YEAR) expirationYear = null;
 			Currency currency = transactionRequest.getCurrency();
-            int payment = PaymentHandler.addPayment(
-                conn,
-                invalidateList,
-                transaction.getProviderId(),
-                ccBusiness,
-                group==null ? null : group.getName(),
-                transactionRequest.getTestMode(),
-                transactionRequest.getDuplicateWindow(),
-                transactionRequest.getOrderNumber(),
-                new Money(currency, transactionRequest.getAmount()),
-                transactionRequest.getTaxAmount() == null ? null : new Money(currency, transactionRequest.getTaxAmount()),
-                transactionRequest.getTaxExempt(),
-                transactionRequest.getShippingAmount() == null ? null : new Money(currency, transactionRequest.getShippingAmount()),
-                transactionRequest.getDutyAmount() == null ? null : new Money(currency, transactionRequest.getDutyAmount()),
-                transactionRequest.getShippingFirstName(),
-                transactionRequest.getShippingLastName(),
-                transactionRequest.getShippingCompanyName(),
-                transactionRequest.getShippingStreetAddress1(),
-                transactionRequest.getShippingStreetAddress2(),
-                transactionRequest.getShippingCity(),
-                transactionRequest.getShippingState(),
-                transactionRequest.getShippingPostalCode(),
-                transactionRequest.getShippingCountryCode(),
-                transactionRequest.getEmailCustomer(),
-                transactionRequest.getMerchantEmail(),
-                transactionRequest.getInvoiceNumber(),
-                transactionRequest.getPurchaseOrderNumber(),
-                transactionRequest.getDescription(),
-                creditCardCreatedBy,
-                creditCard.getPrincipalName(),
-                ccBusiness,
-                creditCard.getGroupName(),
-                creditCard.getProviderUniqueId(),
-                creditCard.getMaskedCardNumber(),
+			int payment = PaymentHandler.addPayment(
+				conn,
+				invalidateList,
+				transaction.getProviderId(),
+				ccBusiness,
+				group==null ? null : group.getName(),
+				transactionRequest.getTestMode(),
+				transactionRequest.getDuplicateWindow(),
+				transactionRequest.getOrderNumber(),
+				new Money(currency, transactionRequest.getAmount()),
+				transactionRequest.getTaxAmount() == null ? null : new Money(currency, transactionRequest.getTaxAmount()),
+				transactionRequest.getTaxExempt(),
+				transactionRequest.getShippingAmount() == null ? null : new Money(currency, transactionRequest.getShippingAmount()),
+				transactionRequest.getDutyAmount() == null ? null : new Money(currency, transactionRequest.getDutyAmount()),
+				transactionRequest.getShippingFirstName(),
+				transactionRequest.getShippingLastName(),
+				transactionRequest.getShippingCompanyName(),
+				transactionRequest.getShippingStreetAddress1(),
+				transactionRequest.getShippingStreetAddress2(),
+				transactionRequest.getShippingCity(),
+				transactionRequest.getShippingState(),
+				transactionRequest.getShippingPostalCode(),
+				transactionRequest.getShippingCountryCode(),
+				transactionRequest.getEmailCustomer(),
+				transactionRequest.getMerchantEmail(),
+				transactionRequest.getInvoiceNumber(),
+				transactionRequest.getPurchaseOrderNumber(),
+				transactionRequest.getDescription(),
+				creditCardCreatedBy,
+				creditCard.getPrincipalName(),
+				ccBusiness,
+				creditCard.getGroupName(),
+				creditCard.getProviderUniqueId(),
+				creditCard.getMaskedCardNumber(),
 				expirationMonth,
 				expirationYear,
-                creditCard.getFirstName(),
-                creditCard.getLastName(),
-                creditCard.getCompanyName(),
-                creditCard.getEmail(),
-                creditCard.getPhone(),
-                creditCard.getFax(),
-                creditCard.getCustomerId(),
-                creditCard.getCustomerTaxId(),
-                creditCard.getStreetAddress1(),
-                creditCard.getStreetAddress2(),
-                creditCard.getCity(),
-                creditCard.getState(),
-                creditCard.getPostalCode(),
-                creditCard.getCountryCode(),
-                creditCard.getComments(),
-                System.currentTimeMillis(), // TODO: Timestamp nanosecond precision
-                MASTER_BUSINESS_ADMINISTRATOR,
-                principal==null ? null : principal.getName()
-            );
-            conn.commit();
-            return Integer.toString(payment);
-        } catch(IOException err) {
-            throw new SQLException(err);
-        }
-    }
+				creditCard.getFirstName(),
+				creditCard.getLastName(),
+				creditCard.getCompanyName(),
+				creditCard.getEmail(),
+				creditCard.getPhone(),
+				creditCard.getFax(),
+				creditCard.getCustomerId(),
+				creditCard.getCustomerTaxId(),
+				creditCard.getStreetAddress1(),
+				creditCard.getStreetAddress2(),
+				creditCard.getCity(),
+				creditCard.getState(),
+				creditCard.getPostalCode(),
+				creditCard.getCountryCode(),
+				creditCard.getComments(),
+				System.currentTimeMillis(), // TODO: Timestamp nanosecond precision
+				MASTER_BUSINESS_ADMINISTRATOR,
+				principal==null ? null : principal.getName()
+			);
+			conn.commit();
+			return Integer.toString(payment);
+		} catch(IOException err) {
+			throw new SQLException(err);
+		}
+	}
 
-    /**
-     * Stores the results of a sale transaction:
-     * <ol>
-     *   <li>authorizationResult</li>
-     *   <li>captureTime</li>
-     *   <li>capturePrincipalName</li>
-     *   <li>captureResult</li>
-     *   <li>status</li>
-     * </ol>
-     *
-     * The current status must be PROCESSING or AUTHORIZED.
-     */
-    @Override
-    public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {
-        try {
-            //String providerId = transaction.getProviderId();
+	/**
+	 * Stores the results of a sale transaction:
+	 * <ol>
+	 *   <li>authorizationResult</li>
+	 *   <li>captureTime</li>
+	 *   <li>capturePrincipalName</li>
+	 *   <li>captureResult</li>
+	 *   <li>status</li>
+	 * </ol>
+	 *
+	 * The current status must be PROCESSING or AUTHORIZED.
+	 */
+	@Override
+	public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {
+		try {
+			//String providerId = transaction.getProviderId();
 
-            AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
-            TransactionResult.CommunicationResult authorizationCommunicationResult = authorizationResult.getCommunicationResult();
-            TransactionResult.ErrorCode authorizationErrorCode = authorizationResult.getErrorCode();
-            AuthorizationResult.ApprovalResult approvalResult = authorizationResult.getApprovalResult();
-            AuthorizationResult.DeclineReason declineReason = authorizationResult.getDeclineReason();
-            AuthorizationResult.ReviewReason reviewReason = authorizationResult.getReviewReason();
-            AuthorizationResult.CvvResult cvvResult = authorizationResult.getCvvResult();
-            AuthorizationResult.AvsResult avsResult = authorizationResult.getAvsResult();
+			AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
+			TransactionResult.CommunicationResult authorizationCommunicationResult = authorizationResult.getCommunicationResult();
+			TransactionResult.ErrorCode authorizationErrorCode = authorizationResult.getErrorCode();
+			AuthorizationResult.ApprovalResult approvalResult = authorizationResult.getApprovalResult();
+			AuthorizationResult.DeclineReason declineReason = authorizationResult.getDeclineReason();
+			AuthorizationResult.ReviewReason reviewReason = authorizationResult.getReviewReason();
+			AuthorizationResult.CvvResult cvvResult = authorizationResult.getCvvResult();
+			AuthorizationResult.AvsResult avsResult = authorizationResult.getAvsResult();
 
-            CaptureResult captureResult = transaction.getCaptureResult();
-            TransactionResult.CommunicationResult captureCommunicationResult = captureResult.getCommunicationResult();
-            TransactionResult.ErrorCode captureErrorCode = captureResult.getErrorCode();
+			CaptureResult captureResult = transaction.getCaptureResult();
+			TransactionResult.CommunicationResult captureCommunicationResult = captureResult.getCommunicationResult();
+			TransactionResult.ErrorCode captureErrorCode = captureResult.getErrorCode();
 
 			long captureTime = transaction.getCaptureTime();
 
 			TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
-            PaymentHandler.paymentSaleCompleted(
-                conn,
-                invalidateList,
-                Integer.parseInt(transaction.getPersistenceUniqueId()),
-                authorizationCommunicationResult==null ? null : authorizationCommunicationResult.name(),
-                authorizationResult.getProviderErrorCode(),
-                authorizationErrorCode==null ? null : authorizationErrorCode.name(),
-                authorizationResult.getProviderErrorMessage(),
-                authorizationResult.getProviderUniqueId(),
-                tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementMaskedCardNumber(),
-                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber(),
-                tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementExpiration(),
-                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationMonth(),
-                tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationYear(),
-                authorizationResult.getProviderApprovalResult(),
-                approvalResult==null ? null : approvalResult.name(),
-                authorizationResult.getProviderDeclineReason(),
-                declineReason==null ? null : declineReason.name(),
-                authorizationResult.getProviderReviewReason(),
-                reviewReason==null ? null : reviewReason.name(),
-                authorizationResult.getProviderCvvResult(),
-                cvvResult==null ? null : cvvResult.name(),
-                authorizationResult.getProviderAvsResult(),
-                avsResult==null ? null : avsResult.name(),
-                authorizationResult.getApprovalCode(),
-                captureTime == 0 ? null : new Timestamp(captureTime),
-                MASTER_BUSINESS_ADMINISTRATOR,
-                transaction.getCapturePrincipalName(),
-                captureCommunicationResult==null ? null : captureCommunicationResult.name(),
-                captureResult.getProviderErrorCode(),
-                captureErrorCode==null ? null : captureErrorCode.name(),
-                captureResult.getProviderErrorMessage(),
-                captureResult.getProviderUniqueId(),
-                transaction.getStatus().name()
-            );
-            conn.commit();
-        } catch(IOException err) {
-            throw new SQLException(err);
-        }
-    }
+			PaymentHandler.paymentSaleCompleted(
+				conn,
+				invalidateList,
+				Integer.parseInt(transaction.getPersistenceUniqueId()),
+				authorizationCommunicationResult==null ? null : authorizationCommunicationResult.name(),
+				authorizationResult.getProviderErrorCode(),
+				authorizationErrorCode==null ? null : authorizationErrorCode.name(),
+				authorizationResult.getProviderErrorMessage(),
+				authorizationResult.getProviderUniqueId(),
+				tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementMaskedCardNumber(),
+				tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementMaskedCardNumber(),
+				tokenizedCreditCard == null ? null : tokenizedCreditCard.getProviderReplacementExpiration(),
+				tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationMonth(),
+				tokenizedCreditCard == null ? null : tokenizedCreditCard.getReplacementExpirationYear(),
+				authorizationResult.getProviderApprovalResult(),
+				approvalResult==null ? null : approvalResult.name(),
+				authorizationResult.getProviderDeclineReason(),
+				declineReason==null ? null : declineReason.name(),
+				authorizationResult.getProviderReviewReason(),
+				reviewReason==null ? null : reviewReason.name(),
+				authorizationResult.getProviderCvvResult(),
+				cvvResult==null ? null : cvvResult.name(),
+				authorizationResult.getProviderAvsResult(),
+				avsResult==null ? null : avsResult.name(),
+				authorizationResult.getApprovalCode(),
+				captureTime == 0 ? null : new Timestamp(captureTime),
+				MASTER_BUSINESS_ADMINISTRATOR,
+				transaction.getCapturePrincipalName(),
+				captureCommunicationResult==null ? null : captureCommunicationResult.name(),
+				captureResult.getProviderErrorCode(),
+				captureErrorCode==null ? null : captureErrorCode.name(),
+				captureResult.getProviderErrorMessage(),
+				captureResult.getProviderUniqueId(),
+				transaction.getStatus().name()
+			);
+			conn.commit();
+		} catch(IOException err) {
+			throw new SQLException(err);
+		}
+	}
 
-    /**
-     * Stores the results of an authorize transaction:
-     * <ol>
-     *   <li>authorizationResult</li>
-     *   <li>status</li>
-     * </ol>
-     *
-     * The current status must be PROCESSING.
-     */
-    @Override
-    public void authorizeCompleted(Principal principal, Transaction transaction) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
-    }
+	/**
+	 * Stores the results of an authorize transaction:
+	 * <ol>
+	 *   <li>authorizationResult</li>
+	 *   <li>status</li>
+	 * </ol>
+	 *
+	 * The current status must be PROCESSING.
+	 */
+	@Override
+	public void authorizeCompleted(Principal principal, Transaction transaction) throws SQLException {
+		throw new SQLException("Method not implemented for direct master server persistence.");
+	}
 
-    @Override
-    public void voidCompleted(Principal principal, Transaction transaction) throws SQLException {
-        throw new SQLException("Method not implemented for direct master server persistence.");
-    }
+	@Override
+	public void voidCompleted(Principal principal, Transaction transaction) throws SQLException {
+		throw new SQLException("Method not implemented for direct master server persistence.");
+	}
 }

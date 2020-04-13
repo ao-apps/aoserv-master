@@ -49,17 +49,17 @@ final public class TableHandler {
 
 	private static boolean started = false;
 
-    public static void start() {
-        synchronized(System.out) {
-            if(!started) {
-                System.out.print("Starting " + TableHandler.class.getSimpleName());
+	public static void start() {
+		synchronized(System.out) {
+			if(!started) {
+				System.out.print("Starting " + TableHandler.class.getSimpleName());
 				initGetObjectHandlers(System.out);
 				initGetTableHandlers(System.out);
 				started = true;
-                System.out.println(": Done");
-            }
-        }
-    }
+				System.out.println(": Done");
+			}
+		}
+	}
 
 	private TableHandler() {
 	}

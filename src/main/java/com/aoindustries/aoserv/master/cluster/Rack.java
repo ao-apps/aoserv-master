@@ -1,7 +1,7 @@
 package com.aoindustries.aoserv.master.cluster;
 
 /*
- * Copyright 2007-2009 by AO Industries, Inc.,
+ * Copyright 2007-2009, 2020 by AO Industries, Inc.,
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
@@ -10,8 +10,8 @@ package com.aoindustries.aoserv.master.cluster;
  * @author  AO Industries, Inc.
  */
 public enum Rack {
-    FC_9_07,
-    FC_9_14,
-    FC_9_17,
-    KC
+	FC_9_07,
+	FC_9_14,
+	FC_9_17,
+	KC
 }
