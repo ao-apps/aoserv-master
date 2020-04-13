@@ -54,7 +54,7 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
 	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
 		// Restrict to the operating system versions accessible to this user
 		IntList osVersions = TableHandler.getOperatingSystemVersions(conn, source);
-		if(osVersions.size() == 0) {
+		if(osVersions.isEmpty()) {
 			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 		} else {
 			StringBuilder sql = new StringBuilder();

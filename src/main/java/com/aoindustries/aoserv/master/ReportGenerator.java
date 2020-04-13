@@ -242,27 +242,26 @@ final public class ReportGenerator implements CronJob {
 							}*/
 
 							// Add these stats to the table
-							PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,CURRENT_DATE,?,?::int8);");
-							try {
-								Iterator<Integer> hostKeys = stats.keySet().iterator();
-								while(hostKeys.hasNext()) {
-									Map<Integer,TempBackupReport> packages = stats.get(hostKeys.next());
-									Iterator<Integer> packageKeys=packages.keySet().iterator();
-									while(packageKeys.hasNext()) {
-										TempBackupReport tbr=packages.get(packageKeys.next());
-										pstmt.setInt(1, tbr.host);
-										pstmt.setInt(2, tbr.packageNum);
-										pstmt.setInt(3, tbr.fileCount);
-										pstmt.setLong(4, tbr.diskSize);
-										pstmt.addBatch();
+							try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,CURRENT_DATE,?,?::int8);")) {
+								try {
+									Iterator<Integer> hostKeys = stats.keySet().iterator();
+									while(hostKeys.hasNext()) {
+										Map<Integer,TempBackupReport> packages = stats.get(hostKeys.next());
+										Iterator<Integer> packageKeys=packages.keySet().iterator();
+										while(packageKeys.hasNext()) {
+											TempBackupReport tbr=packages.get(packageKeys.next());
+											pstmt.setInt(1, tbr.host);
+											pstmt.setInt(2, tbr.packageNum);
+											pstmt.setInt(3, tbr.fileCount);
+											pstmt.setLong(4, tbr.diskSize);
+											pstmt.addBatch();
+										}
 									}
+									pstmt.executeBatch();
+								} catch(SQLException err) {
+									System.err.println("Error from update: "+pstmt.toString());
+									throw err;
 								}
-								pstmt.executeBatch();
-							} catch(SQLException err) {
-								System.err.println("Error from update: "+pstmt.toString());
-								throw err;
-							} finally {
-								pstmt.close();
 							}
 
 							// Invalidate the table

@@ -45,6 +45,7 @@ final public class IpAddressHandler {
 		);
 	}
 
+	@SuppressWarnings("deprecation")
 	public static DomainName getUnassignedHostname(
 		DatabaseConnection conn,
 		int ipAddress

@@ -12,6 +12,7 @@ import java.util.List;
 /**
  * @author  AO Industries, Inc.
  */
+@SuppressWarnings("overrides") // We will not implement hashCode, despite having equals
 public final class VirtualServer implements Comparable<VirtualServer> {
 
 	/**
@@ -731,9 +732,9 @@ public final class VirtualServer implements Comparable<VirtualServer> {
 
 	public static void main(String[] args) {
 		VirtualServer[] virtualServers = getVirtualServers();
-		for(int y=0; y<virtualServers.length; y++) {
-			for(int x=0; x<virtualServers.length; x++) {
-				System.out.print(virtualServers[x].equals(virtualServers[y]) ? '@' : '-');
+		for(VirtualServer y : virtualServers) {
+			for(VirtualServer x : virtualServers) {
+				System.out.print(x.equals(y) ? '@' : '-');
 			}
 			System.out.println();
 		}

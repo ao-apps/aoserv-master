@@ -339,9 +339,11 @@ final public class ClusterHandler implements CronJob {
 											secondaryMapping,
 											autoMapping
 										);
-									} catch(Exception exception) {
-										if(c==9) throw exception;
-										logger.log(Level.SEVERE, null, exception);
+									} catch(ThreadDeath td) {
+										throw td;
+									} catch(Throwable t) {
+										if(c==9) throw t;
+										logger.log(Level.SEVERE, null, t);
 										try {
 											Thread.sleep(2000);
 										} catch(InterruptedException err) {
@@ -375,10 +377,10 @@ final public class ClusterHandler implements CronJob {
 						newAutoMappings
 					);
 				}
-			} catch(ThreadDeath TD) {
-				throw TD;
-			} catch(Throwable T) {
-				logger.log(Level.SEVERE, null, T);
+			} catch(ThreadDeath td) {
+				throw td;
+			} catch(Throwable t) {
+				logger.log(Level.SEVERE, null, t);
 			}
 		}
 	}

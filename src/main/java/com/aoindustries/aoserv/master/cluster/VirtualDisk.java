@@ -8,6 +8,7 @@ package com.aoindustries.aoserv.master.cluster;
 /**
  * @author  AO Industries, Inc.
  */
+@SuppressWarnings("overrides") // We will not implement hashCode, despite having equals
 public final class VirtualDisk {
 
 	final String device;

@@ -21,7 +21,6 @@ import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
-import java.security.acl.Group;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -279,7 +278,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	}
 
 	@Override
-	public String insertTransaction(Principal principal, Group group, Transaction transaction) throws SQLException {
+	@SuppressWarnings("deprecation")
+	public String insertTransaction(Principal principal, java.security.acl.Group group, Transaction transaction) throws SQLException {
 		try {
 			//String providerId = transaction.getProviderId();
 			TransactionRequest transactionRequest = transaction.getTransactionRequest();

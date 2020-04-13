@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -908,7 +909,7 @@ final public class MysqlHandler {
 
 		// Perform the password check here, too.
 		if(password!=null && password.length()==0) password=com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD;
-		if(password!=com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD) {
+		if(Objects.equals(password, com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD)) {
 			List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.mysql.User.checkPassword(mu, password);
 			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}

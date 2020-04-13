@@ -128,6 +128,7 @@ final public class DnsService implements MasterService {
 	/**
 	 * Creates a new <code>Zone</code>.
 	 */
+	@SuppressWarnings("deprecation")
 	public void addDNSZone(
 		DatabaseConnection conn,
 		RequestSource source,
@@ -443,7 +444,7 @@ final public class DnsService implements MasterService {
 		synchronized(dnstldLock) {
 			if(dnstldCache==null) {
 				dnstldCache=conn.executeObjectCollectionQuery(
-					new ArrayList<DomainName>(),
+					new ArrayList<>(),
 					ObjectFactories.domainNameFactory,
 					"select domain from dns.\"TopLevelDomain\""
 				);
@@ -610,6 +611,7 @@ final public class DnsService implements MasterService {
 		);
 	}
 
+	@SuppressWarnings("deprecation")
 	public void updateReverseDnsIfExists(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,

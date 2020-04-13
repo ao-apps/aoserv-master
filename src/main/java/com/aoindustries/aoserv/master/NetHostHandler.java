@@ -474,8 +474,7 @@ final public class NetHostHandler {
 								return;
 							}
 						} else {
-							System.err.println("waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: "+host);
-							Thread.dumpStack();
+							new Exception("waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: "+host).printStackTrace(System.err);
 							invalidateSyncLock.notify();
 							return;
 						}

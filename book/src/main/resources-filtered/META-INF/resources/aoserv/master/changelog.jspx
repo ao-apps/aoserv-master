@@ -54,8 +54,9 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			>
 				<ul>
 					<li>Project moved to GitHub and Maven.</li>
-					<!-- TODO:
 					<li>Updated to Java 8 coding standards.</li>
+					<!-- TODO:
+					<li>Removed dependency on special AO PostgreSQL JDBC driver, pending acceptance of TODO.</li>
 					-->
 				</ul>
 			</changelog:release>

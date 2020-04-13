@@ -376,7 +376,7 @@ final public class TableHandler {
 					} else {
 						// Restrict to the operating system versions accessible to this user
 						IntList osVersions=getOperatingSystemVersions(conn, source);
-						if(osVersions.size()==0) return 0;
+						if(osVersions.isEmpty()) return 0;
 						StringBuilder sql=new StringBuilder();
 						sql.append("select count(*) from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
 						for(int c=0;c<osVersions.size();c++) {
@@ -736,6 +736,7 @@ final public class TableHandler {
 					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
 					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
+					@SuppressWarnings("deprecation")
 					com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
 					conn.releaseConnection();
 					MasterServer.writeObjects(
@@ -793,6 +794,7 @@ final public class TableHandler {
 					source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
 					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
+					@SuppressWarnings("deprecation")
 					com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
 					conn.releaseConnection();
 					MasterServer.writeObjects(
