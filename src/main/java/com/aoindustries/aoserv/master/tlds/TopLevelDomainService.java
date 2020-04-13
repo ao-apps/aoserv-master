@@ -3,7 +3,7 @@
  * 7262 Bull Pen Cir, Mobile, Alabama, 36695, U.S.A.
  * All rights reserved.
  */
-package com.aoindustries.tlds;
+package com.aoindustries.aoserv.master.tlds;
 
 import com.aoindustries.aoserv.master.MasterDatabase;
 import com.aoindustries.aoserv.master.MasterServer;
@@ -13,6 +13,7 @@ import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Strings;
+import com.aoindustries.tlds.TopLevelDomain;
 import com.aoindustries.util.logging.ProcessTimer;
 import java.sql.SQLException;
 import java.sql.Timestamp;
