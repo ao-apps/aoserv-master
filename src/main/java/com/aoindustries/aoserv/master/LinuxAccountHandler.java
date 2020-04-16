@@ -663,6 +663,7 @@ final public class LinuxAccountHandler {
 					&& gid < gidMin
 					&& (
 						   group.equals(Group.AOSERV_JILTER)
+						|| group.equals(Group.AOSERV_MASTER)
 						|| group.equals(Group.AOSERV_XEN_MIGRATION)
 						|| group.equals(Group.CGRED)
 						|| group.equals(Group.CHRONY)
@@ -683,7 +684,17 @@ final public class LinuxAccountHandler {
 					// Regular user groups in range gidMin through Group.GID_MAX
 					gid >= gidMin
 					&& gid <= gidMax
-					&& group.equals(Group.AOADMIN)
+					&& (
+						group.equals(Group.AOADMIN)
+						// AOServ Schema
+						|| group.equals(Group.ACCOUNTING)
+						|| group.equals(Group.BILLING)
+						|| group.equals(Group.DISTRIBUTION)
+						|| group.equals(Group.INFRASTRUCTURE)
+						|| group.equals(Group.MANAGEMENT)
+						|| group.equals(Group.MONITORING)
+						|| group.equals(Group.RESELLER)
+					)
 				)
 			)
 		) {
@@ -751,51 +762,61 @@ final public class LinuxAccountHandler {
 		static {
 			try {
 				try {
-					addCentos7SystemUser(User.ROOT,                           0, Group.ROOT,              "root",                        "/root",            Shell.BASH, null);
-					addCentos7SystemUser(User.BIN,                            1, Group.BIN,               "bin",                         "/bin",             Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.DAEMON,                         2, Group.DAEMON,            "daemon",                      "/sbin",            Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.ADM,                            3, Group.ADM,               "adm",                         "/var/adm",         Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.LP,                             4, Group.LP,                "lp",                          "/var/spool/lpd",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SYNC,                           5, Group.ROOT,              "sync",                        "/sbin",            Shell.SYNC, null);
-					addCentos7SystemUser(User.SHUTDOWN,                       6, Group.ROOT,              "shutdown",                    "/sbin",            Shell.SHUTDOWN, null);
-					addCentos7SystemUser(User.HALT,                           7, Group.ROOT,              "halt",                        "/sbin",            Shell.HALT, null);
-					addCentos7SystemUser(User.MAIL,                           8, Group.MAIL,              "mail",                        "/var/spool/mail",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.OPERATOR,                      11, Group.ROOT,              "operator",                    "/root",            Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.GAMES,                         12, Group.USERS,             "games",                       "/usr/games",       Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.FTP,                           14, Group.FTP,               "FTP User",                    "/var/ftp",         Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.NAMED,                         25, Group.NAMED,             "Named",                       "/var/named",       Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.POSTGRES,                      26, Group.POSTGRES,          "PostgreSQL Server",           "/var/lib/pgsql",   Shell.BASH, null);
-					addCentos7SystemUser(User.RPCUSER,                       29, Group.RPCUSER,           "RPC Service User",            "/var/lib/nfs",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.MYSQL,                         31, Group.MYSQL,             "MySQL server",                "/var/lib/mysql",   Shell.BASH, null);
-					addCentos7SystemUser(User.RPC,                           32, Group.RPC,               "Rpcbind Daemon",              "/var/lib/rpcbind", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.MAILNULL,                      47, Group.MAILNULL,          null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.APACHE,                        48, Group.APACHE,            "Apache",                      "/usr/share/httpd", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SMMSP,                         51, Group.SMMSP,             null,                          "/var/spool/mqueue", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.TSS,                           59, Group.TSS,               "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.TCPDUMP,                       72, Group.TCPDUMP,           null,                          "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SSHD,                          74, Group.SSHD,              "Privilege-separated SSH",     "/var/empty/sshd",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.CYRUS,                         76, Group.MAIL,              "Cyrus IMAP Server",           "/var/lib/imap",    Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.AWSTATS,                       78, Group.AWSTATS,           "AWStats Background Log Processing", "/var/opt/awstats", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.DBUS,                          81, Group.DBUS,              "System message bus",          "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.BIRD,                          95, Group.BIRD,              "BIRD Internet Routing Daemon", "/var/opt/bird",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.NOBODY,                        99, Group.NOBODY,            "Nobody",                      "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.AVAHI_AUTOIPD,                170, Group.AVAHI_AUTOIPD,     "Avahi IPv4LL Stack",          "/var/lib/avahi-autoipd", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.DHCPD,                        177, Group.DHCPD,             "DHCP server",                 "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SYSTEMD_NETWORK,              192, Group.SYSTEMD_NETWORK,   "systemd Network Management",  "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.NFSNOBODY,                  65534, Group.NFSNOBODY,         "Anonymous NFS User",          "/var/lib/nfs",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.AOSERV_JILTER,     ANY_SYSTEM_UID, Group.AOSERV_JILTER,     "AOServ Jilter",               "/var/opt/aoserv-jilter", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.CHRONY,            ANY_SYSTEM_UID, Group.CHRONY,            null,                          "/var/lib/chrony",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.CLAMSCAN,          ANY_SYSTEM_UID, Group.CLAMSCAN,          "Clamav scanner user",         "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.CLAMUPDATE,        ANY_SYSTEM_UID, Group.CLAMUPDATE,        "Clamav database update user", "/var/lib/clamav",  Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.MEMCACHED,         ANY_SYSTEM_UID, Group.MEMCACHED,         "Memcached daemon",            "/run/memcached",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.NGINX,             ANY_SYSTEM_UID, Group.NGINX,             "nginx user",                  "/var/cache/nginx", Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.POLKITD,           ANY_SYSTEM_UID, Group.POLKITD,           "User for polkitd",            "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.REDIS,             ANY_SYSTEM_UID, Group.REDIS,             "Redis Database Server",       "/var/lib/redis",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SASLAUTH,          ANY_SYSTEM_UID, Group.SASLAUTH,          "Saslauthd user",              "/run/saslauthd",   Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.SYSTEMD_BUS_PROXY, ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY, "systemd Bus Proxy",           "/",                Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.UNBOUND,           ANY_SYSTEM_UID, Group.UNBOUND,           "Unbound DNS resolver",        "/etc/unbound",     Shell.NOLOGIN, null);
-					addCentos7SystemUser(User.AOADMIN,           ANY_USER_UID,   Group.AOADMIN,           "AO Industries Administrator", "/home/aoadmin",    Shell.BASH, AOADMIN_SUDO);
-					addCentos7SystemUser(User.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, Group.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",  "/var/opt/aoserv-xen-migration", Shell.BASH, AOSERV_XEN_MIGRATION_SUDO);
+					// TODO: We should probably have a database table instead of this hard-coded list, same for system groups
+					addCentos7SystemUser(User.ROOT,                              0, Group.ROOT,                 "root",                                                            "/root",                         Shell.BASH,     null);
+					addCentos7SystemUser(User.BIN,                               1, Group.BIN,                  "bin",                                                             "/bin",                          Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.DAEMON,                            2, Group.DAEMON,               "daemon",                                                          "/sbin",                         Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.ADM,                               3, Group.ADM,                  "adm",                                                             "/var/adm",                      Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.LP,                                4, Group.LP,                   "lp",                                                              "/var/spool/lpd",                Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SYNC,                              5, Group.ROOT,                 "sync",                                                            "/sbin",                         Shell.SYNC,     null);
+					addCentos7SystemUser(User.SHUTDOWN,                          6, Group.ROOT,                 "shutdown",                                                        "/sbin",                         Shell.SHUTDOWN, null);
+					addCentos7SystemUser(User.HALT,                              7, Group.ROOT,                 "halt",                                                            "/sbin",                         Shell.HALT,     null);
+					addCentos7SystemUser(User.MAIL,                              8, Group.MAIL,                 "mail",                                                            "/var/spool/mail",               Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.OPERATOR,                         11, Group.ROOT,                 "operator",                                                        "/root",                         Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.GAMES,                            12, Group.USERS,                "games",                                                           "/usr/games",                    Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.FTP,                              14, Group.FTP,                  "FTP User",                                                        "/var/ftp",                      Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.NAMED,                            25, Group.NAMED,                "Named",                                                           "/var/named",                    Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.POSTGRES,                         26, Group.POSTGRES,             "PostgreSQL Server",                                               "/var/lib/pgsql",                Shell.BASH,     null);
+					addCentos7SystemUser(User.RPCUSER,                          29, Group.RPCUSER,              "RPC Service User",                                                "/var/lib/nfs",                  Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.MYSQL,                            31, Group.MYSQL,                "MySQL server",                                                    "/var/lib/mysql",                Shell.BASH,     null);
+					addCentos7SystemUser(User.RPC,                              32, Group.RPC,                  "Rpcbind Daemon",                                                  "/var/lib/rpcbind",              Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.MAILNULL,                         47, Group.MAILNULL,             null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.APACHE,                           48, Group.APACHE,               "Apache",                                                          "/usr/share/httpd",              Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SMMSP,                            51, Group.SMMSP,                null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.TSS,                              59, Group.TSS,                  "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null",                     Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.TCPDUMP,                          72, Group.TCPDUMP,              null,                                                              "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SSHD,                             74, Group.SSHD,                 "Privilege-separated SSH",                                         "/var/empty/sshd",               Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.CYRUS,                            76, Group.MAIL,                 "Cyrus IMAP Server",                                               "/var/lib/imap",                 Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.BIRD,                             95, Group.BIRD,                 "BIRD Internet Routing Daemon",                                    "/var/opt/bird",                 Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.NOBODY,                           99, Group.NOBODY,               "Nobody",                                                          "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.AVAHI_AUTOIPD,                   170, Group.AVAHI_AUTOIPD,        "Avahi IPv4LL Stack",                                              "/var/lib/avahi-autoipd",        Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SYSTEMD_NETWORK,                 192, Group.SYSTEMD_NETWORK,      "systemd Network Management",                                      "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.NFSNOBODY,                     65534, Group.NFSNOBODY,            "Anonymous NFS User",                                              "/var/lib/nfs",                  Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.AOSERV_JILTER,        ANY_SYSTEM_UID, Group.AOSERV_JILTER,        "AOServ Jilter",                                                   "/var/opt/aoserv-jilter",        Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.AOSERV_MASTER,        ANY_SYSTEM_UID, Group.AOSERV_MASTER,        "AOServ Master",                                                   "/var/opt/aoserv-master",        Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.CHRONY,               ANY_SYSTEM_UID, Group.CHRONY,               null,                                                              "/var/lib/chrony",               Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.REDIS,                ANY_SYSTEM_UID, Group.REDIS,                "Redis Database Server",                                           "/var/lib/redis",                Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SASLAUTH,             ANY_SYSTEM_UID, Group.SASLAUTH,             "Saslauthd user",                                                  "/run/saslauthd",                Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.SYSTEMD_BUS_PROXY,    ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY,    "systemd Bus Proxy",                                               "/",                             Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.UNBOUND,              ANY_SYSTEM_UID, Group.UNBOUND,              "Unbound DNS resolver",                                            "/etc/unbound",                  Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.AOADMIN,              ANY_USER_UID,   Group.AOADMIN,              "AO Industries Administrator",                                     "/home/aoadmin",                 Shell.BASH,     AOADMIN_SUDO);
+					addCentos7SystemUser(User.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, Group.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",                                            "/var/opt/aoserv-xen-migration", Shell.BASH,     AOSERV_XEN_MIGRATION_SUDO);
+					// AOServ Schema:
+					addCentos7SystemUser(User.ACCOUNTING,           ANY_USER_UID,   Group.ACCOUNTING,           "masterdb access",                                                 "/home/accounting",              Shell.BASH,     null);
+					addCentos7SystemUser(User.BILLING,              ANY_USER_UID,   Group.BILLING,              "masterdb access",                                                 "/home/billing",                 Shell.BASH,     null);
+					addCentos7SystemUser(User.DISTRIBUTION,         ANY_USER_UID,   Group.DISTRIBUTION,         "masterdb access",                                                 "/home/distribution",            Shell.BASH,     null);
+					addCentos7SystemUser(User.INFRASTRUCTURE,       ANY_USER_UID,   Group.INFRASTRUCTURE,       "masterdb access",                                                 "/home/infrastructure",          Shell.BASH,     null);
+					addCentos7SystemUser(User.MANAGEMENT,           ANY_USER_UID,   Group.MANAGEMENT,           "masterdb access",                                                 "/home/management",              Shell.BASH,     null);
+					addCentos7SystemUser(User.MONITORING,           ANY_USER_UID,   Group.MONITORING,           "masterdb access",                                                 "/home/monitoring",              Shell.BASH,     null);
+					addCentos7SystemUser(User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
