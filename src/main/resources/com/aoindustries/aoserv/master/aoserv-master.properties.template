@@ -1,6 +1,6 @@
 #
 # aoserv-master - Master server for the AOServ Platform.
-# Copyright (C) 2006, 2008, 2010, 2013, 2015  AO Industries, Inc.
+# Copyright (C) 2006, 2008, 2010, 2013, 2015, 2020  AO Industries, Inc.
 #     support@aoindustries.com
 #     7262 Bull Pen Cir
 #     Mobile, AL 36695
@@ -35,31 +35,16 @@ aoserv.master.db.password=<postgres_app_password>
 aoserv.master.db.connections=<max_num_connections>
 aoserv.master.db.max_connection_age=
 
-# The people responsible for system security
-aoserv.master.security.email.to=aoserv@aoindustries.com
-aoserv.master.security.email.from=master@<hostname>
-aoserv.master.security.smtp.server=<smtp_server>
-
-# The people responsible for system reliability
-aoserv.master.error.email.to=aoserv@aoindustries.com
-aoserv.master.error.email.from=master@<hostname>
-aoserv.master.error.smtp.server=<smtp_server>
-aoserv.master.warning.email.to=aoserv@aoindustries.com
-aoserv.master.warning.email.from=master@<hostname>
-aoserv.master.warning.smtp.server=<smtp_server>
-
 # The protocols this server will listen on
 aoserv.master.protocols=tcp, ssl
-#aoserv.server.protocols=tcp, ssl, http, https
-aoserv.master.local_ip=192.168.1.128
+aoserv.master.local_ip=<local_ip>
 
 # TCP server parameters
-aoserv.master.tcp.bind=192.168.1.128
-#aoserv.master.tcp.bind=192.168.1.4
+aoserv.master.tcp.bind=<tcp_bind>
 aoserv.master.tcp.ports=4582
 
 # SSL server parameters
-aoserv.master.ssl.bind=<ssl_bind_ip>
+aoserv.master.ssl.bind=<ssl_bind>
 aoserv.master.ssl.ports=4583
 aoserv.master.ssl.keystore.password=<keystore_password>
 aoserv.master.ssl.keystore.path=<keystore_path>
