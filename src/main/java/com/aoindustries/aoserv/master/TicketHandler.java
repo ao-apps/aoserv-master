@@ -257,7 +257,7 @@ final public class TicketHandler /*implements Runnable*/ {
 			createdBy,
 			category==-1 ? DatabaseAccess.Null.INTEGER : category,
 			type,
-			fromAddress,
+			AOServObject.USE_SQL_DATA_WRITE ? fromAddress : fromAddress.toString(),
 			summary,
 			details,
 			rawEmail,
