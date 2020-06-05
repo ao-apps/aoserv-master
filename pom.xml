@@ -149,10 +149,6 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 						<groupId>org.apache.maven.plugins</groupId><artifactId>maven-javadoc-plugin</artifactId>
 						<configuration>
 							<offlineLinks>
-								<offlineLink>
-									<url>${javadoc.link.javase}</url>
-									<location>${project.build.directory}/offlineLinks/com/aoindustries/javadoc/offline/javase/${javase.release}</location>
-								</offlineLink>
 								<!-- Direct -->
 								<offlineLink>
 									<url>https://aoindustries.com/ao-collections/apidocs/</url>
@@ -198,6 +194,11 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 									<url>https://commons.apache.org/proper/commons-lang/javadocs/api-${commons-lang3.version}/</url>
 									<location>${project.build.directory}/offlineLinks/org.apache.commons/commons-lang3</location>
 								</offlineLink>
+								<!-- Java SE -->
+								<offlineLink>
+									<url>${javadoc.link.javase}</url>
+									<location>${project.build.directory}/offlineLinks/com/aoindustries/javadoc/offline/javase/${javase.release}</location>
+								</offlineLink>
 							</offlineLinks>
 						</configuration>
 					</plugin>
@@ -208,12 +209,6 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 
 	<dependencyManagement>
 		<dependencies>
-			<!-- BOM -->
-			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>ao-credit-cards-bom</artifactId><version>1.1.3-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
 			<!-- Direct -->
 			<dependency>
 				<groupId>com.aoindustries</groupId><artifactId>ao-collections</artifactId><version>1.1.0${POST-SNAPSHOT}</version>
@@ -289,6 +284,12 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			</dependency>
 			<dependency>
 				<groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>${stripe-java.version}</version>
+			</dependency>
+			<!-- BOM -->
+			<dependency>
+				<groupId>com.aoindustries</groupId><artifactId>ao-credit-cards-bom</artifactId><version>1.1.3-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
+				<type>pom</type>
+				<scope>import</scope>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
