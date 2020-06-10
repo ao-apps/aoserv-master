@@ -29,7 +29,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		<relativePath>../../ao-oss-parent/pom.xml</relativePath>
 	</parent>
 
-	<groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.84.5-SNAPSHOT</version>
+	<groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.84.6-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 
 	<properties>
@@ -235,7 +235,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoindustries</groupId><artifactId>aocode-public</artifactId><version>4.1.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><version>1.84.5-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
+				<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><version>1.84.6-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
 				<groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId><version>1.84.0${POST-SNAPSHOT}</version>
@@ -267,7 +267,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			</dependency>
 			<!-- Runtime Direct -->
 			<dependency>
-				<groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.2.12</version>
+				<groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.2.13</version>
 			</dependency>
 			<!-- Runtime Transitive -->
 			<dependency>
