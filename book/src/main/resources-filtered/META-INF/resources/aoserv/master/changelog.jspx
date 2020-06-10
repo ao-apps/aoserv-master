@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-06-10T01:14:52-05:00"
+		dateModified="2020-06-10T04:24:34-05:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -56,6 +56,10 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<ul>
 					<li>Fixed <code>add_email_forwarding</code> database insert that relied the special AO PostgreSQL JDBC driver.</li>
 					<li>Updated PostgreSQL JDBC Drivers to 42.2.13.</li>
+					<li>
+						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.21.0/jar">com.stripe:stripe-java:jar:19.21.0</ao:a>,
+						which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
+					</li>
 				</ul>
 			</changelog:release>
 		</c:if>
