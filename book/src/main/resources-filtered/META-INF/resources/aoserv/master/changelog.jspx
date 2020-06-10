@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-04-26T00:35:11-05:00"
+		dateModified="2020-06-10T00:19:47-05:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -52,7 +52,11 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				groupId="@{project.groupId}"
 				artifactId="@{documented.artifactId}"
 				scmUrl="@{project.scm.url}"
-			/>
+			>
+				<ul>
+					<li>Fixed <code>add_email_forwarding</code> database insert that relied the special AO PostgreSQL JDBC driver.</li>
+				</ul>
+			</changelog:release>
 		</c:if>
 
 		<changelog:release

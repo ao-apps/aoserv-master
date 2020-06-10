@@ -22,6 +22,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.email.InboxAttributes;
 import com.aoindustries.aoserv.client.email.List;
@@ -240,7 +241,7 @@ final public class EmailHandler {
 		int forwarding = conn.executeIntUpdate(
 			"INSERT INTO email.\"Forwarding\" (email_address, destination) VALUES (?,?) RETURNING id",
 			address,
-			destination
+			AOServObject.USE_SQL_DATA_WRITE ? destination : destinationStr
 		);
 
 		// Notify all clients of the update
