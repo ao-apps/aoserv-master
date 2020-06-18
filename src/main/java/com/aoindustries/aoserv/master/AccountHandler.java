@@ -22,6 +22,7 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.account.Profile;
@@ -553,11 +554,21 @@ final public class AccountHandler {
 		);
 		short index = 0;
 		for(Email email : billingEmail) {
-			conn.executeUpdate("INSERT INTO account.\"Profile.billingEmail{}\" VALUES (?,?,?)", profile, index++, email);
+			conn.executeUpdate(
+				"INSERT INTO account.\"Profile.billingEmail{}\" VALUES (?,?,?)",
+				profile,
+				index++,
+				AOServObject.USE_SQL_DATA_WRITE ? email : email.toString()
+			);
 		}
 		index = 0;
 		for(Email email : technicalEmail) {
-			conn.executeUpdate("INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)", profile, index++, email);
+			conn.executeUpdate(
+				"INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)",
+				profile,
+				index++,
+				AOServObject.USE_SQL_DATA_WRITE ? email : email.toString()
+			);
 		}
 		// TODO: Update stored cards since they have "email", "phone", and "fax" from the account profile.
 		// Notify all clients of the update
