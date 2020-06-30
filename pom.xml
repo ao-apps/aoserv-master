@@ -300,7 +300,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.paypal</groupId><artifactId>payflow</artifactId><version>v440</version>
 			</dependency>
 			<dependency>
-				<groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>19.23.0</version>
+				<groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>19.27.0</version>
 			</dependency>
 			<!-- Non-classpath Direct -->
 			<dependency>
