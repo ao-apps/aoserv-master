@@ -29,7 +29,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		<relativePath>../../../ao-oss-parent/pom.xml</relativePath>
 	</parent>
 
-	<groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.84.8</version>
+	<groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.84.8-POST-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 
 	<properties>
@@ -51,7 +51,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		<connection>scm:git:git://github.com/aoindustries/aoserv-master.git</connection>
 		<developerConnection>scm:git:git@github.com:aoindustries/aoserv-master.git</developerConnection>
 		<url>https://github.com/aoindustries/aoserv-master</url>
-		<tag>aoserv-master-book-1.84.8</tag>
+		<tag>HEAD</tag>
 	</scm>
 
 	<issueManagement>
