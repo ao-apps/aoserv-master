@@ -73,7 +73,10 @@ final public class LinuxAccountHandler {
 	;
 
 	/** Default sudo setting for newly added "aoadmin" system users. */
-	private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD: ALL";
+	private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD:ALL";
+
+	/** Amazon EC2 cloud-init */
+	private static final String CENTOS_SUDO = "ALL=(ALL) NOPASSWD:ALL";
 
 	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
 	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
@@ -694,6 +697,8 @@ final public class LinuxAccountHandler {
 						|| group.equals(Group.MANAGEMENT)
 						|| group.equals(Group.MONITORING)
 						|| group.equals(Group.RESELLER)
+						// Amazon EC2 cloud-init
+						|| group.equals(Group.CENTOS)
 					)
 				)
 			)
@@ -817,6 +822,8 @@ final public class LinuxAccountHandler {
 					addCentos7SystemUser(User.MANAGEMENT,           ANY_USER_UID,   Group.MANAGEMENT,           "masterdb access",                                                 "/home/management",              Shell.BASH,     null);
 					addCentos7SystemUser(User.MONITORING,           ANY_USER_UID,   Group.MONITORING,           "masterdb access",                                                 "/home/monitoring",              Shell.BASH,     null);
 					addCentos7SystemUser(User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
+					// Amazon EC2 cloud-init
+					addCentos7SystemUser(User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CENTOS_SUDO);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
