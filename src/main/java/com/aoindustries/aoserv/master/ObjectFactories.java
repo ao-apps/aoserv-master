@@ -133,6 +133,17 @@ final public class ObjectFactories {
 		}
 	};
 
+	/**
+	 * Requires "mysqlServerName".
+	 */
+	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Server.Name> mysqlServerNameFactory = (ResultSet result) -> {
+		try {
+			return com.aoindustries.aoserv.client.mysql.Server.Name.valueOf(result.getString("mysqlServerName"));
+		} catch(ValidationException e) {
+			throw new SQLException(e.getLocalizedMessage(), e);
+		}
+	};
+
 	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.User.Name> mysqlUserNameFactory = (ResultSet result) -> {
 		try {
 			return com.aoindustries.aoserv.client.mysql.User.Name.valueOf(result.getString(1));
@@ -157,11 +168,14 @@ final public class ObjectFactories {
 		}
 	};
 
+	/**
+	 * Requires "port" and "net_protocol".
+	 */
 	public static final ObjectFactory<Port> portFactory = (ResultSet result) -> {
 		try {
 			return Port.valueOf(
-				result.getInt(1),
-				Protocol.valueOf(result.getString(2).toUpperCase(Locale.ROOT))
+				result.getInt("port"),
+				Protocol.valueOf(result.getString("net_protocol").toUpperCase(Locale.ROOT))
 			);
 		} catch(IllegalArgumentException | ValidationException e) {
 			throw new SQLException(e.getLocalizedMessage(), e);

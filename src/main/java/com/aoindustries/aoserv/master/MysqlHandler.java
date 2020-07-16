@@ -39,8 +39,10 @@ import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.net.Port;
+import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1095,7 +1097,8 @@ final public class MysqlHandler {
 	}
 
 	public static Account.Name getPackageForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.executeObjectQuery(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  nb.package\n"
 			+ "from\n"
@@ -1107,10 +1110,14 @@ final public class MysqlHandler {
 		);
 	}
 
-	public static Port getPortForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+	public static Tuple2<Server.Name,Port> getNameAndPortForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
 		return conn.executeObjectQuery(
-			ObjectFactories.portFactory,
+			(ResultSet result) -> new Tuple2<>(
+				ObjectFactories.mysqlServerNameFactory.createObject(result),
+				ObjectFactories.portFactory.createObject(result)
+			),
 			"select\n"
+			+ "  ms.\"name\" as \"mysqlServerName\","
 			+ "  nb.port,\n"
 			+ "  nb.net_protocol\n"
 			+ "from\n"
@@ -1237,10 +1244,10 @@ final public class MysqlHandler {
 				throw new SQLException(e);
 			}
 		}
-		Port port = getPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.releaseConnection();
-		MysqlReplication.SlaveStatus slaveStatus = daemonConnector.getMySQLSlaveStatus(chrootPath, osv, port);
+		MysqlReplication.SlaveStatus slaveStatus = daemonConnector.getMySQLSlaveStatus(chrootPath, osv, serverNameAndPort.getElement1(), serverNameAndPort.getElement2());
 		if(slaveStatus==null) out.writeByte(AoservProtocol.DONE);
 		else {
 			out.writeByte(AoservProtocol.NEXT);
@@ -1308,11 +1315,11 @@ final public class MysqlHandler {
 				}
 			}
 		}
-		Port port = getPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		Database.Name databaseName = getNameForDatabase(conn, database);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.releaseConnection();
-		List<Database.TableStatus> tableStatuses = daemonConnector.getMySQLTableStatus(chrootPath, osv, port, databaseName);
+		List<Database.TableStatus> tableStatuses = daemonConnector.getMySQLTableStatus(chrootPath, osv, serverNameAndPort.getElement1(), serverNameAndPort.getElement2(), databaseName);
 		out.writeByte(AoservProtocol.NEXT);
 		int size = tableStatuses.size();
 		out.writeCompressedInt(size);
@@ -1387,11 +1394,11 @@ final public class MysqlHandler {
 				}
 			}
 		}
-		Port port = getPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		Database.Name databaseName = getNameForDatabase(conn, database);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.releaseConnection();
-		List<Database.CheckTableResult> checkTableResults = daemonConnector.checkMySQLTables(chrootPath, osv, port, databaseName, tableNames);
+		List<Database.CheckTableResult> checkTableResults = daemonConnector.checkMySQLTables(chrootPath, osv, serverNameAndPort.getElement1(), serverNameAndPort.getElement2(), databaseName, tableNames);
 		out.writeByte(AoservProtocol.NEXT);
 		int size = checkTableResults.size();
 		out.writeCompressedInt(size);
