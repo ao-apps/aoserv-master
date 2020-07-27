@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-07-19T00:08:04-05:00"
+		dateModified="2020-07-27T17:15:41-05:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -52,7 +52,14 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				groupId="@{project.groupId}"
 				artifactId="@{documented.artifactId}"
 				scmUrl="@{project.scm.url}"
-			/>
+			>
+				<ul>
+					<li>
+						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.35.0/jar">com.stripe:stripe-java:jar:19.35.0</ao:a>,
+						which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
+					</li>
+				</ul>
+			</changelog:release>
 		</c:if>
 
 		<changelog:release
