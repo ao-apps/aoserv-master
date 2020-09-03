@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-08-21T18:34:15-05:00"
+		dateModified="2020-09-02T17:48:22-05:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -55,7 +55,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			>
 				<ul>
 					<li>
-						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.45.0/jar">com.stripe:stripe-java:jar:19.45.0</ao:a>,
+						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.1.0/jar">com.stripe:stripe-java:jar:20.1.0</ao:a>,
 						which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
 					</li>
 					<li>Updated PostgreSQL JDBC Drivers to 42.2.16.</li>
