@@ -120,14 +120,13 @@ final public class ReportGenerator implements CronJob {
 				MasterServer.executorService.submit(timer);
 
 				// Start the transaction
-				InvalidateList invalidateList=new InvalidateList();
-				DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-				try {
+				try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+					InvalidateList invalidateList=new InvalidateList();
 					boolean connRolledBack=false;
 					try {
 						// Do not make the run twice in one day
 						if(
-							conn.executeBooleanQuery(
+							conn.queryBoolean(
 								"select\n"
 								+ "  not exists (\n"
 								+ "    select\n"
@@ -299,10 +298,8 @@ final public class ReportGenerator implements CronJob {
 					} finally {
 						if(!connRolledBack && !conn.isClosed()) conn.commit();
 					}
-				} finally {
-					conn.releaseConnection();
+					MasterServer.invalidateTables(conn, invalidateList, null);
 				}
-				MasterServer.invalidateTables(invalidateList, null);
 			}
 		} catch(ThreadDeath TD) {
 			throw TD;

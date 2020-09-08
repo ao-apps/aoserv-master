@@ -101,7 +101,7 @@ final public class SignupHandler {
 		PaymentHandler.checkAccessEncryptionKey(conn, source, "addRequest", recipient);
 
 		// Add the entry
-		int requestId = conn.executeIntUpdate(
+		int requestId = conn.updateInt(
 			"INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING id",
 			account.toString(),
 			ip_address.toString(),
@@ -183,22 +183,28 @@ final public class SignupHandler {
 						public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 							try {
 								InvalidateList invalidateList = new InvalidateList();
-								MasterDatabase database = MasterDatabase.getDatabase();
-								if(database.executeUpdate("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
-									invalidateList.addTable(database,
-										Table.TableID.SIGNUP_REQUESTS,
-										InvalidateList.allAccounts,
-										InvalidateList.allHosts,
-										false
-									);
-									invalidateList.addTable(database,
-										Table.TableID.SIGNUP_REQUEST_OPTIONS,
-										InvalidateList.allAccounts,
-										InvalidateList.allHosts,
-										false
-									);
-									MasterServer.invalidateTables(invalidateList, null);
-								}
+								MasterDatabase.getDatabase().transaction(IOException.class, conn -> {
+									if(conn.update("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
+										invalidateList.addTable(
+											conn,
+											Table.TableID.SIGNUP_REQUESTS,
+											InvalidateList.allAccounts,
+											InvalidateList.allHosts,
+											false
+										);
+										invalidateList.addTable(
+											conn,
+											Table.TableID.SIGNUP_REQUEST_OPTIONS,
+											InvalidateList.allAccounts,
+											InvalidateList.allHosts,
+											false
+										);
+										conn.commit();
+										MasterServer.invalidateTables(conn, invalidateList, null);
+									} else {
+										conn.rollback();
+									}
+								});
 							} catch(ThreadDeath TD) {
 								throw TD;
 							} catch(Throwable T) {

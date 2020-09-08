@@ -28,6 +28,7 @@ import com.aoindustries.aoserv.master.master.Process;
 import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.collections.IntArrayList;
 import com.aoindustries.collections.IntList;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableInput;
 import com.aoindustries.io.stream.StreamableOutput;
@@ -201,18 +202,12 @@ final public class SocketServerThread extends Thread implements RequestSource {
 						out.flush();
 						return;
 					}
-					DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-					try {
-						process.setDeamonServer(NetHostHandler.getHostForLinuxServerHostname(conn, daemonServer));
-					} catch(RuntimeException | IOException err) {
-						conn.rollback();
-						throw err;
-					} catch(SQLException err) {
-						conn.rollbackAndClose();
-						throw err;
-					} finally {
-						conn.releaseConnection();
-					}
+					process.setDeamonServer(
+						NetHostHandler.getHostForLinuxServerHostname(
+							MasterDatabase.getDatabase(),
+							daemonServer
+						)
+					);
 				} else {
 					process.setDeamonServer(-1);
 				}
@@ -395,123 +390,80 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					case VERSION_1_0_A_101 :
 					case VERSION_1_0_A_100 :
 					{
-						String message;
-						DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-						try {
-							try {
-								message = MasterServer.authenticate(
-									conn,
-									socket.getInetAddress().getHostAddress(),
-									process.getEffectiveAdministrator_username(),
-									process.getAuthenticatedAdministrator_username(),
-									password
-								);
-							} catch(RuntimeException | IOException err) {
-								conn.rollback();
-								throw err;
-							} catch(SQLException err) {
-								conn.rollbackAndClose();
-								throw err;
-							} finally {
-								conn.releaseConnection();
-							}
+						DatabaseAccess db = MasterDatabase.getDatabase();
+						String message = MasterServer.authenticate(
+							db,
+							socket.getInetAddress().getHostAddress(),
+							process.getEffectiveAdministrator_username(),
+							process.getAuthenticatedAdministrator_username(),
+							password
+						);
 
-							if(message!=null) {
-								//UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
-								out.writeBoolean(false);
-								out.writeUTF(message);
-								out.flush();
-							} else {
-								// Only master users may provide a daemon_server
-								boolean isOK=true;
-								int daemonServer=process.getDaemonServer();
-								if(daemonServer!=-1) {
-									try {
-										if(MasterServer.getUser(conn, process.getEffectiveAdministrator_username())==null) {
-											conn.releaseConnection();
-											out.writeBoolean(false);
-											out.writeUTF("Only master users may register a daemon server.");
-											out.flush();
-											isOK=false;
-										} else {
-											UserHost[] servers=MasterServer.getUserHosts(conn, process.getEffectiveAdministrator_username());
-											conn.releaseConnection();
-											if(servers.length!=0) {
-												isOK=false;
-												for (UserHost server1 : servers) {
-													if (server1.getServerPKey() == daemonServer) {
-														isOK=true;
-														break;
-													}
-												}
-												if(!isOK) {
-													out.writeBoolean(false);
-													out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
-													out.flush();
-												}
+						if(message!=null) {
+							//UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
+							out.writeBoolean(false);
+							out.writeUTF(message);
+							out.flush();
+						} else {
+							// Only master users may provide a daemon_server
+							boolean isOK=true;
+							int daemonServer=process.getDaemonServer();
+							if(daemonServer!=-1) {
+								if(MasterServer.getUser(db, process.getEffectiveAdministrator_username())==null) {
+									out.writeBoolean(false);
+									out.writeUTF("Only master users may register a daemon server.");
+									out.flush();
+									isOK=false;
+								} else {
+									UserHost[] servers=MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
+									if(servers.length!=0) {
+										isOK=false;
+										for (UserHost server1 : servers) {
+											if (server1.getServerPKey() == daemonServer) {
+												isOK=true;
+												break;
 											}
 										}
-									} catch(RuntimeException | IOException err) {
-										conn.rollback();
-										throw err;
-									} catch(SQLException err) {
-										conn.rollbackAndClose();
-										throw err;
-									} finally {
-										conn.releaseConnection();
-									}
-								}
-								if(isOK) {
-									out.writeBoolean(true);
-									if(existingId == null) {
-										Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
-										process.setConnectorId(connectorId);
-										if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-											assert connectorId.getHi() == 0;
-											assert connectorId.getLo() != -1;
-											out.writeLong(connectorId.getLo());
-										} else {
-											out.writeIdentifier(connectorId);
+										if(!isOK) {
+											out.writeBoolean(false);
+											out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
+											out.flush();
 										}
-									} else {
-										process.setConnectorId(existingId);
-									}
-									// Command sequence starts at a random value
-									final long startSeq;
-									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-										startSeq = MasterServer.getSecureRandom().nextLong();
-										out.writeLong(startSeq);
-									} else {
-										startSeq = 0;
-									}
-									out.flush();
-
-									try {
-										MasterServer.updateAOServProtocolLastUsed(conn, protocolVersion);
-									} catch(RuntimeException | IOException err) {
-										conn.rollback();
-										throw err;
-									} catch(SQLException err) {
-										conn.rollbackAndClose();
-										throw err;
-									} finally {
-										conn.releaseConnection();
-									}
-
-									long seq = startSeq;
-									while(server.handleRequest(this, seq++, in, out, process)) {
-										// Do nothing in loop
 									}
 								}
 							}
-						} catch(RuntimeException | IOException err) {
-							conn.rollback();
-							throw err;
-						} catch(SQLException err) {
-							conn.rollbackAndClose();
-							throw err;
-						} finally {
-							conn.releaseConnection();
+							if(isOK) {
+								out.writeBoolean(true);
+								if(existingId == null) {
+									Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
+									process.setConnectorId(connectorId);
+									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+										assert connectorId.getHi() == 0;
+										assert connectorId.getLo() != -1;
+										out.writeLong(connectorId.getLo());
+									} else {
+										out.writeIdentifier(connectorId);
+									}
+								} else {
+									process.setConnectorId(existingId);
+								}
+								// Command sequence starts at a random value
+								final long startSeq;
+								if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
+									startSeq = MasterServer.getSecureRandom().nextLong();
+									out.writeLong(startSeq);
+								} else {
+									startSeq = 0;
+								}
+								out.flush();
+
+								MasterServer.updateAOServProtocolLastUsed(db, protocolVersion);
+
+								long seq = startSeq;
+								while(server.handleRequest(this, seq++, in, out, process)) {
+									// Do nothing in loop
+								}
+							}
 						}
 						break;
 					}

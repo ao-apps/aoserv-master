@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -122,7 +122,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
 	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeQuery(
+		return conn.query(
 			(ResultSet results) -> {
 				try {
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();

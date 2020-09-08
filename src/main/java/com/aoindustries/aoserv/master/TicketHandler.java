@@ -157,7 +157,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		for(int range=1000000; range<1000000000; range *= 10) {
 			for(int attempt=0; attempt<1000; attempt++) {
 				int ticket = secureRandom.nextInt(range);
-				if(conn.executeBooleanQuery("select (select id from ticket.\"Ticket\" where id=?) is null", ticket)) return ticket;
+				if(conn.queryBoolean("select (select id from ticket.\"Ticket\" where id=?) is null", ticket)) return ticket;
 			}
 		}
 		throw new SQLException("Failed to generate ticket ID after thousands of attempts");
@@ -245,7 +245,7 @@ final public class TicketHandler /*implements Runnable*/ {
 	) throws IOException, SQLException {
 		int ticket = generateTicketId(conn);
 
-		conn.executeUpdate(
+		conn.update(
 			AOServObject.USE_SQL_DATA_WRITE
 				? "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)"
 				: "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?::\"com.aoindustries.net\".\"Email\",?,?,?,now(),?,?,?,?,?,?,?)",
@@ -304,7 +304,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int ticket
 	) throws IOException, SQLException {
 		checkAccessTicket(conn, source, "getTicketDetails", ticket);
-		return conn.executeStringQuery("select details from ticket.\"Ticket\" where id=?", ticket);
+		return conn.queryString("select details from ticket.\"Ticket\" where id=?", ticket);
 	}
 
 	public static String getTicketRawEmail(
@@ -313,7 +313,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int ticket
 	) throws IOException, SQLException {
 		checkAccessTicket(conn, source, "getTicketRawEmail", ticket);
-		return conn.executeStringQuery("select raw_email from ticket.\"Ticket\" where id=?", ticket);
+		return conn.queryString("select raw_email from ticket.\"Ticket\" where id=?", ticket);
 	}
 
 	public static String getTicketInternalNotes(
@@ -322,7 +322,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int ticket
 	) throws IOException, SQLException {
 		checkAccessTicket(conn, source, "getTicketInternalNotes", ticket);
-		if(isTicketAdmin(conn, source)) return conn.executeStringQuery("select internal_notes from ticket.\"Ticket\" where id=?", ticket);
+		if(isTicketAdmin(conn, source)) return conn.queryString("select internal_notes from ticket.\"Ticket\" where id=?", ticket);
 		else return "";
 	}
 
@@ -332,7 +332,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int action
 	) throws IOException, SQLException {
 		checkAccessAction(conn, source, "getActionOldValue", action);
-		return conn.executeStringQuery("select old_value from ticket.\"Action\" where id=?", action);
+		return conn.queryString("select old_value from ticket.\"Action\" where id=?", action);
 	}
 
 	public static String getActionNewValue(
@@ -341,7 +341,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int action
 	) throws IOException, SQLException {
 		checkAccessAction(conn, source, "getActionNewValue", action);
-		return conn.executeStringQuery("select new_value from ticket.\"Action\" where id=?", action);
+		return conn.queryString("select new_value from ticket.\"Action\" where id=?", action);
 	}
 
 	public static String getActionDetails(
@@ -350,7 +350,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int action
 	) throws IOException, SQLException {
 		checkAccessAction(conn, source, "getActionDetails", action);
-		return conn.executeStringQuery("select details from ticket.\"Action\" where id=?", action);
+		return conn.queryString("select details from ticket.\"Action\" where id=?", action);
 	}
 
 	public static String getActionRawEmail(
@@ -359,7 +359,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		int action
 	) throws IOException, SQLException {
 		checkAccessAction(conn, source, "getActionRawEmail", action);
-		return conn.executeStringQuery("select raw_email from ticket.\"Action\" where id=?", action);
+		return conn.queryString("select raw_email from ticket.\"Action\" where id=?", action);
 	}
 	// </editor-fold>
 	// <editor-fold desc="Ticket Actions">
@@ -378,9 +378,9 @@ final public class TicketHandler /*implements Runnable*/ {
 		UsernameHandler.checkAccessUsername(conn, source, "bounceTicket", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to bounce a Ticket as user '"+User.MAIL+'\'');
 
-		conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.BOUNCED, ticket);
+		conn.update("update ticket.\"Ticket\" set status=? where id=?", Status.BOUNCED, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -435,11 +435,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to change a Ticket's admin priority as user '"+User.MAIL+'\'');
 
 		if(!isTicketAdmin(conn, source)) throw new SQLException("Only ticket administrators may change the administrative priority.");
-		String oldValue=conn.executeStringQuery("select admin_priority from ticket.\"Ticket\" where id=?", ticket);
+		String oldValue=conn.queryString("select admin_priority from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set admin_priority=? where id=?", priority, ticket);
+		conn.update("update ticket.\"Ticket\" set admin_priority=? where id=?", priority, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
 			ticket,
 			username,
@@ -481,11 +481,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to assign a Ticket as user '"+User.MAIL+'\'');
 
 		if(!isTicketAdmin(conn, source)) throw new SQLException("Only ticket administrators may assign ticket.Ticket.");
-		String oldValue=conn.executeStringQuery("select assigned_to from ticket.\"Ticket\" where id=?", ticket);
+		String oldValue=conn.queryString("select assigned_to from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set assigned_to=? where id=?", assignedTo, ticket);
+		conn.update("update ticket.\"Ticket\" set assigned_to=? where id=?", assignedTo, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, old_value, comments) values(?,?,?,?,?)",
 			ticket,
 			username,
@@ -526,11 +526,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		if(newAccount!=null) AccountHandler.checkAccessAccount(conn, source, "setTicketBusiness", newAccount);
 
 		int updateCount;
-		if(oldAccount==null) updateCount = conn.executeUpdate("update ticket.\"Ticket\" set accounting=? where id=? and accounting is null", newAccount, ticket);
-		else updateCount = conn.executeUpdate("update ticket.\"Ticket\" set accounting=? where id=? and accounting=?", newAccount, ticket, oldAccount);
+		if(oldAccount==null) updateCount = conn.update("update ticket.\"Ticket\" set accounting=? where id=? and accounting is null", newAccount, ticket);
+		else updateCount = conn.update("update ticket.\"Ticket\" set accounting=? where id=? and accounting=?", newAccount, ticket, oldAccount);
 
 		if(updateCount==1) {
-			conn.executeUpdate(
+			conn.update(
 				"insert into ticket.\"Action\"(ticket, administrator, action_type, old_accounting, new_accounting) values(?,?,?,?,?)",
 				ticket,
 				source.getCurrentAdministrator(),
@@ -571,7 +571,8 @@ final public class TicketHandler /*implements Runnable*/ {
 				);
 			}
 			// By brand
-			Account.Name brand = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+			Account.Name brand = conn.queryObject(
+				ObjectFactories.accountNameFactory,
 				"select brand from ticket.\"Ticket\" where id=?",
 				ticket
 			);
@@ -588,7 +589,8 @@ final public class TicketHandler /*implements Runnable*/ {
 				false
 			);
 			// By reseller
-			Account.Name reseller = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+			Account.Name reseller = conn.queryObject(
+				ObjectFactories.accountNameFactory,
 				"select reseller from ticket.\"Ticket\" where id=?",
 				ticket
 			);
@@ -623,14 +625,14 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketType", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketType", ticket);
 
-		int updateCount = conn.executeUpdate(
+		int updateCount = conn.update(
 			"update ticket.\"Ticket\" set ticket_type=? where id=? and ticket_type=?",
 			newType,
 			ticket,
 			oldType
 		);
 		if(updateCount==1) {
-			conn.executeUpdate(
+			conn.update(
 				"insert into ticket.\"Action\"(ticket, administrator, action_type, old_type, new_type) values(?,?,?,?,?)",
 				ticket,
 				source.getCurrentAdministrator(),
@@ -704,7 +706,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketStatus", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketStatus", ticket);
 
-		int updateCount = conn.executeUpdate(
+		int updateCount = conn.update(
 			"update ticket.\"Ticket\" set status=?, status_timeout=? where id=? and status=?",
 			newStatus,
 			statusTimeout==-1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(statusTimeout),
@@ -712,7 +714,7 @@ final public class TicketHandler /*implements Runnable*/ {
 			oldStatus
 		);
 		if(updateCount==1) {
-			conn.executeUpdate(
+			conn.update(
 				"insert into ticket.\"Action\"(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
 				ticket,
 				source.getCurrentAdministrator(),
@@ -785,14 +787,14 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketInternalNotes", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketInternalNotes", ticket);
 
-		int updateCount = conn.executeUpdate(
+		int updateCount = conn.update(
 			"update ticket.\"Ticket\" set internal_notes=? where id=? and internal_notes=?",
 			newInternalNotes,
 			ticket,
 			oldInternalNotes
 		);
 		if(updateCount==1) {
-			conn.executeUpdate(
+			conn.update(
 				"insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
 				ticket,
 				source.getCurrentAdministrator(),
@@ -865,11 +867,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketContactEmails", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketContactEmails", ticket);
 
-		String oldValue = conn.executeStringQuery("select contact_emails from ticket.\"Ticket\" where id=?", ticket);
+		String oldValue = conn.queryString("select contact_emails from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set contact_emails=? where id=?", contactEmails, ticket);
+		conn.update("update ticket.\"Ticket\" set contact_emails=? where id=?", contactEmails, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
 			ticket,
 			source.getCurrentAdministrator(),
@@ -937,11 +939,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketContactPhoneNumbers", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketContactPhoneNumbers", ticket);
 
-		String oldValue = conn.executeStringQuery("select contact_phone_numbers from ticket.\"Ticket\" where id=?", ticket);
+		String oldValue = conn.queryString("select contact_phone_numbers from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set contact_phone_numbers=? where id=?", contactPhoneNumbers, ticket);
+		conn.update("update ticket.\"Ticket\" set contact_phone_numbers=? where id=?", contactPhoneNumbers, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
 			ticket,
 			source.getCurrentAdministrator(),
@@ -1008,11 +1010,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "changeTicketClientPriority", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "changeTicketClientPriority", ticket);
 
-		String oldClientPriority = conn.executeStringQuery("select client_priority from ticket.\"Ticket\" where id=?", ticket);
+		String oldClientPriority = conn.queryString("select client_priority from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set client_priority=? where id=?", newClientPriority, ticket);
+		conn.update("update ticket.\"Ticket\" set client_priority=? where id=?", newClientPriority, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into ticket.\"Action\"(ticket, administrator, action_type, old_priority, new_priority) values(?,?,?,?,?)",
 			ticket,
 			source.getCurrentAdministrator(),
@@ -1079,11 +1081,11 @@ final public class TicketHandler /*implements Runnable*/ {
 		AccountHandler.checkPermission(conn, source, "setTicketSummary", Permission.Name.edit_ticket);
 		checkAccessTicket(conn, source, "setTicketSummary", ticket);
 
-		String oldValue = conn.executeStringQuery("select summary from ticket.\"Ticket\" where id=?", ticket);
+		String oldValue = conn.queryString("select summary from ticket.\"Ticket\" where id=?", ticket);
 
-		conn.executeUpdate("update ticket.\"Ticket\" set summary=? where id=?", summary, ticket);
+		conn.update("update ticket.\"Ticket\" set summary=? where id=?", summary, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into ticket.\"Action\"(ticket, administrator, action_type, old_value, new_value) values(?,?,?,?,?)",
 			ticket,
 			source.getCurrentAdministrator(),
@@ -1167,7 +1169,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		String summary,
 		String details
 	) throws IOException, SQLException {
-		conn.executeUpdate(
+		conn.update(
 			"insert into ticket.\"Action\"(ticket, administrator, action_type, summary, details) values(?,?,?,?,?)",
 			ticket,
 			administrator,
@@ -1203,13 +1205,13 @@ final public class TicketHandler /*implements Runnable*/ {
 		);
 
 		// Reopen if needed
-		String status = conn.executeStringQuery("select status from ticket.\"Ticket\" where id=?", ticket);
+		String status = conn.queryString("select status from ticket.\"Ticket\" where id=?", ticket);
 		if(
 			status.equals(Status.BOUNCED)
 			|| status.equals(Status.CLOSED)
 		) {
-			conn.executeUpdate("update ticket.\"Ticket\" set status=?, status_timeout=null where id=?", Status.OPEN, ticket);
-			conn.executeUpdate(
+			conn.update("update ticket.\"Ticket\" set status=?, status_timeout=null where id=?", Status.OPEN, ticket);
+			conn.update(
 				"insert into ticket.\"Action\"(ticket, administrator, action_type, old_status, new_status) values(?,?,?,?,?)",
 				ticket,
 				administrator,
@@ -1256,14 +1258,14 @@ final public class TicketHandler /*implements Runnable*/ {
 		UsernameHandler.checkAccessUsername(conn, source, "completeTicket", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to complete Ticket as user '"+User.MAIL+'\'');
 
-		conn.executeUpdate(
+		conn.update(
 			"update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
 			username,
 			Status.COMPLETED,
 			ticket
 		);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -1317,13 +1319,13 @@ final public class TicketHandler /*implements Runnable*/ {
 		String baAccount = UsernameHandler.getAccountForUsername(conn, username);
 		boolean isAdminChange=baAccount.equals(AccountHandler.getRootAccount());
 
-		conn.executeUpdate(
+		conn.update(
 			"update ticket.\"Ticket\" set status=? where id=?",
 			isAdminChange?Status.ADMIN_HOLD:Status.CLIENT_HOLD,
 			ticket
 		);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -1362,19 +1364,19 @@ final public class TicketHandler /*implements Runnable*/ {
 		UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to kill Ticket as user '"+User.MAIL+'\'');
 
-		String account1 = conn.executeStringQuery("select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name", username);
-		String account2 = conn.executeStringQuery("select accounting from ticket.\"Ticket\" where id=?", ticket);
+		String account1 = conn.queryString("select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name", username);
+		String account2 = conn.queryString("select accounting from ticket.\"Ticket\" where id=?", ticket);
 
 		boolean isClientChange=account1.equals(account2);
 
-		conn.executeUpdate(
+		conn.update(
 			"update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
 			username,
 			isClientChange?Status.CLIENT_KILL:Status.ADMIN_KILL,
 			ticket
 		);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -1428,9 +1430,9 @@ final public class TicketHandler /*implements Runnable*/ {
 		UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to reactivate Ticket as user '"+User.MAIL+'\'');
 
-		conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
+		conn.update("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -1482,9 +1484,9 @@ final public class TicketHandler /*implements Runnable*/ {
 		UsernameHandler.checkAccessUsername(conn, source, "ticketWork", username);
 		if(username.equals(User.MAIL)) throw new SQLException("Not allowed to submit Ticket work as user '"+User.MAIL+'\'');
 
-		conn.executeUpdate("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
+		conn.update("update ticket.\"Ticket\" set status=? where id=?", Status.UNDERWAY, ticket);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
 			ticket,
 			username,
@@ -1528,59 +1530,64 @@ final public class TicketHandler /*implements Runnable*/ {
 	 * A ticket administrator is part of a business that is also a reseller.
 	 */
 	public static boolean isTicketAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select accounting from reseller.\"Reseller\" where accounting=?) is not null", AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator()));
+		return conn.queryBoolean("select (select accounting from reseller.\"Reseller\" where accounting=?) is not null", AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator()));
 	}
 
 	public static Account.Name getAccountForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from ticket.\"Ticket\" where id=?",
 			ticket
 		);
 	}
 
 	public static Account.Name getBrandForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select brand from ticket.\"Ticket\" where id=?",
 			ticket
 		);
 	}
 
 	public static String getStatusForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		return conn.executeStringQuery("select status from ticket.\"Ticket\" where id=?", ticket);
+		return conn.queryString("select status from ticket.\"Ticket\" where id=?", ticket);
 	}
 
 	public static String getTypeForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		return conn.executeStringQuery("select ticket_type from ticket.\"Ticket\" where id=?", ticket);
+		return conn.queryString("select ticket_type from ticket.\"Ticket\" where id=?", ticket);
 	}
 
 	public static Account.Name getResellerForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select reseller from ticket.\"Ticket\" where id=?",
 			ticket
 		);
 	}
 
 	public static Account.Name getAccountForAction(DatabaseConnection conn, int action) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select ti.accounting from ticket.\"Action\" ac, ticket.\"Ticket\" ti where ac.id=? and ac.ticket=ti.id",
 			action
 		);
 	}
 
 	public static Account.Name getResellerForAction(DatabaseConnection conn, int action) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select ti.reseller from ticket.\"Action\" ac, ticket.\"Ticket\" ti where ac.id=? and ac.ticket=ti.id",
 			action
 		);
 	}
 
 	public static boolean getVisibleAdminOnlyForAction(DatabaseConnection conn, int action) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select tat.visible_admin_only from ticket.\"Action\" ac inner join ticket.\"ActionType\" tat on ac.action_type=tat.type where ac.id=?", action);
+		return conn.queryBoolean("select tat.visible_admin_only from ticket.\"Action\" ac inner join ticket.\"ActionType\" tat on ac.action_type=tat.type where ac.id=?", action);
 	}
 
 	/*
 	public static boolean isActive(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		String status=conn.executeStringQuery("select status from ticket.\"Ticket\" where id=?", ticket);
+		String status=conn.queryString("select status from ticket.\"Ticket\" where id=?", ticket);
 		return
 			!Status.ADMIN_KILL.equals(status)
 			&& !Status.CLIENT_KILL.equals(status)
@@ -1628,7 +1635,7 @@ final public class TicketHandler /*implements Runnable*/ {
 	}
 
 	public static String getContactEmails(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-		String contactEmails=conn.executeStringQuery(
+		String contactEmails=conn.queryString(
 			"select contact_emails from ticket.\"Ticket\" where id=?",
 			ticket
 		);
@@ -1665,48 +1672,52 @@ final public class TicketHandler /*implements Runnable*/ {
 						public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 							try {
 								InvalidateList invalidateList = new InvalidateList();
-								MasterDatabase database = MasterDatabase.getDatabase();
-								int updateCount = database.executeUpdate(
-									"delete from\n"
-									+ "  ticket.\"Action\"\n"
-									+ "where\n"
-									+ "  ticket in (\n"
-									+ "    select\n"
-									+ "      id\n"
-									+ "    from\n"
-									+ "      ticket.\"Ticket\"\n"
-									+ "    where\n"
-									+ "      ticket_type=?\n"
-									+ "      and open_date<(now()-'7 days'::interval)\n"
-									+ "  ) and time<(now()-'7 days'::interval)",
-									TicketType.LOGS
-								);
-								if(updateCount>0) {
-									invalidateList.addTable(database,
-										Table.TableID.TICKET_ACTIONS,
-										InvalidateList.allAccounts,
-										InvalidateList.allHosts,
-										false
+								try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+									int updateCount = conn.update(
+										"delete from\n"
+										+ "  ticket.\"Action\"\n"
+										+ "where\n"
+										+ "  ticket in (\n"
+										+ "    select\n"
+										+ "      id\n"
+										+ "    from\n"
+										+ "      ticket.\"Ticket\"\n"
+										+ "    where\n"
+										+ "      ticket_type=?\n"
+										+ "      and open_date<(now()-'7 days'::interval)\n"
+										+ "  ) and time<(now()-'7 days'::interval)",
+										TicketType.LOGS
 									);
-								}
-								updateCount = database.executeUpdate(
-									"delete from\n"
-									+ "  ticket.\"Ticket\" t\n"
-									+ "where\n"
-									+ "  t.ticket_type=?\n"
-									+ "  and t.open_date < (now()-'7 days'::interval)\n"
-									+ "  and (select ta.id from ticket.\"Action\" ta where t.id = ta.ticket limit 1) is null",
-									TicketType.LOGS
-								);
-								if(updateCount>0) {
-									invalidateList.addTable(database,
-										Table.TableID.TICKETS,
-										InvalidateList.allAccounts,
-										InvalidateList.allHosts,
-										false
+									if(updateCount>0) {
+										invalidateList.addTable(
+											conn,
+											Table.TableID.TICKET_ACTIONS,
+											InvalidateList.allAccounts,
+											InvalidateList.allHosts,
+											false
+										);
+									}
+									updateCount = conn.update(
+										"delete from\n"
+										+ "  ticket.\"Ticket\" t\n"
+										+ "where\n"
+										+ "  t.ticket_type=?\n"
+										+ "  and t.open_date < (now()-'7 days'::interval)\n"
+										+ "  and (select ta.id from ticket.\"Action\" ta where t.id = ta.ticket limit 1) is null",
+										TicketType.LOGS
 									);
+									if(updateCount>0) {
+										invalidateList.addTable(
+											conn,
+											Table.TableID.TICKETS,
+											InvalidateList.allAccounts,
+											InvalidateList.allHosts,
+											false
+										);
+									}
+									conn.commit();
+									MasterServer.invalidateTables(conn, invalidateList, null);
 								}
-								MasterServer.invalidateTables(invalidateList, null);
 							} catch(ThreadDeath TD) {
 								throw TD;
 							} catch(Throwable T) {
@@ -1767,9 +1778,8 @@ final public class TicketHandler /*implements Runnable*/ {
 					try {
 						timer.start();
 						// Start the transaction
-						InvalidateList invalidateList=new InvalidateList();
-						DatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection();
-						try {
+						try (DatabaseConnection conn=(MasterDatabaseConnection)MasterDatabase.getDatabase().createDatabaseConnection()) {
+							InvalidateList invalidateList=new InvalidateList();
 							boolean connRolledBack=false;
 							try {
 								for(int c=1;c<Integer.MAX_VALUE;c++) {
@@ -1921,10 +1931,8 @@ final public class TicketHandler /*implements Runnable*/ {
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}
-						} finally {
-							conn.releaseConnection();
+							MasterServer.invalidateTables(conn, invalidateList, null);
 						}
-						MasterServer.invalidateTables(invalidateList, null);
 					} finally {
 						timer.stop();
 					}

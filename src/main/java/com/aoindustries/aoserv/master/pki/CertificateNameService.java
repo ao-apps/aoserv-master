@@ -139,7 +139,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 	@Override
 	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
-		return conn.executeQuery(
+		return conn.query(
 			(ResultSet results) -> {
 				try {
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();

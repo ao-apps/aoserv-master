@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -64,18 +64,18 @@ final public class NetBindHandler {
 		Set<FirewallZone.Name> firewalldZones
 	) throws IOException, SQLException {
 		if(
-			conn.executeBooleanQuery("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
+			conn.queryBoolean("select (select protocol from net.\"AppProtocol\" where protocol=?) is null", appProtocol)
 		) throw new SQLException("Unable to find in table net.AppProtocol: "+appProtocol);
 
 		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
 		if(mu==null) {
 			// Must be a user service
 			if(
-				!conn.executeBooleanQuery("select is_user_service from net.\"AppProtocol\" where protocol=?", appProtocol)
+				!conn.queryBoolean("select is_user_service from net.\"AppProtocol\" where protocol=?", appProtocol)
 			) throw new SQLException("Only master users may add non-user net.Bind.");
 
 			// Must match the default port
-			Port defaultPort = conn.executeObjectQuery(
+			Port defaultPort = conn.queryObject(
 				ObjectFactories.portFactory,
 				"select port, net_protocol from net.\"AppProtocol\" where protocol=?",
 				appProtocol
@@ -94,7 +94,7 @@ final public class NetBindHandler {
 			if(inetAddress.isUnspecified()) {
 				// Wildcard must be unique per server
 				if(
-					conn.executeBooleanQuery(
+					conn.queryBoolean(
 						"select\n"
 						+ "  (\n"
 						+ "    select\n"
@@ -115,7 +115,7 @@ final public class NetBindHandler {
 			} else if(inetAddress.isLoopback()) {
 				// Loopback must be unique per server and not have wildcard
 				if(
-					conn.executeBooleanQuery(
+					conn.queryBoolean(
 						"select\n"
 						+ "  (\n"
 						+ "    select\n"
@@ -143,7 +143,7 @@ final public class NetBindHandler {
 			} else {
 				// Make sure that this port is not already allocated within the server on this IP or the wildcard
 				if(
-					conn.executeBooleanQuery(
+					conn.queryBoolean(
 						"select\n"
 						+ "  (\n"
 						+ "    select\n"
@@ -171,7 +171,7 @@ final public class NetBindHandler {
 			}
 
 			// Add the port to the DB
-			bind = conn.executeIntUpdate(
+			bind = conn.updateInt(
 				"INSERT INTO\n"
 				+ "  net.\"Bind\"\n"
 				+ "VALUES (\n"
@@ -203,7 +203,7 @@ final public class NetBindHandler {
 		);
 		if(!firewalldZones.isEmpty()) {
 			for(FirewallZone.Name firewalldZone : firewalldZones) {
-				conn.executeUpdate(
+				conn.update(
 					"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 					+ "  ?,\n"
 					+ "  (select id from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
@@ -236,7 +236,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		int bind;
 		synchronized(netBindLock) {
-			bind = conn.executeIntUpdate(
+			bind = conn.updateInt(
 				"INSERT INTO\n"
 				+ "  net.\"Bind\"\n"
 				+ "VALUES (\n"
@@ -279,7 +279,8 @@ final public class NetBindHandler {
 	}
 
 	public static Account.Name getAccountForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select pk.accounting from net.\"Bind\" nb, billing.\"Package\" pk where nb.id=? and nb.package=pk.name",
 			bind
 		);
@@ -291,7 +292,7 @@ final public class NetBindHandler {
 		int ipAddress,
 		Port port
 	) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select\n"
 			+ "  coalesce(\n"
 			+ "    (\n"
@@ -314,11 +315,11 @@ final public class NetBindHandler {
 	}
 
 	public static int getHostForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net.\"Bind\" where id=?", bind);
+		return conn.queryInt("select server from net.\"Bind\" where id=?", bind);
 	}
 
 	public static Account.Name getPackageForBind(DatabaseConnection conn, int bind) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.accountNameFactory,
 			"select package from net.\"Bind\" where id=?",
 			bind
@@ -346,7 +347,7 @@ final public class NetBindHandler {
 		Account.Name business = getAccountForBind(conn, bind);
 		int host = getHostForBind(conn, bind);
 
-		if(conn.executeUpdate("delete from net.\"TcpRedirect\" where net_bind=?", bind) > 0) {
+		if(conn.update("delete from net.\"TcpRedirect\" where net_bind=?", bind) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.NET_TCP_REDIRECTS,
@@ -356,7 +357,7 @@ final public class NetBindHandler {
 			);
 		}
 
-		if(conn.executeUpdate("delete from ftp.\"PrivateServer\" where net_bind=?", bind) > 0) {
+		if(conn.update("delete from ftp.\"PrivateServer\" where net_bind=?", bind) > 0) {
 			invalidateList.addTable(
 				conn,
 				Table.TableID.PRIVATE_FTP_SERVERS,
@@ -366,7 +367,7 @@ final public class NetBindHandler {
 			);
 		}
 
-		conn.executeUpdate("delete from net.\"Bind\" where id=?", bind);
+		conn.update("delete from net.\"Bind\" where id=?", bind);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.NET_BINDS,
@@ -395,12 +396,13 @@ final public class NetBindHandler {
 		boolean updated = false;
 		int host = getHostForBind(conn, bind);
 		if(firewalldZones.isEmpty()) {
-			if(conn.executeUpdate("delete from net.\"BindFirewallZone\" where net_bind=?", bind) != 0) {
+			if(conn.update("delete from net.\"BindFirewallZone\" where net_bind=?", bind) != 0) {
 				updated = true;
 			}
 		} else {
 			// Find the set that exists
-			Set<FirewallZone.Name> existing = conn.executeObjectCollectionQuery(new HashSet<>(),
+			Set<FirewallZone.Name> existing = conn.queryCollection(
+				new HashSet<>(),
 				ObjectFactories.firewallZoneNameFactory,
 				"select\n"
 				+ "  fz.\"name\"\n"
@@ -414,7 +416,7 @@ final public class NetBindHandler {
 			// Delete extra
 			for(FirewallZone.Name name : existing) {
 				if(!firewalldZones.contains(name)) {
-					conn.executeUpdate(
+					conn.update(
 						"delete from net.\"BindFirewallZone\" where id=(\n"
 						+ "  select\n"
 						+ "    nbfz.id\n"
@@ -434,7 +436,7 @@ final public class NetBindHandler {
 			// Add new
 			for(FirewallZone.Name name : firewalldZones) {
 				if(!existing.contains(name)) {
-					conn.executeUpdate(
+					conn.update(
 						"insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (\n"
 						+ "  ?,\n"
 						+ "  (select id from net.\"FirewallZone\" where server=? and \"name\"=?)\n"
@@ -475,7 +477,7 @@ final public class NetBindHandler {
 	) throws IOException, SQLException {
 		PackageHandler.checkAccessPackage(conn, source, "setBindMonitoringEnabled", getPackageForBind(conn, bind));
 
-		conn.executeUpdate("update net.\"Bind\" set monitoring_enabled=? where id=?", monitoringEnabled, bind);
+		conn.update("update net.\"Bind\" set monitoring_enabled=? where id=?", monitoringEnabled, bind);
 
 		invalidateList.addTable(conn,
 			Table.TableID.NET_BINDS,
@@ -506,13 +508,13 @@ final public class NetBindHandler {
 		int host = getHostForBind(conn, bind);
 		if(openFirewall) {
 			// Add the public zone if missing
-			int fz = conn.executeIntQuery("select id from net.\"FirewallZone\" where server=? and \"name\"=?", host, FirewallZone.PUBLIC);
+			int fz = conn.queryInt("select id from net.\"FirewallZone\" where server=? and \"name\"=?", host, FirewallZone.PUBLIC);
 			boolean updated;
 			synchronized(netBindLock) {
 				if(
-					conn.executeBooleanQuery("select (select id from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=?) is null", bind, fz)
+					conn.queryBoolean("select (select id from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=?) is null", bind, fz)
 				) {
-					conn.executeUpdate("insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (?,?)", bind, fz);
+					conn.update("insert into net.\"BindFirewallZone\" (net_bind, firewalld_zone) values (?,?)", bind, fz);
 					updated = true;
 				} else {
 					updated = false;
@@ -538,7 +540,7 @@ final public class NetBindHandler {
 		} else {
 			// Remove the public zone if present
 			if(
-				conn.executeUpdate(
+				conn.update(
 					"delete from net.\"BindFirewallZone\" where net_bind=? and firewalld_zone=(select id from net.\"FirewallZone\" where server=? and \"name\"=?)",
 					bind,
 					host,

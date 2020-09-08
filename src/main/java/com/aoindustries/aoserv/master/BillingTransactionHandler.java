@@ -142,7 +142,7 @@ final public class BillingTransactionHandler {
 			} else {
 				throw new IllegalArgumentException("Unexpected value for timeType: " + timeType);
 			}
-			transaction = conn.executeIntUpdate(
+			transaction = conn.updateInt(
 				"INSERT INTO billing.\"Transaction\" VALUES (" + function + ",default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
 				account,
 				sourceAccount,
@@ -166,7 +166,7 @@ final public class BillingTransactionHandler {
 			} else {
 				throw new IllegalArgumentException("Unexpected value for timeType: " + timeType);
 			}
-			transaction = conn.executeIntUpdate(
+			transaction = conn.updateInt(
 				"INSERT INTO billing.\"Transaction\" VALUES (?" + cast + ",default,?,?,?,?,?,?,?,?,?,?,?,null,?) RETURNING transid",
 				time,
 				account,
@@ -283,7 +283,7 @@ final public class BillingTransactionHandler {
 		Account.Name account
 	) throws IOException, SQLException {
 		return Monies.of(
-			conn.executeObjectCollectionQuery(
+			conn.queryCollection(
 				new ArrayList<>(),
 				ObjectFactories.moneyFactory,
 				"SELECT\n"
@@ -365,7 +365,7 @@ final public class BillingTransactionHandler {
 						Currency.USD.getCurrencyCode()
 					);
 				}else {
-					conn.releaseConnection();
+					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 				}
 			} else {
@@ -458,7 +458,7 @@ final public class BillingTransactionHandler {
 					);
 					params.add(Currency.USD.getCurrencyCode());
 				} else {
-					conn.releaseConnection();
+					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 					return;
 				}
@@ -601,13 +601,13 @@ final public class BillingTransactionHandler {
 		Account.Name account = getAccountForTransaction(conn, transaction);
 		int updateCount;
 		if(paymentInfo == null) {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
 				payment,
 				transaction
 			);
 		} else {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='Y' where transid=? and payment_confirmed='W'",
 				payment,
 				paymentInfo,
@@ -646,13 +646,13 @@ final public class BillingTransactionHandler {
 
 		int updateCount;
 		if(paymentInfo == null) {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
 				payment,
 				transaction
 			);
 		} else {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=?, payment_confirmed='N' where transid=? and payment_confirmed='W'",
 				payment,
 				paymentInfo,
@@ -691,13 +691,13 @@ final public class BillingTransactionHandler {
 
 		int updateCount;
 		if(paymentInfo == null) {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
 				payment,
 				transaction
 			);
 		} else {
-			updateCount = conn.executeUpdate(
+			updateCount = conn.update(
 				"update billing.\"Transaction\" set credit_card_transaction=?, payment_info=? where transid=? and payment_confirmed='W' and credit_card_transaction is null",
 				payment,
 				paymentInfo,
@@ -711,7 +711,8 @@ final public class BillingTransactionHandler {
 	}
 
 	public static Account.Name getAccountForTransaction(DatabaseConnection conn, int transaction) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from billing.\"Transaction\" where transid=?",
 			transaction
 		);

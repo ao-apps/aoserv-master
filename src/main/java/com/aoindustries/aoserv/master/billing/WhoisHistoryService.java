@@ -103,7 +103,7 @@ final public class WhoisHistoryService implements MasterService {
 		Set<Account.Name> accountsAffected = new HashSet<>();
 
 		// Open account that have balance <= $0.00 and entry is older than one year
-		List<Account.Name> deletedGoodStanding = conn.executeObjectListUpdate(
+		List<Account.Name> deletedGoodStanding = conn.updateList(
 			ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
@@ -132,7 +132,7 @@ final public class WhoisHistoryService implements MasterService {
 		}
 
 		// Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
-		List<Account.Name> deletedCanceledZero = conn.executeObjectListUpdate(
+		List<Account.Name> deletedCanceledZero = conn.updateList(
 			ObjectFactories.accountNameFactory,
 			"DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
 			+ "  SELECT\n"
@@ -178,7 +178,7 @@ final public class WhoisHistoryService implements MasterService {
 			);
 		}
 		// Cleanup any orphaned data
-		conn.executeUpdate("DELETE FROM billing.\"WhoisHistory\" WHERE id NOT IN (SELECT \"whoisHistory\" FROM billing.\"WhoisHistoryAccount\")");
+		conn.update("DELETE FROM billing.\"WhoisHistory\" WHERE id NOT IN (SELECT \"whoisHistory\" FROM billing.\"WhoisHistoryAccount\")");
 	}
 	// </editor-fold>
 
@@ -252,9 +252,8 @@ final public class WhoisHistoryService implements MasterService {
 					MasterServer.executorService.submit(timer);
 
 					// Start the transaction
-					InvalidateList invalidateList = new InvalidateList();
-					DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
-					try {
+					try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+						InvalidateList invalidateList = new InvalidateList();
 						boolean connRolledBack = false;
 						try {
 							/*
@@ -262,7 +261,7 @@ final public class WhoisHistoryService implements MasterService {
 							 */
 							cleanup(conn, invalidateList);
 							conn.commit();
-							MasterServer.invalidateTables(invalidateList, null);
+							MasterServer.invalidateTables(conn, invalidateList, null);
 							invalidateList.reset();
 
 							/*
@@ -270,7 +269,7 @@ final public class WhoisHistoryService implements MasterService {
 							 */
 							// Get the set of unique registrable domains and accounts in the system
 							Map<DomainName,Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
-							conn.releaseConnection();
+							conn.close(); // Don't hold database connection while sleeping
 
 							// Find the number of distinct registrable domains
 							int registrableDomainCount = registrableDomains.size();
@@ -295,7 +294,7 @@ final public class WhoisHistoryService implements MasterService {
 								Map<DomainName,Timestamp> lookupOrder;
 								{
 									// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
-									final Map<DomainName,Timestamp> lastChecked = conn.executeQuery(
+									final Map<DomainName,Timestamp> lastChecked = conn.query(
 										(ResultSet results) -> {
 											try {
 												Map<DomainName, Timestamp> map = new LinkedHashMap<>(registrableDomainCount *4/3+1); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
@@ -368,7 +367,7 @@ final public class WhoisHistoryService implements MasterService {
 									// update database
 									// TODO: Store the parsed nameservers, too?  At least for when is success.
 									// This could be a batch, but this is short and simple
-									int whoisHistory = conn.executeIntUpdate(
+									int whoisHistory = conn.updateInt(
 										"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
 										registrableDomain,
 										exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
@@ -377,7 +376,7 @@ final public class WhoisHistoryService implements MasterService {
 									);
 									Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
 									for(Account.Name account : accounts) {
-										conn.executeUpdate(
+										conn.update(
 											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
 											whoisHistory,
 											account
@@ -396,8 +395,8 @@ final public class WhoisHistoryService implements MasterService {
 										false
 									);
 									conn.commit();
-									conn.releaseConnection();
-									MasterServer.invalidateTables(invalidateList, null);
+									MasterServer.invalidateTables(conn, invalidateList, null);
+									conn.close(); // Don't hold database connection while sleeping
 									invalidateList.reset();
 									try {
 										long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
@@ -428,10 +427,8 @@ final public class WhoisHistoryService implements MasterService {
 						} finally {
 							if(!connRolledBack && !conn.isClosed()) conn.commit();
 						}
-					} finally {
-						conn.releaseConnection();
+						MasterServer.invalidateTables(conn, invalidateList, null);
 					}
-					MasterServer.invalidateTables(invalidateList, null);
 				}
 			} catch(RuntimeException | IOException | SQLException T) {
 				logger.log(Level.SEVERE, null, T);
@@ -472,7 +469,7 @@ final public class WhoisHistoryService implements MasterService {
 			if(masterServers.length == 0) {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// id is that of the associated billing.WhoisHistoryAccount
-					return conn.executeQuery(
+					return conn.query(
 						(ResultSet results) -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
@@ -491,7 +488,7 @@ final public class WhoisHistoryService implements MasterService {
 						whoisHistoryAccount
 					);
 				} else {
-					return conn.executeQuery(
+					return conn.query(
 						(ResultSet results) -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
@@ -509,7 +506,7 @@ final public class WhoisHistoryService implements MasterService {
 		} else {
 			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 				// id is that of the associated billing.WhoisHistoryAccount
-				return conn.executeQuery(
+				return conn.query(
 					(ResultSet results) -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));
@@ -539,7 +536,7 @@ final public class WhoisHistoryService implements MasterService {
 					whoisHistoryAccount
 				);
 			} else {
-				return conn.executeQuery(
+				return conn.query(
 					(ResultSet results) -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));

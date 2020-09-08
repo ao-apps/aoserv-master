@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -52,14 +52,15 @@ final public class PkiCertificateHandler {
 	}
 
 	public static Account.Name getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select package from pki.\"Certificate\" where id=?",
 			certificate
 		);
 	}
 
 	public static int getLinuxServerForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select ao_server from pki.\"Certificate\" where id=?",
 			certificate
 		);
@@ -77,7 +78,7 @@ final public class PkiCertificateHandler {
 			conn,
 			getLinuxServerForCertificate(conn, certificate)
 		);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.checkSslCertificate(certificate, allowCached);
 	}
 }

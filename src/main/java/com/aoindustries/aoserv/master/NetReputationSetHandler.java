@@ -51,7 +51,8 @@ final public class NetReputationSetHandler {
 	}
 
 	public static Account.Name getAccountForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from \"net.reputation\".\"Set\" where id=?",
 			ipReputationSet
 		);
@@ -112,7 +113,7 @@ final public class NetReputationSetHandler {
 	private static void lockForUpdate(
 		DatabaseConnection conn
 	) throws SQLException {
-		conn.executeUpdate(
+		conn.update(
 			"LOCK TABLE\n"
 			+ "  \"net.reputation\".\"Set\",\n"
 			+ "  \"net.reputation\".\"Host\",\n"
@@ -122,7 +123,7 @@ final public class NetReputationSetHandler {
 
 	/* TODO: Do in batches
 	private static void createTempTable(DatabaseConnection conn, String suffix) throws SQLException {
-		conn.executeUpdate(
+		conn.update(
 			"CREATE TEMPORARY TABLE add_reputation_" + suffix + " (\n"
 			+ "  host INTEGER NOT NULL,\n"
 			+ "  network INTEGER NOT NULL,\n"
@@ -228,10 +229,10 @@ final public class NetReputationSetHandler {
 
 		if(addReputations.length>0) {
 			// Get the settings
-			final short maxUncertainReputation = conn.executeShortQuery("SELECT max_uncertain_reputation FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
-			final short maxDefiniteReputation  = conn.executeShortQuery("SELECT max_definite_reputation  FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
-			final short networkPrefix          = conn.executeShortQuery("SELECT network_prefix           FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
-			final short maxNetworkReputation   = conn.executeShortQuery("SELECT max_network_reputation   FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
+			final short maxUncertainReputation = conn.queryShort("SELECT max_uncertain_reputation FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
+			final short maxDefiniteReputation  = conn.queryShort("SELECT max_definite_reputation  FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
+			final short networkPrefix          = conn.queryShort("SELECT network_prefix           FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
+			final short maxNetworkReputation   = conn.queryShort("SELECT max_network_reputation   FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
 			final int   maxNetworkCounter        = ((maxNetworkReputation + 1) << (32 - networkPrefix)) - 1;
 
 			// Will only send signals when changed
@@ -244,14 +245,14 @@ final public class NetReputationSetHandler {
 			lockForUpdate(conn);
 
 			// Flag as rep added
-			conn.executeUpdate("UPDATE \"net.reputation\".\"Set\" SET last_reputation_added=now() WHERE id=?", ipReputationSet);
+			conn.update("UPDATE \"net.reputation\".\"Set\" SET last_reputation_added=now() WHERE id=?", ipReputationSet);
 
 			for(Set.AddReputation addRep : addReputations) {
 				int host = addRep.getHost();
 				Set.ConfidenceType confidence = addRep.getConfidence();
 				Set.ReputationType reputationType = addRep.getReputationType();
 				short score = addRep.getScore();
-				Host dbHost = conn.executeObjectQuery(
+				Host dbHost = conn.queryObject(
 					Connection.TRANSACTION_READ_COMMITTED,
 					true,
 					false,
@@ -282,7 +283,7 @@ final public class NetReputationSetHandler {
 						throw new AssertionError("Unexpected value for reputationType: " + reputationType);
 					}
 					if(goodReputation!=0 || badReputation!=0) {
-						int rowCount = conn.executeUpdate(
+						int rowCount = conn.update(
 							"INSERT INTO \"net.reputation\".\"Host\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
 							ipReputationSet,
 							host,
@@ -302,7 +303,7 @@ final public class NetReputationSetHandler {
 							maxDefiniteReputation
 						);
 						if(newGoodReputation!=oldGoodReputation) {
-							int rowCount = conn.executeUpdate(
+							int rowCount = conn.update(
 								"UPDATE \"net.reputation\".\"Host\" SET good_reputation=? WHERE \"set\"=? AND host=?",
 								newGoodReputation,
 								ipReputationSet,
@@ -322,7 +323,7 @@ final public class NetReputationSetHandler {
 							maxDefiniteReputation
 						);
 						if(newBadReputation!=oldBadReputation) {
-							int rowCount = conn.executeUpdate(
+							int rowCount = conn.update(
 								"UPDATE \"net.reputation\".\"Host\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
 								newBadReputation,
 								ipReputationSet,
@@ -338,7 +339,7 @@ final public class NetReputationSetHandler {
 				if(positiveChange>0) {
 					// Update network when positive change applied
 					int network = getNetwork(host, networkPrefix);
-					Network dbNetwork = conn.executeObjectQuery(
+					Network dbNetwork = conn.queryObject(
 						Connection.TRANSACTION_READ_COMMITTED,
 						true,
 						false,
@@ -355,7 +356,7 @@ final public class NetReputationSetHandler {
 						// Add new
 						int networkCounter = positiveChange;
 						if(networkCounter>maxNetworkCounter) networkCounter = maxNetworkCounter;
-						int rowCount = conn.executeUpdate(
+						int rowCount = conn.update(
 							"INSERT INTO \"net.reputation\".\"Network\" (\"set\", network, counter) VALUES (?,?,?)",
 							ipReputationSet,
 							network,
@@ -369,7 +370,7 @@ final public class NetReputationSetHandler {
 						long newCounterLong = (long)oldCounter + (long)positiveChange;
 						int newCounter = newCounterLong <= maxNetworkCounter ? (int)newCounterLong : maxNetworkCounter;
 						if(newCounter!=oldCounter) {
-							int rowCount = conn.executeUpdate(
+							int rowCount = conn.update(
 								"UPDATE \"net.reputation\".\"Network\" SET counter=? WHERE \"set\"=? AND network=?",
 								newCounter,
 								ipReputationSet,
@@ -405,8 +406,8 @@ final public class NetReputationSetHandler {
 				if(updateNetworks(conn, "good", networkPrefix, maxNetworkReputation)) networksUpdated = true;
 				//if(updateNetworks(conn, "bad" , networkPrefix, maxNetworkReputation)) networksUpdated = true;
 			} finally {
-				conn.executeUpdate("DROP TABLE IF EXISTS add_reputation_good");
-				conn.executeUpdate("DROP TABLE IF EXISTS add_reputation_bad");
+				conn.update("DROP TABLE IF EXISTS add_reputation_good");
+				conn.update("DROP TABLE IF EXISTS add_reputation_bad");
 			}
 			 */
 			// </editor-fold>

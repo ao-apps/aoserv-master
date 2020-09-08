@@ -26,6 +26,7 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.collections.IntList;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
@@ -88,7 +89,7 @@ final public class AccountUserHandler {
 			}
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into account.\"User\" values(?,?,null)",
 			name,
 			packageName
@@ -147,7 +148,7 @@ final public class AccountUserHandler {
 				&& !PostgresqlHandler.isUserDisabled(conn, postgresqlUsername)
 			) throw new SQLException("Cannot disable Username '"+user+"': PostgreSQL user not disabled: "+postgresqlUsername);
 		}
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"User\" set disable_log=? where username=?",
 			disableLog,
 			user
@@ -176,7 +177,7 @@ final public class AccountUserHandler {
 		Account.Name pk=getPackageForUser(conn, user);
 		if(PackageHandler.isPackageDisabled(conn, pk)) throw new SQLException("Unable to enable Username '"+user+"', Package not enabled: "+pk);
 
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"User\" set disable_log=null where username=?",
 			user
 		);
@@ -192,7 +193,7 @@ final public class AccountUserHandler {
 	}
 
 	public static int getDisableLogForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"User\" where username=?", user);
+		return conn.queryInt("select coalesce(disable_log, -1) from account.\"User\" where username=?", user);
 	}
 
 	public static void invalidateTable(Table.TableID tableID) {
@@ -207,7 +208,7 @@ final public class AccountUserHandler {
 	}
 
 	public static boolean isUserNameAvailable(DatabaseConnection conn, User.Name name) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select username from account.\"User\" where username=?) is null", name);
+		return conn.queryBoolean("select (select username from account.\"User\" where username=?) is null", name);
 	}
 
 	public static boolean isUserDisabled(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
@@ -241,17 +242,18 @@ final public class AccountUserHandler {
 
 		Account.Name account = getAccountForUser(conn, user);
 
-		conn.executeUpdate("delete from account.\"User\" where username=?", user);
+		conn.update("delete from account.\"User\" where username=?", user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.USERNAMES, account, InvalidateList.allHosts, false);
 	}
 
-	public static Account.Name getAccountForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
+	public static Account.Name getAccountForUser(DatabaseAccess db, User.Name user) throws IOException, SQLException {
 		synchronized(userAccounts) {
 			Account.Name O=userAccounts.get(user);
 			if(O!=null) return O;
-			Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+			Account.Name account = db.queryObject(
+				ObjectFactories.accountNameFactory,
 				"select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name",
 				user
 			);
@@ -262,14 +264,15 @@ final public class AccountUserHandler {
 
 	// TODO: Cache this lookup, since it is involved iteratively when querying master processes
 	public static Account.Name getPackageForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select package from account.\"User\" where username=?",
 			user
 		);
 	}
 
 	public static IntList getHostsForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
-		return conn.executeIntListQuery(
+		return conn.queryIntList(
 			"select\n"
 			+ "  bs.server\n"
 			+ "from\n"
@@ -285,7 +288,7 @@ final public class AccountUserHandler {
 	}
 
 	public static List<User.Name> getUsersForPackage(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
-		return conn.executeObjectListQuery(
+		return conn.queryList(
 			ObjectFactories.userNameFactory,
 			"select username from account.\"User\" where package=?",
 			packageName
@@ -293,7 +296,7 @@ final public class AccountUserHandler {
 	}
 
 	public static boolean canUserAccessHost(DatabaseConnection conn, User.Name user, int host) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"

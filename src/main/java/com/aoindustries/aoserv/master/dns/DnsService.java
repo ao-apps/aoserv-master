@@ -77,7 +77,7 @@ final public class DnsService implements MasterService {
 		checkAccessDNSZone(conn, source, "addRecord", zone);
 
 		// Must have appropriate priority
-		if(conn.executeBooleanQuery("select has_priority from dns.\"RecordType\" where type=?", type)) {
+		if(conn.queryBoolean("select has_priority from dns.\"RecordType\" where type=?", type)) {
 			if(priority == Record.NO_PRIORITY) throw new IllegalArgumentException("priority required for type=" + type);
 			else if(priority<=0) throw new SQLException("Invalid priority: " + priority);
 		} else {
@@ -85,7 +85,7 @@ final public class DnsService implements MasterService {
 		}
 
 		// Must have appropriate weight
-		if(conn.executeBooleanQuery("select has_weight from dns.\"RecordType\" where type=?", type)) {
+		if(conn.queryBoolean("select has_weight from dns.\"RecordType\" where type=?", type)) {
 			if(weight == Record.NO_WEIGHT) throw new IllegalArgumentException("weight required for type=" + type);
 			else if(weight<=0) throw new SQLException("Invalid weight: " + weight);
 		} else {
@@ -93,7 +93,7 @@ final public class DnsService implements MasterService {
 		}
 
 		// Must have appropriate port
-		if(conn.executeBooleanQuery("select has_port from dns.\"RecordType\" where type=?", type)) {
+		if(conn.queryBoolean("select has_port from dns.\"RecordType\" where type=?", type)) {
 			if(port == Record.NO_PORT) throw new IllegalArgumentException("port required for type=" + type);
 			else if(port < 1 || port > 65535) throw new SQLException("Invalid port: " + port);
 		} else {
@@ -113,7 +113,7 @@ final public class DnsService implements MasterService {
 		}
 
 		// Add the entry
-		int record = conn.executeIntUpdate(
+		int record = conn.updateInt(
 			"INSERT INTO dns.\"Record\" (\n"
 			+ "  \"zone\",\n"
 			+ "  \"domain\",\n"
@@ -167,7 +167,7 @@ final public class DnsService implements MasterService {
 		MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
 
 		// Add the dns_zone entry
-		conn.executeUpdate(
+		conn.update(
 			"insert into dns.\"Zone\" values(?,?,?,?,?,?)",
 			zone,
 			zone,
@@ -178,7 +178,7 @@ final public class DnsService implements MasterService {
 		);
 
 		// Add the MX entry
-		conn.executeUpdate(
+		conn.update(
 			"insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", priority, destination) values(?,?,?,?,?)",
 			zone,
 			"@",
@@ -206,22 +206,22 @@ final public class DnsService implements MasterService {
 				throw new AssertionError();
 		}
 
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns1.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns2.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns3.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns4.aoindustries.com.");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    RecordType.TXT, "v=spf1 a mx -all");
-		conn.executeUpdate(INSERT_RECORD, zone, "@",    aType,       ip.toString());
+		conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns1.aoindustries.com.");
+		conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns2.aoindustries.com.");
+		conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns3.aoindustries.com.");
+		conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns4.aoindustries.com.");
+		conn.update(INSERT_RECORD, zone, "@",    RecordType.TXT, "v=spf1 a mx -all");
+		conn.update(INSERT_RECORD, zone, "@",    aType,       ip.toString());
 		/*
-		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  aType,       ip.toString());
-		conn.executeUpdate(INSERT_RECORD, zone, "ftp",  RecordType.TXT, "v=spf1 -all");
+		conn.update(INSERT_RECORD, zone, "ftp",  aType,       ip.toString());
+		conn.update(INSERT_RECORD, zone, "ftp",  RecordType.TXT, "v=spf1 -all");
 		 */
-		conn.executeUpdate(INSERT_RECORD, zone, "mail", aType,       ip.toString());
+		conn.update(INSERT_RECORD, zone, "mail", aType,       ip.toString());
 		// See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
-		conn.executeUpdate(INSERT_RECORD, zone, "mail", RecordType.TXT, "v=spf1 a -all");
-		conn.executeUpdate(INSERT_RECORD, zone, "www",  aType,       ip.toString());
+		conn.update(INSERT_RECORD, zone, "mail", RecordType.TXT, "v=spf1 a -all");
+		conn.update(INSERT_RECORD, zone, "www",  aType,       ip.toString());
 		// See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
-		conn.executeUpdate(INSERT_RECORD, zone, "www",  RecordType.TXT, "v=spf1 -all");
+		conn.update(INSERT_RECORD, zone, "www",  RecordType.TXT, "v=spf1 -all");
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
@@ -244,7 +244,7 @@ final public class DnsService implements MasterService {
 		String zone=getZoneForRecord(conn, record);
 
 		// Remove the dns.Record entry
-		conn.executeUpdate("delete from dns.\"Record\" where id=?", record);
+		conn.update("delete from dns.\"Record\" where id=?", record);
 		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
 		// Update the serial of the zone
@@ -275,10 +275,10 @@ final public class DnsService implements MasterService {
 		String zone
 	) throws IOException, SQLException {
 		// Remove the dns.Record entries
-		conn.executeUpdate("delete from dns.\"Record\" where \"zone\"=?", zone);
+		conn.update("delete from dns.\"Record\" where \"zone\"=?", zone);
 
 		// Remove the dns.Zone entry
-		conn.executeUpdate("delete from dns.\"Zone\" where \"zone\"=?", zone);
+		conn.update("delete from dns.\"Zone\" where \"zone\"=?", zone);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
@@ -312,13 +312,13 @@ final public class DnsService implements MasterService {
 	) throws IOException, SQLException {
 		DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
 		String zone = tld + ".";
-		boolean exists = conn.executeBooleanQuery(
+		boolean exists = conn.queryBoolean(
 			"select (select zone from dns.\"Zone\" where zone=?) is not null",
 			zone
 		);
 		if (exists) {
 			String preTld = getPreTld(hostname, tld);
-			exists = conn.executeBooleanQuery(
+			exists = conn.queryBoolean(
 				"select (select id from dns.\"Record\" where \"zone\"=? and \"type\"='A' and \"domain\"=?) is not null",
 				zone,
 				preTld
@@ -335,7 +335,7 @@ final public class DnsService implements MasterService {
 					default :
 						throw new AssertionError();
 				}
-				conn.executeUpdate(
+				conn.update(
 					"insert into dns.\"Record\" (\"zone\", \"domain\", \"type\", destination) values (?,?,?,?)",
 					zone,
 					preTld,
@@ -410,7 +410,7 @@ final public class DnsService implements MasterService {
 
 	/* Unused 2018-12-02:
 	public Account.Name getAccountForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.accountingCodeFactory,
 			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.\"zone\"=nz.\"zone\" and nz.package=pk.\"name\" and nr.id=?",
 			record
@@ -419,14 +419,15 @@ final public class DnsService implements MasterService {
 	 */
 
 	private static Account.Name getAccountForDnsZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select pk.accounting from dns.\"Zone\" nz, billing.\"Package\" pk where nz.package=pk.name and nz.zone=?",
 			zone
 		);
 	}
 
 	private static IntList getDnsLinuxServers(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntListQuery("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Server\")", AppProtocol.DNS);
+		return conn.queryIntList("select distinct server from net.\"Bind\" where app_protocol=? and server in (select server from linux.\"Server\")", AppProtocol.DNS);
 	}
 
 	private static final Object dnstldLock=new Object();
@@ -460,8 +461,7 @@ final public class DnsService implements MasterService {
 	public List<DomainName> getDNSTLDs(DatabaseConnection conn) throws IOException, SQLException {
 		synchronized(dnstldLock) {
 			if(dnstldCache==null) {
-				dnstldCache=conn.executeObjectCollectionQuery(
-					new ArrayList<>(),
+				dnstldCache = conn.queryList(
 					ObjectFactories.domainNameFactory,
 					"select domain from dns.\"TopLevelDomain\""
 				);
@@ -471,22 +471,24 @@ final public class DnsService implements MasterService {
 	}
 
 	private static String getZoneForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
-		return conn.executeStringQuery("select \"zone\" from dns.\"Record\" where id=?", record);
+		return conn.queryString("select \"zone\" from dns.\"Record\" where id=?", record);
 	}
 
 	public boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
+		return conn.queryBoolean("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
 	private static Account.Name getPackageForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.\"zone\"=nz.\"zone\"",
 			record
 		);
 	}
 
 	private static Account.Name getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select package from dns.\"Zone\" where zone=?",
 			zone
 		);
@@ -509,12 +511,12 @@ final public class DnsService implements MasterService {
 		DomainName hostname,
 		List<DomainName> tlds
 	) throws IOException, SQLException {
-		if(conn.executeBooleanQuery("select (select id from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
+		if(conn.queryBoolean("select (select id from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
 			DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
 			String zone = tld + ".";
-			if(conn.executeBooleanQuery("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
+			if(conn.queryBoolean("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
 				String preTld = getPreTld(hostname, tld);
-				int deleteCount = conn.executeUpdate(
+				int deleteCount = conn.update(
 					"delete from dns.\"Record\" where\n"
 					+ "  \"zone\"=?\n"
 					+ "  and \"type\" in (?,?)\n"
@@ -552,7 +554,7 @@ final public class DnsService implements MasterService {
 		if (ttl <= 0 || ttl > 24*60*60) {
 			throw new SQLException("Illegal TTL value: "+ttl);
 		}
-		conn.executeUpdate("update dns.\"Zone\" set ttl=? where zone=?", ttl, zone);
+		conn.update("update dns.\"Zone\" set ttl=? where zone=?", ttl, zone);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.DNS_ZONES,
@@ -570,7 +572,7 @@ final public class DnsService implements MasterService {
 		InetAddress destination
 	) throws IOException, SQLException {
 		// Find the ids of the entries that should be changed
-		IntList records = conn.executeIntListQuery("select id from dns.\"Record\" where \"dhcpAddress\"=?", dhcpAddress);
+		IntList records = conn.queryIntList("select id from dns.\"Record\" where \"dhcpAddress\"=?", dhcpAddress);
 
 		// Build a list of affected zones
 		List<String> zones=new SortedArrayList<>();
@@ -579,7 +581,7 @@ final public class DnsService implements MasterService {
 			int record = records.getInt(c);
 			String zone = getZoneForRecord(conn, record);
 			if(!zones.contains(zone)) zones.add(zone);
-			conn.executeUpdate("update dns.\"Record\" set destination=? where id=?", destination, record);
+			conn.update("update dns.\"Record\" set destination=? where id=?", destination, record);
 		}
 
 		// Invalidate the records
@@ -606,7 +608,7 @@ final public class DnsService implements MasterService {
 		String zone
 	) throws IOException, SQLException {
 		// Get the old serial
-		long serial=conn.executeLongQuery("select serial from dns.\"Zone\" where zone=?", zone);
+		long serial=conn.queryLong("select serial from dns.\"Zone\" where zone=?", zone);
 
 		// Check if already today or higher
 		long todaySerial=Zone.getCurrentSerial();
@@ -619,7 +621,7 @@ final public class DnsService implements MasterService {
 		}
 
 		// Place the serial back in the database
-		conn.executeUpdate("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
+		conn.update("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
 		invalidateList.addTable(conn,
 			Table.TableID.DNS_ZONES,
 			InvalidateList.allAccounts,
@@ -652,7 +654,7 @@ final public class DnsService implements MasterService {
 				if(netmask!=null) {
 					String arpaZone=Zone.getArpaZoneForIPAddress(ip, netmask);
 					if(
-						conn.executeBooleanQuery(
+						conn.queryBoolean(
 							"select (select zone from dns.\"Zone\" where zone=?) is not null",
 							arpaZone
 						)
@@ -660,7 +662,7 @@ final public class DnsService implements MasterService {
 						int pos=ipStr.lastIndexOf('.');
 						String oct4=ipStr.substring(pos+1);
 						if(
-							conn.executeBooleanQuery(
+							conn.queryBoolean(
 								"select (select id from dns.\"Record\" where \"zone\"=? and \"domain\"=? and \"type\"=? limit 1) is not null",
 								arpaZone,
 								oct4,
@@ -669,7 +671,7 @@ final public class DnsService implements MasterService {
 						) {
 							updateDNSZoneSerial(conn, invalidateList, arpaZone);
 
-							conn.executeUpdate(
+							conn.update(
 								"update dns.\"Record\" set destination=? where \"zone\"=? and \"domain\"=? and \"type\"=?",
 								hostname.toString()+'.',
 								arpaZone,

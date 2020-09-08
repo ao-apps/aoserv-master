@@ -386,7 +386,7 @@ final public class TableHandler {
 						if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107)<=0) {
 							return 0;
 						} else {
-							return conn.executeIntQuery(
+							return conn.queryInt(
 								"select count(*) from \"distribution.management\".\"DistroFile\""
 							);
 						}
@@ -401,7 +401,7 @@ final public class TableHandler {
 							sql.append(osVersions.getInt(c));
 						}
 						sql.append(')');
-						return conn.executeIntQuery(sql.toString());
+						return conn.queryInt(sql.toString());
 					}
 				} else return 0;
 			case TICKETS :
@@ -755,7 +755,7 @@ final public class TableHandler {
 				) {
 					@SuppressWarnings("deprecation")
 					com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
-					conn.releaseConnection();
+					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(
 						source,
 						out,
@@ -784,7 +784,7 @@ final public class TableHandler {
 				) {
 					// Send in lowercase
 					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
-					conn.releaseConnection();
+					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(
 						source,
 						out,
@@ -813,7 +813,7 @@ final public class TableHandler {
 				) {
 					@SuppressWarnings("deprecation")
 					com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
-					conn.releaseConnection();
+					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(
 						source,
 						out,
@@ -841,7 +841,7 @@ final public class TableHandler {
 				break;
 		}
 		// Not recognized table name and version range: write empty response
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while writing response
 		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
 	}
 
@@ -878,10 +878,10 @@ final public class TableHandler {
 	 *
 	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableID)
 	 */
-	public static String getTableNameForDBTableID(DatabaseAccess conn, Integer dbTableId) throws SQLException {
+	public static String getTableNameForDBTableID(DatabaseAccess db, Integer dbTableId) throws SQLException {
 		synchronized(tableNamesLock) {
 			if(tableNames == null) {
-				tableNames = conn.executeQuery(
+				tableNames = db.query(
 					(ResultSet results) -> {
 						Map<Integer,String> newMap = new HashMap<>();
 						while(results.next()) {
@@ -910,11 +910,11 @@ final public class TableHandler {
 	 *
 	 * @see  #getTableNameForDBTableID(com.aoindustries.dbc.DatabaseAccess, java.lang.Integer)
 	 */
-	public static String getTableName(DatabaseAccess conn, Table.TableID tableID) throws IOException, SQLException {
+	public static String getTableName(DatabaseAccess db, Table.TableID tableID) throws IOException, SQLException {
 		return getTableNameForDBTableID(
-			conn,
+			db,
 			convertClientTableIDToDBTableID(
-				conn,
+				db,
 				AoservProtocol.Version.CURRENT_VERSION,
 				tableID.ordinal()
 			)
@@ -929,14 +929,14 @@ final public class TableHandler {
 	 * @return  the {@code id} used in the database or {@code -1} if unknown
 	 */
 	public static int convertClientTableIDToDBTableID(
-		DatabaseAccess conn,
+		DatabaseAccess db,
 		AoservProtocol.Version version,
 		int clientTableID
 	) throws IOException, SQLException {
 		synchronized(fromClientTableIDs) {
 			Map<Integer,Integer> tableIDs = fromClientTableIDs.get(version);
 			if(tableIDs == null) {
-				IntList clientTables = conn.executeIntListQuery(
+				IntList clientTables = db.queryIntList(
 					"select\n"
 					+ "  st.id\n"
 					+ "from\n"
@@ -967,14 +967,14 @@ final public class TableHandler {
 	final private static EnumMap<AoservProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	public static int convertDBTableIDToClientTableID(
-		DatabaseConnection conn,
+		DatabaseAccess db,
 		AoservProtocol.Version version,
 		int tableID
 	) throws IOException, SQLException {
 		synchronized(toClientTableIDs) {
 			Map<Integer,Integer> clientTableIDs = toClientTableIDs.get(version);
 			if(clientTableIDs == null) {
-				IntList clientTables = conn.executeIntListQuery(
+				IntList clientTables = db.queryIntList(
 					"select\n"
 					+ "  st.id\n"
 					+ "from\n"
@@ -1024,13 +1024,13 @@ final public class TableHandler {
 	 * Converts a local (Master AoservProtocol) table ID to a client-version matched table ID.
 	 */
 	public static int convertToClientTableID(
-		DatabaseConnection conn,
+		DatabaseAccess db,
 		RequestSource source,
 		Table.TableID tableID
 	) throws IOException, SQLException {
-		int dbTableID=convertClientTableIDToDBTableID(conn, AoservProtocol.Version.CURRENT_VERSION, tableID.ordinal());
+		int dbTableID=convertClientTableIDToDBTableID(db, AoservProtocol.Version.CURRENT_VERSION, tableID.ordinal());
 		if(dbTableID==-1) return -1;
-		return convertDBTableIDToClientTableID(conn, source.getProtocolVersion(), dbTableID);
+		return convertDBTableIDToClientTableID(db, source.getProtocolVersion(), dbTableID);
 	}
 
 	final private static EnumMap<AoservProtocol.Version,Map<Table.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
@@ -1055,7 +1055,7 @@ final public class TableHandler {
 			Map<String,Integer> columns = tables.get(tableID);
 			if(columns == null) {
 				// TODO: Why is tableID not used in this query???
-				List<String> clientColumns = conn.executeStringListQuery(
+				List<String> clientColumns = conn.queryStringList(
 					"select\n"
 					+ "  sc.\"name\"\n"
 					+ "from\n"
@@ -1109,7 +1109,7 @@ final public class TableHandler {
 
 	// TODO: Move to proper service class
 	public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		return conn.executeIntListQuery(
+		return conn.queryIntList(
 			"select distinct\n"
 			+ "  se.operating_system_version\n"
 			+ "from\n"

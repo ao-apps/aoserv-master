@@ -77,13 +77,14 @@ final public class DaemonHandler {
 	}
 
 	public static HostAddress getDaemonConnectAddress(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		HostAddress address = database.executeObjectQuery(
+		HostAddress address = database.queryObject(
 			ObjectFactories.hostAddressFactory,
 			"select daemon_connect_address from linux.\"Server\" where server=?",
 			linuxServer
 		);
 		if(address!=null) return address;
-		InetAddress ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
+		InetAddress ip = database.queryObject(
+			ObjectFactories.inetAddressFactory,
 			"select\n"
 			+ "  host(ia.\"inetAddress\")\n"
 			+ "from\n"
@@ -98,7 +99,8 @@ final public class DaemonHandler {
 		);
 		if(ip==null) throw new SQLException("Unable to find daemon IP address for Server: "+linuxServer);
 		if(ip.isUnspecified()) {
-			ip = database.executeObjectQuery(ObjectFactories.inetAddressFactory,
+			ip = database.queryObject(
+				ObjectFactories.inetAddressFactory,
 				"select\n"
 				+ "  host(ia.\"inetAddress\")\n"
 				+ "from\n"
@@ -124,7 +126,7 @@ final public class DaemonHandler {
 	}
 
 	public static Port getDaemonConnectorPort(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		return database.executeObjectQuery(
+		return database.queryObject(
 			ObjectFactories.portFactory,
 			"select\n"
 			+ "  nb.port,\n"
@@ -140,7 +142,7 @@ final public class DaemonHandler {
 	}
 
 	public static String getDaemonConnectorProtocol(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		return database.executeStringQuery(
+		return database.queryString(
 			"select\n"
 			+ "  nb.app_protocol\n"
 			+ "from\n"
@@ -154,7 +156,7 @@ final public class DaemonHandler {
 	}
 
 	public static int getDaemonConnectorPoolSize(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		return database.executeIntQuery(
+		return database.queryInt(
 			"select\n"
 			+ "  pool_size\n"
 			+ "from\n"
@@ -339,7 +341,7 @@ final public class DaemonHandler {
 
 		// Send the key to the daemon
 		AOServDaemonConnector daemonConnector = getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
 
 		return new Server.DaemonAccess(

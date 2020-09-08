@@ -35,6 +35,7 @@ import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.collections.SortedArrayList;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Strings;
@@ -75,10 +76,10 @@ final public class AccountHandler {
 	private final static Map<com.aoindustries.aoserv.client.account.User.Name,Boolean> disabledAdministrators = new HashMap<>();
 	private final static Map<Account.Name,Boolean> disabledAccounts = new HashMap<>();
 
-	public static boolean canAccessAccount(DatabaseConnection conn, RequestSource source, Account.Name account) throws IOException, SQLException {
+	public static boolean canAccessAccount(DatabaseAccess db, RequestSource source, Account.Name account) throws IOException, SQLException {
 		//com.aoindustries.aoserv.client.account.User.Name administrator = source.getAdministrator();
 		return
-			getAllowedAccounts(conn, source)
+			getAllowedAccounts(db, source)
 			.contains(
 				account //UsernameHandler.getAccountForUser(conn, administrator)
 			)
@@ -127,7 +128,7 @@ final public class AccountHandler {
 		}
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Account\" set canceled=now(), cancel_reason=? where accounting=?",
 			cancelReason,
 			account
@@ -143,7 +144,7 @@ final public class AccountHandler {
 		int host,
 		String column
 	) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  bs."+column+"\n"
 			+ "from\n"
@@ -187,7 +188,7 @@ final public class AccountHandler {
 	}
 
 	public static void checkAddAccount(DatabaseConnection conn, RequestSource source, String action, Account.Name parent, int host) throws IOException, SQLException {
-		boolean canAdd = conn.executeBooleanQuery(
+		boolean canAdd = conn.queryBoolean(
 			"select can_add_businesses from account.\"Account\" where accounting=?",
 			AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator())
 		);
@@ -222,7 +223,7 @@ final public class AccountHandler {
 	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, Permission.Name permission) throws IOException, SQLException {
 		synchronized(cachedPermissionsLock) {
 			if(cachedPermissions == null) {
-				cachedPermissions = conn.executeQuery(
+				cachedPermissions = conn.query(
 					(ResultSet results) -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name,Set<String>> newCache = new HashMap<>();
 						while(results.next()) {
@@ -257,17 +258,17 @@ final public class AccountHandler {
 		}
 	}
 
-	public static List<Account.Name> getAllowedAccounts(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+	public static List<Account.Name> getAllowedAccounts(DatabaseAccess db, RequestSource source) throws IOException, SQLException {
 		synchronized(userAccountsLock) {
 			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 			if(userAccounts == null) userAccounts = new HashMap<>();
 			List<Account.Name> SV=userAccounts.get(currentAdministrator);
 			if(SV==null) {
 				List<Account.Name> V;
-				User mu = MasterServer.getUser(conn, currentAdministrator);
+				User mu = MasterServer.getUser(db, currentAdministrator);
 				if(mu!=null) {
-					if(MasterServer.getUserHosts(conn, currentAdministrator).length!=0) {
-						V = conn.executeObjectCollectionQuery(
+					if(MasterServer.getUserHosts(db, currentAdministrator).length!=0) {
+						V = db.queryCollection(
 							new ArrayList<>(),
 							ObjectFactories.accountNameFactory,
 							"select distinct\n"
@@ -283,14 +284,14 @@ final public class AccountHandler {
 							currentAdministrator
 						);
 					} else {
-						V = conn.executeObjectCollectionQuery(
+						V = db.queryCollection(
 							new ArrayList<>(),
 							ObjectFactories.accountNameFactory,
 							"select accounting from account.\"Account\""
 						);
 					}
 				} else {
-					V = conn.executeObjectCollectionQuery(
+					V = db.queryCollection(
 						new ArrayList<>(),
 						ObjectFactories.accountNameFactory,
 						"select\n"
@@ -319,7 +320,7 @@ final public class AccountHandler {
 	}
 
 	public static Account.Name getAccountForDisableLog(DatabaseConnection conn, int disableLog) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"DisableLog\" where id=?", disableLog);
+		return conn.queryObject(ObjectFactories.accountNameFactory, "select accounting from account.\"DisableLog\" where id=?", disableLog);
 	}
 
 	/**
@@ -347,7 +348,7 @@ final public class AccountHandler {
 		int newDepth=getDepthInAccountTree(conn, parent)+1;
 		if(newDepth>Account.MAXIMUM_BUSINESS_TREE_DEPTH) throw new SQLException("Unable to add Account '"+name+"', the maximum depth of the business tree ("+Account.MAXIMUM_BUSINESS_TREE_DEPTH+") would be exceeded.");
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into account.\"Account\" (\n"
 			+ "  accounting,\n"
 			+ "  contract_version,\n"
@@ -375,7 +376,7 @@ final public class AccountHandler {
 			can_see_prices,
 			billParent
 		);
-		conn.executeUpdate(
+		conn.update(
 			"insert into account.\"AccountHost\" (\n"
 			+ "  accounting,\n"
 			+ "  server,\n"
@@ -445,7 +446,7 @@ final public class AccountHandler {
 		if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
 		String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
-		conn.executeUpdate(
+		conn.update(
 			"insert into account.\"Administrator\" values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)",
 			user.toString(),
 			name,
@@ -467,7 +468,7 @@ final public class AccountHandler {
 		);
 
 		// administrators default to having the same permissions as the person who created them
-		conn.executeUpdate(
+		conn.update(
 			"insert into master.\"AdministratorPermission\" (username, permission) select ?, permission from master.\"AdministratorPermission\" where username=?",
 			user,
 			source.getCurrentAdministrator()
@@ -481,7 +482,7 @@ final public class AccountHandler {
 	}
 
 	public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
-		String newState = conn.executeStringQuery(
+		String newState = conn.queryString(
 			"select coalesce((select code from account.\"UsState\" where upper(name)=upper(?) or code=upper(?)),'')",
 			state,
 			state
@@ -526,9 +527,9 @@ final public class AccountHandler {
 
 		if (country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
-		int priority=conn.executeIntQuery("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", account);
+		int priority = conn.queryInt("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", account);
 
-		int profile = conn.executeIntUpdate(
+		int profile = conn.updateInt(
 			"INSERT INTO account.\"Profile\" VALUES (default,?,?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?::account.\"Profile.EmailFormat\",?,?,?::account.\"Profile.EmailFormat\") RETURNING id",
 			account.toString(),
 			priority,
@@ -554,7 +555,7 @@ final public class AccountHandler {
 		);
 		short index = 0;
 		for(Email email : billingEmail) {
-			conn.executeUpdate(
+			conn.update(
 				"INSERT INTO account.\"Profile.billingEmail{}\" VALUES (?,?,?)",
 				profile,
 				index++,
@@ -563,7 +564,7 @@ final public class AccountHandler {
 		}
 		index = 0;
 		for(Email email : technicalEmail) {
-			conn.executeUpdate(
+			conn.update(
 				"INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)",
 				profile,
 				index++,
@@ -607,7 +608,7 @@ final public class AccountHandler {
 		// Parent account must also have access to the server
 		if(
 			!account.equals(getRootAccount())
-			&& conn.executeBooleanQuery(
+			&& conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -625,9 +626,9 @@ final public class AccountHandler {
 			)
 		) throw new SQLException("Unable to add AccountHost, parent does not have access to host.  account="+account+", host="+host);
 
-		boolean hasDefault=conn.executeBooleanQuery("select (select id from account.\"AccountHost\" where accounting=? and is_default limit 1) is not null", account);
+		boolean hasDefault = conn.queryBoolean("select (select id from account.\"AccountHost\" where accounting=? and is_default limit 1) is not null", account);
 
-		int accountHost = conn.executeIntUpdate(
+		int accountHost = conn.updateInt(
 			"INSERT INTO account.\"AccountHost\" (accounting, server, is_default) VALUES (?,?,?) RETURNING id",
 			account,
 			host,
@@ -657,7 +658,7 @@ final public class AccountHandler {
 		checkAccessAccount(conn, source, "addDisableLog", account);
 
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		int disableLog = conn.executeIntUpdate(
+		int disableLog = conn.updateInt(
 			"INSERT INTO account.\"DisableLog\" (accounting, disabled_by, disable_reason) VALUES (?,?,?) RETURNING id",
 			account,
 			currentAdministrator,
@@ -691,7 +692,7 @@ final public class AccountHandler {
 		checkAccessAccount(conn, source, "addNoticeLog", account);
 		if(transaction != NoticeLog.NO_TRANSACTION) BillingTransactionHandler.checkAccessTransaction(conn, source, "addNoticeLog", transaction);
 
-		int id = conn.executeIntUpdate(
+		int id = conn.updateInt(
 			"INSERT INTO\n"
 			+ "  billing.\"NoticeLog\"\n"
 			+ "(\n"
@@ -717,7 +718,7 @@ final public class AccountHandler {
 
 		// Add current balances
 		if(
-			conn.executeUpdate(
+			conn.update(
 				"INSERT INTO billing.\"NoticeLog.balance\" (\"noticeLog\", \"balance.currency\", \"balance.value\")\n"
 				+ "SELECT\n"
 				+ "  ?,\n"
@@ -755,7 +756,7 @@ final public class AccountHandler {
 			}
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Account\" set disable_log=? where accounting=?",
 			disableLog,
 			account
@@ -776,7 +777,7 @@ final public class AccountHandler {
 		AccountUserHandler.checkAccessUser(conn, source, "disableAdministrator", administrator);
 		if(isAdministratorDisabled(conn, administrator)) throw new SQLException("Administrator is already disabled: " + administrator);
 
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Administrator\" set disable_log=? where username=?",
 			disableLog,
 			administrator
@@ -800,7 +801,7 @@ final public class AccountHandler {
 
 		if(isAccountCanceled(conn, account)) throw new SQLException("Unable to enable Account, Account canceled: "+account);
 
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Account\" set disable_log=null where accounting=?",
 			account
 		);
@@ -820,7 +821,7 @@ final public class AccountHandler {
 		if(disableLog==-1) throw new SQLException("Administrator is already enabled: "+administrator);
 		checkAccessDisableLog(conn, source, "enableAdministrator", disableLog, true);
 
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Administrator\" set disable_log=null where username=?",
 			administrator
 		);
@@ -848,7 +849,7 @@ final public class AccountHandler {
 				SB.append((char)('a'+secureRandom.nextInt('z'+1-'a')));
 				SB.append(secureRandom.nextInt(range));
 				String supportCode = SB.toString();
-				if(conn.executeBooleanQuery("select (select support_code from account.\"Administrator\" where support_code=?) is null", supportCode)) return supportCode;
+				if(conn.queryBoolean("select (select support_code from account.\"Administrator\" where support_code=?) is null", supportCode)) return supportCode;
 			}
 		}
 		throw new SQLException("Failed to generate support code after thousands of attempts");
@@ -859,7 +860,8 @@ final public class AccountHandler {
 		Account.Name template
 	) throws IOException, SQLException {
 		// Load the entire list of accounting codes
-		Set<Account.Name> codes=conn.executeObjectCollectionQuery(new HashSet<>(),
+		Set<Account.Name> codes=conn.queryCollection(
+			new HashSet<>(),
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"Account\""
 		);
@@ -885,7 +887,8 @@ final public class AccountHandler {
 	public static int getDepthInAccountTree(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
 		int depth=0;
 		while(account!=null) {
-			Account.Name parent=conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+			Account.Name parent=conn.queryObject(
+				ObjectFactories.accountNameFactory,
 				"select parent from account.\"Account\" where accounting=?",
 				account
 			);
@@ -897,7 +900,7 @@ final public class AccountHandler {
 	}
 
 	public static com.aoindustries.aoserv.client.account.User.Name getDisabledByForDisableLog(DatabaseConnection conn, int disableLog) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.userNameFactory,
 			"select disabled_by from account.\"DisableLog\" where id=?",
 			disableLog
@@ -905,14 +908,14 @@ final public class AccountHandler {
 	}
 
 	public static int getDisableLogForAccount(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Account\" where accounting=?", account);
+		return conn.queryInt("select coalesce(disable_log, -1) from account.\"Account\" where accounting=?", account);
 	}
 
 	final private static Map<com.aoindustries.aoserv.client.account.User.Name,Integer> administratorDisableLogs = new HashMap<>();
-	public static int getDisableLogForAdministrator(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
+	public static int getDisableLogForAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
 		synchronized(administratorDisableLogs) {
 			if(administratorDisableLogs.containsKey(administrator)) return administratorDisableLogs.get(administrator);
-			int disableLog=conn.executeIntQuery("select coalesce(disable_log, -1) from account.\"Administrator\" where username=?", administrator);
+			int disableLog = db.queryInt("select coalesce(disable_log, -1) from account.\"Administrator\" where username=?", administrator);
 			administratorDisableLogs.put(administrator, disableLog);
 			return disableLog;
 		}
@@ -920,14 +923,15 @@ final public class AccountHandler {
 
 	// TODO: Here and all around in AOServ Master, lists are used where objects should be in a unique set
 	public static List<Account.Name> getPackagesForAccount(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
+		return conn.queryList(
+			ObjectFactories.accountNameFactory,
 			"select name from billing.\"Package\" where accounting=?",
 			account
 		);
 	}
 
 	public static IntList getHostsForAccount(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeIntListQuery("select server from account.\"AccountHost\" where accounting=?", account);
+		return conn.queryIntList("select server from account.\"AccountHost\" where accounting=?", account);
 	}
 
 	public static Account.Name getRootAccount() throws IOException {
@@ -938,7 +942,7 @@ final public class AccountHandler {
 		DatabaseConnection conn,
 		Account.Name name
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select count(*) from account.\"Account\" where accounting=?", name)==0;
+		return conn.queryInt("select count(*) from account.\"Account\" where accounting=?", name)==0;
 	}
 
 	public static boolean isAdministratorPasswordSet(
@@ -947,7 +951,7 @@ final public class AccountHandler {
 		com.aoindustries.aoserv.client.account.User.Name administrator
 	) throws IOException, SQLException {
 		AccountUserHandler.checkAccessUser(conn, source, "isAdministratorPasswordSet", administrator);
-		return conn.executeBooleanQuery("select password is not null from account.\"Administrator\" where username=?", administrator);
+		return conn.queryBoolean("select password is not null from account.\"Administrator\" where username=?", administrator);
 	}
 
 	public static void removeAdministrator(
@@ -971,8 +975,8 @@ final public class AccountHandler {
 
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
 
-		conn.executeUpdate("delete from master.\"AdministratorPermission\" where username=?", administrator);
-		conn.executeUpdate("delete from account.\"Administrator\" where username=?", administrator);
+		conn.update("delete from master.\"AdministratorPermission\" where username=?", administrator);
+		conn.update("delete from account.\"Administrator\" where username=?", administrator);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
@@ -987,19 +991,20 @@ final public class AccountHandler {
 		InvalidateList invalidateList,
 		int accountHost
 	) throws IOException, SQLException {
-		Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		Account.Name account = conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where id=?",
 			accountHost
 		);
-		int host = conn.executeIntQuery("select server from account.\"AccountHost\" where id=?", accountHost);
+		int host = conn.queryInt("select server from account.\"AccountHost\" where id=?", accountHost);
 
 		// Must be allowed to access this Account
 		checkAccessAccount(conn, source, "removeAccountHost", account);
 
 		// Do not remove the default unless it is the only one left
 		if(
-			conn.executeBooleanQuery("select is_default from account.\"AccountHost\" where id=?", accountHost)
-			&& conn.executeIntQuery("select count(*) from account.\"AccountHost\" where accounting=?", account)>1
+			conn.queryBoolean("select is_default from account.\"AccountHost\" where id=?", accountHost)
+			&& conn.queryInt("select count(*) from account.\"AccountHost\" where accounting=?", account)>1
 		) {
 			throw new SQLException("Cannot remove the default AccountHost unless it is the last AccountHost for an account: " + accountHost);
 		}
@@ -1019,15 +1024,16 @@ final public class AccountHandler {
 		InvalidateList invalidateList,
 		int accountHost
 	) throws IOException, SQLException {
-		Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		Account.Name account = conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where id=?",
 			accountHost
 		);
-		int host = conn.executeIntQuery("select server from account.\"AccountHost\" where id=?", accountHost);
+		int host = conn.queryInt("select server from account.\"AccountHost\" where id=?", accountHost);
 
 		// No children should be able to access the server
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1051,7 +1057,7 @@ final public class AccountHandler {
 		 */
 		// email.Pipe
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1073,7 +1079,7 @@ final public class AccountHandler {
 
 		// web.Site
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1095,7 +1101,7 @@ final public class AccountHandler {
 
 		// net.IpAddress
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1119,7 +1125,7 @@ final public class AccountHandler {
 
 		// linux.UserServer
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1143,7 +1149,7 @@ final public class AccountHandler {
 
 		// linux.GroupServer
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1167,7 +1173,7 @@ final public class AccountHandler {
 
 		// mysql.Database
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1191,7 +1197,7 @@ final public class AccountHandler {
 
 		// mysql.UserServer
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1217,7 +1223,7 @@ final public class AccountHandler {
 
 		// net.Bind
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1239,7 +1245,7 @@ final public class AccountHandler {
 
 		// postgresql.Database
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1266,7 +1272,7 @@ final public class AccountHandler {
 
 		// postgresql.UserServer
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1291,7 +1297,7 @@ final public class AccountHandler {
 
 		// email.Domain
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1313,7 +1319,7 @@ final public class AccountHandler {
 
 		// email.SmtpRelay
 		if(
-			conn.executeBooleanQuery(
+			conn.queryBoolean(
 				"select\n"
 				+ "  (\n"
 				+ "    select\n"
@@ -1334,7 +1340,7 @@ final public class AccountHandler {
 			)
 		) throw new SQLException("Account="+account+" still owns at least one SmtpRelay on Host="+host);
 
-		conn.executeUpdate("delete from account.\"AccountHost\" where id=?", accountHost);
+		conn.update("delete from account.\"AccountHost\" where id=?", accountHost);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
@@ -1352,7 +1358,7 @@ final public class AccountHandler {
 	) throws IOException, SQLException {
 		Account.Name account = getAccountForDisableLog(conn, disableLog);
 
-		conn.executeUpdate("delete from account.\"DisableLog\" where id=?", disableLog);
+		conn.update("delete from account.\"DisableLog\" where id=?", disableLog);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.DISABLE_LOG, account, InvalidateList.allHosts, false);
@@ -1367,7 +1373,7 @@ final public class AccountHandler {
 	) throws IOException, SQLException {
 		checkAccessAccount(conn, source, "setAccountName", account);
 
-		conn.executeUpdate("update account.\"Account\" set accounting=? where accounting=?", name, account);
+		conn.update("update account.\"Account\" set accounting=? where accounting=?", name, account);
 
 		// TODO: Update stored cards since they have "group_name" meta data matching the account name.
 
@@ -1415,7 +1421,7 @@ final public class AccountHandler {
 		;
 
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
-		conn.executeUpdate("update account.\"Administrator\" set password=? where username=?", encrypted, administrator);
+		conn.update("update account.\"Administrator\" set password=? where username=?", encrypted, administrator);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
@@ -1455,7 +1461,7 @@ final public class AccountHandler {
 		if (country!=null && country.equals(CountryCode.US)) state=convertUSState(conn, state);
 
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"Administrator\" set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
 			name,
 			title,
@@ -1488,7 +1494,8 @@ final public class AccountHandler {
 		InvalidateList invalidateList,
 		int accountHost
 	) throws IOException, SQLException {
-		Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		Account.Name account = conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where id=?",
 			accountHost
 		);
@@ -1498,11 +1505,11 @@ final public class AccountHandler {
 		if(isAccountDisabled(conn, account)) throw new SQLException("Unable to set the default AccountHost, Account disabled: "+account);
 
 		// Update the table
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"AccountHost\" set is_default=true where id=?",
 			accountHost
 		);
-		conn.executeUpdate(
+		conn.update(
 			"update account.\"AccountHost\" set is_default=false where accounting=? and id!=?",
 			account,
 			accountHost
@@ -1517,10 +1524,10 @@ final public class AccountHandler {
 		);
 	}
 
-	public static Administrator getAdministrator(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
+	public static Administrator getAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
 		synchronized(administratorsLock) {
 			if(administrators == null) {
-				administrators = conn.executeQuery(
+				administrators = db.query(
 					(ResultSet results) -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name,Administrator> table=new HashMap<>();
 						while(results.next()) {
@@ -1563,7 +1570,7 @@ final public class AccountHandler {
 	}
 
 	public static Account.Name getParentAccount(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.accountNameFactory,
 			"select parent from account.\"Account\" where accounting=?",
 			account
@@ -1571,7 +1578,7 @@ final public class AccountHandler {
 	}
 
 	public static List<Account.Name> getChildAccounts(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(
+		return conn.queryCollection(
 			new ArrayList<>(),
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"Account\" where parent=?",
@@ -1581,7 +1588,7 @@ final public class AccountHandler {
 
 	// TODO: Seems unused 20181218
 	public static Set<Email> getTechnicalEmail(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(
+		return conn.queryCollection(
 			new LinkedHashSet<>(),
 			ObjectFactories.emailFactory,
 			"SELECT\n"
@@ -1597,17 +1604,17 @@ final public class AccountHandler {
 		);
 	}
 
-	public static boolean isAdministrator(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
-		return getAdministrator(conn, user) != null;
+	public static boolean isAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
+		return getAdministrator(db, user) != null;
 	}
 
-	public static boolean isAdministratorDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
+	public static boolean isAdministratorDisabled(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
 		Boolean O;
 		synchronized(disabledAdministrators) {
 			O=disabledAdministrators.get(administrator);
 		}
 		if(O!=null) return O;
-		boolean isDisabled = getDisableLogForAdministrator(conn, administrator)!=-1;
+		boolean isDisabled = getDisableLogForAdministrator(db, administrator)!=-1;
 		synchronized(disabledAdministrators) {
 			disabledAdministrators.put(administrator, isDisabled);
 		}
@@ -1625,11 +1632,11 @@ final public class AccountHandler {
 	}
 
 	public static boolean isAccountCanceled(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select canceled is not null from account.\"Account\" where accounting=?", account);
+		return conn.queryBoolean("select canceled is not null from account.\"Account\" where accounting=?", account);
 	}
 
 	public static boolean isAccountBillParent(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select bill_parent from account.\"Account\" where accounting=?", account);
+		return conn.queryBoolean("select bill_parent from account.\"Account\" where accounting=?", account);
 	}
 
 	public static boolean canSeePrices(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
@@ -1637,19 +1644,19 @@ final public class AccountHandler {
 	}
 
 	public static boolean canSeePrices(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select can_see_prices from account.\"Account\" where accounting=?", account);
+		return conn.queryBoolean("select can_see_prices from account.\"Account\" where accounting=?", account);
 	}
 
 	public static boolean isAccountOrParent(DatabaseConnection conn, Account.Name parentAccounting, Account.Name account) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select account.is_account_or_parent(?,?)", parentAccounting, account);
+		return conn.queryBoolean("select account.is_account_or_parent(?,?)", parentAccounting, account);
 	}
 
-	public static boolean canSwitchUser(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name authenticatedAs, com.aoindustries.aoserv.client.account.User.Name connectAs) throws IOException, SQLException {
-		Account.Name authAccounting=AccountUserHandler.getAccountForUser(conn, authenticatedAs);
-		Account.Name connectAccounting=AccountUserHandler.getAccountForUser(conn, connectAs);
+	public static boolean canSwitchUser(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name authenticatedAs, com.aoindustries.aoserv.client.account.User.Name connectAs) throws IOException, SQLException {
+		Account.Name authAccounting=AccountUserHandler.getAccountForUser(db, authenticatedAs);
+		Account.Name connectAccounting=AccountUserHandler.getAccountForUser(db, connectAs);
 		// Cannot switch within same account
 		if(authAccounting.equals(connectAccounting)) return false;
-		return conn.executeBooleanQuery(
+		return db.queryBoolean(
 			"select\n"
 			+ "  (select can_switch_users from account.\"Administrator\" where username=?)\n"
 			+ "  and account.is_account_or_parent(?,?)",
@@ -1665,7 +1672,7 @@ final public class AccountHandler {
 	 * @return  a <code>HashMap</code> of <code>ArrayList</code>
 	 */
 	public static Map<Account.Name,List<String>> getAccountContacts(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeQuery(
+		return conn.query(
 			(ResultSet results) -> {
 				// Load the list of account.Account and their contacts
 				Map<Account.Name,List<String>> accountContacts = new HashMap<>();
@@ -1745,7 +1752,7 @@ final public class AccountHandler {
 				String domain=addy.substring(pos+1);
 				if(domain.length()>0) {
 					// Look for matches in email.Domain, 5 points each
-					List<Account.Name> domain_accounts = conn.executeObjectCollectionQuery(
+					List<Account.Name> domain_accounts = conn.queryCollection(
 						new ArrayList<>(),
 						ObjectFactories.accountNameFactory,
 						"select\n"
@@ -1762,7 +1769,8 @@ final public class AccountHandler {
 						addWeight(accountWeights, account, 5);
 					}
 					// Look for matches in web.VirtualHostName, 1 point each
-					List<Account.Name> site_accounts = conn.executeObjectCollectionQuery(new ArrayList<>(),
+					List<Account.Name> site_accounts = conn.queryCollection(
+						new ArrayList<>(),
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  pk.accounting\n"
@@ -1782,7 +1790,7 @@ final public class AccountHandler {
 						addWeight(accountWeights, account, 1);
 					}
 					// Look for matches in dns.Zone, 1 point each
-					List<Account.Name> zone_accounts = conn.executeObjectCollectionQuery(
+					List<Account.Name> zone_accounts = conn.queryCollection(
 						new ArrayList<>(),
 						ObjectFactories.accountNameFactory,
 						"select\n"
@@ -1840,7 +1848,7 @@ final public class AccountHandler {
 	}
 
 	public static boolean canAccountAccessHost(DatabaseConnection conn, Account.Name account, int host) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"

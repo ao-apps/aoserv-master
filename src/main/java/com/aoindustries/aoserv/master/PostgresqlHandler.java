@@ -128,7 +128,7 @@ final public class PostgresqlHandler {
 		// If requesting PostGIS, make sure the version of PostgreSQL supports it.
 		if(
 			enablePostgis
-			&& conn.executeBooleanQuery("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresqlServer)
+			&& conn.queryBoolean("select pv.postgis_version is null from postgresql.\"Server\" ps inner join postgresql.\"Version\" pv on ps.version = pv.version where ps.bind = ?", postgresqlServer)
 		) throw new SQLException("This version of PostgreSQL doesn't support PostGIS");
 
 		// datdba must be on the same server and not be 'mail'
@@ -141,7 +141,7 @@ final public class PostgresqlHandler {
 		Account.Name account=AccountUserHandler.getAccountForUser(conn, datdbaUsername);
 		// Encoding must exist for this version of the database
 		if(
-			!conn.executeBooleanQuery(
+			!conn.queryBoolean(
 				"SELECT EXISTS (\n"
 				+ "  SELECT\n"
 				+ "    pe.id\n"
@@ -165,7 +165,7 @@ final public class PostgresqlHandler {
 		AccountHandler.checkAccountAccessHost(conn, source, "addDatabase", account, linuxServer);
 
 		// Add the entry to the database
-		int database = conn.executeIntUpdate(
+		int database = conn.updateInt(
 			"INSERT INTO\n"
 			+ "  postgresql.\"Database\"\n"
 			+ "VALUES (\n"
@@ -218,7 +218,7 @@ final public class PostgresqlHandler {
 		// This sub-account must have access to the server
 		AccountUserHandler.checkUserAccessHost(conn, source, "addUserServer", user, linuxServer);
 
-		int userServer = conn.executeIntUpdate(
+		int userServer = conn.updateInt(
 			"INSERT INTO postgresql.\"UserServer\" VALUES (default,?,?,null,null) RETURNING id",
 			user,
 			postgresqlServer
@@ -252,7 +252,7 @@ final public class PostgresqlHandler {
 		AccountUserHandler.checkAccessUser(conn, source, "addUser", user);
 		if(AccountUserHandler.isUserDisabled(conn, user)) throw new SQLException("Unable to add User, Username disabled: "+user);
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into postgresql.\"User\"(username) values(?)",
 			user
 		);
@@ -282,7 +282,7 @@ final public class PostgresqlHandler {
 		}
 		if(isUserServerDisabled(conn, userServer)) throw new SQLException("UserServer is already disabled: "+userServer);
 
-		conn.executeUpdate(
+		conn.update(
 			"update postgresql.\"UserServer\" set disable_log=? where id=?",
 			disableLog,
 			userServer
@@ -322,7 +322,7 @@ final public class PostgresqlHandler {
 			}
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"update postgresql.\"User\" set disable_log=? where username=?",
 			disableLog,
 			user
@@ -352,7 +352,7 @@ final public class PostgresqlHandler {
 
 		int linuxServer = getLinuxServerForDatabase(conn, database);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.dumpPostgresDatabase(
 			database,
 			gzip,
@@ -382,7 +382,7 @@ final public class PostgresqlHandler {
 		}
 		if(isUserDisabled(conn, pu)) throw new SQLException("Unable to enable UserServer #"+userServer+", User not enabled: "+pu);
 
-		conn.executeUpdate(
+		conn.update(
 			"update postgresql.\"UserServer\" set disable_log=null where id=?",
 			userServer
 		);
@@ -414,7 +414,7 @@ final public class PostgresqlHandler {
 
 		if(AccountUserHandler.isUserDisabled(conn, user)) throw new SQLException("Unable to enable User '"+user+"', Username not enabled: "+user);
 
-		conn.executeUpdate(
+		conn.update(
 			"update postgresql.\"User\" set disable_log=null where username=?",
 			user
 		);
@@ -438,7 +438,8 @@ final public class PostgresqlHandler {
 		String template_added
 	) throws IOException, SQLException {
 		// Load the entire list of postgres database names
-		Set<Database.Name> names = conn.executeObjectCollectionQuery(new HashSet<>(),
+		Set<Database.Name> names = conn.queryCollection(
+			new HashSet<>(),
 			ObjectFactories.postgresqlDatabaseNameFactory,
 			"select name from postgresql.\"Database\" group by name"
 		);
@@ -457,15 +458,15 @@ final public class PostgresqlHandler {
 	}
 
 	public static int getDisableLogForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"UserServer\" where id=?", userServer);
+		return conn.queryInt("select coalesce(disable_log, -1) from postgresql.\"UserServer\" where id=?", userServer);
 	}
 
 	public static int getDisableLogForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name user) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from postgresql.\"User\" where username=?", user);
+		return conn.queryInt("select coalesce(disable_log, -1) from postgresql.\"User\" where username=?", user);
 	}
 
 	public static Database.Name getNameForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.postgresqlDatabaseNameFactory,
 			"select \"name\" from postgresql.\"Database\" where id=?",
 			database
@@ -473,11 +474,11 @@ final public class PostgresqlHandler {
 	}
 
 	public static IntList getUserServersForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name user) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from postgresql.\"UserServer\" where username=?", user);
+		return conn.queryIntList("select id from postgresql.\"UserServer\" where username=?", user);
 	}
 
 	public static com.aoindustries.aoserv.client.postgresql.User.Name getUserForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.postgresqlUserNameFactory,
 			"select username from postgresql.\"UserServer\" where id=?",
 			userServer
@@ -511,7 +512,7 @@ final public class PostgresqlHandler {
 	}
 
 	public static boolean isUser(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name name) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
@@ -552,7 +553,7 @@ final public class PostgresqlHandler {
 			"isPostgresDatabaseNameAvailable",
 			linuxServer
 		);
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
@@ -579,7 +580,7 @@ final public class PostgresqlHandler {
 		int linuxServer
 	) throws IOException, SQLException {
 		NetHostHandler.checkAccessHost(conn, source, "isServerNameAvailable", linuxServer);
-		return conn.executeBooleanQuery("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Server\" WHERE \"name\" = ? AND ao_server = ?)", name, linuxServer);
+		return conn.queryBoolean("SELECT NOT EXISTS (SELECT * FROM postgresql.\"Server\" WHERE \"name\" = ? AND ao_server = ?)", name, linuxServer);
 	}
 
 	public static boolean isUserServerPasswordSet(
@@ -594,7 +595,7 @@ final public class PostgresqlHandler {
 
 		int linuxServer = getLinuxServerForUserServer(conn, userServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		String password = daemonConnector.getPostgresUserPassword(userServer);
 		return !com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD_DB_VALUE.equals(password);
 	}
@@ -628,7 +629,7 @@ final public class PostgresqlHandler {
 		// Remove the database entry
 		Account.Name account = getAccountForDatabase(conn, database);
 		int linuxServer = getLinuxServerForDatabase(conn, database);
-		conn.executeUpdate("delete from postgresql.\"Database\" where id=?", database);
+		conn.update("delete from postgresql.\"Database\" where id=?", database);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -661,11 +662,11 @@ final public class PostgresqlHandler {
 		Account.Name account = getAccountForUserServer(conn, userServer);
 
 		// Make sure that this is not the DBA for any databases
-		int count=conn.executeIntQuery("select count(*) from postgresql.\"Database\" where datdba=?", userServer);
+		int count=conn.queryInt("select count(*) from postgresql.\"Database\" where datdba=?", userServer);
 		if(count>0) throw new SQLException("UserServer #"+userServer+" cannot be removed because it is the datdba for "+count+(count==1?" database":" databases"));
 
 		// Remove the postgres_server_user
-		conn.executeUpdate("delete from postgresql.\"UserServer\" where id=?", userServer);
+		conn.update("delete from postgresql.\"UserServer\" where id=?", userServer);
 
 		// Notify all clients of the updates
 		invalidateList.addTable(
@@ -705,9 +706,9 @@ final public class PostgresqlHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 
 		// Remove the postgres_server_user
-		IntList linuxServers = conn.executeIntListQuery("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server = ps.bind", user);
+		IntList linuxServers = conn.queryIntList("select ps.ao_server from postgresql.\"UserServer\" psu, postgresql.\"Server\" ps where psu.username=? and psu.postgres_server = ps.bind", user);
 		if(!linuxServers.isEmpty()) {
-			conn.executeUpdate("delete from postgresql.\"UserServer\" where username=?", user);
+			conn.update("delete from postgresql.\"UserServer\" where username=?", user);
 			invalidateList.addTable(
 				conn,
 				Table.TableID.POSTGRES_SERVER_USERS,
@@ -718,7 +719,7 @@ final public class PostgresqlHandler {
 		}
 
 		// Remove the postgres_user
-		conn.executeUpdate("delete from postgresql.\"User\" where username=?", user);
+		conn.update("delete from postgresql.\"User\" where username=?", user);
 		invalidateList.addTable(
 			conn,
 			Table.TableID.POSTGRES_USERS,
@@ -757,7 +758,7 @@ final public class PostgresqlHandler {
 
 		// Contact the daemon for the update
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.setPostgresUserPassword(userServer, password);
 	}
 
@@ -782,7 +783,7 @@ final public class PostgresqlHandler {
 		}
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update postgresql.\"UserServer\" set predisable_password=? where id=?",
 			password,
 			userServer
@@ -805,7 +806,7 @@ final public class PostgresqlHandler {
 		NetHostHandler.checkAccessHost(conn, source, "waitForDatabaseRebuild", linuxServer);
 		NetHostHandler.waitForInvalidates(linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.waitForPostgresDatabaseRebuild();
 	}
 
@@ -817,7 +818,7 @@ final public class PostgresqlHandler {
 		NetHostHandler.checkAccessHost(conn, source, "waitForServerRebuild", linuxServer);
 		NetHostHandler.waitForInvalidates(linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.waitForPostgresServerRebuild();
 	}
 
@@ -829,12 +830,13 @@ final public class PostgresqlHandler {
 		NetHostHandler.checkAccessHost(conn, source, "waitForUserRebuild", linuxServer);
 		NetHostHandler.waitForInvalidates(linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.waitForPostgresUserRebuild();
 	}
 
 	public static Account.Name getAccountForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -852,7 +854,7 @@ final public class PostgresqlHandler {
 	}
 
 	public static int getPackageForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select\n"
 			+ "  pk.id\n"
 			+ "from\n"
@@ -870,22 +872,23 @@ final public class PostgresqlHandler {
 	}
 
 	public static Account.Name getAccountForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select pk.accounting from postgresql.\"UserServer\" psu, account.\"User\" un, billing.\"Package\" pk where psu.username=un.username and un.package=pk.name and psu.id=?",
 			userServer
 		);
 	}
 
 	public static int getLinuxServerForServer(DatabaseConnection conn, int postgresqlServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from postgresql.\"Server\" where bind = ?", postgresqlServer);
+		return conn.queryInt("select ao_server from postgresql.\"Server\" where bind = ?", postgresqlServer);
 	}
 
 	public static int getPortForServer(DatabaseConnection conn, int postgresqlServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresqlServer);
+		return conn.queryInt("select nb.port from postgresql.\"Server\" ps, net.\"Bind\" nb where ps.bind = ? and ps.bind = nb.id", postgresqlServer);
 	}
 
 	public static String getMinorVersionForServer(DatabaseConnection conn, int postgresqlServer) throws IOException, SQLException {
-		return conn.executeStringQuery(
+		return conn.queryString(
 			"SELECT\n"
 			+ "  pv.minor_version\n"
 			+ "FROM\n"
@@ -898,18 +901,18 @@ final public class PostgresqlHandler {
 	}
 
 	public static int getServerForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select postgres_server from postgresql.\"Database\" where id=?",
 			database
 		);
 	}
 
 	public static int getServerForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select postgres_server from postgresql.\"UserServer\" where id=?", userServer);
+		return conn.queryInt("select postgres_server from postgresql.\"UserServer\" where id=?", userServer);
 	}
 
 	public static int getLinuxServerForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"SELECT\n"
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
@@ -922,7 +925,7 @@ final public class PostgresqlHandler {
 	}
 
 	public static int getDatdbaForDatabase(DatabaseConnection conn, int database) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select\n"
 			+ "  datdba\n"
 			+ "from\n"
@@ -934,7 +937,7 @@ final public class PostgresqlHandler {
 	}
 
 	public static int getLinuxServerForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"SELECT\n"
 			+ "  ps.ao_server\n"
 			+ "FROM\n"
@@ -955,7 +958,7 @@ final public class PostgresqlHandler {
 		boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to restart PostgreSQL on "+linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.restartPostgres(postgresqlServer);
 	}
 
@@ -968,7 +971,7 @@ final public class PostgresqlHandler {
 		boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to start PostgreSQL on "+linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.startPostgreSQL(postgresqlServer);
 	}
 
@@ -981,7 +984,7 @@ final public class PostgresqlHandler {
 		boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_postgresql");
 		if(!canControl) throw new SQLException("Not allowed to stop PostgreSQL on "+linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.stopPostgreSQL(postgresqlServer);
 	}
 

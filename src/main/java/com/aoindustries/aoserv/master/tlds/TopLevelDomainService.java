@@ -97,14 +97,13 @@ public class TopLevelDomainService implements MasterService {
 					long lastUpdatedMillis = snapshot.getLastUpdatedTime();
 					if(lastUpdatedTime == Long.MIN_VALUE || lastUpdatedMillis != lastUpdatedTime) {
 						// Start the transaction
-						DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
-						try {
+						try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
 							boolean connRolledBack = false;
 							try {
 								Timestamp lastUpdatedTimestamp = new Timestamp(lastUpdatedMillis);
 								// Check if this update is already in the database
 								if(
-									conn.executeBooleanQuery(
+									conn.queryBoolean(
 										"SELECT EXISTS (\n"
 										+ "  SELECT * FROM \"com.aoindustries.tlds\".\"TopLevelDomain.Log\" WHERE \"lastUpdatedTime\"=?\n"
 										+ ")",
@@ -123,7 +122,7 @@ public class TopLevelDomainService implements MasterService {
 									List<String> topLevelDomains = snapshot.getTopLevelDomains();
 									if(topLevelDomains.isEmpty()) throw new AssertionError("topLevelDomains is empty");
 									// Create and populate a temporary table
-									conn.executeUpdate(
+									conn.update(
 										"CREATE TEMPORARY TABLE \"TopLevelDomain_import\" (\n"
 										+ "  label CITEXT PRIMARY KEY\n"
 										+ ")");
@@ -133,27 +132,27 @@ public class TopLevelDomainService implements MasterService {
 										if(i != 0) insert.append(',');
 										insert.append("(?)");
 									}
-									conn.executeUpdate(insert.toString(), topLevelDomains.toArray());
+									conn.update(insert.toString(), topLevelDomains.toArray());
 									// Delete old entries
-									int deleted = conn.executeUpdate(
+									int deleted = conn.update(
 										"DELETE FROM \"com.aoindustries.tlds\".\"TopLevelDomain\" WHERE label NOT IN (\n"
 										+ "  SELECT label FROM \"TopLevelDomain_import\"\n"
 										+ ")");
 									// Delete old entries where case changed
-									int delete_for_update = conn.executeUpdate(
+									int delete_for_update = conn.update(
 										"DELETE FROM \"com.aoindustries.tlds\".\"TopLevelDomain\" WHERE label::text NOT IN (\n"
 										+ "  SELECT label::text FROM \"TopLevelDomain_import\"\n"
 										+ ")");
 									// Add new entries
-									int inserted = conn.executeUpdate(
+									int inserted = conn.update(
 										"INSERT INTO \"com.aoindustries.tlds\".\"TopLevelDomain\"\n"
 										+ "SELECT * FROM \"TopLevelDomain_import\" WHERE label NOT IN (\n"
 										+ "  SELECT label FROM \"com.aoindustries.tlds\".\"TopLevelDomain\"\n"
 										+ ")");
 									// Drop temp table
-									conn.executeUpdate("DROP TABLE \"TopLevelDomain_import\"");
+									conn.update("DROP TABLE \"TopLevelDomain_import\"");
 									// Add Log entry
-									conn.executeUpdate(
+									conn.update(
 										"INSERT INTO \"com.aoindustries.tlds\".\"TopLevelDomain.Log\" VALUES (\n"
 										+ "  ?,\n"
 										+ "  ?,\n"
@@ -199,8 +198,6 @@ public class TopLevelDomainService implements MasterService {
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}
-						} finally {
-							conn.releaseConnection();
 						}
 					}
 				}

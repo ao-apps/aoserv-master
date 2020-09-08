@@ -298,7 +298,6 @@ final public class ClusterHandler implements CronJob {
 									try {
 										final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
 										AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
-										// database.releaseConnection();
 										// Get the DRBD states
 										List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
 										Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);

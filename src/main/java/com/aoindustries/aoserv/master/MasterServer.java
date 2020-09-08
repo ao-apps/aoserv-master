@@ -62,6 +62,7 @@ import com.aoindustries.collections.IntList;
 import com.aoindustries.collections.MinimalList;
 import com.aoindustries.collections.PolymorphicMultimap;
 import com.aoindustries.collections.SortedArrayList;
+import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.NoRowException;
 import com.aoindustries.io.IoUtils;
@@ -551,8 +552,7 @@ public abstract class MasterServer {
 						// This method normally never leaves for this command
 						try {
 							addCacheListener(source);
-							final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-							try {
+							try (final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection()) {
 								final AoservProtocol.Version protocolVersion = source.getProtocolVersion();
 								final com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 								boolean didInitialInvalidateAll = false;
@@ -565,10 +565,10 @@ public abstract class MasterServer {
 											int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
 											if(clientTableID != -1) clientInvalidateList.add(clientTableID);
 										}
-										conn.releaseConnection();
+										conn.close(); // Don't hold database connection while writing response
 										ice = new InvalidateCacheEntry(clientInvalidateList, -1, null);
 									} else {
-										conn.releaseConnection();
+										conn.close(); // Don't hold database connection while sleeping
 										process.commandSleeping();
 										long endTime=System.currentTimeMillis()+60000;
 										synchronized(source) {
@@ -612,8 +612,6 @@ public abstract class MasterServer {
 									}
 									didInitialInvalidateAll = true;
 								}
-							} finally {
-								conn.releaseConnection();
 							}
 						} finally {
 							removeCacheListener(source);
@@ -644,14 +642,13 @@ public abstract class MasterServer {
 					boolean logSQLException = true;
 					Thread currentThread=Thread.currentThread();
 					try {
-						InvalidateList invalidateList=new InvalidateList();
 						IntArrayList clientInvalidateList=null;
 
 						final Response resp;
 						final boolean sendInvalidateList;
 
-						final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-						try {
+						try (final DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+							InvalidateList invalidateList = new InvalidateList();
 							boolean connRolledBack=false;
 							try {
 								// Stop processing if the account is disabled
@@ -3678,7 +3675,7 @@ public abstract class MasterServer {
 												sslCertificate,
 												allowCached
 											);
-											conn.releaseConnection();
+											conn.close(); // Don't hold database connection while writing response
 											out.writeByte(AoservProtocol.NEXT);
 											int size = results.size();
 											out.writeCompressedInt(size);
@@ -5130,7 +5127,7 @@ public abstract class MasterServer {
 											byte[] entropy = useBufferManager ? BufferManager.getBytes() : new byte[numBytes];
 											try {
 												numBytes = RandomHandler.getMasterEntropy(conn, source, entropy, numBytes);
-												conn.releaseConnection();
+												conn.close(); // Don't hold database connection while writing response
 												out.writeByte(AoservProtocol.DONE);
 												out.writeCompressedInt(numBytes);
 												out.write(entropy, 0, numBytes);
@@ -5725,7 +5722,7 @@ public abstract class MasterServer {
 														"from",
 														clientTableID
 													);
-													conn.releaseConnection();
+													conn.close(); // Don't hold database connection while writing response
 													writeObjects(source, out, provideProgress, Collections.emptyList());
 												}
 											} else {
@@ -10224,11 +10221,9 @@ public abstract class MasterServer {
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}
-						} finally {
-							conn.releaseConnection();
+							// Invalidate the affected tables
+							invalidateTables(conn, invalidateList, source);
 						}
-						// Invalidate the affected tables
-						invalidateTables(invalidateList, source);
 
 						// Write the response codes
 						if(resp != null) resp.writeResponse(out, source.getProtocolVersion());
@@ -10291,6 +10286,7 @@ public abstract class MasterServer {
 	 * </p>
 	 */
 	public static void invalidateTables(
+		DatabaseAccess db,
 		InvalidateList invalidateList,
 		RequestSource invalidateSource
 	) throws IOException, SQLException {
@@ -10301,7 +10297,6 @@ public abstract class MasterServer {
 		Identifier invalidateSourceConnectorId = invalidateSource == null ? null : invalidateSource.getConnectorId();
 
 		IntList tableList = new IntArrayList();
-		final DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
 		// Grab a copy of cacheListeners to maximize concurrency
 		List<RequestSource> listenerCopy;
 		synchronized(cacheListeners) {
@@ -10325,71 +10320,62 @@ public abstract class MasterServer {
 				) {
 					tableList.clear();
 					// Build the list with a connection, but don't send until the connection is released
-					try {
-						try {
-							for(Table.TableID tableID : tableIDs) {
-								int clientTableID = TableHandler.convertToClientTableID(conn, source, tableID);
-								if(clientTableID != -1) {
-									List<Account.Name> affectedBusinesses = invalidateList.getAffectedAccounts(tableID);
-									List<Integer> affectedHosts = invalidateList.getAffectedHosts(tableID);
-									if(
-										affectedBusinesses!=null
-										&& affectedHosts!=null
-									) {
-										boolean businessMatches;
-										int size=affectedBusinesses.size();
-										if(size == 0) businessMatches=true;
-										else {
-											businessMatches=false;
-											for(int c=0;c<size;c++) {
-												if(AccountHandler.canAccessAccount(conn, source, affectedBusinesses.get(c))) {
-													businessMatches=true;
-													break;
-												}
-											}
+					for(Table.TableID tableID : tableIDs) {
+						int clientTableID = TableHandler.convertToClientTableID(db, source, tableID);
+						if(clientTableID != -1) {
+							List<Account.Name> affectedBusinesses = invalidateList.getAffectedAccounts(tableID);
+							List<Integer> affectedHosts = invalidateList.getAffectedHosts(tableID);
+							if(
+								affectedBusinesses!=null
+								&& affectedHosts!=null
+							) {
+								boolean businessMatches;
+								int size=affectedBusinesses.size();
+								if(size == 0) businessMatches=true;
+								else {
+									businessMatches=false;
+									for(int c=0;c<size;c++) {
+										if(AccountHandler.canAccessAccount(db, source, affectedBusinesses.get(c))) {
+											businessMatches=true;
+											break;
 										}
-
-										// Filter by server
-										boolean serverMatches;
-										size=affectedHosts.size();
-										if(size == 0) serverMatches=true;
-										else {
-											serverMatches=false;
-											for(int c=0;c<size;c++) {
-												int host = affectedHosts.get(c);
-												if(NetHostHandler.canAccessHost(conn, source, host)) {
-													serverMatches=true;
-													break;
-												}
-												if(
-													tableID==Table.TableID.AO_SERVERS
-													|| tableID==Table.TableID.IP_ADDRESSES
-													|| tableID==Table.TableID.LINUX_ACCOUNTS
-													|| tableID==Table.TableID.LINUX_SERVER_ACCOUNTS
-													|| tableID==Table.TableID.NET_DEVICES
-													|| tableID==Table.TableID.SERVERS
-													|| tableID==Table.TableID.USERNAMES
-												) {
-													// These tables invalidations are also sent to the servers failover parent
-													int failoverServer=NetHostHandler.getFailoverServer(conn, host);
-													if(failoverServer!=-1 && NetHostHandler.canAccessHost(conn, source, failoverServer)) {
-														serverMatches=true;
-														break;
-													}
-												}
-											}
-										}
-										// Send the invalidate through
-										if(businessMatches && serverMatches) tableList.add(clientTableID);
 									}
 								}
+
+								// Filter by server
+								boolean serverMatches;
+								size=affectedHosts.size();
+								if(size == 0) serverMatches=true;
+								else {
+									serverMatches=false;
+									for(int c=0;c<size;c++) {
+										int host = affectedHosts.get(c);
+										if(NetHostHandler.canAccessHost(db, source, host)) {
+											serverMatches=true;
+											break;
+										}
+										if(
+											tableID==Table.TableID.AO_SERVERS
+											|| tableID==Table.TableID.IP_ADDRESSES
+											|| tableID==Table.TableID.LINUX_ACCOUNTS
+											|| tableID==Table.TableID.LINUX_SERVER_ACCOUNTS
+											|| tableID==Table.TableID.NET_DEVICES
+											|| tableID==Table.TableID.SERVERS
+											|| tableID==Table.TableID.USERNAMES
+										) {
+											// These tables invalidations are also sent to the servers failover parent
+											int failoverServer=NetHostHandler.getFailoverServer(db, host);
+											if(failoverServer!=-1 && NetHostHandler.canAccessHost(db, source, failoverServer)) {
+												serverMatches=true;
+												break;
+											}
+										}
+									}
+								}
+								// Send the invalidate through
+								if(businessMatches && serverMatches) tableList.add(clientTableID);
 							}
-						} catch(SQLException err) {
-							conn.rollbackAndClose();
-							throw err;
 						}
-					} finally {
-						conn.releaseConnection();
 					}
 					source.cachesInvalidated(tableList);
 				}
@@ -10778,7 +10764,7 @@ public abstract class MasterServer {
 	}
 
 	public static String authenticate(
-		DatabaseConnection conn,
+		DatabaseAccess db,
 		String remoteHost, 
 		com.aoindustries.aoserv.client.account.User.Name connectAs, 
 		com.aoindustries.aoserv.client.account.User.Name authenticateAs, 
@@ -10787,16 +10773,16 @@ public abstract class MasterServer {
 		if(connectAs == null) return "Connection attempted with empty connect username";
 		if(authenticateAs == null) return "Connection attempted with empty authentication username";
 
-		if(!AccountHandler.isAdministrator(conn, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
+		if(!AccountHandler.isAdministrator(db, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
 
-		if(AccountHandler.isAdministratorDisabled(conn, authenticateAs)) return "Administrator disabled: "+authenticateAs;
+		if(AccountHandler.isAdministratorDisabled(db, authenticateAs)) return "Administrator disabled: "+authenticateAs;
 
-		if (!isHostAllowed(conn, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
+		if (!isHostAllowed(db, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
 		// Authenticate the client first
 		if(password.length() == 0) return "Connection attempted with empty password";
 
-		HashedPassword correctCrypted=AccountHandler.getAdministrator(conn, authenticateAs).getPassword();
+		HashedPassword correctCrypted=AccountHandler.getAdministrator(db, authenticateAs).getPassword();
 		if(
 			correctCrypted==null
 			|| !correctCrypted.passwordMatches(password)
@@ -10804,9 +10790,9 @@ public abstract class MasterServer {
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions
 		if(!connectAs.equals(authenticateAs)) {
-			if(!AccountHandler.isAdministrator(conn, connectAs)) return "Unable to find Administrator: "+connectAs;
+			if(!AccountHandler.isAdministrator(db, connectAs)) return "Unable to find Administrator: "+connectAs;
 			// Must have can_switch_users permissions and must be switching to a subaccount user
-			if(!AccountHandler.canSwitchUser(conn, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
+			if(!AccountHandler.canSwitchUser(db, authenticateAs, connectAs)) return "Not allowed to switch users from "+authenticateAs+" to "+connectAs;
 		}
 
 		// Let them in
@@ -10832,14 +10818,14 @@ public abstract class MasterServer {
 	public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname, List<DomainName> tlds) throws IOException, SQLException {
 		String zone = ZoneTable.getDNSZoneForHostname(hostname, tlds);
 
-		if(conn.executeBooleanQuery(
+		if(conn.queryBoolean(
 			"select (select zone from dns.\"ForbiddenZone\" where zone=?) is not null",
 			zone
 		)) throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: "+hostname);
 
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
-		String existingZone=conn.executeStringQuery(
+		String existingZone=conn.queryString(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
@@ -10850,7 +10836,7 @@ public abstract class MasterServer {
 
 		String domain = zone.substring(0, zone.length()-1);
 
-		IntList httpdSites=conn.executeIntListQuery(
+		IntList httpdSites=conn.queryIntList(
 			"select\n"
 			+ "  hsb.httpd_site\n"
 			+ "from\n"
@@ -10865,7 +10851,7 @@ public abstract class MasterServer {
 		// Must be able to access all of the sites
 		for(int httpdSite : httpdSites) if(!WebHandler.canAccessSite(conn, source, httpdSite)) throw new SQLException("Access to this hostname forbidden: Exists in web.VirtualHostName: "+hostname);
 
-		IntList emailDomains=conn.executeIntListQuery(
+		IntList emailDomains=conn.queryIntList(
 			"select id from email.\"Domain\" where (domain=? or domain like ?)",
 			domain,
 			"%."+domain
@@ -10874,84 +10860,87 @@ public abstract class MasterServer {
 		for(int emailDomain : emailDomains) if(!EmailHandler.canAccessDomain(conn, source, emailDomain)) throw new SQLException("Access to this hostname forbidden: Exists in email.Domain: "+hostname);
 	}
 
-	public static UserHost[] getUserHosts(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
+	public static UserHost[] getUserHosts(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
 		synchronized(masterServersLock) {
-			if(masterServers==null) masterServers=new HashMap<>();
-			UserHost[] mss=masterServers.get(user);
-			if(mss!=null) return mss;
-			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement("select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username")) {
-				try {
-					List<UserHost> v=new ArrayList<>();
-					pstmt.setString(1, user.toString());
-					try (ResultSet results = pstmt.executeQuery()) {
-						while(results.next()) {
-							UserHost ms=new UserHost();
-							ms.init(results);
-							v.add(ms);
-						}
+			if(masterServers == null) masterServers = new HashMap<>();
+			UserHost[] mss = masterServers.get(user);
+			if(mss != null) return mss;
+			return db.query(
+				(ResultSet results) -> {
+					List<UserHost> v = new ArrayList<>();
+					while(results.next()) {
+						UserHost ms = new UserHost();
+						ms.init(results);
+						v.add(ms);
 					}
-					mss=new UserHost[v.size()];
-					v.toArray(mss);
-					masterServers.put(user, mss);
-					return mss;
-				} catch(SQLException e) {
-					throw new WrappedSQLException(e, pstmt);
-				}
-			}
+					UserHost[] newMss = new UserHost[v.size()];
+					v.toArray(newMss);
+					masterServers.put(user, newMss);
+					return newMss;
+				},
+				"select ms.* from master.\"User\" mu, master.\"UserHost\" ms where mu.is_active and mu.username=? and mu.username=ms.username",
+				user.toString()
+			);
 		}
 	}
 
-	public static Map<com.aoindustries.aoserv.client.account.User.Name,User> getUsers(DatabaseConnection conn) throws IOException, SQLException {
+	public static Map<com.aoindustries.aoserv.client.account.User.Name,User> getUsers(DatabaseAccess db) throws IOException, SQLException {
 		synchronized(masterUsersLock) {
-			if(masterUsers==null) {
-				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
-					Map<com.aoindustries.aoserv.client.account.User.Name,User> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select * from master.\"User\" where is_active");
-					while(results.next()) {
-						User mu=new User();
-						mu.init(results);
-						table.put(mu.getKey(), mu);
-					}
-					masterUsers = Collections.unmodifiableMap(table);
-				}
+			if(masterUsers == null) {
+				masterUsers = Collections.unmodifiableMap(
+					db.query(
+						results -> {
+							Map<com.aoindustries.aoserv.client.account.User.Name,User> table = new HashMap<>();
+							while(results.next()) {
+								User mu = new User();
+								mu.init(results);
+								table.put(mu.getKey(), mu);
+							}
+							return table;
+						},
+						"select * from master.\"User\" where is_active"
+					)
+				);
 			}
 			return masterUsers;
 		}
 	}
 
-	public static User getUser(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name name) throws IOException, SQLException {
-		return getUsers(conn).get(name);
+	public static User getUser(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name name) throws IOException, SQLException {
+		return getUsers(db).get(name);
 	}
 
 	/**
 	 * Gets the hosts that are allowed for the provided username.
 	 */
-	public static boolean isHostAllowed(DatabaseConnection conn, com.aoindustries.aoserv.client.account.User.Name user, String host) throws IOException, SQLException {
+	public static boolean isHostAllowed(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user, String host) throws IOException, SQLException {
 		Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> myMasterHosts;
 		synchronized(masterHostsLock) {
-			if(masterHosts==null) {
-				try (Statement stmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement()) {
-					Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> table=new HashMap<>();
-					ResultSet results=stmt.executeQuery("select mh.username, mh.host from master.\"UserAcl\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active");
-					while(results.next()) {
-						com.aoindustries.aoserv.client.account.User.Name un;
-						HostAddress ho;
-						try {
-							un=com.aoindustries.aoserv.client.account.User.Name.valueOf(results.getString(1));
-							ho=HostAddress.valueOf(results.getString(2));
-						} catch(ValidationException e) {
-							throw new SQLException(e);
-						}
-						List<HostAddress> sv=table.get(un);
-						if(sv==null) table.put(un, sv=new SortedArrayList<>());
-						sv.add(ho);
-					}
-					masterHosts = table;
-				}
-			}
 			myMasterHosts = masterHosts;
+			if(myMasterHosts == null) {
+				myMasterHosts = masterHosts = db.query(
+					results -> {
+						Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> table = new HashMap<>();
+						while(results.next()) {
+							com.aoindustries.aoserv.client.account.User.Name un;
+							HostAddress ho;
+							try {
+								un = com.aoindustries.aoserv.client.account.User.Name.valueOf(results.getString(1));
+								ho = HostAddress.valueOf(results.getString(2));
+							} catch(ValidationException e) {
+								throw new SQLException(e);
+							}
+							List<HostAddress> sv = table.get(un);
+							if(sv == null) table.put(un, sv = new SortedArrayList<>());
+							sv.add(ho);
+						}
+						return table;
+					},
+					"select mh.username, mh.host from master.\"UserAcl\" mh, master.\"User\" mu where mh.username=mu.username and mu.is_active"
+				);
+			}
 		}
-		if(getUser(conn, user)!=null) {
+		if(getUser(db, user)!=null) {
 			List<HostAddress> hosts=myMasterHosts.get(user);
 			// Allow from anywhere if no hosts are provided
 			if(hosts==null) return true;
@@ -10964,7 +10953,7 @@ public abstract class MasterServer {
 			return false;
 		} else {
 			// Normal users can connect from any where
-			return AccountHandler.getAdministrator(conn, user)!=null;
+			return AccountHandler.getAdministrator(db, user)!=null;
 		}
 	}
 
@@ -11299,7 +11288,7 @@ public abstract class MasterServer {
 		}
 	}
 
-	public static void updateAOServProtocolLastUsed(DatabaseConnection conn, AoservProtocol.Version protocolVersion) throws IOException, SQLException {
-		conn.executeUpdate("update schema.\"AoservProtocol\" set \"lastUsed\" = now()::date where version = ? and (\"lastUsed\" is null or \"lastUsed\" < now()::date)", protocolVersion.getVersion());
+	public static void updateAOServProtocolLastUsed(DatabaseAccess db, AoservProtocol.Version protocolVersion) throws IOException, SQLException {
+		db.update("update schema.\"AoservProtocol\" set \"lastUsed\" = now()::date where version = ? and (\"lastUsed\" is null or \"lastUsed\" < now()::date)", protocolVersion.getVersion());
 	}
 }

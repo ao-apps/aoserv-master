@@ -155,7 +155,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		} catch(NumberFormatException e) {
 			return null;
 		}
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
@@ -177,7 +177,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal) throws SQLException {
-		return conn.executeQuery(
+		return conn.query(
 			(ResultSet results) -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
@@ -202,7 +202,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal, String providerId) throws SQLException {
-		return conn.executeQuery(
+		return conn.query(
 			(ResultSet results) -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
@@ -302,12 +302,13 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 			TransactionRequest transactionRequest = transaction.getTransactionRequest();
 			CreditCard creditCard = transaction.getCreditCard();
 			// Get the createdBy from the credit card persistence mechanism
-			com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = conn.executeObjectQuery(
+			com.aoindustries.aoserv.client.account.User.Name creditCardCreatedBy = conn.queryObject(
 				ObjectFactories.userNameFactory,
 				"select created_by from payment.\"CreditCard\" where id=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);
-			Account.Name ccBusiness = conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+			Account.Name ccBusiness = conn.queryObject(
+				ObjectFactories.accountNameFactory,
 				"select accounting from payment.\"CreditCard\" where id=?::integer",
 				creditCard.getPersistenceUniqueId()
 			);

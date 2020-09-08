@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -54,7 +54,7 @@ final public class FTPHandler {
 			&& !UserType.FTPONLY.equals(type)
 		) throw new SQLException("Only Linux Accounts of type '"+UserType.USER+"' or '"+UserType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
 
-		conn.executeUpdate("insert into ftp.\"GuestUser\" values(?)", linuxUser);
+		conn.update("insert into ftp.\"GuestUser\" values(?)", linuxUser);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -75,7 +75,7 @@ final public class FTPHandler {
 		LinuxAccountHandler.checkAccessUser(conn, source, "removeFTPGuestUser", linuxUser);
 		if(linuxUser.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
 
-		conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", linuxUser);
+		conn.update("delete from ftp.\"GuestUser\" where username=?", linuxUser);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -92,7 +92,7 @@ final public class FTPHandler {
 		InvalidateList invalidateList,
 		int bind
 	) throws IOException, SQLException {
-		conn.executeUpdate("delete from ftp.\"PrivateServer\" net_bind=?", bind);
+		conn.update("delete from ftp.\"PrivateServer\" net_bind=?", bind);
 
 		// Notify all clients of the update
 		invalidateList.addTable(

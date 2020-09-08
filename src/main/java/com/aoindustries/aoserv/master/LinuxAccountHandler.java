@@ -220,7 +220,7 @@ final public class LinuxAccountHandler {
 			if(AccountUserHandler.isUserDisabled(conn, user)) throw new SQLException("Unable to add User, Username disabled: "+user);
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"insert into linux.\"User\" values(?,?,?,?,?,?,?,now(),null)",
 			user,
 			name,
@@ -268,7 +268,7 @@ final public class LinuxAccountHandler {
 			|| name.equals(Group.MAILONLY)
 		) throw new SQLException("Not allowed to add Group: "+name);
 
-		conn.executeUpdate("insert into linux.\"Group\" values(?,?,?)", name, packageName, type);
+		conn.update("insert into linux.\"Group\" values(?,?,?)", name, packageName, type);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn,
@@ -310,10 +310,10 @@ final public class LinuxAccountHandler {
 		}
 
 		// Do not allow more than 31 groups per account
-		int count=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"user\"=?", user);
+		int count=conn.queryInt("select count(*) from linux.\"GroupUser\" where \"user\"=?", user);
 		if(count >= GroupUser.MAX_GROUPS) throw new SQLException("Only "+GroupUser.MAX_GROUPS+" groups are allowed per user, username="+user+" already has access to "+count+" groups");
 
-		int groupUser = conn.executeIntUpdate(
+		int groupUser = conn.updateInt(
 			"INSERT INTO linux.\"GroupUser\" VALUES (default,?,?,?,null) RETURNING id",
 			group,
 			user,
@@ -362,7 +362,7 @@ final public class LinuxAccountHandler {
 		if(home.equals(UserServer.getDefaultHomeDirectory(user))) {
 			// Make sure no conflicting /home/u/username account exists.
 			String prefix = home + "/";
-			List<String> conflicting = conn.executeStringListQuery(
+			List<String> conflicting = conn.queryStringList(
 				"select distinct home from linux.\"UserServer\" where ao_server=? and substring(home from 1 for " + prefix.length() + ")=? order by home",
 				linuxServer,
 				prefix
@@ -372,7 +372,7 @@ final public class LinuxAccountHandler {
 			// Make sure no conflicting /home/u account exists.
 			String conflictHome = "/home/" + user.toString().charAt(0);
 			if(
-				conn.executeBooleanQuery(
+				conn.queryBoolean(
 					"select (select id from linux.\"UserServer\" where ao_server=? and home=? limit 1) is not null",
 					linuxServer,
 					conflictHome
@@ -439,7 +439,7 @@ final public class LinuxAccountHandler {
 
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, linuxServer);
-		int userServer = conn.executeIntUpdate(
+		int userServer = conn.updateInt(
 			"INSERT INTO\n"
 			+ "  linux.\"UserServer\"\n"
 			+ "VALUES (\n"
@@ -480,7 +480,7 @@ final public class LinuxAccountHandler {
 		);
 		// If it is a email type, add the default attachment blocks
 		if(!user.equals(User.EMAILMON) && isUserEmailType(conn, user)) {
-			conn.executeUpdate(
+			conn.update(
 				"insert into email.\"AttachmentBlock\" (\n"
 				+ "  linux_server_account,\n"
 				+ "  extension\n"
@@ -527,7 +527,7 @@ final public class LinuxAccountHandler {
 
 		// Now allocating unique to entire system for server portability between farms
 		//String farm=ServerHandler.getFarmForServer(conn, linuxServer);
-		int groupServer = conn.executeIntUpdate(
+		int groupServer = conn.updateInt(
 			"INSERT INTO\n"
 			+ "  linux.\"GroupServer\"\n"
 			+ "VALUES (\n"
@@ -558,7 +558,8 @@ final public class LinuxAccountHandler {
 	 * or {@code null} if the gid is not allocated to the server.
 	 */
 	public static Group.Name getGroupByGid(DatabaseConnection conn, int linuxServer, int gid) throws SQLException {
-		return conn.executeObjectQuery(Connection.TRANSACTION_READ_COMMITTED,
+		return conn.queryObject(
+			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
 			ObjectFactories.groupNameFactory,
@@ -573,7 +574,7 @@ final public class LinuxAccountHandler {
 	 * or {@code null} if the uid is not allocated to the server.
 	 */
 	public static com.aoindustries.aoserv.client.linux.User.Name getUserByUid(DatabaseConnection conn, int linuxServer, int uid) throws SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			Connection.TRANSACTION_READ_COMMITTED,
 			true,
 			false,
@@ -703,7 +704,7 @@ final public class LinuxAccountHandler {
 				)
 			)
 		) {
-			int groupServer = conn.executeIntUpdate(
+			int groupServer = conn.updateInt(
 				"INSERT INTO\n"
 				+ "  linux.\"GroupServer\"\n"
 				+ "VALUES (\n"
@@ -928,7 +929,7 @@ final public class LinuxAccountHandler {
 			if(!Objects.equals(home,           systemUser.home))           throw new SQLException("Unexpected system home: "           + home           + " != " + systemUser.home);
 			if(!Objects.equals(shell,          systemUser.shell))          throw new SQLException("Unexpected system shell: "          + shell          + " != " + systemUser.shell);
 			// Add to database
-			int userServer = conn.executeIntUpdate(
+			int userServer = conn.updateInt(
 				"INSERT INTO\n"
 				+ "  linux.\"UserServer\"\n"
 				+ "VALUES (\n"
@@ -986,7 +987,7 @@ final public class LinuxAccountHandler {
 		com.aoindustries.aoserv.client.linux.User.Name user = getUserForUserServer(conn, from_userServer);
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to copy User named '"+User.MAIL+'\'');
 		int from_server=getServerForUserServer(conn, from_userServer);
-		int to_lsa=conn.executeIntQuery(
+		int to_lsa=conn.queryInt(
 			"select id from linux.\"UserServer\" where username=? and ao_server=?",
 			user,
 			to_server
@@ -1001,7 +1002,7 @@ final public class LinuxAccountHandler {
 
 		AOServDaemonConnector fromDaemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
 		AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		long byteCount = fromDaemonConnector.copyHomeDirectory(user, toDaemonConnector);
 		return byteCount;
 	}
@@ -1046,7 +1047,7 @@ final public class LinuxAccountHandler {
 
 		AOServDaemonConnector fromDemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
 		AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		Tuple2<String,Integer> enc_password = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
 		toDaemonConnector.setEncryptedLinuxAccountPassword(to_user, enc_password.getElement1(), enc_password.getElement2());
 
@@ -1072,7 +1073,7 @@ final public class LinuxAccountHandler {
 			}
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"User\" set disable_log=? where username=?",
 			disableLog,
 			user
@@ -1135,7 +1136,7 @@ final public class LinuxAccountHandler {
 			}
 		}
 
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set disable_log=? where id=?",
 			disableLog,
 			userServer
@@ -1163,7 +1164,7 @@ final public class LinuxAccountHandler {
 		AccountHandler.checkAccessDisableLog(conn, source, "enableUser", disableLog, true);
 		if(AccountUserHandler.isUserDisabled(conn, user)) throw new SQLException("Unable to enable User '"+user+"', Username not enabled: "+user);
 
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"User\" set disable_log=null where username=?",
 			user
 		);
@@ -1191,7 +1192,7 @@ final public class LinuxAccountHandler {
 		com.aoindustries.aoserv.client.linux.User.Name la=getUserForUserServer(conn, userServer);
 		if(isUserDisabled(conn, la)) throw new SQLException("Unable to enable UserServer #"+userServer+", User not enabled: "+la);
 
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set disable_log=null where id=?",
 			userServer
 		);
@@ -1213,7 +1214,8 @@ final public class LinuxAccountHandler {
 		checkAccessUserServer(conn, source, "getAutoresponderContent", userServer);
 		com.aoindustries.aoserv.client.linux.User.Name name = getUserForUserServer(conn, userServer);
 		if(name.equals(User.MAIL)) throw new SQLException("Not allowed to get the autoresponder content for User named '"+User.MAIL+'\'');
-		PosixPath path = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
+		PosixPath path = conn.queryObject(
+			ObjectFactories.posixPathFactory,
 			"select autoresponder_path from linux.\"UserServer\" where id=?",
 			userServer
 		);
@@ -1223,7 +1225,9 @@ final public class LinuxAccountHandler {
 		} else {
 			int linuxServer = getServerForUserServer(conn, userServer);
 			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-			conn.releaseConnection();
+			// TODO: Add a listener to daemonConnector, which would ensure (and maybe close?) no active database connection
+			//       while performing I/O with a daemon.
+			conn.close(); // Don't hold database connection while connecting to the daemon
 			content = daemonConnector.getAutoresponderContent(path);
 		}
 		return content;
@@ -1243,16 +1247,16 @@ final public class LinuxAccountHandler {
 		int linuxServer = getServerForUserServer(conn, userServer);
 
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.getCronTable(user);
 	}
 
 	public static int getDisableLogForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"User\" where username=?", user);
+		return conn.queryInt("select coalesce(disable_log, -1) from linux.\"User\" where username=?", user);
 	}
 
 	public static int getDisableLogForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select coalesce(disable_log, -1) from linux.\"UserServer\" where id=?", userServer);
+		return conn.queryInt("select coalesce(disable_log, -1) from linux.\"UserServer\" where id=?", userServer);
 	}
 
 	public static void invalidateTable(Table.TableID tableID) {
@@ -1268,7 +1272,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static boolean isUser(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
@@ -1294,7 +1298,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static boolean isUserEmailType(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  lat.is_email\n"
 			+ "from\n"
@@ -1319,17 +1323,17 @@ final public class LinuxAccountHandler {
 	}
 
 	public static boolean isLinuxGroupAvailable(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
-		return conn.executeBooleanQuery("select (select name from linux.\"Group\" where name=?) is null", name);
+		return conn.queryBoolean("select (select name from linux.\"Group\" where name=?) is null", name);
 	}
 
 	public static int getGroupServer(DatabaseConnection conn, Group.Name group, int linuxServer) throws IOException, SQLException {
-		int groupServer = conn.executeIntQuery("select coalesce((select id from linux.\"GroupServer\" where name=? and ao_server=?), -1)", group, linuxServer);
+		int groupServer = conn.queryInt("select coalesce((select id from linux.\"GroupServer\" where name=? and ao_server=?), -1)", group, linuxServer);
 		if(groupServer == -1) throw new SQLException("Unable to find GroupServer " + group + " on " + linuxServer);
 		return groupServer;
 	}
 
 	public static Group.Name getPrimaryGroup(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user, int operatingSystemVersion) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.groupNameFactory,
 			"select\n"
 			+ "  \"group\"\n"
@@ -1358,7 +1362,7 @@ final public class LinuxAccountHandler {
 
 		int linuxServer = getServerForUserServer(conn, userServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		String crypted = daemonConnector.getEncryptedLinuxAccountPassword(user).getElement1();
 		return crypted.length() >= 2 && !User.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
 	}
@@ -1374,7 +1378,7 @@ final public class LinuxAccountHandler {
 		if(DaemonHandler.isDaemonAvailable(linuxServer)) {
 			try {
 				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-				conn.releaseConnection();
+				conn.close(); // Don't hold database connection while connecting to the daemon
 				return daemonConnector.isProcmailManual(userServer) ? AoservProtocol.TRUE : AoservProtocol.FALSE;
 			} catch(IOException err) {
 				DaemonHandler.flagDaemonAsDown(linuxServer);
@@ -1407,21 +1411,21 @@ final public class LinuxAccountHandler {
 		IntList linuxServers = getServersForUser(conn, user);
 		for(int c=0;c<linuxServers.size();c++) {
 			int linuxServer = linuxServers.getInt(c);
-			conn.executeUpdate("update linux.\"UserServer\" set autoresponder_from=null where username=? and ao_server=?", user, linuxServer);
+			conn.update("update linux.\"UserServer\" set autoresponder_from=null where username=? and ao_server=?", user, linuxServer);
 		}
 		// Delete any FTP guest user info attached to this account
-		boolean ftpModified = conn.executeUpdate("delete from ftp.\"GuestUser\" where username=?", user) > 0;
+		boolean ftpModified = conn.update("delete from ftp.\"GuestUser\" where username=?", user) > 0;
 		// Delete the account from all servers
 		// Get the values for later use
 		for(int c=0;c<linuxServers.size();c++) {
 			int linuxServer = linuxServers.getInt(c);
-			int userServer = conn.executeIntQuery("select id from linux.\"UserServer\" where username=? and ao_server=?", user, linuxServer);
+			int userServer = conn.queryInt("select id from linux.\"UserServer\" where username=? and ao_server=?", user, linuxServer);
 			removeUserServer(conn, invalidateList, userServer);
 		}
 		// Delete the group relations for this account
-		boolean groupAccountModified = conn.executeUpdate("delete from linux.\"GroupUser\" where \"user\"=?", user) > 0;
+		boolean groupAccountModified = conn.update("delete from linux.\"GroupUser\" where \"user\"=?", user) > 0;
 		// Delete from the database
-		conn.executeUpdate("delete from linux.\"User\" where username=?", user);
+		conn.update("delete from linux.\"User\" where username=?", user);
 
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 
@@ -1453,20 +1457,20 @@ final public class LinuxAccountHandler {
 		) throw new SQLException("Not allowed to remove Group named '"+group+"'");
 
 		// Must not be the primary group for any User
-		int primaryCount=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? and \"isPrimary\"", group);
+		int primaryCount=conn.queryInt("select count(*) from linux.\"GroupUser\" where \"group\"=? and \"isPrimary\"", group);
 		if(primaryCount>0) throw new SQLException("linux_group.name="+group+" is the primary group for "+primaryCount+" Linux "+(primaryCount==1?"account":"accounts"));
 		// Get the values for later use
 		Account.Name account = getAccountForGroup(conn, group);
 		IntList linuxServers = getServersForGroup(conn, group);
 		for(int c=0;c<linuxServers.size();c++) {
 			int linuxServer = linuxServers.getInt(c);
-			conn.executeUpdate("delete from linux.\"GroupServer\" where name=? and ao_server=?", group, linuxServer);
+			conn.update("delete from linux.\"GroupServer\" where name=? and ao_server=?", group, linuxServer);
 		}
 		// Delete the group relations for this group
-		boolean groupAccountsModified=conn.executeIntQuery("select count(*) from linux.\"GroupUser\" where \"group\"=? limit 1", group)>0;
-		if(groupAccountsModified) conn.executeUpdate("delete from linux.\"GroupUser\" where \"group\"=?", group);
+		boolean groupAccountsModified=conn.queryInt("select count(*) from linux.\"GroupUser\" where \"group\"=? limit 1", group)>0;
+		if(groupAccountsModified) conn.update("delete from linux.\"GroupUser\" where \"group\"=?", group);
 		// Delete from the database
-		conn.executeUpdate("delete from linux.\"Group\" where name=?", group);
+		conn.update("delete from linux.\"Group\" where name=?", group);
 
 		// Notify all clients of the update
 		if(linuxServers.size()>0) invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, account, linuxServers, false);
@@ -1483,11 +1487,11 @@ final public class LinuxAccountHandler {
 		checkAccessGroupUser(conn, source, "removeGroupUser", groupUser);
 
 		// Must not be a primary group
-		boolean isPrimary=conn.executeBooleanQuery("select \"isPrimary\" from linux.\"GroupUser\" where id=?", groupUser);
+		boolean isPrimary=conn.queryBoolean("select \"isPrimary\" from linux.\"GroupUser\" where id=?", groupUser);
 		if(isPrimary) throw new SQLException("linux.GroupUser.id="+groupUser+" is a primary group");
 
 		// Must be needingful not by SharedTomcatSite to be tying to SharedTomcat please
-		int useCount = conn.executeIntQuery(
+		int useCount = conn.queryInt(
 			"select count(*) from linux.\"GroupUser\" lga, "+
 					"linux.\"UserServer\" lsa, "+
 					"\"web.tomcat\".\"SharedTomcat\" hst, "+
@@ -1502,7 +1506,7 @@ final public class LinuxAccountHandler {
 			groupUser
 		);
 		if (useCount==0) {
-			useCount = conn.executeIntQuery(
+			useCount = conn.queryInt(
 				"select count(*) from linux.\"GroupUser\" lga, "+
 						"linux.\"GroupServer\" lsg, "+
 						"\"web.tomcat\".\"SharedTomcat\" hst, "+
@@ -1523,7 +1527,7 @@ final public class LinuxAccountHandler {
 		List<Account.Name> accounts = getAccountsForGroupUser(conn, groupUser);
 		IntList linuxServers = getServersForGroupUser(conn, groupUser);
 		// Delete the group relations for this group
-		conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", groupUser);
+		conn.update("delete from linux.\"GroupUser\" where id=?", groupUser);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
@@ -1536,7 +1540,7 @@ final public class LinuxAccountHandler {
 		Group.Name group,
 		com.aoindustries.aoserv.client.linux.User.Name user
 	) throws IOException, SQLException {
-		int groupUser = conn.executeIntQuery(
+		int groupUser = conn.queryInt(
 			"select\n"
 			+ "  coalesce(\n"
 			+ "    (\n"
@@ -1590,7 +1594,7 @@ final public class LinuxAccountHandler {
 			// Get the values for later use
 			List<Account.Name> accounts = getAccountsForGroupUser(conn, groupUser);
 			IntList linuxServers = getServersForGroupUser(conn, groupUser);
-			conn.executeUpdate("delete from linux.\"GroupUser\" where id=?", groupUser);
+			conn.update("delete from linux.\"GroupUser\" where id=?", groupUser);
 
 			// Notify all clients of the update
 			invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
@@ -1625,8 +1629,8 @@ final public class LinuxAccountHandler {
 		if(uid < uidMin) throw new SQLException("Not allowed to remove a system UserServer: id="+userServer+", uid="+uid);
 
 		// Must not contain a CVS repository
-		String home=conn.executeStringQuery("select home from linux.\"UserServer\" where id=?", userServer);
-		int count=conn.executeIntQuery(
+		String home=conn.queryString("select home from linux.\"UserServer\" where id=?", userServer);
+		int count=conn.queryInt(
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
@@ -1644,26 +1648,26 @@ final public class LinuxAccountHandler {
 		if(count>0) throw new SQLException("Home directory on "+linuxServer+" contains "+count+" CVS "+(count==1?"repository":"repositories")+": "+home);
 
 		// Delete the email configurations that depend on this account
-		IntList addresses=conn.executeIntListQuery("select email_address from email.\"InboxAddress\" where linux_server_account=?", userServer);
+		IntList addresses=conn.queryIntList("select email_address from email.\"InboxAddress\" where linux_server_account=?", userServer);
 		int size=addresses.size();
 		boolean addressesModified=size>0;
 		for(int c=0;c<size;c++) {
 			int address=addresses.getInt(c);
-			conn.executeUpdate("delete from email.\"InboxAddress\" where email_address=?", address);
+			conn.update("delete from email.\"InboxAddress\" where email_address=?", address);
 			if(!EmailHandler.isAddressUsed(conn, address)) {
-				conn.executeUpdate("delete from email.\"Address\" where id=?", address);
+				conn.update("delete from email.\"Address\" where id=?", address);
 			}
 		}
 
 		Account.Name account = getAccountForUserServer(conn, userServer);
 
 		// Delete the attachment blocks
-		if(conn.executeUpdate("delete from email.\"AttachmentBlock\" where linux_server_account=?", userServer) > 0) {
+		if(conn.update("delete from email.\"AttachmentBlock\" where linux_server_account=?", userServer) > 0) {
 			invalidateList.addTable(conn, Table.TableID.EMAIL_ATTACHMENT_BLOCKS, account, linuxServer, false);
 		}
 
 		// Delete the account from the server
-		conn.executeUpdate("delete from linux.\"UserServer\" where id=?", userServer);
+		conn.update("delete from linux.\"UserServer\" where id=?", userServer);
 		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, account, linuxServer, true);
 
 		// Notify all clients of the update
@@ -1700,7 +1704,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = getAccountForGroupServer(conn, groupServer);
 		int linuxServer = getServerForGroupServer(conn, groupServer);
 		// Must not be the primary group for any UserServer on the same server
-		int primaryCount=conn.executeIntQuery(
+		int primaryCount=conn.queryInt(
 			"select\n"
 			+ "  count(*)\n"
 			+ "from\n"
@@ -1721,7 +1725,7 @@ final public class LinuxAccountHandler {
 
 		if(primaryCount>0) throw new SQLException("linux_server_group.id="+groupServer+" is the primary group for "+primaryCount+" Linux server "+(primaryCount==1?"account":"accounts")+" on "+linuxServer);
 		// Delete from the database
-		conn.executeUpdate("delete from linux.\"GroupServer\" where id=?", groupServer);
+		conn.update("delete from linux.\"GroupServer\" where id=?", groupServer);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, account, linuxServer, true);
@@ -1749,7 +1753,7 @@ final public class LinuxAccountHandler {
 
 		// The from must be on this account
 		if(from!=-1) {
-			int fromLSA=conn.executeIntQuery("select linux_server_account from email.\"InboxAddress\" where id=?", from);
+			int fromLSA=conn.queryInt("select linux_server_account from email.\"InboxAddress\" where id=?", from);
 			if(fromLSA!=userServer) throw new SQLException("((linux_acc_address.id="+from+").linux_server_account="+fromLSA+")!=((linux_server_account.id="+userServer+").username="+user+")");
 		}
 
@@ -1759,7 +1763,8 @@ final public class LinuxAccountHandler {
 		if(content==null && !enabled) {
 			path = null;
 		} else {
-			path = conn.executeObjectQuery(ObjectFactories.posixPathFactory,
+			path = conn.queryObject(
+				ObjectFactories.posixPathFactory,
 				"select coalesce(autoresponder_path, home || '/.autorespond.txt') from linux.\"UserServer\" where id=?",
 				userServer
 			);
@@ -1771,7 +1776,7 @@ final public class LinuxAccountHandler {
 			gid=-1;
 		} else {
 			uid = getUidForUserServer(conn, userServer);
-			gid = conn.executeIntQuery(
+			gid = conn.queryInt(
 				"select\n"
 				+ "  lsg.gid\n"
 				+ "from\n"
@@ -1820,7 +1825,7 @@ final public class LinuxAccountHandler {
 		// Store the content on the server
 		if(path!=null) {
 			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-			conn.releaseConnection();
+			conn.close(); // Don't hold database connection while connecting to the daemon
 			daemonConnector.setAutoresponderContent(path, content==null?"":content, uid, gid);
 		}
 
@@ -1848,7 +1853,7 @@ final public class LinuxAccountHandler {
 		int linuxServer = getServerForUserServer(conn, userServer);
 
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.setCronTable(user, cronTable);
 	}
 
@@ -1866,7 +1871,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 		IntList linuxServers = getServersForUser(conn, user);
 
-		conn.executeUpdate("update linux.\"User\" set home_phone=? where username=?", phone, user);
+		conn.update("update linux.\"User\" set home_phone=? where username=?", phone, user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
@@ -1886,7 +1891,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 		IntList linuxServers = getServersForUser(conn, user);
 
-		conn.executeUpdate("update linux.\"User\" set name=? where username=?", name, user);
+		conn.update("update linux.\"User\" set name=? where username=?", name, user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
@@ -1906,7 +1911,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 		IntList linuxServers = getServersForUser(conn, user);
 
-		conn.executeUpdate("update linux.\"User\" set office_location=? where username=?", location, user);
+		conn.update("update linux.\"User\" set office_location=? where username=?", location, user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
@@ -1926,7 +1931,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 		IntList linuxServers = getServersForUser(conn, user);
 
-		conn.executeUpdate("update linux.\"User\" set office_phone=? where username=?", phone, user);
+		conn.update("update linux.\"User\" set office_phone=? where username=?", phone, user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
@@ -1948,7 +1953,7 @@ final public class LinuxAccountHandler {
 		Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 		IntList linuxServers = getServersForUser(conn, user);
 
-		conn.executeUpdate("update linux.\"User\" set shell=? where username=?", shell, user);
+		conn.update("update linux.\"User\" set shell=? where username=?", shell, user);
 
 		// Notify all clients of the update
 		invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
@@ -1967,7 +1972,7 @@ final public class LinuxAccountHandler {
 
 		com.aoindustries.aoserv.client.linux.User.Name user = getUserForUserServer(conn, userServer);
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to set password for UserServer named '"+User.MAIL+"': "+userServer);
-		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", user);
+		String type=conn.queryString("select type from linux.\"User\" where username=?", user);
 
 		// Make sure passwords can be set before doing a strength check
 		if(!UserType.canSetPassword(type)) throw new SQLException("Passwords may not be set for UserType="+type);
@@ -1982,7 +1987,7 @@ final public class LinuxAccountHandler {
 		int linuxServer = getServerForUserServer(conn, userServer);
 		try {
 			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-			conn.releaseConnection();
+			conn.close(); // Don't hold database connection while connecting to the daemon
 			daemonConnector.setLinuxServerAccountPassword(user, password);
 		} catch(IOException | SQLException err) {
 			System.err.println("Unable to set linux account password for "+user+" on "+linuxServer);
@@ -1991,10 +1996,10 @@ final public class LinuxAccountHandler {
 
 		// Update the linux.Server table for emailmon and ftpmon
 		/*if(username.equals(User.EMAILMON)) {
-			conn.executeUpdate("update linux.\"Server\" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, linuxServer);
+			conn.update("update linux.\"Server\" set emailmon_password=? where server=?", password==null||password.length()==0?null:password, linuxServer);
 			invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
 		} else if(username.equals(User.FTPMON)) {
-			conn.executeUpdate("update linux.\"Server\" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, linuxServer);
+			conn.update("update linux.\"Server\" set ftpmon_password=? where server=?", password==null||password.length()==0?null:password, linuxServer);
 			invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
 		}*/
 	}
@@ -2014,7 +2019,7 @@ final public class LinuxAccountHandler {
 		}
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set predisable_password=? where id=?",
 			password,
 			userServer
@@ -2043,12 +2048,12 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		if(days==-1) {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set junk_email_retention=null where id=?",
 				userServer
 			);
 		} else {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set junk_email_retention=? where id=?",
 				days,
 				userServer
@@ -2077,7 +2082,7 @@ final public class LinuxAccountHandler {
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin integration mode for User named '"+User.MAIL+'\'');
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set sa_integration_mode=? where id=?",
 			mode,
 			userServer
@@ -2105,7 +2110,7 @@ final public class LinuxAccountHandler {
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to set the spam assassin required score for User named '"+User.MAIL+'\'');
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set sa_required_score=? where id=?",
 			requiredScore,
 			userServer
@@ -2134,12 +2139,12 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		if(discardScore==-1) {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set sa_discard_score=null where id=?",
 				userServer
 			);
 		} else {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set sa_discard_score=? where id=?",
 				discardScore,
 				userServer
@@ -2169,12 +2174,12 @@ final public class LinuxAccountHandler {
 
 		// Update the database
 		if(days==-1) {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set trash_email_retention=null where id=?",
 				userServer
 			);
 		} else {
-			conn.executeUpdate(
+			conn.update(
 				"update linux.\"UserServer\" set trash_email_retention=? where id=?",
 				days,
 				userServer
@@ -2203,7 +2208,7 @@ final public class LinuxAccountHandler {
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to set the use_inbox flag for User named '"+User.MAIL+'\'');
 
 		// Update the database
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"UserServer\" set use_inbox=? where id=?",
 			useInbox,
 			userServer
@@ -2229,12 +2234,12 @@ final public class LinuxAccountHandler {
 		NetHostHandler.checkAccessHost(conn, source, "waitForLinuxAccountRebuild", linuxServer);
 		NetHostHandler.waitForInvalidates(linuxServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.waitForLinuxAccountRebuild();
 	}
 
 	static boolean canGroupAccessServer(DatabaseConnection conn, RequestSource source, Group.Name group, int linuxServer) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select\n"
 			+ "  (\n"
 			+ "    select\n"
@@ -2271,7 +2276,8 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Account.Name getAccountForGroup(DatabaseConnection conn, Group.Name name) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select pk.accounting from linux.\"Group\" lg, billing.\"Package\" pk where lg.package=pk.name and lg.name=?",
 			name
 		);
@@ -2279,7 +2285,8 @@ final public class LinuxAccountHandler {
 
 	// TODO: Is this still relevant?
 	public static List<Account.Name> getAccountsForGroupUser(DatabaseConnection conn, int groupUser) throws IOException, SQLException {
-		return conn.executeObjectCollectionQuery(new ArrayList<>(),
+		// TODO: Review other queryCollection that can be queryList
+		return conn.queryList(
 			ObjectFactories.accountNameFactory,
 		   "select\n"
 			+ "  pk1.accounting\n"
@@ -2303,7 +2310,8 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Account.Name getAccountForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -2319,7 +2327,8 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Account.Name getAccountForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -2335,7 +2344,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Group.Name getGroupForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.groupNameFactory,
 			"select name from linux.\"GroupServer\" where id=?",
 			groupServer
@@ -2343,23 +2352,23 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getServerForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from linux.\"UserServer\" where id=?", userServer);
+		return conn.queryInt("select ao_server from linux.\"UserServer\" where id=?", userServer);
 	}
 
 	public static int getServerForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from linux.\"GroupServer\" where id=?", groupServer);
+		return conn.queryInt("select ao_server from linux.\"GroupServer\" where id=?", groupServer);
 	}
 
 	public static IntList getServersForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeIntListQuery("select ao_server from linux.\"UserServer\" where username=?", user);
+		return conn.queryIntList("select ao_server from linux.\"UserServer\" where username=?", user);
 	}
 
 	public static IntList getServersForGroup(DatabaseConnection conn, Group.Name group) throws IOException, SQLException {
-		return conn.executeIntListQuery("select ao_server from linux.\"GroupServer\" where name=?", group);
+		return conn.queryIntList("select ao_server from linux.\"GroupServer\" where name=?", group);
 	}
 
 	public static IntList getServersForGroupUser(DatabaseConnection conn, int groupUser) throws IOException, SQLException {
-		return conn.executeIntListQuery(
+		return conn.queryIntList(
 			"select\n"
 			+ "  lsg.ao_server\n"
 			+ "from\n"
@@ -2379,11 +2388,11 @@ final public class LinuxAccountHandler {
 	}
 
 	public static String getTypeForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeStringQuery("select type from linux.\"User\" where username=?", user);
+		return conn.queryString("select type from linux.\"User\" where username=?", user);
 	}
 
 	public static String getTypeForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeStringQuery(
+		return conn.queryString(
 			"select\n"
 			+ "  la.type\n"
 			+ "from\n"
@@ -2397,7 +2406,7 @@ final public class LinuxAccountHandler {
    }
 
 	public static String getTypeForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeStringQuery(
+		return conn.queryString(
 			"select\n"
 			+ "  lg.type\n"
 			+ "from\n"
@@ -2411,7 +2420,7 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getUserServer(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user, int linuxServer) throws IOException, SQLException {
-		int userServer = conn.executeIntQuery(
+		int userServer = conn.queryInt(
 			"select coalesce(\n"
 			+ "  (\n"
 			+ "    select\n"
@@ -2431,15 +2440,16 @@ final public class LinuxAccountHandler {
 	}
 
 	public static IntList getUserServersForUser(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from linux.\"UserServer\" where username=?", user);
+		return conn.queryIntList("select id from linux.\"UserServer\" where username=?", user);
 	}
 
 	public static IntList getGroupServersForGroup(DatabaseConnection conn, Group.Name group) throws IOException, SQLException {
-		return conn.executeIntListQuery("select id from linux.\"GroupServer\" where name=?", group);
+		return conn.queryIntList("select id from linux.\"GroupServer\" where name=?", group);
 	}
 
 	public static Account.Name getPackageForGroup(DatabaseConnection conn, Group.Name group) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  package\n"
 			+ "from\n"
@@ -2451,7 +2461,8 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Account.Name getPackageForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  lg.package\n"
 			+ "from\n"
@@ -2465,15 +2476,15 @@ final public class LinuxAccountHandler {
 	}
 
 	public static int getGidForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select gid from linux.\"GroupServer\" where id=?", groupServer);
+		return conn.queryInt("select gid from linux.\"GroupServer\" where id=?", groupServer);
 	}
 
 	public static int getUidForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeIntQuery("select uid from linux.\"UserServer\" where id=?", userServer);
+		return conn.queryInt("select uid from linux.\"UserServer\" where id=?", userServer);
 	}
 
 	public static com.aoindustries.aoserv.client.linux.User.Name getUserForGroupUser(DatabaseConnection conn, int groupUser) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.linuxUserNameFactory,
 			"select \"user\" from linux.\"GroupUser\" where id=?",
 			groupUser
@@ -2481,14 +2492,15 @@ final public class LinuxAccountHandler {
 	}
 
 	public static Group.Name getGroupForGroupUser(DatabaseConnection conn, int groupUser) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.groupNameFactory,
+		return conn.queryObject(
+			ObjectFactories.groupNameFactory,
 			"select \"group\" from linux.\"GroupUser\" where id=?",
 			groupUser
 		);
 	}
 
 	public static com.aoindustries.aoserv.client.linux.User.Name getUserForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.linuxUserNameFactory,
 			"select username from linux.\"UserServer\" where id=?",
 			userServer
@@ -2506,7 +2518,7 @@ final public class LinuxAccountHandler {
 
 		com.aoindustries.aoserv.client.linux.User.Name user = getUserForUserServer(conn, userServer);
 		if(user.equals(User.MAIL)) throw new SQLException("Not allowed to compare password for UserServer named '"+User.MAIL+"': "+userServer);
-		String type=conn.executeStringQuery("select type from linux.\"User\" where username=?", user);
+		String type=conn.queryString("select type from linux.\"User\" where username=?", user);
 
 		// Make sure passwords can be set before doing a comparison
 		if(!UserType.canSetPassword(type)) throw new SQLException("Passwords may not be compared for UserType="+type);
@@ -2515,7 +2527,7 @@ final public class LinuxAccountHandler {
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
 			getServerForUserServer(conn, userServer)
 		);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.compareLinuxAccountPassword(user, password);
 	}
 
@@ -2526,22 +2538,23 @@ final public class LinuxAccountHandler {
 		int groupUser
 	) throws IOException, SQLException {
 		checkAccessGroupUser(conn, source, "setPrimaryGroupUser", groupUser);
-		com.aoindustries.aoserv.client.linux.User.Name user = conn.executeObjectQuery(
+		com.aoindustries.aoserv.client.linux.User.Name user = conn.queryObject(
 			ObjectFactories.linuxUserNameFactory,
 			"select \"user\" from linux.\"GroupUser\" where id=?",
 			groupUser
 		);
 		if(isUserDisabled(conn, user)) throw new SQLException("Unable to set primary GroupUser, User disabled: "+user);
-		Group.Name group = conn.executeObjectQuery(ObjectFactories.groupNameFactory,
+		Group.Name group = conn.queryObject(
+			ObjectFactories.groupNameFactory,
 			"select \"group\" from linux.\"GroupUser\" where id=?",
 			groupUser
 		);
 
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"GroupUser\" set \"isPrimary\" = true where id = ?",
 			groupUser
 		);
-		conn.executeUpdate(
+		conn.update(
 			"update linux.\"GroupUser\" set \"isPrimary\" = false where \"isPrimary\" and id != ? and \"user\" = ?",
 			groupUser,
 			user

@@ -63,11 +63,11 @@ final public class VirtualServerHandler {
 	 */
 
 	public static int getVirtualServerForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeIntQuery("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
+		return conn.queryInt("select virtual_server from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
 	}
 
 	public static String getDeviceForVirtualDisk(DatabaseConnection conn, int virtualDisk) throws IOException, SQLException {
-		return conn.executeStringQuery("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
+		return conn.queryString("select device from infrastructure.\"VirtualDisk\" where id=?", virtualDisk);
 	}
 
 	public static Server.DaemonAccess requestVncConsoleDaemonAccess(
@@ -82,7 +82,7 @@ final public class VirtualServerHandler {
 		if(!canVncConsole) throw new SQLException("Not allowed to VNC console to "+virtualServer);
 		// TODO: Must not be a disabled server
 		// Must be a virtual server with VNC enabled
-		String vncPassword = conn.executeStringQuery("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
+		String vncPassword = conn.queryString("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
 		if(vncPassword==null) throw new SQLException("Virtual server VNC is disabled: "+virtualServer);
 		// Find current location of server
 		int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
@@ -115,7 +115,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.createVirtualServer(virtualServerName);
 	}
 
@@ -135,7 +135,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.rebootVirtualServer(virtualServerName);
 	}
 
@@ -155,7 +155,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.shutdownVirtualServer(virtualServerName);
 	}
 
@@ -175,7 +175,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.destroyVirtualServer(virtualServerName);
 	}
 
@@ -195,7 +195,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.pauseVirtualServer(virtualServerName);
 	}
 
@@ -215,7 +215,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.unpauseVirtualServer(virtualServerName);
 	}
 
@@ -232,7 +232,7 @@ final public class VirtualServerHandler {
 		// Grant access to the Xen outer server
 		String virtualServerName = NetHostHandler.getNameForHost(conn, virtualServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.getVirtualServerStatus(virtualServerName);
 	}
 
@@ -259,7 +259,7 @@ final public class VirtualServerHandler {
 		// Begin verification, getting Unix time in seconds
 		AOServDaemonConnector primaryDaemonConnector = DaemonHandler.getDaemonConnector(conn, primaryPhysicalServer);
 		AOServDaemonConnector secondaryDaemonConnector = DaemonHandler.getDaemonConnector(conn, secondaryPhysicalServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		long lastVerified = primaryDaemonConnector.verifyVirtualDisk(virtualServerName, device);
 		// Update the verification time on the secondary
 		secondaryDaemonConnector.updateVirtualDiskLastVerified(virtualServerName, device, lastVerified);

@@ -52,7 +52,7 @@ public final class BackupHandler {
 		boolean backupEnabled,
 		boolean required
 	) throws IOException, SQLException {
-		int host = conn.executeIntQuery("select server from backup.\"FileReplication\" where id=?", fileReplication);
+		int host = conn.queryInt("select server from backup.\"FileReplication\" where id=?", fileReplication);
 		int packageNum = NetHostHandler.getPackageForHost(conn, host);
 		PackageHandler.checkAccessPackage(conn, source, "addFileReplicationSetting", packageNum);
 
@@ -62,7 +62,7 @@ public final class BackupHandler {
 		if(slashPos==-1) throw new SQLException("Path must contain a slash (/): "+path);
 		// TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
-		int fileReplicationSetting = conn.executeIntUpdate(
+		int fileReplicationSetting = conn.updateInt(
 			"INSERT INTO backup.\"FileReplicationSetting\" (replication, \"path\", backup_enabled, required) VALUES (?,?,?,?) RETURNING id",
 			fileReplication,
 			path,
@@ -87,7 +87,7 @@ public final class BackupHandler {
 		InvalidateList invalidateList,
 		int fileReplicationSetting
 	) throws IOException, SQLException {
-		int host = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
+		int host = conn.queryInt("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
 		int packageNum=NetHostHandler.getPackageForHost(conn, host);
 		PackageHandler.checkAccessPackage(conn, source, "removeFileReplicationSetting", packageNum);
 
@@ -99,10 +99,10 @@ public final class BackupHandler {
 		InvalidateList invalidateList,
 		int fileReplicationSetting
 	) throws IOException, SQLException {
-		int host = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
+		int host = conn.queryInt("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
 		int packageNum = NetHostHandler.getPackageForHost(conn, host);
 
-		conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where id=?", fileReplicationSetting);
+		conn.update("delete from backup.\"FileReplicationSetting\" where id=?", fileReplicationSetting);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -123,7 +123,7 @@ public final class BackupHandler {
 		boolean backupEnabled,
 		boolean required
 	) throws IOException, SQLException {
-		int host = conn.executeIntQuery("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
+		int host = conn.queryInt("select ffr.server from backup.\"FileReplicationSetting\" fbs inner join backup.\"FileReplication\" ffr on fbs.replication=ffr.id where fbs.id=?", fileReplicationSetting);
 		int packageNum = NetHostHandler.getPackageForHost(conn, host);
 		PackageHandler.checkAccessPackage(conn, source, "setFileBackupSetting", packageNum);
 
@@ -133,7 +133,7 @@ public final class BackupHandler {
 		if(slashPos==-1) throw new SQLException("Path must contain a slash (/): "+path);
 		// TODO: Check for windows roots: if(FilePathHandler.getRootNode(backupConn, path.substring(0, slashPos+1))==-1) throw new SQLException("Path does not start with a valid root: "+path);
 
-		conn.executeUpdate(
+		conn.update(
 			"update\n"
 			+ "  backup.\"FileReplicationSetting\"\n"
 			+ "set\n"
@@ -162,11 +162,12 @@ public final class BackupHandler {
 		DatabaseConnection conn,
 		int backupPartition
 	) throws IOException, SQLException {
-		return conn.executeIntQuery("select ao_server from backup.\"BackupPartition\" where id=?", backupPartition);
+		return conn.queryInt("select ao_server from backup.\"BackupPartition\" where id=?", backupPartition);
 	}
 
 	public static PosixPath getPathForBackupPartition(DatabaseConnection conn, int backupPartition) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.posixPathFactory,
+		return conn.queryObject(
+			ObjectFactories.posixPathFactory,
 			"select path from backup.\"BackupPartition\" where id=?",
 			backupPartition
 		);
@@ -183,7 +184,7 @@ public final class BackupHandler {
 			PosixPath path=getPathForBackupPartition(conn, backupPartition);
 			try {
 				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-				conn.releaseConnection();
+				conn.close(); // Don't hold database connection while connecting to the daemon
 				return daemonConnector.getDiskDeviceTotalSize(path);
 			} catch(IOException | SQLException err) {
 				DaemonHandler.flagDaemonAsDown(linuxServer);
@@ -204,7 +205,7 @@ public final class BackupHandler {
 			PosixPath path=getPathForBackupPartition(conn, backupPartition);
 			try {
 				AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
-				conn.releaseConnection();
+				conn.close(); // Don't hold database connection while connecting to the daemon
 				return daemonConnector.getDiskDeviceUsedSize(path);
 			} catch(IOException | SQLException err) {
 				DaemonHandler.flagDaemonAsDown(linuxServer);

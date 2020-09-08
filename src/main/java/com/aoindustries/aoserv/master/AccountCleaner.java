@@ -117,7 +117,7 @@ final public class AccountCleaner implements CronJob {
 				// Start the transaction
 				final InvalidateList invalidateList=new InvalidateList();
 				cleanNow(invalidateList);
-				MasterServer.invalidateTables(invalidateList, null);
+				MasterServer.invalidateTables(MasterDatabase.getDatabase(), invalidateList, null);
 			}
 		} catch(ThreadDeath TD) {
 			throw TD;
@@ -127,8 +127,7 @@ final public class AccountCleaner implements CronJob {
 	}
 
 	private static void cleanNow(InvalidateList invalidateList) throws IOException, SQLException, ValidationException {
-		final DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-		try {
+		try (final DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
 			boolean connRolledBack=false;
 			try {
 				StringBuilder message=new StringBuilder();
@@ -137,7 +136,7 @@ final public class AccountCleaner implements CronJob {
 				{
 					// Those that are part of canceled accounts
 					if(
-						conn.executeBooleanQuery(
+						conn.queryBoolean(
 							"select\n"
 							+ "  (\n"
 							+ "    select\n"
@@ -155,7 +154,7 @@ final public class AccountCleaner implements CronJob {
 							+ "  ) is not null"
 						)
 					) {
-						conn.executeUpdate(
+						conn.update(
 							"delete from\n"
 							+ "  backup.\"BackupReport\"\n"
 							+ "where\n"
@@ -178,7 +177,7 @@ final public class AccountCleaner implements CronJob {
 
 					// Those that are older than BackupReport.SendmailSmtpStat.MAX_REPORT_AGE
 					if(
-						conn.executeBooleanQuery(
+						conn.queryBoolean(
 							"select\n"
 							+ "  (\n"
 							+ "    select\n"
@@ -191,7 +190,7 @@ final public class AccountCleaner implements CronJob {
 							+ "  ) is not null"
 						)
 					) {
-						conn.executeUpdate(
+						conn.update(
 							"delete from\n"
 							+ "  backup.\"BackupReport\"\n"
 							+ "where\n"
@@ -205,7 +204,8 @@ final public class AccountCleaner implements CronJob {
 				{
 					{
 						// look for any accounts that have been canceled but not disabled
-						List<Account.Name> bus = conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
+						List<Account.Name> bus = conn.queryList(
+							ObjectFactories.accountNameFactory,
 							"select accounting from account.\"Account\" where parent=? and canceled is not null and disable_log is null",
 							AccountHandler.getRootAccount()
 						);
@@ -223,7 +223,8 @@ final public class AccountCleaner implements CronJob {
 
 					{
 						// look for any accounts that have been disabled for over two months but not canceled
-						List<Account.Name> bus = conn.executeObjectListQuery(ObjectFactories.accountNameFactory,
+						List<Account.Name> bus = conn.queryList(
+							ObjectFactories.accountNameFactory,
 							"select\n"
 							+ "  bu.accounting\n"
 							+ "from\n"
@@ -249,7 +250,7 @@ final public class AccountCleaner implements CronJob {
 
 				// payment.CreditCard
 				{
-					IntList ccs=conn.executeIntListQuery(
+					IntList ccs=conn.queryIntList(
 						"select\n"
 						+ "  cc.id\n"
 						+ "from\n"
@@ -268,7 +269,7 @@ final public class AccountCleaner implements CronJob {
 				// account.Administrator over CANCELED_KEEP_DAYS days
 				// remove if balance is zero and has not been used in ticket.Action or billing.Transaction
 				{
-					List<com.aoindustries.aoserv.client.account.User.Name> administrators=conn.executeObjectListQuery(
+					List<com.aoindustries.aoserv.client.account.User.Name> administrators=conn.queryList(
 						ObjectFactories.userNameFactory,
 						"select\n"
 						+ "  ba.username\n"
@@ -324,7 +325,7 @@ final public class AccountCleaner implements CronJob {
 
 				// scm.CvsRepository
 				{
-					IntList crs=conn.executeIntListQuery(
+					IntList crs=conn.queryIntList(
 						"select\n"
 						+ "  cr.id\n"
 						+ "from\n"
@@ -349,7 +350,7 @@ final public class AccountCleaner implements CronJob {
 				// dns.Zone
 				{
 					DnsService dnsService = MasterServer.getService(DnsService.class);
-					List<String> dzs=conn.executeStringListQuery(
+					List<String> dzs=conn.queryStringList(
 						"select\n"
 						+ "  dz.zone\n"
 						+ "from\n"
@@ -369,7 +370,7 @@ final public class AccountCleaner implements CronJob {
 
 				// email.List
 				{
-					IntList els=conn.executeIntListQuery(
+					IntList els=conn.queryIntList(
 						"select\n"
 						+ "  el.id\n"
 						+ "from\n"
@@ -393,7 +394,7 @@ final public class AccountCleaner implements CronJob {
 
 				// email.Domain
 				{
-					IntList eds=conn.executeIntListQuery(
+					IntList eds=conn.queryIntList(
 						"select\n"
 						+ "  ed.id\n"
 						+ "from\n"
@@ -413,7 +414,7 @@ final public class AccountCleaner implements CronJob {
 
 				// email.Pipe
 				{
-					IntList eps=conn.executeIntListQuery(
+					IntList eps=conn.queryIntList(
 						"select\n"
 						+ "  ep.id\n"
 						+ "from\n"
@@ -433,7 +434,7 @@ final public class AccountCleaner implements CronJob {
 
 				// email.SmtpRelay
 				{
-					IntList esrs=conn.executeIntListQuery(
+					IntList esrs=conn.queryIntList(
 						"select\n"
 						+ "  esr.id\n"
 						+ "from\n"
@@ -454,7 +455,7 @@ final public class AccountCleaner implements CronJob {
 				/*
 				// backup.FileReplicationSetting
 				{
-					IntList fbss=conn.executeIntListQuery(
+					IntList fbss=conn.queryIntList(
 						"select\n"
 						+ "  fbs.id\n"
 						+ "from\n"
@@ -475,7 +476,7 @@ final public class AccountCleaner implements CronJob {
 
 				// web.Site
 				{
-					IntList hss=conn.executeIntListQuery(
+					IntList hss=conn.queryIntList(
 						"select\n"
 						+ "  hs.id\n"
 						+ "from\n"
@@ -495,7 +496,7 @@ final public class AccountCleaner implements CronJob {
 
 				// web.tomcat.SharedTomcat
 				{
-					IntList hsts=conn.executeIntListQuery(
+					IntList hsts=conn.queryIntList(
 						"select\n"
 						+ "  hst.id\n"
 						+ "from\n"
@@ -519,7 +520,7 @@ final public class AccountCleaner implements CronJob {
 
 				// ftp.PrivateServer
 				{
-					IntList pfss=conn.executeIntListQuery(
+					IntList pfss=conn.queryIntList(
 						"select\n"
 						+ "  pfs.net_bind\n"
 						+ "from\n"
@@ -541,7 +542,7 @@ final public class AccountCleaner implements CronJob {
 
 				// net.Bind
 				{
-					IntList nbs=conn.executeIntListQuery(
+					IntList nbs=conn.queryIntList(
 						"select\n"
 						+ "  nb.id\n"
 						+ "from\n"
@@ -562,7 +563,7 @@ final public class AccountCleaner implements CronJob {
 
 				// net.IpAddress
 				{
-					IntList ias=conn.executeIntListQuery(
+					IntList ias=conn.queryIntList(
 						"select\n"
 						+ "  ia.id\n"
 						+ "from\n"
@@ -584,7 +585,7 @@ final public class AccountCleaner implements CronJob {
 
 				// web.HttpdServer
 				{
-					IntList hss=conn.executeIntListQuery(
+					IntList hss=conn.queryIntList(
 						"select\n"
 						+ "  hs.id\n"
 						+ "from\n"
@@ -605,7 +606,7 @@ final public class AccountCleaner implements CronJob {
 
 				// linux.User
 				{
-					List<com.aoindustries.aoserv.client.linux.User.Name> las=conn.executeObjectListQuery(
+					List<com.aoindustries.aoserv.client.linux.User.Name> las=conn.queryList(
 						ObjectFactories.linuxUserNameFactory,
 						"select\n"
 						+ "  la.username\n"
@@ -633,7 +634,8 @@ final public class AccountCleaner implements CronJob {
 
 				// linux.Group
 				{
-					List<Group.Name> lgs=conn.executeObjectListQuery(ObjectFactories.groupNameFactory,
+					List<Group.Name> lgs=conn.queryList(
+						ObjectFactories.groupNameFactory,
 						"select\n"
 						+ "  lg.name\n"
 						+ "from\n"
@@ -658,7 +660,7 @@ final public class AccountCleaner implements CronJob {
 
 				// mysql.Database
 				{
-					IntList mds=conn.executeIntListQuery(
+					IntList mds=conn.queryIntList(
 						"select\n"
 						+ "  md.id\n"
 						+ "from\n"
@@ -678,7 +680,8 @@ final public class AccountCleaner implements CronJob {
 
 				// mysql.User
 				{
-					List<com.aoindustries.aoserv.client.mysql.User.Name> mus=conn.executeObjectListQuery(ObjectFactories.mysqlUserNameFactory,
+					List<com.aoindustries.aoserv.client.mysql.User.Name> mus=conn.queryList(
+						ObjectFactories.mysqlUserNameFactory,
 						"select\n"
 						+ "  mu.username\n"
 						+ "from\n"
@@ -700,7 +703,7 @@ final public class AccountCleaner implements CronJob {
 
 				// postgresql.Database
 				{
-					IntList pds=conn.executeIntListQuery(
+					IntList pds=conn.queryIntList(
 						"select\n"
 						+ "  pd.id\n"
 						+ "from\n"
@@ -724,7 +727,8 @@ final public class AccountCleaner implements CronJob {
 
 				// postgresql.User
 				{
-					List<com.aoindustries.aoserv.client.postgresql.User.Name> pus=conn.executeObjectListQuery(ObjectFactories.postgresqlUserNameFactory,
+					List<com.aoindustries.aoserv.client.postgresql.User.Name> pus=conn.queryList(
+						ObjectFactories.postgresqlUserNameFactory,
 						"select\n"
 						+ "  pu.username\n"
 						+ "from\n"
@@ -747,7 +751,7 @@ final public class AccountCleaner implements CronJob {
 				// account.User
 				// delete all closed account.User, unless used by a business_administrator that was left behind
 				{
-					List<com.aoindustries.aoserv.client.account.User.Name> uns=conn.executeObjectListQuery(
+					List<com.aoindustries.aoserv.client.account.User.Name> uns=conn.queryList(
 						ObjectFactories.userNameFactory,
 						"select\n"
 						+ "  un.username\n"
@@ -769,7 +773,7 @@ final public class AccountCleaner implements CronJob {
 
 				// account.DisableLog
 				{
-					IntList dls=conn.executeIntListQuery(
+					IntList dls=conn.queryIntList(
 						"select\n"
 						+ "  dl.id\n"
 						+ "from\n"
@@ -805,7 +809,7 @@ final public class AccountCleaner implements CronJob {
 				{
 					for(int depth = Account.MAXIMUM_BUSINESS_TREE_DEPTH; depth>=1; depth--) {
 						// non-default
-						IntList bss=conn.executeIntListQuery(
+						IntList bss=conn.queryIntList(
 							"select\n"
 							+ "  bs.id\n"
 							+ "from\n"
@@ -819,13 +823,13 @@ final public class AccountCleaner implements CronJob {
 						);
 						for(int c=0;c<bss.size();c++) {
 							int bs = bss.getInt(c);
-							Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
+							Account.Name account = conn.queryObject(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
 							int bsDepth = AccountHandler.getDepthInAccountTree(conn, account);
 							if(bsDepth==depth) AccountHandler.removeAccountHost(conn, invalidateList, bs);
 						}
 
 						// default
-						bss=conn.executeIntListQuery(
+						bss=conn.queryIntList(
 							"select\n"
 							+ "  bs.id\n"
 							+ "from\n"
@@ -838,7 +842,7 @@ final public class AccountCleaner implements CronJob {
 						);
 						for(int c=0;c<bss.size();c++) {
 							int bs = bss.getInt(c);
-							Account.Name account = conn.executeObjectQuery(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
+							Account.Name account = conn.queryObject(ObjectFactories.accountNameFactory, "select accounting from account.\"AccountHost\" where id=?", bs);
 							int bsDepth = AccountHandler.getDepthInAccountTree(conn, account);
 							if(bsDepth==depth) AccountHandler.removeAccountHost(conn, invalidateList, bs);
 						}
@@ -862,8 +866,6 @@ final public class AccountCleaner implements CronJob {
 			} finally {
 				if(!connRolledBack && !conn.isClosed()) conn.commit();
 			}
-		} finally {
-			conn.releaseConnection();
 		}
 	}
 

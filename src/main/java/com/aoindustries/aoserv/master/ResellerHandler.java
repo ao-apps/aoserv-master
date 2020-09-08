@@ -47,7 +47,7 @@ final public class ResellerHandler {
 	) throws IOException, SQLException {
 		Account.Name account = originalAccount;
 		while(account!=null) {
-			if(conn.executeBooleanQuery("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", account)) return account;
+			if(conn.queryBoolean("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", account)) return account;
 			account = AccountHandler.getParentAccount(conn, account);
 		}
 		throw new SQLException("Unable to find Reseller for Account: "+originalAccount);

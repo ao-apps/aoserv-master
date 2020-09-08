@@ -76,7 +76,7 @@ final public class FailoverHandler implements CronJob {
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplicationLog for servers that have the same package as the business_administrator adding the log entry");
 		//ServerHandler.checkAccessServer(conn, source, "addFileReplicationLog", server);
 
-		int fileReplicationLog = conn.executeIntUpdate(
+		int fileReplicationLog = conn.updateInt(
 			"INSERT INTO\n"
 			+ "  backup.\"FileReplicationLog\"\n"
 			+ "VALUES (\n"
@@ -127,8 +127,8 @@ final public class FailoverHandler implements CronJob {
 		Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
 		if(!userPackage.equals(serverPackage)) throw new SQLException("userPackage!=serverPackage: may only set backup.FileReplication.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
 
-		if(bitRate==null) conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=null where id=?", fileReplication);
-		else conn.executeUpdate("update backup.\"FileReplication\" set max_bit_rate=? where id=?", bitRate, fileReplication);
+		if(bitRate==null) conn.update("update backup.\"FileReplication\" set max_bit_rate=null where id=?", fileReplication);
+		else conn.update("update backup.\"FileReplication\" set max_bit_rate=? where id=?", bitRate, fileReplication);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -158,13 +158,13 @@ final public class FailoverHandler implements CronJob {
 		boolean modified = false;
 
 		// Get the list of all the ids that currently exist
-		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSchedule\" where replication=?", fileReplication);
+		IntList ids = conn.queryIntList("select id from backup.\"FileReplicationSchedule\" where replication=?", fileReplication);
 		int size = hours.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove id from the list, otherwise add
 			short hour = hours.get(c);
 			short minute = minutes.get(c);
-			int existingPkey = conn.executeIntQuery(
+			int existingPkey = conn.queryInt(
 				"select coalesce((select id from backup.\"FileReplicationSchedule\" where replication=? and hour=? and minute=?), -1)",
 				fileReplication,
 				hour,
@@ -172,7 +172,7 @@ final public class FailoverHandler implements CronJob {
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
-				conn.executeUpdate("insert into backup.\"FileReplicationSchedule\" (replication, hour, minute, enabled) values(?,?,?,true)", fileReplication, hour, minute);
+				conn.update("insert into backup.\"FileReplicationSchedule\" (replication, hour, minute, enabled) values(?,?,?,true)", fileReplication, hour, minute);
 				modified = true;
 			} else {
 				// Remove from the list that will be removed
@@ -182,7 +182,7 @@ final public class FailoverHandler implements CronJob {
 		// Delete the unmatched ids
 		if(ids.size()>0) {
 			for(int c=0,len=ids.size(); c<len; c++) {
-				conn.executeUpdate("delete from backup.\"FileReplicationSchedule\" where id=?", ids.getInt(c));
+				conn.update("delete from backup.\"FileReplicationSchedule\" where id=?", ids.getInt(c));
 			}
 			modified = true;
 		}
@@ -218,21 +218,21 @@ final public class FailoverHandler implements CronJob {
 		boolean modified = false;
 
 		// Get the list of all the ids that currently exist
-		IntList ids = conn.executeIntListQuery("select id from backup.\"FileReplicationSetting\" where replication=?", fileReplication);
+		IntList ids = conn.queryIntList("select id from backup.\"FileReplicationSetting\" where replication=?", fileReplication);
 		int size = paths.size();
 		for(int c=0;c<size;c++) {
 			// If it exists, remove id from the list, otherwise add
 			String path = paths.get(c);
 			boolean backupEnabled = backupEnableds.get(c);
 			boolean required = requireds.get(c);
-			int existingPkey = conn.executeIntQuery(
+			int existingPkey = conn.queryInt(
 				"select coalesce((select id from backup.\"FileReplicationSetting\" where replication=? and path=?), -1)",
 				fileReplication,
 				path
 			);
 			if(existingPkey==-1) {
 				// Doesn't exist, add
-				conn.executeUpdate(
+				conn.update(
 					"insert into backup.\"FileReplicationSetting\" (replication, path, backup_enabled, required) values(?,?,?,?)",
 					fileReplication,
 					path,
@@ -243,7 +243,7 @@ final public class FailoverHandler implements CronJob {
 			} else {
 				// Update the flags if either doesn't match
 				if(
-					conn.executeUpdate(
+					conn.update(
 						"update backup.\"FileReplicationSetting\" set backup_enabled=?, required=? where id=? and not (backup_enabled=? and required=?)",
 						backupEnabled,
 						required,
@@ -260,7 +260,7 @@ final public class FailoverHandler implements CronJob {
 		// Delete the unmatched ids
 		if(ids.size()>0) {
 			for(int c=0,len=ids.size(); c<len; c++) {
-				conn.executeUpdate("delete from backup.\"FileReplicationSetting\" where id=?", ids.getInt(c));
+				conn.update("delete from backup.\"FileReplicationSetting\" where id=?", ids.getInt(c));
 			}
 			modified = true;
 		}
@@ -278,11 +278,11 @@ final public class FailoverHandler implements CronJob {
 	}
 
 	public static int getFromHostForFileReplication(DatabaseConnection conn, int fileReplication) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from backup.\"FileReplication\" where id=?", fileReplication);
+		return conn.queryInt("select server from backup.\"FileReplication\" where id=?", fileReplication);
 	}
 
 	public static int getBackupPartitionForFileReplication(DatabaseConnection conn, int fileReplication) throws IOException, SQLException {
-		return conn.executeIntQuery("select backup_partition from backup.\"FileReplication\" where id=?", fileReplication);
+		return conn.queryInt("select backup_partition from backup.\"FileReplication\" where id=?", fileReplication);
 	}
 
 	public static void getFileReplicationLogs(
@@ -325,7 +325,7 @@ final public class FailoverHandler implements CronJob {
 
 		// Contact the server
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toLinuxServer);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.getFailoverFileReplicationActivity(fileReplication);
 	}
 
@@ -363,7 +363,7 @@ final public class FailoverHandler implements CronJob {
 	@Override
 	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
-			MasterDatabase.getDatabase().executeUpdate("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
+			MasterDatabase.getDatabase().update("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
 		} catch(RuntimeException | IOException | SQLException T) {
 			logger.log(Level.SEVERE, null, T);
 		}
@@ -403,17 +403,17 @@ final public class FailoverHandler implements CronJob {
 			;
 		}
 
-		int quota_gid = conn.executeIntQuery("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", fileReplication);
+		int quota_gid = conn.queryInt("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", fileReplication);
 
 		// Verify that the backup_partition is the correct type
-		boolean isQuotaEnabled = conn.executeBooleanQuery("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication);
+		boolean isQuotaEnabled = conn.queryBoolean("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication);
 		if(quota_gid==-1) {
 			if(isQuotaEnabled) throw new SQLException("quota_gid is null when quota_enabled=true: backup.FileReplication.id="+fileReplication);
 		} else {
 			if(!isQuotaEnabled) throw new SQLException("quota_gid is not null when quota_enabled=false: backup.FileReplication.id="+fileReplication);
 		}
 
-		HostAddress connectAddress = conn.executeObjectQuery(
+		HostAddress connectAddress = conn.queryObject(
 			ObjectFactories.hostAddressFactory,
 			"select connect_address from backup.\"FileReplication\" where id=?",
 			fileReplication
@@ -425,7 +425,7 @@ final public class FailoverHandler implements CronJob {
 			AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
 			Integer.toString(fileReplication),
 			serverName,
-			conn.executeStringQuery("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication),
+			conn.queryString("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication),
 			quota_gid==-1 ? null : Integer.toString(quota_gid)
 		);
 	}

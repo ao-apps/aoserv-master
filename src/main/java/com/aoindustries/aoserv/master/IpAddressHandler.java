@@ -56,7 +56,7 @@ final public class IpAddressHandler {
 	}
 
 	public static boolean isDhcpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeBooleanQuery(
+		return conn.queryBoolean(
 			"select \"isDhcp\" from net.\"IpAddress\" where id=?",
 			ipAddress
 		);
@@ -111,12 +111,12 @@ final public class IpAddressHandler {
 		Account.Name account = getAccountForIpAddress(conn, ipAddress);
 
 		// Update net.IpAddress
-		int toDevice = conn.executeIntQuery(
+		int toDevice = conn.queryInt(
 			"select id from net.\"Device\" where server=? and \"deviceId\"=?",
 			toHost,
 			DeviceId.ETH0
 		);
-		conn.executeUpdate(
+		conn.update(
 			"update net.\"IpAddress\" set device=? where id=?",
 			toDevice,
 			ipAddress
@@ -156,7 +156,7 @@ final public class IpAddressHandler {
 		int host = getHostForIpAddress(conn, dhcpAddress);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" where id=?", inetAddress, dhcpAddress);
+		conn.update("update net.\"IpAddress\" set \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" where id=?", inetAddress, dhcpAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -207,7 +207,7 @@ final public class IpAddressHandler {
 		) throw new SQLException("Not allowed to set the hostname for "+ip);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
+		conn.update("update net.\"IpAddress\" set hostname=? where id=?", hostname.toString(), ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -243,7 +243,7 @@ final public class IpAddressHandler {
 		// Update the table
 		// TODO: Add row when first enabled or column set to non-default
 		// TODO: Remove row when disabled and other columns match defaults
-		conn.executeUpdate("update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=? where id=?", monitoringEnabled, ipAddress);
+		conn.update("update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=? where id=?", monitoringEnabled, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -285,7 +285,7 @@ final public class IpAddressHandler {
 		int host = getHostForIpAddress(conn, ipAddress);
 
 		// Make sure that the IP Address is not in use
-		int count=conn.executeIntQuery(
+		int count=conn.queryInt(
 			  "select\n"
 			+ "  count(*)\n"
 			+ "from\n"
@@ -297,7 +297,7 @@ final public class IpAddressHandler {
 		if(count!=0) throw new SQLException("Unable to set Package, net.IpAddress in use by "+count+(count==1?" row":" rows")+" in net.Bind: "+ipAddress);
 
 		// Update the table
-		conn.executeUpdate("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), \"isAvailable\"=false where id=?", newPackage, ipAddress);
+		conn.update("update net.\"IpAddress\" set package=(select id from billing.\"Package\" where name=?), \"isAvailable\"=false where id=?", newPackage, ipAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -310,7 +310,7 @@ final public class IpAddressHandler {
 	}
 
 	public static int getSharedHttpdIpAddress(DatabaseConnection conn, int linuxServer) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select\n"
 			+ "  coalesce(\n"
 			+ "    (\n"
@@ -355,7 +355,8 @@ final public class IpAddressHandler {
 	}
 
 	public static Account.Name getPackageForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.name\n"
 			+ "from\n"
@@ -368,7 +369,8 @@ final public class IpAddressHandler {
 	}
 
 	public static Account.Name getAccountForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"
@@ -381,22 +383,23 @@ final public class IpAddressHandler {
 	}
 
 	public static int getHostForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeIntQuery("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddress);
+		return conn.queryInt("select nd.server from net.\"IpAddress\" ia, net.\"Device\" nd where ia.id=? and ia.device=nd.id", ipAddress);
 	}
 
 	public static InetAddress getInetAddressForIpAddress(DatabaseConnection conn, int ipAddress) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.inetAddressFactory,
+		return conn.queryObject(
+			ObjectFactories.inetAddressFactory,
 			"select host(\"inetAddress\") from net.\"IpAddress\" where id=?",
 			ipAddress
 		);
 	}
 
 	public static int getWildcardIpAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.executeIntQuery("select id from net.\"IpAddress\" where \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.queryInt("select id from net.\"IpAddress\" where \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIpAddress(DatabaseConnection conn, int host) throws IOException, SQLException {
-		return conn.executeIntQuery(
+		return conn.queryInt(
 			"select\n"
 			+ "  ia.id\n"
 			+ "from\n"
@@ -424,11 +427,11 @@ final public class IpAddressHandler {
 			getUnassignedHostname(conn, ipAddress)
 		);
 
-		conn.executeUpdate(
+		conn.update(
 			"update net.\"IpAddress\" set \"isAvailable\"=true, \"isOverflow\"=false where id=?",
 			ipAddress
 		);
-		conn.executeUpdate(
+		conn.update(
 			"update \"net.monitoring\".\"IpAddressMonitoring\" set enabled=true, \"pingMonitorEnabled\"=false, \"checkBlacklistsOverSmtp\"=false, \"verifyDnsPtr\"=true, \"verifyDnsA\"=false where id=?",
 			ipAddress
 		);

@@ -72,13 +72,12 @@ public class TicketLoggingHandler extends QueuedHandler {
 		String summary = tempSB.toString();
 
 		// Start the transaction
-		InvalidateList invalidateList = new InvalidateList();
-		DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
-		try {
+		try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+			InvalidateList invalidateList = new InvalidateList();
 			boolean connRolledBack = false;
 			try {
 				// Look for an existing ticket to append
-				int existingTicket = conn.executeIntQuery(
+				int existingTicket = conn.queryInt(
 					"select\n"
 					+ "  coalesce(\n"
 					+ "    (\n"
@@ -160,9 +159,7 @@ public class TicketLoggingHandler extends QueuedHandler {
 			} finally {
 				if(!connRolledBack && !conn.isClosed()) conn.commit();
 			}
-		} finally {
-			conn.releaseConnection();
+			MasterServer.invalidateTables(conn, invalidateList, null);
 		}
-		MasterServer.invalidateTables(invalidateList, null);
 	}
 }

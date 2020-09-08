@@ -186,7 +186,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 
 		int creditCard;
 		if(encryptedCardNumber==null && encryptionFrom==-1 && encryptionRecipient==-1) {
-			creditCard = conn.executeIntUpdate(
+			creditCard = conn.updateInt(
 				"INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -239,7 +239,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 				description
 			);
 		} else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
-			creditCard = conn.executeIntUpdate(
+			creditCard = conn.updateInt(
 				"INSERT INTO payment.\"CreditCard\" (\n"
 				+ "  processor_id,\n"
 				+ "  accounting,\n"
@@ -315,7 +315,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		BankAccountHandler.checkIsAccounting(conn, source, "creditCardDeclined");
 		checkAccessCreditCard(conn, source, "creditCardDeclined", creditCard);
 
-		conn.executeUpdate(
+		conn.update(
 			"update payment.\"CreditCard\" set active=false, deactivated_on=now(), deactivate_reason=? where id=?",
 			reason,
 			creditCard
@@ -331,7 +331,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	public static Account.Name getAccountForCreditCard(DatabaseConnection conn, int creditCard) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.accountNameFactory,
 			"select accounting from payment.\"CreditCard\" where id=?",
 			creditCard
@@ -339,7 +339,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	public static Account.Name getAccountForProcessor(DatabaseConnection conn, String processor) throws IOException, SQLException {
-		return conn.executeObjectQuery(
+		return conn.queryObject(
 			ObjectFactories.accountNameFactory,
 			"select accounting from payment.\"Processor\" where provider_id=?",
 			processor
@@ -347,11 +347,12 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	public static String getProcessorForPayment(DatabaseConnection conn, int payment) throws IOException, SQLException {
-		return conn.executeStringQuery("select processor_id from payment.\"Payment\" where id=?", payment);
+		return conn.queryString("select processor_id from payment.\"Payment\" where id=?", payment);
 	}
 
 	public static Account.Name getAccountForEncryptionKey(DatabaseConnection conn, int encryptionKey) throws IOException, SQLException {
-		return conn.executeObjectQuery(ObjectFactories.accountNameFactory,
+		return conn.queryObject(
+			ObjectFactories.accountNameFactory,
 			"select accounting from pki.\"EncryptionKey\" where id=?",
 			encryptionKey
 		);
@@ -378,7 +379,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		Account.Name business=getAccountForCreditCard(conn, creditCard);
 
 		// Update the database
-		conn.executeUpdate("delete from payment.\"CreditCard\" where id=?", creditCard);
+		conn.update("delete from payment.\"CreditCard\" where id=?", creditCard);
 
 		invalidateList.addTable(
 			conn,
@@ -462,7 +463,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 	) throws IOException, SQLException {
 		// Update row
 		if(cardInfo == null) {
-			conn.executeUpdate(
+			conn.update(
 				"update\n"
 				+ "  payment.\"CreditCard\"\n"
 				+ "set\n"
@@ -501,7 +502,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 				creditCard
 			);
 		} else {
-			conn.executeUpdate(
+			conn.update(
 				"update\n"
 				+ "  payment.\"CreditCard\"\n"
 				+ "set\n"
@@ -574,7 +575,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 
 		if(encryptedCardNumber==null && encryptionFrom==-1 && encryptionRecipient==-1) {
 			// Update row
-			conn.executeUpdate(
+			conn.update(
 				"update\n"
 				+ "  payment.\"CreditCard\"\n"
 				+ "set\n"
@@ -593,7 +594,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 			);
 		} else if(encryptedCardNumber!=null && encryptionFrom!=-1 && encryptionRecipient!=-1) {
 			// Update row
-			conn.executeUpdate(
+			conn.update(
 				"update\n"
 				+ "  payment.\"CreditCard\"\n"
 				+ "set\n"
@@ -648,7 +649,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		Short expirationYear
 	) throws IOException, SQLException {
 		// Update row
-		conn.executeUpdate(
+		conn.update(
 			"update\n"
 			+ "  payment.\"CreditCard\"\n"
 			+ "set\n"
@@ -682,7 +683,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		checkAccessCreditCard(conn, source, "reactivateCreditCard", creditCard);
 
 		// Update row
-		conn.executeUpdate(
+		conn.update(
 			"update\n"
 			+ "  payment.\"CreditCard\"\n"
 			+ "set\n"
@@ -717,7 +718,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 
 		if(creditCard == -1) {
 			// Clear only
-			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=false where accounting=? and use_monthly", account);
+			conn.update("update payment.\"CreditCard\" set use_monthly=false where accounting=? and use_monthly", account);
 		} else {
 			checkAccessCreditCard(conn, source, "setCreditCardUseMonthly", creditCard);
 
@@ -725,7 +726,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 			if(!account.equals(getAccountForCreditCard(conn, creditCard))) throw new SQLException("credit card and business accounting codes do not match");
 
 			// Perform clear and set in one SQL statement - I thinks myself clever right now.
-			conn.executeUpdate("update payment.\"CreditCard\" set use_monthly=(id=?) where accounting=? and use_monthly!=(id=?)", creditCard, account, creditCard);
+			conn.update("update payment.\"CreditCard\" set use_monthly=(id=?) where accounting=? and use_monthly!=(id=?)", creditCard, account, creditCard);
 		}
 
 		invalidateList.addTable(
@@ -926,7 +927,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		if(dutyAmount != null && dutyAmount.getCurrency() != currency) {
 			throw new SQLException("Currency mismatch: amount.currency = " + currency + ", dutyAmount.currency = " + dutyAmount.getCurrency());
 		}
-		int payment = conn.executeIntUpdate(
+		int payment = conn.updateInt(
 			"INSERT INTO payment.\"Payment\" (\n"
 			+ "  processor_id,\n"
 			+ "  accounting,\n"
@@ -1162,7 +1163,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		String processor = getProcessorForPayment(conn, payment);
 		Account.Name account = getAccountForProcessor(conn, processor);
 
-		int updated = conn.executeUpdate(
+		int updated = conn.update(
 			"update\n"
 			+ "  payment.\"Payment\"\n"
 			+ "set\n"
@@ -1327,7 +1328,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 		String processor = getProcessorForPayment(conn, payment);
 		Account.Name account = getAccountForProcessor(conn, processor);
 
-		int updated = conn.executeUpdate(
+		int updated = conn.update(
 			"update\n"
 			+ "  payment.\"Payment\"\n"
 			+ "set\n"
@@ -1521,13 +1522,12 @@ final public class PaymentHandler /*implements CronJob*/ {
 				}
 
 				// Start the transaction
-				InvalidateList invalidateList=new InvalidateList();
-				DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection();
-				try {
+				try (DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection()) {
+					InvalidateList invalidateList=new InvalidateList();
 					boolean connRolledBack=false;
 					try {
 						// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-						List<AutomaticPayment> automaticPayments = conn.executeQuery(
+						List<AutomaticPayment> automaticPayments = conn.query(
 							(ResultSet results) -> {
 								try {
 									List<AutomaticPayment> list = new ArrayList<>();
@@ -1913,10 +1913,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 					} finally {
 						if(!connRolledBack && !conn.isClosed()) conn.commit();
 					}
-				} finally {
-					conn.releaseConnection();
+					MasterServer.invalidateTables(conn, invalidateList, null);
 				}
-				/*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
 			}
 		} catch(ThreadDeath TD) {
 			throw TD;
@@ -1941,15 +1939,14 @@ final public class PaymentHandler /*implements CronJob*/ {
 			MasterServer.executorService.submit(timer);
 
 			// Start the transaction
-			InvalidateList invalidateList = new InvalidateList();
-			DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection();
-			try {
+			try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+				InvalidateList invalidateList = new InvalidateList();
 				boolean connRolledBack = false;
 				try {
 					if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
 
 					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-					List<MerchantServicesProvider> providers = conn.executeObjectListQuery(
+					List<MerchantServicesProvider> providers = conn.queryList(
 						(ResultSet result) -> {
 							try {
 								return MerchantServicesProviderFactory.getMerchantServicesProvider(
@@ -2003,10 +2000,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 				} finally {
 					if(!connRolledBack && !conn.isClosed()) conn.commit();
 				}
-			} finally {
-				conn.releaseConnection();
+				MasterServer.invalidateTables(conn, invalidateList, null);
 			}
-			/*if(invalidateList!=null)*/ MasterServer.invalidateTables(invalidateList, null);
 		}
 	}
 

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2008-2013, 2015, 2017, 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2008-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -43,7 +43,7 @@ final public class NetDeviceHandler {
 		NetHostHandler.checkAccessHost(conn, source, "getDeviceBondingReport", host);
 
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.getNetDeviceBondingReport(device);
 	}
 
@@ -53,11 +53,11 @@ final public class NetDeviceHandler {
 		NetHostHandler.checkAccessHost(conn, source, "getDeviceStatisticsReport", host);
 
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
-		conn.releaseConnection();
+		conn.close(); // Don't hold database connection while connecting to the daemon
 		return daemonConnector.getNetDeviceStatisticsReport(device);
 	}
 
 	public static int getHostForDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
-		return conn.executeIntQuery("select server from net.\"Device\" where id=?", device);
+		return conn.queryInt("select server from net.\"Device\" where id=?", device);
 	}
 }
