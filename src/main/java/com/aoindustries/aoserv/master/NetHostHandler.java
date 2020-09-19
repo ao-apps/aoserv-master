@@ -36,7 +36,6 @@ import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.DomainName;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -254,8 +253,7 @@ final public class NetHostHandler {
 	}
 
 	public static List<Account.Name> getAccountsForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
-		return conn.queryCollection(
-			new ArrayList<>(),
+		return conn.queryList(
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"AccountHost\" where server=?",
 			host
@@ -479,7 +477,9 @@ final public class NetHostHandler {
 							}
 							if(closedIDs!=null) {
 								int size=closedIDs.size();
-								for(int c=0;c<size;c++) ids.remove(closedIDs.get(c));
+								for(int c = 0; c < size; c++) {
+									ids.remove(closedIDs.get(c));
+								}
 							}
 							if(foundOlder) {
 								try {
@@ -492,7 +492,7 @@ final public class NetHostHandler {
 								return;
 							}
 						} else {
-							new Exception("waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: "+host).printStackTrace(System.err);
+							logger.log(Level.WARNING, "waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: {0}", host);
 							invalidateSyncLock.notify();
 							return;
 						}

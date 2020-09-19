@@ -32,6 +32,7 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.SysExits;
 import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.logging.ProcessTimer;
@@ -69,6 +70,7 @@ final public class AccountCleaner implements CronJob {
 
 	private static boolean started=false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -99,6 +101,7 @@ final public class AccountCleaner implements CronJob {
 	}
 
 	@Override
+	@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch"})
 	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
 			try (
@@ -119,10 +122,10 @@ final public class AccountCleaner implements CronJob {
 				cleanNow(invalidateList);
 				MasterServer.invalidateTables(MasterDatabase.getDatabase(), invalidateList, null);
 			}
-		} catch(ThreadDeath TD) {
-			throw TD;
-		} catch(Throwable T) {
-			logger.log(Level.SEVERE, null, T);
+		} catch(ThreadDeath td) {
+			throw td;
+		} catch(Throwable t) {
+			logger.log(Level.SEVERE, null, t);
 		}
 	}
 
@@ -801,7 +804,9 @@ final public class AccountCleaner implements CronJob {
 						+ "  and (select pu.username from postgresql.\"User\" pu where pu.disable_log=dl.id limit 1) is null\n"
 						+ "  and (select un.username from account.\"User\" un where un.disable_log=dl.id limit 1) is null"
 					);
-					for(int c=0;c<dls.size();c++) AccountHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
+					for(int c = 0; c < dls.size(); c++) {
+						AccountHandler.removeDisableLog(conn, invalidateList, dls.getInt(c));
+					}
 				}
 
 				// account.AccountHost
@@ -851,24 +856,25 @@ final public class AccountCleaner implements CronJob {
 				if(message.length()>0) {
 					logger.log(Level.WARNING, message.toString());
 				}
-			} catch(RuntimeException | IOException err) {
-				if(conn.rollback()) {
-					connRolledBack=true;
-					invalidateList=null;
-				}
-				throw err;
 			} catch(SQLException err) {
 				if(conn.rollbackAndClose()) {
 					connRolledBack=true;
 					invalidateList=null;
 				}
 				throw err;
+			} catch(Throwable t) {
+				if(conn.rollback()) {
+					connRolledBack=true;
+					invalidateList=null;
+				}
+				throw t;
 			} finally {
 				if(!connRolledBack && !conn.isClosed()) conn.commit();
 			}
 		}
 	}
 
+	@SuppressWarnings({"UseOfSystemOutOrSystemErr", "UseSpecificCatch", "TooBroadCatch"})
 	public static void main(String[] args) {
 		try {
 			InvalidateList invalidateList = new InvalidateList();
@@ -885,9 +891,11 @@ final public class AccountCleaner implements CronJob {
 					}
 				}
 			}
-		} catch(RuntimeException | ValidationException | IOException | SQLException err) {
-			ErrorPrinter.printStackTraces(err);
-			System.exit(1);
+		} catch(ThreadDeath td) {
+			throw td;
+		} catch(Throwable t) {
+			ErrorPrinter.printStackTraces(t, System.err);
+			System.exit(SysExits.getSysExit(t));
 		}
 	}
 }

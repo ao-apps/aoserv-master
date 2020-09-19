@@ -26,6 +26,7 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.billing.Resource;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseAccess.Null;
@@ -34,9 +35,7 @@ import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -535,8 +534,8 @@ final public class PackageHandler {
 		Account.Name template
 	) throws IOException, SQLException {
 		// Load the entire list of package names
-		Set<Account.Name> names = conn.queryCollection(
-			new HashSet<>(),
+		Set<Account.Name> names = conn.queryNewCollection(
+			AoCollections::newHashSet,
 			ObjectFactories.accountNameFactory,
 			"select name from billing.\"Package\""
 		);
@@ -701,8 +700,7 @@ final public class PackageHandler {
 	}
 
 	public static List<Account.Name> getAccountsForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
-		return conn.queryCollection(
-			new ArrayList<>(),
+		return conn.queryList(
 			ObjectFactories.accountNameFactory,
 			"select distinct\n"
 			+ "  bu.accounting\n"

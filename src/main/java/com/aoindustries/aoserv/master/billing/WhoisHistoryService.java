@@ -36,6 +36,7 @@ import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.ObjectFactories;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
@@ -56,7 +57,6 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -294,10 +294,10 @@ final public class WhoisHistoryService implements MasterService {
 								Map<DomainName,Timestamp> lookupOrder;
 								{
 									// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
-									final Map<DomainName,Timestamp> lastChecked = conn.query(
+									final Map<DomainName,Timestamp> lastChecked = conn.queryCall(
 										(ResultSet results) -> {
 											try {
-												Map<DomainName, Timestamp> map = new LinkedHashMap<>(registrableDomainCount *4/3+1); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
+												Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
 												int oldNotUsedCount = 0;
 												while(results.next()) {
 													DomainName registrableDomain = DomainName.valueOf(results.getString(1));
@@ -319,7 +319,7 @@ final public class WhoisHistoryService implements MasterService {
 										// TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
 										"select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
 									);
-									lookupOrder = new LinkedHashMap<>(registrableDomainCount *4/3+1);
+									lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
 									for(DomainName registrableDomain : registrableDomains.keySet()) {
 										if(!lastChecked.containsKey(registrableDomain)) {
 											lookupOrder.put(registrableDomain, null);
@@ -358,10 +358,13 @@ final public class WhoisHistoryService implements MasterService {
 										output = result.getStdout();
 										error = result.getStderr();
 										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
-									} catch(RuntimeException | IOException err) {
+									} catch(ThreadDeath td) {
+										throw td;
+									} catch(Throwable t) {
+										logger.log(Level.FINE, null, t);
 										exitStatus = null;
 										output = "";
-										error = err.toString();
+										error = t.toString();
 										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
 									}
 									// update database
@@ -412,26 +415,28 @@ final public class WhoisHistoryService implements MasterService {
 							} else {
 								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
 							}
-						} catch(RuntimeException | IOException err) {
-							if(conn.rollback()) {
-								connRolledBack=true;
-								invalidateList=null;
-							}
-							throw err;
 						} catch(SQLException err) {
 							if(conn.rollbackAndClose()) {
 								connRolledBack=true;
 								invalidateList=null;
 							}
 							throw err;
+						} catch(Throwable t) {
+							if(conn.rollback()) {
+								connRolledBack=true;
+								invalidateList=null;
+							}
+							throw t;
 						} finally {
 							if(!connRolledBack && !conn.isClosed()) conn.commit();
 						}
 						MasterServer.invalidateTables(conn, invalidateList, null);
 					}
 				}
-			} catch(RuntimeException | IOException | SQLException T) {
-				logger.log(Level.SEVERE, null, T);
+			} catch(ThreadDeath td) {
+				throw td;
+			} catch(Throwable t) {
+				logger.log(Level.SEVERE, null, t);
 			}
 		}
 	};
@@ -469,7 +474,7 @@ final public class WhoisHistoryService implements MasterService {
 			if(masterServers.length == 0) {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// id is that of the associated billing.WhoisHistoryAccount
-					return conn.query(
+					return conn.queryCall(
 						(ResultSet results) -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
@@ -488,7 +493,7 @@ final public class WhoisHistoryService implements MasterService {
 						whoisHistoryAccount
 					);
 				} else {
-					return conn.query(
+					return conn.queryCall(
 						(ResultSet results) -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
@@ -506,7 +511,7 @@ final public class WhoisHistoryService implements MasterService {
 		} else {
 			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 				// id is that of the associated billing.WhoisHistoryAccount
-				return conn.query(
+				return conn.queryCall(
 					(ResultSet results) -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));
@@ -536,7 +541,7 @@ final public class WhoisHistoryService implements MasterService {
 					whoisHistoryAccount
 				);
 			} else {
-				return conn.query(
+				return conn.queryCall(
 					(ResultSet results) -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));

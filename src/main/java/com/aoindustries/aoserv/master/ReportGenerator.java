@@ -29,7 +29,6 @@ import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.logging.ProcessTimer;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -72,6 +71,7 @@ final public class ReportGenerator implements CronJob {
 
 	private static boolean started=false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -283,18 +283,18 @@ final public class ReportGenerator implements CronJob {
 							// Invalidate the table
 							invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 						}
-					} catch(RuntimeException | IOException err) {
-						if(conn.rollback()) {
-							connRolledBack=true;
-							invalidateList=null;
-						}
-						throw err;
 					} catch(SQLException err) {
 						if(conn.rollbackAndClose()) {
 							connRolledBack=true;
 							invalidateList=null;
 						}
 						throw err;
+					} catch(Throwable t) {
+						if(conn.rollback()) {
+							connRolledBack=true;
+							invalidateList=null;
+						}
+						throw t;
 					} finally {
 						if(!connRolledBack && !conn.isClosed()) conn.commit();
 					}

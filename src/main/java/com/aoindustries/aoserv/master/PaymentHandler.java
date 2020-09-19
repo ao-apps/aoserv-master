@@ -1527,7 +1527,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 					boolean connRolledBack=false;
 					try {
 						// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-						List<AutomaticPayment> automaticPayments = conn.query(
+						List<AutomaticPayment> automaticPayments = conn.queryCall(
 							(ResultSet results) -> {
 								try {
 									List<AutomaticPayment> list = new ArrayList<>();
@@ -1898,18 +1898,18 @@ final public class PaymentHandler /*implements CronJob*/ {
 									throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
 							}
 						}
-					} catch(RuntimeException | IOException err) {
-						if(conn.rollback()) {
-							connRolledBack=true;
-							// invalidateList=null; Not cleared because some commits happen during processing
-						}
-						throw err;
 					} catch(SQLException err) {
 						if(conn.rollbackAndClose()) {
 							connRolledBack=true;
 							// invalidateList=null; Not cleared because some commits happen during processing
 						}
 						throw err;
+					} catch(Throwable t) {
+						if(conn.rollback()) {
+							connRolledBack=true;
+							// invalidateList=null; Not cleared because some commits happen during processing
+						}
+						throw t;
 					} finally {
 						if(!connRolledBack && !conn.isClosed()) conn.commit();
 					}
@@ -1985,18 +1985,18 @@ final public class PaymentHandler /*implements CronJob*/ {
 						CreditCardProcessor processor = new CreditCardProcessor(provider, masterPersistenceMechanism);
 						processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
 					}
-				} catch(RuntimeException err) {
-					if(conn.rollback()) {
-						connRolledBack=true;
-						// invalidateList=null; Not cleared because some commits happen during processing
-					}
-					throw err;
 				} catch(SQLException err) {
 					if(conn.rollbackAndClose()) {
 						connRolledBack=true;
 						// invalidateList=null; Not cleared because some commits happen during processing
 					}
 					throw err;
+				} catch(Throwable t) {
+					if(conn.rollback()) {
+						connRolledBack=true;
+						// invalidateList=null; Not cleared because some commits happen during processing
+					}
+					throw t;
 				} finally {
 					if(!connRolledBack && !conn.isClosed()) conn.commit();
 				}

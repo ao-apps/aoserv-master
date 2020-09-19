@@ -32,6 +32,7 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.dbc.DatabaseConnection;
@@ -66,6 +67,7 @@ final public class TableHandler {
 
 	private static boolean started = false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -243,7 +245,9 @@ final public class TableHandler {
 			} finally {
 				if(!successful) {
 					// Rollback partial
-					for(Table.TableID id : added) getObjectHandlers.remove(id);
+					for(Table.TableID id : added) {
+						getObjectHandlers.remove(id);
+					}
 				}
 			}
 		}
@@ -453,7 +457,9 @@ final public class TableHandler {
 			} finally {
 				if(!successful) {
 					// Rollback partial
-					for(Table.TableID id : added) getTableHandlers.remove(id);
+					for(Table.TableID id : added) {
+						getTableHandlers.remove(id);
+					}
 				}
 			}
 		}
@@ -881,7 +887,7 @@ final public class TableHandler {
 	public static String getTableNameForDBTableID(DatabaseAccess db, Integer dbTableId) throws SQLException {
 		synchronized(tableNamesLock) {
 			if(tableNames == null) {
-				tableNames = db.query(
+				tableNames = db.queryCall(
 					(ResultSet results) -> {
 						Map<Integer,String> newMap = new HashMap<>();
 						while(results.next()) {
@@ -953,7 +959,7 @@ final public class TableHandler {
 					version.getVersion()
 				);
 				int numTables = clientTables.size();
-				tableIDs = new HashMap<>(numTables*4/3+1);
+				tableIDs = AoCollections.newHashMap(numTables);
 				for(int c=0;c<numTables;c++) {
 					tableIDs.put(c, clientTables.getInt(c));
 				}
@@ -991,7 +997,7 @@ final public class TableHandler {
 					version.getVersion()
 				);
 				int numTables = clientTables.size();
-				clientTableIDs = new HashMap<>(numTables*4/3+1);
+				clientTableIDs = AoCollections.newHashMap(numTables);
 				for(int c = 0; c < numTables; c++) {
 					clientTableIDs.put(clientTables.getInt(c), c);
 				}
@@ -1072,7 +1078,7 @@ final public class TableHandler {
 					version.getVersion()
 				);
 				int numColumns = clientColumns.size();
-				columns = new HashMap<>(numColumns*4/3+1);
+				columns = AoCollections.HashMap(numColumns);
 				for(int c = 0; c < numColumns; c++) {
 					columns.put(clientColumns.get(c), c);
 				}

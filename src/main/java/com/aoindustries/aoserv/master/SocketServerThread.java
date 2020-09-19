@@ -29,7 +29,6 @@ import com.aoindustries.aoserv.master.master.Process_Manager;
 import com.aoindustries.collections.IntArrayList;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableInput;
 import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.lang.Strings;
@@ -187,6 +186,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 	}
 
 	@Override
+	@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch"})
 	public void run() {
 		try {
 			try {
@@ -534,10 +534,10 @@ final public class SocketServerThread extends Thread implements RequestSource {
 				} else {
 					logger.log(Level.FINE, null, err);
 				}
-			} catch(ThreadDeath TD) {
-				throw TD;
-			} catch(RuntimeException | SQLException T) {
-				logger.log(Level.SEVERE, null, T);
+			} catch(ThreadDeath td) {
+				throw td;
+			} catch(Throwable t) {
+				logger.log(Level.SEVERE, null, t);
 			} finally {
 				// Close the socket
 				try {

@@ -77,6 +77,7 @@ public class TopLevelDomainService implements MasterService {
 		private volatile long lastUpdatedTime = Long.MIN_VALUE;
 
 		@Override
+		@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch"})
 		public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
 				try (
@@ -185,16 +186,16 @@ public class TopLevelDomainService implements MasterService {
 									}
 								}
 								lastUpdatedTime = lastUpdatedMillis;
-							} catch(RuntimeException err) {
-								if(conn.rollback()) {
-									connRolledBack = true;
-								}
-								throw err;
 							} catch(SQLException err) {
 								if(conn.rollbackAndClose()) {
 									connRolledBack = true;
 								}
 								throw err;
+							} catch(Throwable t) {
+								if(conn.rollback()) {
+									connRolledBack = true;
+								}
+								throw t;
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}

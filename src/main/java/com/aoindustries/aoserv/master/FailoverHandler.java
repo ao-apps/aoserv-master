@@ -346,6 +346,7 @@ final public class FailoverHandler implements CronJob {
 
 	private static boolean started=false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -361,11 +362,14 @@ final public class FailoverHandler implements CronJob {
 	}
 
 	@Override
+	@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch"})
 	public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 		try {
 			MasterDatabase.getDatabase().update("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
-		} catch(RuntimeException | IOException | SQLException T) {
-			logger.log(Level.SEVERE, null, T);
+		} catch(ThreadDeath td) {
+			throw td;
+		} catch(Throwable t) {
+			logger.log(Level.SEVERE, null, t);
 		}
 	}
 

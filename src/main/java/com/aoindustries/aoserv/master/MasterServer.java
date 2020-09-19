@@ -57,6 +57,7 @@ import com.aoindustries.aoserv.client.web.tomcat.Context;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryService;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.aoserv.master.master.Process;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntArrayList;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.collections.MinimalList;
@@ -778,7 +779,7 @@ public abstract class MasterServer {
 													Set<Email> billingEmail;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
 														int size = in.readCompressedInt();
-														billingEmail = new LinkedHashSet<>(size*4/3+1);
+														billingEmail = AoCollections.newLinkedHashSet(size);
 														for(int i = 0; i < size; i++) {
 															billingEmail.add(Email.valueOf(in.readUTF()));
 														}
@@ -795,7 +796,7 @@ public abstract class MasterServer {
 													Set<Email> technicalEmail;
 													if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
 														int size = in.readCompressedInt();
-														technicalEmail = new LinkedHashSet<>(size*4/3+1);
+														technicalEmail = AoCollections.newLinkedHashSet(size);
 														for(int i = 0; i < size; i++) {
 															technicalEmail.add(Email.valueOf(in.readUTF()));
 														}
@@ -2698,7 +2699,7 @@ public abstract class MasterServer {
 													} else {
 														monitoringEnabled = in.readBoolean();
 														numZones = in.readCompressedInt();
-														firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
+														firewalldZones = AoCollections.newLinkedHashSet(numZones);
 														for(int i = 0; i < numZones; i++) {
 															FirewallZone.Name name = FirewallZone.Name.valueOf(in.readUTF());
 															if(!firewalldZones.add(name)) {
@@ -2995,7 +2996,7 @@ public abstract class MasterServer {
 													String ciphertext = in.readUTF();
 													// options
 													int numOptions = in.readCompressedInt();
-													Map<String,String> options = new HashMap<>(numOptions * 4 / 3 + 1);
+													Map<String,String> options = AoCollections.newHashMap(numOptions);
 													for(int c=0;c<numOptions;c++) {
 														String name = in.readUTF();
 														String value = in.readNullUTF();
@@ -3141,7 +3142,7 @@ public abstract class MasterServer {
 														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) in.readNullUTF(); // assignedTo
 														if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
 															int size = in.readCompressedInt();
-															contactEmails = new LinkedHashSet<>(size*4/3+1);
+															contactEmails = AoCollections.newLinkedHashSet(size);
 															for(int i = 0; i < size; i++) {
 																contactEmails.add(Email.valueOf(in.readUTF()));
 															}
@@ -8710,7 +8711,7 @@ public abstract class MasterServer {
 										{
 											int bind = in.readCompressedInt();
 											int numZones = in.readCompressedInt();
-											Set<FirewallZone.Name> firewalldZones = new LinkedHashSet<>(numZones*4/3+1);
+											Set<FirewallZone.Name> firewalldZones = AoCollections.newLinkedHashSet(numZones);
 											for(int i = 0; i < numZones; i++) {
 												FirewallZone.Name name = FirewallZone.Name.valueOf(in.readUTF());
 												if(!firewalldZones.add(name)) {
@@ -8952,7 +8953,7 @@ public abstract class MasterServer {
 											Set<Email> contactEmails;
 											if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
 												int size = in.readCompressedInt();
-												contactEmails = new LinkedHashSet<>(size*4/3+1);
+												contactEmails = AoCollections.newLinkedHashSet(size);
 												for(int i = 0; i < size; i++) {
 													contactEmails.add(Email.valueOf(in.readUTF()));
 												}
@@ -10206,18 +10207,18 @@ public abstract class MasterServer {
 										}
 									}
 								}
-							} catch(RuntimeException | ValidationException | IOException err) {
-								if(conn.rollback()) {
-									connRolledBack=true;
-									invalidateList=null;
-								}
-								throw err;
 							} catch(SQLException err) {
 								if(conn.rollbackAndClose()) {
 									connRolledBack=true;
 									invalidateList=null;
 								}
 								throw err;
+							} catch(Throwable t) {
+								if(conn.rollback()) {
+									connRolledBack=true;
+									invalidateList=null;
+								}
+								throw t;
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}
@@ -10238,9 +10239,6 @@ public abstract class MasterServer {
 							}
 							out.writeCompressedInt(-1);
 						}
-					} catch(RuntimeException err) {
-						logger.log(Level.SEVERE, null, err);
-						keepOpen = false;
 					} catch(SQLException err) {
 						if(logSQLException) logger.log(Level.SEVERE, null, err);
 						String message=err.getMessage();
@@ -10258,6 +10256,12 @@ public abstract class MasterServer {
 						out.writeByte(AoservProtocol.IO_EXCEPTION);
 						out.writeUTF(message==null?"":message);
 						keepOpen = false; // Close on IOException
+					} catch(ThreadDeath td) {
+						keepOpen = false;
+						throw td;
+					} catch(Throwable t) {
+						logger.log(Level.SEVERE, null, t);
+						keepOpen = false;
 					} finally {
 						if(currentThread.getPriority()!=Thread.NORM_PRIORITY) {
 							currentThread.setPriority(Thread.NORM_PRIORITY);
@@ -10865,7 +10869,7 @@ public abstract class MasterServer {
 			if(masterServers == null) masterServers = new HashMap<>();
 			UserHost[] mss = masterServers.get(user);
 			if(mss != null) return mss;
-			return db.query(
+			return db.queryCall(
 				(ResultSet results) -> {
 					List<UserHost> v = new ArrayList<>();
 					while(results.next()) {
@@ -10888,7 +10892,7 @@ public abstract class MasterServer {
 		synchronized(masterUsersLock) {
 			if(masterUsers == null) {
 				masterUsers = Collections.unmodifiableMap(
-					db.query(
+					db.queryCall(
 						results -> {
 							Map<com.aoindustries.aoserv.client.account.User.Name,User> table = new HashMap<>();
 							while(results.next()) {
@@ -10918,7 +10922,7 @@ public abstract class MasterServer {
 		synchronized(masterHostsLock) {
 			myMasterHosts = masterHosts;
 			if(myMasterHosts == null) {
-				myMasterHosts = masterHosts = db.query(
+				myMasterHosts = masterHosts = db.queryCall(
 					results -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> table = new HashMap<>();
 						while(results.next()) {

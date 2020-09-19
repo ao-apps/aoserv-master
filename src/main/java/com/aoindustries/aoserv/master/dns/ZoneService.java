@@ -122,7 +122,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
 	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.query(
+		return conn.queryCall(
 			(ResultSet results) -> {
 				try {
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();

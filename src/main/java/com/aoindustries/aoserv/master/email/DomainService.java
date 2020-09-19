@@ -137,7 +137,7 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
 	@Override
 	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
-		return conn.query(
+		return conn.queryCall(
 			(ResultSet results) -> {
 				try {
 					Map<DomainName,Set<Account.Name>> map = new HashMap<>();

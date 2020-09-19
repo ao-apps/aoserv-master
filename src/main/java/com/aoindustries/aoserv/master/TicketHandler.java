@@ -1652,6 +1652,7 @@ final public class TicketHandler /*implements Runnable*/ {
 	 */
 	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==25 && (hour&3)==3;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!cronDaemonAdded) {
@@ -1913,21 +1914,16 @@ final public class TicketHandler /*implements Runnable*/ {
 										if(store.isConnected()) store.close();
 									}
 								}
-							} catch(RuntimeException err) {
-								if(conn.rollback()) {
-									connRolledBack=true;
-								}
-								throw err;
-							} catch(IOException err) {
-								if(conn.rollback()) {
-									connRolledBack=true;
-								}
-								throw err;
 							} catch(SQLException err) {
 								if(conn.rollbackAndClose()) {
 									connRolledBack=true;
 								}
 								throw err;
+							} catch(Throwable t) {
+								if(conn.rollback()) {
+									connRolledBack=true;
+								}
+								throw t;
 							} finally {
 								if(!connRolledBack && !conn.isClosed()) conn.commit();
 							}

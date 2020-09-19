@@ -177,7 +177,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal) throws SQLException {
-		return conn.query(
+		return conn.queryCall(
 			(ResultSet results) -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
@@ -202,7 +202,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal, String providerId) throws SQLException {
-		return conn.query(
+		return conn.queryCall(
 			(ResultSet results) -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {

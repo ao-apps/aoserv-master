@@ -42,6 +42,8 @@ import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.Throwables;
+import com.aoindustries.sql.Connections;
 import com.aoindustries.util.InternUtils;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
@@ -50,7 +52,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -559,9 +560,7 @@ final public class LinuxAccountHandler {
 	 */
 	public static Group.Name getGroupByGid(DatabaseConnection conn, int linuxServer, int gid) throws SQLException {
 		return conn.queryObject(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true,
-			false,
+			Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 			ObjectFactories.groupNameFactory,
 			"select name from linux.\"GroupServer\" where ao_server=? and gid=?",
 			linuxServer,
@@ -732,6 +731,7 @@ final public class LinuxAccountHandler {
 		}
 	}
 
+	@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch"})
 	static class SystemUser {
 
 		static final int ANY_SYSTEM_UID = -1;
@@ -830,9 +830,7 @@ final public class LinuxAccountHandler {
 				}
 			} catch(Throwable t) {
 				t.printStackTrace(System.err);
-				if(t instanceof RuntimeException) throw (RuntimeException)t;
-				if(t instanceof Error) throw (Error)t;
-				throw new RuntimeException(t);
+				throw Throwables.wrap(t, ExceptionInInitializerError.class, ExceptionInInitializerError::new);
 			}
 		}
 
@@ -2285,7 +2283,6 @@ final public class LinuxAccountHandler {
 
 	// TODO: Is this still relevant?
 	public static List<Account.Name> getAccountsForGroupUser(DatabaseConnection conn, int groupUser) throws IOException, SQLException {
-		// TODO: Review other queryCollection that can be queryList
 		return conn.queryList(
 			ObjectFactories.accountNameFactory,
 		   "select\n"

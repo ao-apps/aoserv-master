@@ -25,6 +25,7 @@ package com.aoindustries.aoserv.master;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
@@ -35,7 +36,6 @@ import com.aoindustries.util.logging.ProcessTimer;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -68,6 +68,7 @@ final public class ClusterHandler implements CronJob {
 
 	private static boolean started=false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -147,6 +148,7 @@ final public class ClusterHandler implements CronJob {
 	 */
 	private static Map<Integer,Set<Integer>> autoMappings = Collections.emptyMap();
 
+	@SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter") // private only
 	private static void setMappings(
 		Map<Integer,Set<Integer>> newPrimaryMappings,
 		Map<Integer,Set<Integer>> newSecondaryMappings,
@@ -269,6 +271,7 @@ final public class ClusterHandler implements CronJob {
 	}
 
 	private static final Object updateMappingsLock = new Object();
+	@SuppressWarnings({"UseSpecificCatch", "TooBroadCatch", "SleepWhileHoldingLock", "SleepWhileInLoop"})
 	private static void updateMappings() {
 		synchronized(updateMappingsLock) {
 			try {
@@ -288,7 +291,7 @@ final public class ClusterHandler implements CronJob {
 					// Query the servers in parallel
 					final MasterDatabase database = MasterDatabase.getDatabase();
 					IntList xenPhysicalServers = NetHostHandler.getEnabledXenPhysicalServers(database);
-					Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = new HashMap<>(xenPhysicalServers.size()*4/3+1);
+					Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = AoCollections.newHashMap(xenPhysicalServers.size());
 					for(final Integer xenPhysicalServer : xenPhysicalServers) {
 						futures.put(
 							xenPhysicalServer,
@@ -300,8 +303,8 @@ final public class ClusterHandler implements CronJob {
 										AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
 										// Get the DRBD states
 										List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
-										Set<Integer> primaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
-										Set<Integer> secondaryMapping = new HashSet<>(drbdReports.size()*4/3+1);
+										Set<Integer> primaryMapping = AoCollections.newHashSet(drbdReports.size());
+										Set<Integer> secondaryMapping = AoCollections.newHashSet(drbdReports.size());
 										for(Server.DrbdReport drbdReport : drbdReports) {
 											// Look for primary mappings
 											if(
@@ -340,7 +343,7 @@ final public class ClusterHandler implements CronJob {
 										}
 										// Get the auto-start list
 										Set<String> autoStartList = daemonConnnector.getXenAutoStartLinks();
-										Set<Integer> autoMapping = new HashSet<>(autoStartList.size()*4/3+1);
+										Set<Integer> autoMapping = AoCollections.newHashSet(autoStartList.size());
 										for(String serverName : autoStartList) {
 											autoMapping.add(
 												NetHostHandler.getHostForPackageAndName(
@@ -371,9 +374,9 @@ final public class ClusterHandler implements CronJob {
 							})
 						);
 					}
-					Map<Integer,Set<Integer>> newPrimaryMappings = new HashMap<>(futures.size()*4/3+1);
-					Map<Integer,Set<Integer>> newSecondaryMappings = new HashMap<>(futures.size()*4/3+1);
-					Map<Integer,Set<Integer>> newAutoMappings = new HashMap<>(futures.size()*4/3+1);
+					Map<Integer,Set<Integer>> newPrimaryMappings = AoCollections.newHashMap(futures.size());
+					Map<Integer,Set<Integer>> newSecondaryMappings = AoCollections.newHashMap(futures.size());
+					Map<Integer,Set<Integer>> newAutoMappings = AoCollections.newHashMap(futures.size());
 					for(Map.Entry<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
 						Integer xenPhysicalServer = future.getKey();
 						try {

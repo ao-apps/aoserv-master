@@ -283,8 +283,7 @@ final public class BillingTransactionHandler {
 		Account.Name account
 	) throws IOException, SQLException {
 		return Monies.of(
-			conn.queryCollection(
-				new ArrayList<>(),
+			conn.queryList(
 				ObjectFactories.moneyFactory,
 				"SELECT\n"
 				+ "  t.\"rate.currency\"\n"
@@ -556,7 +555,7 @@ final public class BillingTransactionHandler {
 				params.add(dbValue);
 			}
 
-			Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+			Connection dbConn = conn.getConnection(true);
 			try (
 				PreparedStatement pstmt = dbConn.prepareStatement(
 					sql.toString(),

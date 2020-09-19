@@ -163,6 +163,7 @@ final public class SignupHandler {
 
 	private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute==32 && hour==6;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!cronDaemonAdded) {
@@ -180,10 +181,11 @@ final public class SignupHandler {
 						}
 
 						@Override
+						@SuppressWarnings("UseSpecificCatch")
 						public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 							try {
 								InvalidateList invalidateList = new InvalidateList();
-								MasterDatabase.getDatabase().transaction(IOException.class, conn -> {
+								MasterDatabase.getDatabase().run(IOException.class, conn -> {
 									if(conn.update("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
 										invalidateList.addTable(
 											conn,
@@ -205,10 +207,10 @@ final public class SignupHandler {
 										conn.rollback();
 									}
 								});
-							} catch(ThreadDeath TD) {
-								throw TD;
-							} catch(Throwable T) {
-								logger.log(Level.SEVERE, null, T);
+							} catch(ThreadDeath td) {
+								throw td;
+							} catch(Throwable t) {
+								logger.log(Level.SEVERE, null, t);
 							}
 						}
 

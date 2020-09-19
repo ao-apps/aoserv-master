@@ -28,12 +28,12 @@ import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -401,8 +401,8 @@ final public class NetBindHandler {
 			}
 		} else {
 			// Find the set that exists
-			Set<FirewallZone.Name> existing = conn.queryCollection(
-				new HashSet<>(),
+			Set<FirewallZone.Name> existing = conn.queryNewCollection(
+				AoCollections::newHashSet,
 				ObjectFactories.firewallZoneNameFactory,
 				"select\n"
 				+ "  fz.\"name\"\n"

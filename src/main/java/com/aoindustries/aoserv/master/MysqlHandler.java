@@ -35,6 +35,7 @@ import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
@@ -44,9 +45,7 @@ import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -531,8 +530,8 @@ final public class MysqlHandler {
 		String template_added
 	) throws IOException, SQLException {
 		// Load the entire list of mysql database names
-		Set<Database.Name> names = conn.queryCollection(
-			new HashSet<>(),
+		Set<Database.Name> names = conn.queryNewCollection(
+			AoCollections::newHashSet,
 			ObjectFactories.mysqlDatabaseNameFactory,
 			"select name from mysql.\"Database\" group by name"
 		);
@@ -686,8 +685,7 @@ final public class MysqlHandler {
 		}
 
 		// Remove the mysql_db_user entries
-		List<Account.Name> dbUserAccounts = conn.queryCollection(
-			new ArrayList<>(),
+		List<Account.Name> dbUserAccounts = conn.queryList(
 			ObjectFactories.accountNameFactory,
 			"select\n"
 			+ "  pk.accounting\n"

@@ -30,6 +30,7 @@ import com.aoindustries.aoserv.client.postgresql.Database;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
@@ -37,7 +38,6 @@ import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -438,8 +438,8 @@ final public class PostgresqlHandler {
 		String template_added
 	) throws IOException, SQLException {
 		// Load the entire list of postgres database names
-		Set<Database.Name> names = conn.queryCollection(
-			new HashSet<>(),
+		Set<Database.Name> names = conn.queryNewCollection(
+			AoCollections::newHashSet,
 			ObjectFactories.postgresqlDatabaseNameFactory,
 			"select name from postgresql.\"Database\" group by name"
 		);

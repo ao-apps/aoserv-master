@@ -33,6 +33,7 @@ import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.payment.CountryCode;
 import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.collections.SortedArrayList;
 import com.aoindustries.dbc.DatabaseAccess;
@@ -52,7 +53,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -223,7 +223,7 @@ final public class AccountHandler {
 	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, Permission.Name permission) throws IOException, SQLException {
 		synchronized(cachedPermissionsLock) {
 			if(cachedPermissions == null) {
-				cachedPermissions = conn.query(
+				cachedPermissions = conn.queryCall(
 					(ResultSet results) -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name,Set<String>> newCache = new HashMap<>();
 						while(results.next()) {
@@ -262,14 +262,13 @@ final public class AccountHandler {
 		synchronized(userAccountsLock) {
 			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 			if(userAccounts == null) userAccounts = new HashMap<>();
-			List<Account.Name> SV=userAccounts.get(currentAdministrator);
-			if(SV==null) {
-				List<Account.Name> V;
+			List<Account.Name> accounts = userAccounts.get(currentAdministrator);
+			if(accounts == null) {
 				User mu = MasterServer.getUser(db, currentAdministrator);
 				if(mu!=null) {
 					if(MasterServer.getUserHosts(db, currentAdministrator).length!=0) {
-						V = db.queryCollection(
-							new ArrayList<>(),
+						accounts = db.queryNewCollection(
+							AoCollections::newSortedArrayList,
 							ObjectFactories.accountNameFactory,
 							"select distinct\n"
 							+ "  bu.accounting\n"
@@ -284,15 +283,15 @@ final public class AccountHandler {
 							currentAdministrator
 						);
 					} else {
-						V = db.queryCollection(
-							new ArrayList<>(),
+						accounts = db.queryNewCollection(
+							AoCollections::newSortedArrayList,
 							ObjectFactories.accountNameFactory,
 							"select accounting from account.\"Account\""
 						);
 					}
 				} else {
-					V = db.queryCollection(
-						new ArrayList<>(),
+					accounts = db.queryNewCollection(
+						AoCollections::newSortedArrayList,
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  bu1.accounting\n"
@@ -309,13 +308,9 @@ final public class AccountHandler {
 						currentAdministrator
 					);
 				}
-
-				int size=V.size();
-				SV=new SortedArrayList<>();
-				for(int c=0;c<size;c++) SV.add(V.get(c));
-				userAccounts.put(currentAdministrator, SV);
+				userAccounts.put(currentAdministrator, accounts);
 			}
-			return SV;
+			return accounts;
 		}
 	}
 
@@ -860,8 +855,8 @@ final public class AccountHandler {
 		Account.Name template
 	) throws IOException, SQLException {
 		// Load the entire list of accounting codes
-		Set<Account.Name> codes=conn.queryCollection(
-			new HashSet<>(),
+		Set<Account.Name> codes = conn.queryNewCollection(
+			AoCollections::newHashSet,
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"Account\""
 		);
@@ -1527,7 +1522,7 @@ final public class AccountHandler {
 	public static Administrator getAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user) throws IOException, SQLException {
 		synchronized(administratorsLock) {
 			if(administrators == null) {
-				administrators = db.query(
+				administrators = db.queryCall(
 					(ResultSet results) -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name,Administrator> table=new HashMap<>();
 						while(results.next()) {
@@ -1577,9 +1572,9 @@ final public class AccountHandler {
 		);
 	}
 
+	// TODO: Many uses of List should be Set when the elements are unique
 	public static List<Account.Name> getChildAccounts(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.queryCollection(
-			new ArrayList<>(),
+		return conn.queryList(
 			ObjectFactories.accountNameFactory,
 			"select accounting from account.\"Account\" where parent=?",
 			account
@@ -1588,8 +1583,8 @@ final public class AccountHandler {
 
 	// TODO: Seems unused 20181218
 	public static Set<Email> getTechnicalEmail(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
-		return conn.queryCollection(
-			new LinkedHashSet<>(),
+		return conn.queryNewCollection(
+			AoCollections::newLinkedHashSet,
 			ObjectFactories.emailFactory,
 			"SELECT\n"
 			+ "  technical_email\n"
@@ -1672,7 +1667,7 @@ final public class AccountHandler {
 	 * @return  a <code>HashMap</code> of <code>ArrayList</code>
 	 */
 	public static Map<Account.Name,List<String>> getAccountContacts(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.query(
+		return conn.queryCall(
 			(ResultSet results) -> {
 				// Load the list of account.Account and their contacts
 				Map<Account.Name,List<String>> accountContacts = new HashMap<>();
@@ -1752,8 +1747,7 @@ final public class AccountHandler {
 				String domain=addy.substring(pos+1);
 				if(domain.length()>0) {
 					// Look for matches in email.Domain, 5 points each
-					List<Account.Name> domain_accounts = conn.queryCollection(
-						new ArrayList<>(),
+					List<Account.Name> domain_accounts = conn.queryList(
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  pk.accounting\n"
@@ -1769,8 +1763,7 @@ final public class AccountHandler {
 						addWeight(accountWeights, account, 5);
 					}
 					// Look for matches in web.VirtualHostName, 1 point each
-					List<Account.Name> site_accounts = conn.queryCollection(
-						new ArrayList<>(),
+					List<Account.Name> site_accounts = conn.queryList(
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  pk.accounting\n"
@@ -1790,8 +1783,7 @@ final public class AccountHandler {
 						addWeight(accountWeights, account, 1);
 					}
 					// Look for matches in dns.Zone, 1 point each
-					List<Account.Name> zone_accounts = conn.queryCollection(
-						new ArrayList<>(),
+					List<Account.Name> zone_accounts = conn.queryList(
 						ObjectFactories.accountNameFactory,
 						"select\n"
 						+ "  pk.accounting\n"
