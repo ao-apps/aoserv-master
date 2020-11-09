@@ -236,6 +236,7 @@ final public class WhoisHistoryService implements MasterService {
 		// TODO: This should probably go in a dns.monitoring schema, and be watched by NOC monitoring, with some older
 		//       records left around for billing purposes like done here.
 		@Override
+		@SuppressWarnings("try")
 		public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 			try {
 				try (
@@ -252,184 +253,168 @@ final public class WhoisHistoryService implements MasterService {
 					MasterServer.executorService.submit(timer);
 
 					// Start the transaction
-					try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+					try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
 						InvalidateList invalidateList = new InvalidateList();
-						boolean connRolledBack = false;
-						try {
-							/*
-							 * Remove old records first
-							 */
-							cleanup(conn, invalidateList);
-							conn.commit();
-							MasterServer.invalidateTables(conn, invalidateList, null);
-							invalidateList.reset();
+						/*
+						 * Remove old records first
+						 */
+						cleanup(conn, invalidateList);
+						conn.commit();
+						MasterServer.invalidateTables(conn, invalidateList, null);
+						invalidateList.reset();
 
-							/*
-							 * The add new records
-							 */
-							// Get the set of unique registrable domains and accounts in the system
-							Map<DomainName,Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
-							conn.close(); // Don't hold database connection while sleeping
+						/*
+						 * The add new records
+						 */
+						// Get the set of unique registrable domains and accounts in the system
+						Map<DomainName,Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
+						conn.close(); // Don't hold database connection while sleeping
 
-							// Find the number of distinct registrable domains
-							int registrableDomainCount = registrableDomains.size();
-							if(registrableDomainCount > 0) {
-								// Compute target sleep time as if we have to do all, despite we will probably not do all.
-								// This keeps the scheduling such that the cron job will not slow down too much, thus having to catch-up later
-								final long targetSleepTime = PASS_COMPLETION_TARGET / registrableDomainCount;
-								if(DEBUG) {
-									System.out.println(
-										WhoisHistoryService.class.getSimpleName()
-										+ ": Target sleep time for "
-										+ registrableDomainCount
-										+ " registrable "
-										+ (registrableDomainCount==1 ? "domain" : "domains")
-										+ " is " + targetSleepTime + " ms"
-									);
-								}
-								
-								// Sort the domains by those never looked up first, then by their order from oldest to newest/
-								// The list is not pruned yet, because it might become time while slowly processing the list
-								// Timestamp null when never looked-up
-								Map<DomainName,Timestamp> lookupOrder;
-								{
-									// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
-									final Map<DomainName,Timestamp> lastChecked = conn.queryCall(
-										(ResultSet results) -> {
-											try {
-												Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
-												int oldNotUsedCount = 0;
-												while(results.next()) {
-													DomainName registrableDomain = DomainName.valueOf(results.getString(1));
-													if(registrableDomains.keySet().contains(registrableDomain)) {
-														map.put(
-															registrableDomain,
-															results.getTimestamp(2)
-														);
-													} else {
-														oldNotUsedCount++;
-													}
+						// Find the number of distinct registrable domains
+						int registrableDomainCount = registrableDomains.size();
+						if(registrableDomainCount > 0) {
+							// Compute target sleep time as if we have to do all, despite we will probably not do all.
+							// This keeps the scheduling such that the cron job will not slow down too much, thus having to catch-up later
+							final long targetSleepTime = PASS_COMPLETION_TARGET / registrableDomainCount;
+							if(DEBUG) {
+								System.out.println(
+									WhoisHistoryService.class.getSimpleName()
+									+ ": Target sleep time for "
+									+ registrableDomainCount
+									+ " registrable "
+									+ (registrableDomainCount==1 ? "domain" : "domains")
+									+ " is " + targetSleepTime + " ms"
+								);
+							}
+
+							// Sort the domains by those never looked up first, then by their order from oldest to newest/
+							// The list is not pruned yet, because it might become time while slowly processing the list
+							// Timestamp null when never looked-up
+							Map<DomainName,Timestamp> lookupOrder;
+							{
+								// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
+								final Map<DomainName,Timestamp> lastChecked = conn.queryCall(
+									(ResultSet results) -> {
+										try {
+											Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
+											int oldNotUsedCount = 0;
+											while(results.next()) {
+												DomainName registrableDomain = DomainName.valueOf(results.getString(1));
+												if(registrableDomains.keySet().contains(registrableDomain)) {
+													map.put(
+														registrableDomain,
+														results.getTimestamp(2)
+													);
+												} else {
+													oldNotUsedCount++;
 												}
-												if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
-												return map;
-											} catch(ValidationException e) {
-												throw new SQLException(e);
 											}
-										},
-										// TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
-										"select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
-									);
-									lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
-									for(DomainName registrableDomain : registrableDomains.keySet()) {
-										if(!lastChecked.containsKey(registrableDomain)) {
-											lookupOrder.put(registrableDomain, null);
+											if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
+											return map;
+										} catch(ValidationException e) {
+											throw new SQLException(e);
 										}
-									}
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Number never checked: " + lookupOrder.size());
-									lookupOrder.putAll(lastChecked);
-									assert registrableDomains.keySet().equals(lookupOrder.keySet());
-								}
-								// Performs the whois lookup once per unique registrable domain
-								for(Map.Entry<DomainName,Timestamp> entry : lookupOrder.entrySet()) {
-									DomainName registrableDomain = entry.getKey();
-									Timestamp time = entry.getValue();
-									boolean checkNow;
-									if(time == null) {
-										checkNow = true;
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked, checkNow: " + checkNow);
-									} else {
-										long timeSince = System.currentTimeMillis() - time.getTime();
-										checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + ", checkNow: " + checkNow);
-									}
-									// Since they are in order by time, quite once the first one to not check is found
-									if(!checkNow) {
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": checkNow is false, it is not time for any remaining in the list, breaking loop now");
-										break;
-									}
-									long startTime = System.currentTimeMillis();
-									Integer exitStatus;
-									String output;
-									String error;
-									try {
-										String lower = registrableDomain.toLowerCase();
-										ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
-										exitStatus = result.getExitVal();
-										output = result.getStdout();
-										error = result.getStderr();
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
-									} catch(ThreadDeath td) {
-										throw td;
-									} catch(Throwable t) {
-										logger.log(Level.FINE, null, t);
-										exitStatus = null;
-										output = "";
-										error = t.toString();
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
-									}
-									// update database
-									// TODO: Store the parsed nameservers, too?  At least for when is success.
-									// This could be a batch, but this is short and simple
-									int whoisHistory = conn.updateInt(
-										"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
-										registrableDomain,
-										exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
-										output,
-										error
-									);
-									Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
-									for(Account.Name account : accounts) {
-										conn.update(
-											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
-											whoisHistory,
-											account
-										);
-									}
-									invalidateList.addTable(conn,
-										Table.TableID.WhoisHistory,
-										accounts,
-										InvalidateList.allHosts,
-										false
-									);
-									invalidateList.addTable(conn,
-										Table.TableID.WhoisHistoryAccount,
-										accounts,
-										InvalidateList.allHosts,
-										false
-									);
-									conn.commit();
-									MasterServer.invalidateTables(conn, invalidateList, null);
-									conn.close(); // Don't hold database connection while sleeping
-									invalidateList.reset();
-									try {
-										long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
-										if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
-											sleepTime = LOOKUP_SLEEP_MINIMUM;
-										}
-										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
-										Thread.sleep(sleepTime);
-									} catch(InterruptedException e) {
-										logger.log(Level.WARNING, null, e);
+									},
+									// TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
+									"select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
+								);
+								lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
+								for(DomainName registrableDomain : registrableDomains.keySet()) {
+									if(!lastChecked.containsKey(registrableDomain)) {
+										lookupOrder.put(registrableDomain, null);
 									}
 								}
-							} else {
-								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
+								if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": Number never checked: " + lookupOrder.size());
+								lookupOrder.putAll(lastChecked);
+								assert registrableDomains.keySet().equals(lookupOrder.keySet());
 							}
-						} catch(SQLException err) {
-							if(conn.rollbackAndClose()) {
-								connRolledBack=true;
-								invalidateList=null;
+							// Performs the whois lookup once per unique registrable domain
+							for(Map.Entry<DomainName,Timestamp> entry : lookupOrder.entrySet()) {
+								DomainName registrableDomain = entry.getKey();
+								Timestamp time = entry.getValue();
+								boolean checkNow;
+								if(time == null) {
+									checkNow = true;
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked, checkNow: " + checkNow);
+								} else {
+									long timeSince = System.currentTimeMillis() - time.getTime();
+									checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + ", checkNow: " + checkNow);
+								}
+								// Since they are in order by time, quite once the first one to not check is found
+								if(!checkNow) {
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": checkNow is false, it is not time for any remaining in the list, breaking loop now");
+									break;
+								}
+								long startTime = System.currentTimeMillis();
+								Integer exitStatus;
+								String output;
+								String error;
+								try {
+									String lower = registrableDomain.toLowerCase();
+									ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
+									exitStatus = result.getExitVal();
+									output = result.getStdout();
+									error = result.getStderr();
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
+								} catch(ThreadDeath td) {
+									throw td;
+								} catch(Throwable t) {
+									logger.log(Level.FINE, null, t);
+									exitStatus = null;
+									output = "";
+									error = t.toString();
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
+								}
+								// update database
+								// TODO: Store the parsed nameservers, too?  At least for when is success.
+								// This could be a batch, but this is short and simple
+								int whoisHistory = conn.updateInt(
+									"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
+									registrableDomain,
+									exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
+									output,
+									error
+								);
+								Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
+								for(Account.Name account : accounts) {
+									conn.update(
+										"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
+										whoisHistory,
+										account
+									);
+								}
+								invalidateList.addTable(conn,
+									Table.TableID.WhoisHistory,
+									accounts,
+									InvalidateList.allHosts,
+									false
+								);
+								invalidateList.addTable(conn,
+									Table.TableID.WhoisHistoryAccount,
+									accounts,
+									InvalidateList.allHosts,
+									false
+								);
+								conn.commit();
+								MasterServer.invalidateTables(conn, invalidateList, null);
+								conn.close(); // Don't hold database connection while sleeping
+								invalidateList.reset();
+								try {
+									long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
+									if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
+										sleepTime = LOOKUP_SLEEP_MINIMUM;
+									}
+									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
+									Thread.sleep(sleepTime);
+								} catch(InterruptedException e) {
+									logger.log(Level.WARNING, null, e);
+								}
 							}
-							throw err;
-						} catch(Throwable t) {
-							if(conn.rollback()) {
-								connRolledBack=true;
-								invalidateList=null;
-							}
-							throw t;
-						} finally {
-							if(!connRolledBack && !conn.isClosed()) conn.commit();
+						} else {
+							if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
 						}
+						conn.commit();
 						MasterServer.invalidateTables(conn, invalidateList, null);
 					}
 				}

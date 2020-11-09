@@ -43,7 +43,7 @@ import com.aoindustries.io.FifoFileInputStream;
 import com.aoindustries.io.FifoFileOutputStream;
 import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.lang.Strings;
-import com.aoindustries.sql.AOConnectionPool;
+import com.aoindustries.sql.pool.AOConnectionPool;
 import com.aoindustries.util.BufferManager;
 import com.aoindustries.util.ThreadUtility;
 import java.io.IOException;

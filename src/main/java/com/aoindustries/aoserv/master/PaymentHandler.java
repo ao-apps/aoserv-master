@@ -1522,397 +1522,381 @@ final public class PaymentHandler /*implements CronJob*/ {
 				}
 
 				// Start the transaction
-				try (DatabaseConnection conn=MasterDatabase.getDatabase().createDatabaseConnection()) {
-					InvalidateList invalidateList=new InvalidateList();
-					boolean connRolledBack=false;
-					try {
-						// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-						List<AutomaticPayment> automaticPayments = conn.queryCall(
-							(ResultSet results) -> {
-								try {
-									List<AutomaticPayment> list = new ArrayList<>();
-									SortedMap<Currency,BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
-									// Look for duplicate accounting codes and report a warning
-									Account.Name lastAccounting = null;
-									while(results.next()) {
-										Account.Name account = Account.Name.valueOf(results.getString("accounting"));
-										if(account.equals(lastAccounting)) {
-											logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", account);
-										} else {
-											lastAccounting = account;
-											Currency currency = Currency.getInstance(results.getString("currency"));
-											BigDecimal endofmonth = results.getBigDecimal("endofmonth");
-											if(endofmonth == null) endofmonth = BigDecimal.ZERO;
-											BigDecimal current = results.getBigDecimal("current");
-											if(current == null) current = BigDecimal.ZERO;
-											if(
-												endofmonth.compareTo(BigDecimal.ZERO) > 0
-												&& current.compareTo(BigDecimal.ZERO) > 0
-											) {
-												BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
-												BigDecimal total = totals.get(currency);
-												total = (total == null) ? amount : total.add(amount);
-												totals.put(currency, total);
-												
-												Byte expirationMonth = SafeMath.castByte(results.getShort("expirationMonth"));
-												if(results.wasNull()) expirationMonth = null;
-												Short expirationYear = results.getShort("expirationYear");
-												if(results.wasNull()) expirationYear = null;
-												list.add(
-													new AutomaticPayment(
-														account,
-														new Money(currency, amount),
-														results.getInt("cc_id"),
-														results.getString("cardInfo"),
-														expirationMonth,
-														expirationYear,
-														results.getString("principalName"),
-														results.getString("groupName"),
-														results.getString("cc_providerUniqueId"),
-														results.getString("firstName"),
-														results.getString("lastName"),
-														results.getString("companyName"),
-														results.getString("email"),
-														results.getString("phone"),
-														results.getString("fax"),
-														results.getString("customerId"),
-														results.getString("customerTaxId"),
-														results.getString("streetAddress1"),
-														results.getString("streetAddress2"),
-														results.getString("city"),
-														results.getString("state"),
-														results.getString("postalCode"),
-														results.getString("countryCode"),
-														results.getString("description"),
-														results.getString("ccp_providerId"),
-														results.getString("ccp_className"),
-														results.getString("ccp_param1"),
-														results.getString("ccp_param2"),
-														results.getString("ccp_param3"),
-														results.getString("ccp_param4")
-													)
-												);
-											}
-										}
-									}
-									if(totals.isEmpty()) {
-										assert list.isEmpty();
-										System.out.println("Nothing to process");
+				try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+					InvalidateList invalidateList = new InvalidateList();
+					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
+					List<AutomaticPayment> automaticPayments = conn.queryCall(
+						(ResultSet results) -> {
+							try {
+								List<AutomaticPayment> list = new ArrayList<>();
+								SortedMap<Currency,BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
+								// Look for duplicate accounting codes and report a warning
+								Account.Name lastAccounting = null;
+								while(results.next()) {
+									Account.Name account = Account.Name.valueOf(results.getString("accounting"));
+									if(account.equals(lastAccounting)) {
+										logger.log(Level.WARNING, "More than one credit card marked as automatic for accounting={0}, using the first one found", account);
 									} else {
-										for(Map.Entry<Currency,BigDecimal> entry : totals.entrySet()) {
-											System.out.println("Processing a total of " + new Money(entry.getKey(), entry.getValue()));
+										lastAccounting = account;
+										Currency currency = Currency.getInstance(results.getString("currency"));
+										BigDecimal endofmonth = results.getBigDecimal("endofmonth");
+										if(endofmonth == null) endofmonth = BigDecimal.ZERO;
+										BigDecimal current = results.getBigDecimal("current");
+										if(current == null) current = BigDecimal.ZERO;
+										if(
+											endofmonth.compareTo(BigDecimal.ZERO) > 0
+											&& current.compareTo(BigDecimal.ZERO) > 0
+										) {
+											BigDecimal amount = endofmonth.compareTo(current)<=0 ? endofmonth : current;
+											BigDecimal total = totals.get(currency);
+											total = (total == null) ? amount : total.add(amount);
+											totals.put(currency, total);
+
+											Byte expirationMonth = SafeMath.castByte(results.getShort("expirationMonth"));
+											if(results.wasNull()) expirationMonth = null;
+											Short expirationYear = results.getShort("expirationYear");
+											if(results.wasNull()) expirationYear = null;
+											list.add(
+												new AutomaticPayment(
+													account,
+													new Money(currency, amount),
+													results.getInt("cc_id"),
+													results.getString("cardInfo"),
+													expirationMonth,
+													expirationYear,
+													results.getString("principalName"),
+													results.getString("groupName"),
+													results.getString("cc_providerUniqueId"),
+													results.getString("firstName"),
+													results.getString("lastName"),
+													results.getString("companyName"),
+													results.getString("email"),
+													results.getString("phone"),
+													results.getString("fax"),
+													results.getString("customerId"),
+													results.getString("customerTaxId"),
+													results.getString("streetAddress1"),
+													results.getString("streetAddress2"),
+													results.getString("city"),
+													results.getString("state"),
+													results.getString("postalCode"),
+													results.getString("countryCode"),
+													results.getString("description"),
+													results.getString("ccp_providerId"),
+													results.getString("ccp_className"),
+													results.getString("ccp_param1"),
+													results.getString("ccp_param2"),
+													results.getString("ccp_param3"),
+													results.getString("ccp_param4")
+												)
+											);
 										}
 									}
-									return list;
-								} catch(ValidationException e) {
-									throw new SQLException(e.getLocalizedMessage(), e);
 								}
-							},
-							"select\n"
-							+ "  bu.accounting,\n"
-							+ "  c.\"currencyCode\" AS currency,\n"
-							+ "  endofmonth.balance AS endofmonth,\n"
-							+ "  current.balance AS current,\n"
-							+ "  cc.id as cc_id,\n"
-							+ "  cc.card_info as cardInfo,\n"
-							+ "  cc.\"expirationMonth\",\n"
-							+ "  cc.\"expirationYear\",\n"
-							+ "  cc.principal_name as \"principalName\",\n"
-							+ "  cc.group_name as \"groupName\",\n"
-							+ "  cc.provider_unique_id as \"cc_providerUniqueId\",\n"
-							+ "  cc.first_name as \"firstName\",\n"
-							+ "  cc.last_name as \"lastName\",\n"
-							+ "  cc.company_name as \"companyName\",\n"
-							+ "  cc.email,\n"
-							+ "  cc.phone,\n"
-							+ "  cc.fax,\n"
-							+ "  cc.\"customerId\",\n"
-							+ "  cc.customer_tax_id as \"customerTaxId\",\n"
-							+ "  cc.street_address1 as \"streetAddress1\",\n"
-							+ "  cc.street_address2 as \"streetAddress2\",\n"
-							+ "  cc.city,\n"
-							+ "  cc.state,\n"
-							+ "  cc.postal_code as \"postalCode\",\n"
-							+ "  cc.country_code as \"countryCode\",\n"
-							+ "  cc.description,\n"
-							+ "  ccp.provider_id as \"ccp_providerId\",\n"
-							+ "  ccp.class_name as \"ccp_className\",\n"
-							+ "  ccp.param1 as \"ccp_param1\",\n"
-							+ "  ccp.param2 as \"ccp_param2\",\n"
-							+ "  ccp.param3 as \"ccp_param3\",\n"
-							+ "  ccp.param4 as \"ccp_param4\"\n"
-							+ "from\n"
-							+ "  account.\"Account\" bu\n"
-							+ "  CROSS JOIN billing.\"Currency\" c\n"
-							+ "  INNER JOIN payment.\"CreditCard\" cc ON bu.accounting=cc.accounting\n"
-							+ "  INNER JOIN payment.\"Processor\" ccp ON cc.processor_id=ccp.provider_id\n"
-							+ "  LEFT JOIN (\n"
-							+ "    SELECT\n"
-							+ "      bu.accounting,\n"
-							+ "      tr.\"rate.currency\" AS currency,\n"
-							+ "      sum(\n"
-							+ "        round(\n"
-							+ "          tr.quantity * tr.\"rate.value\",\n"
-							+ "          c2.\"fractionDigits\"\n"
-							+ "        )\n"
-							+ "      ) AS balance\n"
-							+ "    FROM\n"
-							+ "                account.\"Account\"     bu\n"
-							+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
-							+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
-							+ "    WHERE\n"
-							+ "      tr.payment_confirmed != 'N'\n"
-							+ "      AND tr.time < ?\n"
-							+ "    GROUP BY\n"
-							+ "      bu.accounting,\n"
-							+ "      tr.\"rate.currency\"\n"
-							+ "  ) AS endofmonth ON (bu.accounting, c.\"currencyCode\")=(endofmonth.accounting, endofmonth.currency)\n"
-							+ "  LEFT JOIN (\n"
-							+ "    SELECT\n"
-							+ "      bu.accounting,\n"
-							+ "      tr.\"rate.currency\" AS currency,\n"
-							+ "      sum(\n"
-							+ "        round(\n"
-							+ "          tr.quantity * tr.\"rate.value\",\n"
-							+ "          c2.\"fractionDigits\"\n"
-							+ "        )\n"
-							+ "      ) AS balance\n"
-							+ "    FROM\n"
-							+ "                account.\"Account\"     bu\n"
-							+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
-							+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
-							+ "    WHERE\n"
-							+ "      tr.payment_confirmed != 'N'\n"
-							+ "    GROUP BY\n"
-							+ "      bu.accounting,\n"
-							+ "      tr.\"rate.currency\"\n"
-							+ "  ) AS current ON (bu.accounting, c.\"currencyCode\")=(current.accounting, current.currency)\n"
-							+ "WHERE\n"
-							+ "  cc.use_monthly\n"
-							+ "  AND cc.active\n"
-							+ "  AND ccp.enabled\n"
-							+ "  AND (\n"
-							+ "    endofmonth.balance IS NOT NULL\n"
-							+ "    OR current.balance IS NOT NULL\n"
-							+ "  )\n"
-							+ "ORDER BY\n"
-							+ "  bu.accounting,\n"
-							+ "  c.\"currencyCode\"",
-							new Timestamp(beginningOfNextMonth.getTimeInMillis())
-						);
-						// Only need to create the persistence once per DB transaction
-						MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
-						for(AutomaticPayment automaticPayment : automaticPayments) {
-							System.out.println("accounting="+automaticPayment.account);
-							System.out.println("    amount="+automaticPayment.amount);
-							// Find the processor
-							CreditCardProcessor processor = new CreditCardProcessor(
-								MerchantServicesProviderFactory.getMerchantServicesProvider(
-									automaticPayment.ccp_providerId,
-									automaticPayment.ccp_className,
-									automaticPayment.ccp_param1,
-									automaticPayment.ccp_param2,
-									automaticPayment.ccp_param3,
-									automaticPayment.ccp_param4
-								),
-								masterPersistenceMechanism
-							);
-							System.out.println("    processor="+processor.getProviderId());
-
-							// Add as pending transaction
-							String paymentTypeName;
-							String cardInfo = automaticPayment.cardInfo;
-							// TODO: Use some sort of shared API for this
-							if(
-								cardInfo.startsWith("34")
-								|| cardInfo.startsWith("37")
-								|| cardInfo.startsWith("3" + CreditCard.UNKNOWN_DIGIT)
-							) {
-								paymentTypeName = PaymentType.AMEX;
-							} else if(cardInfo.startsWith("60")) {
-								paymentTypeName = PaymentType.DISCOVER;
-							} else if(
-								cardInfo.startsWith("51")
-								|| cardInfo.startsWith("52")
-								|| cardInfo.startsWith("53")
-								|| cardInfo.startsWith("54")
-								|| cardInfo.startsWith("55")
-								|| cardInfo.startsWith("5" + CreditCard.UNKNOWN_DIGIT)
-							) {
-								paymentTypeName = PaymentType.MASTERCARD;
-							} else if(cardInfo.startsWith("4")) {
-								paymentTypeName = PaymentType.VISA;
-							} else {
-								paymentTypeName = null;
+								if(totals.isEmpty()) {
+									assert list.isEmpty();
+									System.out.println("Nothing to process");
+								} else {
+									for(Map.Entry<Currency,BigDecimal> entry : totals.entrySet()) {
+										System.out.println("Processing a total of " + new Money(entry.getKey(), entry.getValue()));
+									}
+								}
+								return list;
+							} catch(ValidationException e) {
+								throw new SQLException(e.getLocalizedMessage(), e);
 							}
-							int transID = BillingTransactionHandler.addTransaction(
-								conn,
-								invalidateList,
-								'T',
-								lastMicrosecondOfMonth,
-								automaticPayment.account,
-								automaticPayment.account,
-								MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
-								TransactionType.PAYMENT,
-								"Monthly automatic billing",
-								new BigDecimal("1.000"),
-								automaticPayment.amount.negate(),
-								paymentTypeName,
-								CreditCard.getCardNumberDisplay(cardInfo),
+						},
+						"select\n"
+						+ "  bu.accounting,\n"
+						+ "  c.\"currencyCode\" AS currency,\n"
+						+ "  endofmonth.balance AS endofmonth,\n"
+						+ "  current.balance AS current,\n"
+						+ "  cc.id as cc_id,\n"
+						+ "  cc.card_info as cardInfo,\n"
+						+ "  cc.\"expirationMonth\",\n"
+						+ "  cc.\"expirationYear\",\n"
+						+ "  cc.principal_name as \"principalName\",\n"
+						+ "  cc.group_name as \"groupName\",\n"
+						+ "  cc.provider_unique_id as \"cc_providerUniqueId\",\n"
+						+ "  cc.first_name as \"firstName\",\n"
+						+ "  cc.last_name as \"lastName\",\n"
+						+ "  cc.company_name as \"companyName\",\n"
+						+ "  cc.email,\n"
+						+ "  cc.phone,\n"
+						+ "  cc.fax,\n"
+						+ "  cc.\"customerId\",\n"
+						+ "  cc.customer_tax_id as \"customerTaxId\",\n"
+						+ "  cc.street_address1 as \"streetAddress1\",\n"
+						+ "  cc.street_address2 as \"streetAddress2\",\n"
+						+ "  cc.city,\n"
+						+ "  cc.state,\n"
+						+ "  cc.postal_code as \"postalCode\",\n"
+						+ "  cc.country_code as \"countryCode\",\n"
+						+ "  cc.description,\n"
+						+ "  ccp.provider_id as \"ccp_providerId\",\n"
+						+ "  ccp.class_name as \"ccp_className\",\n"
+						+ "  ccp.param1 as \"ccp_param1\",\n"
+						+ "  ccp.param2 as \"ccp_param2\",\n"
+						+ "  ccp.param3 as \"ccp_param3\",\n"
+						+ "  ccp.param4 as \"ccp_param4\"\n"
+						+ "from\n"
+						+ "  account.\"Account\" bu\n"
+						+ "  CROSS JOIN billing.\"Currency\" c\n"
+						+ "  INNER JOIN payment.\"CreditCard\" cc ON bu.accounting=cc.accounting\n"
+						+ "  INNER JOIN payment.\"Processor\" ccp ON cc.processor_id=ccp.provider_id\n"
+						+ "  LEFT JOIN (\n"
+						+ "    SELECT\n"
+						+ "      bu.accounting,\n"
+						+ "      tr.\"rate.currency\" AS currency,\n"
+						+ "      sum(\n"
+						+ "        round(\n"
+						+ "          tr.quantity * tr.\"rate.value\",\n"
+						+ "          c2.\"fractionDigits\"\n"
+						+ "        )\n"
+						+ "      ) AS balance\n"
+						+ "    FROM\n"
+						+ "                account.\"Account\"     bu\n"
+						+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
+						+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
+						+ "    WHERE\n"
+						+ "      tr.payment_confirmed != 'N'\n"
+						+ "      AND tr.time < ?\n"
+						+ "    GROUP BY\n"
+						+ "      bu.accounting,\n"
+						+ "      tr.\"rate.currency\"\n"
+						+ "  ) AS endofmonth ON (bu.accounting, c.\"currencyCode\")=(endofmonth.accounting, endofmonth.currency)\n"
+						+ "  LEFT JOIN (\n"
+						+ "    SELECT\n"
+						+ "      bu.accounting,\n"
+						+ "      tr.\"rate.currency\" AS currency,\n"
+						+ "      sum(\n"
+						+ "        round(\n"
+						+ "          tr.quantity * tr.\"rate.value\",\n"
+						+ "          c2.\"fractionDigits\"\n"
+						+ "        )\n"
+						+ "      ) AS balance\n"
+						+ "    FROM\n"
+						+ "                account.\"Account\"     bu\n"
+						+ "      LEFT JOIN billing.\"Transaction\" tr ON bu.accounting = tr.accounting\n"
+						+ "      LEFT JOIN billing.\"Currency\"    c2 ON tr.\"rate.currency\" = c2.\"currencyCode\"\n"
+						+ "    WHERE\n"
+						+ "      tr.payment_confirmed != 'N'\n"
+						+ "    GROUP BY\n"
+						+ "      bu.accounting,\n"
+						+ "      tr.\"rate.currency\"\n"
+						+ "  ) AS current ON (bu.accounting, c.\"currencyCode\")=(current.accounting, current.currency)\n"
+						+ "WHERE\n"
+						+ "  cc.use_monthly\n"
+						+ "  AND cc.active\n"
+						+ "  AND ccp.enabled\n"
+						+ "  AND (\n"
+						+ "    endofmonth.balance IS NOT NULL\n"
+						+ "    OR current.balance IS NOT NULL\n"
+						+ "  )\n"
+						+ "ORDER BY\n"
+						+ "  bu.accounting,\n"
+						+ "  c.\"currencyCode\"",
+						new Timestamp(beginningOfNextMonth.getTimeInMillis())
+					);
+					// Only need to create the persistence once per DB transaction
+					MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
+					for(AutomaticPayment automaticPayment : automaticPayments) {
+						System.out.println("accounting="+automaticPayment.account);
+						System.out.println("    amount="+automaticPayment.amount);
+						// Find the processor
+						CreditCardProcessor processor = new CreditCardProcessor(
+							MerchantServicesProviderFactory.getMerchantServicesProvider(
 								automaticPayment.ccp_providerId,
-								com.aoindustries.aoserv.client.billing.Transaction.WAITING_CONFIRMATION
-							);
-							conn.commit();
+								automaticPayment.ccp_className,
+								automaticPayment.ccp_param1,
+								automaticPayment.ccp_param2,
+								automaticPayment.ccp_param3,
+								automaticPayment.ccp_param4
+							),
+							masterPersistenceMechanism
+						);
+						System.out.println("    processor="+processor.getProviderId());
 
-							// Process payment
-							Transaction transaction = processor.sale(
-								null,
-								null,
-								new TransactionRequest(
-									false, // testMode
-									InetAddress.getLocalHost().getHostAddress(),
-									120, // duplicateWindow
-									Integer.toString(transID), // orderNumber
-									automaticPayment.amount.getCurrency(),
-									automaticPayment.amount.getValue(),
-									null, // taxAmount
-									false, // taxExempt
-									null, // shippingAmount
-									null, // dutyAmount
-									null, // shippingFirstName
-									null, // shippingLastName
-									null, // shippingCompanyName
-									null, // shippingStreetAddress1
-									null, // shippingStreetAddress2
-									null, // shippingCity
-									null, // shippingState
-									null, // shippingPostalCode
-									null, // shippingCountryCode
-									false, // emailCustomer
-									null, // merchantEmail
-									null, // invoiceNumber
-									null, // purchaseOrderNumber
-									"Monthly automatic billing"
-								),
-								new CreditCard(
-									Integer.toString(automaticPayment.cc_id),
-									automaticPayment.principalName,
-									automaticPayment.groupName,
-									automaticPayment.ccp_providerId,
-									automaticPayment.cc_providerUniqueId,
-									null, // cardNumber
-									automaticPayment.cardInfo,
-									automaticPayment.expirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.expirationMonth,
-									automaticPayment.expirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.expirationYear,
-									null, // cardCode
-									automaticPayment.firstName,
-									automaticPayment.lastName,
-									automaticPayment.companyName,
-									automaticPayment.email,
-									automaticPayment.phone,
-									automaticPayment.fax,
-									automaticPayment.customerId,
-									automaticPayment.customerTaxId,
-									automaticPayment.streetAddress1,
-									automaticPayment.streetAddress2,
-									automaticPayment.city,
-									automaticPayment.state,
-									automaticPayment.postalCode,
-									automaticPayment.countryCode,
-									automaticPayment.description
-								)
-							);
+						// Add as pending transaction
+						String paymentTypeName;
+						String cardInfo = automaticPayment.cardInfo;
+						// TODO: Use some sort of shared API for this
+						if(
+							cardInfo.startsWith("34")
+							|| cardInfo.startsWith("37")
+							|| cardInfo.startsWith("3" + CreditCard.UNKNOWN_DIGIT)
+						) {
+							paymentTypeName = PaymentType.AMEX;
+						} else if(cardInfo.startsWith("60")) {
+							paymentTypeName = PaymentType.DISCOVER;
+						} else if(
+							cardInfo.startsWith("51")
+							|| cardInfo.startsWith("52")
+							|| cardInfo.startsWith("53")
+							|| cardInfo.startsWith("54")
+							|| cardInfo.startsWith("55")
+							|| cardInfo.startsWith("5" + CreditCard.UNKNOWN_DIGIT)
+						) {
+							paymentTypeName = PaymentType.MASTERCARD;
+						} else if(cardInfo.startsWith("4")) {
+							paymentTypeName = PaymentType.VISA;
+						} else {
+							paymentTypeName = null;
+						}
+						int transID = BillingTransactionHandler.addTransaction(
+							conn,
+							invalidateList,
+							'T',
+							lastMicrosecondOfMonth,
+							automaticPayment.account,
+							automaticPayment.account,
+							MasterPersistenceMechanism.MASTER_BUSINESS_ADMINISTRATOR,
+							TransactionType.PAYMENT,
+							"Monthly automatic billing",
+							new BigDecimal("1.000"),
+							automaticPayment.amount.negate(),
+							paymentTypeName,
+							CreditCard.getCardNumberDisplay(cardInfo),
+							automaticPayment.ccp_providerId,
+							com.aoindustries.aoserv.client.billing.Transaction.WAITING_CONFIRMATION
+						);
+						conn.commit();
 
-							AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
-							TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
-							switch(authorizationResult.getCommunicationResult()) {
-								case LOCAL_ERROR :
-								case IO_ERROR :
-								case GATEWAY_ERROR :
-								{
-									// Update transaction as failed
-									//     TODO: Deactivate the card if this is the 3rd consecutive failure
-									//     TODO: Notify customer
-									BillingTransactionHandler.transactionDeclined(
-										conn,
-										invalidateList,
-										transID,
-										Integer.parseInt(transaction.getPersistenceUniqueId()),
-										tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-									);
-									conn.commit();
-									System.out.println("    Result: Error");
-									break;
-								}
-								case SUCCESS :
-									// Check approval result
-									switch(authorizationResult.getApprovalResult()) {
-										case HOLD : {
-											// Update transaction
-											BillingTransactionHandler.transactionHeld(
-												conn,
-												invalidateList,
-												transID,
-												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-											);
-											conn.commit();
-											System.out.println("    Result: Hold");
-											System.out.println("    Review Reason: "+authorizationResult.getReviewReason());
-											break;
-										}
-										case DECLINED : {
-											// Update transaction as declined
-											//     TODO: Deactivate the card if this is the 3rd consecutive failure
-											//     TODO: Notify customer
-											BillingTransactionHandler.transactionDeclined(
-												conn,
-												invalidateList,
-												transID,
-												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-											);
-											conn.commit();
-											System.out.println("    Result: Declined");
-											System.out.println("    Decline Reason: "+authorizationResult.getDeclineReason());
-											break;
-										}
-										case APPROVED : {
-											// Update transaction as successful
-											BillingTransactionHandler.transactionApproved(
-												conn,
-												invalidateList,
-												transID,
-												Integer.parseInt(transaction.getPersistenceUniqueId()),
-												tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-											);
-											System.out.println("    Result: Approved");
-											break;
-										}
-										default: {
-											throw new RuntimeException("Unexpected value for authorization approval result: "+authorizationResult.getApprovalResult());
-										}
-									}
-									break;
-								default:
-									throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
+						// Process payment
+						Transaction transaction = processor.sale(
+							null,
+							null,
+							new TransactionRequest(
+								false, // testMode
+								InetAddress.getLocalHost().getHostAddress(),
+								120, // duplicateWindow
+								Integer.toString(transID), // orderNumber
+								automaticPayment.amount.getCurrency(),
+								automaticPayment.amount.getValue(),
+								null, // taxAmount
+								false, // taxExempt
+								null, // shippingAmount
+								null, // dutyAmount
+								null, // shippingFirstName
+								null, // shippingLastName
+								null, // shippingCompanyName
+								null, // shippingStreetAddress1
+								null, // shippingStreetAddress2
+								null, // shippingCity
+								null, // shippingState
+								null, // shippingPostalCode
+								null, // shippingCountryCode
+								false, // emailCustomer
+								null, // merchantEmail
+								null, // invoiceNumber
+								null, // purchaseOrderNumber
+								"Monthly automatic billing"
+							),
+							new CreditCard(
+								Integer.toString(automaticPayment.cc_id),
+								automaticPayment.principalName,
+								automaticPayment.groupName,
+								automaticPayment.ccp_providerId,
+								automaticPayment.cc_providerUniqueId,
+								null, // cardNumber
+								automaticPayment.cardInfo,
+								automaticPayment.expirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.expirationMonth,
+								automaticPayment.expirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.expirationYear,
+								null, // cardCode
+								automaticPayment.firstName,
+								automaticPayment.lastName,
+								automaticPayment.companyName,
+								automaticPayment.email,
+								automaticPayment.phone,
+								automaticPayment.fax,
+								automaticPayment.customerId,
+								automaticPayment.customerTaxId,
+								automaticPayment.streetAddress1,
+								automaticPayment.streetAddress2,
+								automaticPayment.city,
+								automaticPayment.state,
+								automaticPayment.postalCode,
+								automaticPayment.countryCode,
+								automaticPayment.description
+							)
+						);
+
+						AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
+						TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
+						switch(authorizationResult.getCommunicationResult()) {
+							case LOCAL_ERROR :
+							case IO_ERROR :
+							case GATEWAY_ERROR :
+							{
+								// Update transaction as failed
+								//     TODO: Deactivate the card if this is the 3rd consecutive failure
+								//     TODO: Notify customer
+								BillingTransactionHandler.transactionDeclined(
+									conn,
+									invalidateList,
+									transID,
+									Integer.parseInt(transaction.getPersistenceUniqueId()),
+									tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+								);
+								conn.commit();
+								System.out.println("    Result: Error");
+								break;
 							}
+							case SUCCESS :
+								// Check approval result
+								switch(authorizationResult.getApprovalResult()) {
+									case HOLD : {
+										// Update transaction
+										BillingTransactionHandler.transactionHeld(
+											conn,
+											invalidateList,
+											transID,
+											Integer.parseInt(transaction.getPersistenceUniqueId()),
+											tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+										);
+										conn.commit();
+										System.out.println("    Result: Hold");
+										System.out.println("    Review Reason: "+authorizationResult.getReviewReason());
+										break;
+									}
+									case DECLINED : {
+										// Update transaction as declined
+										//     TODO: Deactivate the card if this is the 3rd consecutive failure
+										//     TODO: Notify customer
+										BillingTransactionHandler.transactionDeclined(
+											conn,
+											invalidateList,
+											transID,
+											Integer.parseInt(transaction.getPersistenceUniqueId()),
+											tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+										);
+										conn.commit();
+										System.out.println("    Result: Declined");
+										System.out.println("    Decline Reason: "+authorizationResult.getDeclineReason());
+										break;
+									}
+									case APPROVED : {
+										// Update transaction as successful
+										BillingTransactionHandler.transactionApproved(
+											conn,
+											invalidateList,
+											transID,
+											Integer.parseInt(transaction.getPersistenceUniqueId()),
+											tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+										);
+										System.out.println("    Result: Approved");
+										break;
+									}
+									default: {
+										throw new RuntimeException("Unexpected value for authorization approval result: "+authorizationResult.getApprovalResult());
+									}
+								}
+								break;
+							default:
+								throw new RuntimeException("Unexpected value for authorization communication result: "+authorizationResult.getCommunicationResult());
 						}
-					} catch(SQLException err) {
-						if(conn.rollbackAndClose()) {
-							connRolledBack=true;
-							// invalidateList=null; Not cleared because some commits happen during processing
-						}
-						throw err;
-					} catch(Throwable t) {
-						if(conn.rollback()) {
-							connRolledBack=true;
-							// invalidateList=null; Not cleared because some commits happen during processing
-						}
-						throw t;
-					} finally {
-						if(!connRolledBack && !conn.isClosed()) conn.commit();
 					}
+					conn.commit();
 					MasterServer.invalidateTables(conn, invalidateList, null);
 				}
 			}
@@ -1939,67 +1923,51 @@ final public class PaymentHandler /*implements CronJob*/ {
 			MasterServer.executorService.submit(timer);
 
 			// Start the transaction
-			try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+			try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
 				InvalidateList invalidateList = new InvalidateList();
-				boolean connRolledBack = false;
-				try {
-					if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
+				if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Synchronizing stored cards");
 
-					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
-					List<MerchantServicesProvider> providers = conn.queryList(
-						(ResultSet result) -> {
-							try {
-								return MerchantServicesProviderFactory.getMerchantServicesProvider(
-									result.getString("providerId"),
-									result.getString("className"),
-									result.getString("param1"),
-									result.getString("param2"),
-									result.getString("param3"),
-									result.getString("param4")
-								);
-							} catch(ReflectiveOperationException e) {
-								throw new SQLException(e.getLocalizedMessage(), e);
-							}
-						},
-						"SELECT\n"
-						+ "  provider_id AS \"providerId\",\n"
-						+ "  class_name  AS \"className\",\n"
-						+ "  param1,\n"
-						+ "  param2,\n"
-						+ "  param3,\n"
-						+ "  param4\n"
-						+ "FROM\n"
-						+ "  payment.\"Processor\"\n"
-						+ "WHERE\n"
-						+ "  enabled\n"
-						+ "ORDER BY\n"
-						+ "  provider_id"
-					);
-					if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
+				// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
+				List<MerchantServicesProvider> providers = conn.queryList(
+					(ResultSet result) -> {
+						try {
+							return MerchantServicesProviderFactory.getMerchantServicesProvider(
+								result.getString("providerId"),
+								result.getString("className"),
+								result.getString("param1"),
+								result.getString("param2"),
+								result.getString("param3"),
+								result.getString("param4")
+							);
+						} catch(ReflectiveOperationException e) {
+							throw new SQLException(e.getLocalizedMessage(), e);
+						}
+					},
+					"SELECT\n"
+					+ "  provider_id AS \"providerId\",\n"
+					+ "  class_name  AS \"className\",\n"
+					+ "  param1,\n"
+					+ "  param2,\n"
+					+ "  param3,\n"
+					+ "  param4\n"
+					+ "FROM\n"
+					+ "  payment.\"Processor\"\n"
+					+ "WHERE\n"
+					+ "  enabled\n"
+					+ "ORDER BY\n"
+					+ "  provider_id"
+				);
+				if(infoOut != null) infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
 
-					// Find all the stored cards
-					MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
+				// Find all the stored cards
+				MasterPersistenceMechanism masterPersistenceMechanism = new MasterPersistenceMechanism(conn, invalidateList);
 
-					// Only need to create the persistence once per DB transaction
-					for(MerchantServicesProvider provider : providers) {
-						CreditCardProcessor processor = new CreditCardProcessor(provider, masterPersistenceMechanism);
-						processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
-					}
-				} catch(SQLException err) {
-					if(conn.rollbackAndClose()) {
-						connRolledBack=true;
-						// invalidateList=null; Not cleared because some commits happen during processing
-					}
-					throw err;
-				} catch(Throwable t) {
-					if(conn.rollback()) {
-						connRolledBack=true;
-						// invalidateList=null; Not cleared because some commits happen during processing
-					}
-					throw t;
-				} finally {
-					if(!connRolledBack && !conn.isClosed()) conn.commit();
+				// Only need to create the persistence once per DB transaction
+				for(MerchantServicesProvider provider : providers) {
+					CreditCardProcessor processor = new CreditCardProcessor(provider, masterPersistenceMechanism);
+					processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
 				}
+				conn.commit();
 				MasterServer.invalidateTables(conn, invalidateList, null);
 			}
 		}

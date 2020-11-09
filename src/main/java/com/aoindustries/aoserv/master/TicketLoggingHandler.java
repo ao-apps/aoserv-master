@@ -72,92 +72,76 @@ public class TicketLoggingHandler extends QueuedHandler {
 		String summary = tempSB.toString();
 
 		// Start the transaction
-		try (DatabaseConnection conn = MasterDatabase.getDatabase().createDatabaseConnection()) {
+		try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
 			InvalidateList invalidateList = new InvalidateList();
-			boolean connRolledBack = false;
-			try {
-				// Look for an existing ticket to append
-				int existingTicket = conn.queryInt(
-					"select\n"
-					+ "  coalesce(\n"
-					+ "    (\n"
-					+ "      select\n"
-					+ "        id\n"
-					+ "      from\n"
-					+ "        ticket.\"Ticket\"\n"
-					+ "      where\n"
-					+ "        status in (?,?,?)\n"
-					+ "        and brand=?\n"
-					+ "        and accounting=?\n"
-					+ "        and language=?\n"
-					+ "        and ticket_type=?\n"
-					+ "        and summary=?\n"
-					+ "        and category=?\n"
-					+ "      order by\n"
-					+ "        open_date desc,\n"
-					+ "        id desc\n"
-					+ "      limit 1\n"
-					+ "    ), -1\n"
-					+ "  )",
-					Status.OPEN,
-					Status.HOLD,
-					Status.BOUNCED,
+			// Look for an existing ticket to append
+			int existingTicket = conn.queryInt(
+				"select\n"
+				+ "  coalesce(\n"
+				+ "    (\n"
+				+ "      select\n"
+				+ "        id\n"
+				+ "      from\n"
+				+ "        ticket.\"Ticket\"\n"
+				+ "      where\n"
+				+ "        status in (?,?,?)\n"
+				+ "        and brand=?\n"
+				+ "        and accounting=?\n"
+				+ "        and language=?\n"
+				+ "        and ticket_type=?\n"
+				+ "        and summary=?\n"
+				+ "        and category=?\n"
+				+ "      order by\n"
+				+ "        open_date desc,\n"
+				+ "        id desc\n"
+				+ "      limit 1\n"
+				+ "    ), -1\n"
+				+ "  )",
+				Status.OPEN,
+				Status.HOLD,
+				Status.BOUNCED,
+				rootAccounting,
+				rootAccounting,
+				Language.EN,
+				TicketType.LOGS,
+				summary,
+				category
+			);
+			if(existingTicket != -1) {
+				TicketHandler.addTicketAnnotation(
+					conn,
+					invalidateList,
+					existingTicket,
+					null,
+					com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
+					fullReport
+				);
+			} else {
+				// The priority depends on the log level
+				String priorityName = com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.getPriorityName(level);
+				TicketHandler.addTicket(
+					conn,
+					invalidateList,
+					rootAccounting,
 					rootAccounting,
 					rootAccounting,
 					Language.EN,
+					null,
+					category,
 					TicketType.LOGS,
+					null,
 					summary,
-					category
+					fullReport,
+					null,
+					priorityName,
+					null,
+					Status.OPEN,
+					-1,
+					Collections.emptySet(),
+					"",
+					""
 				);
-				if(existingTicket != -1) {
-					TicketHandler.addTicketAnnotation(
-						conn,
-						invalidateList,
-						existingTicket,
-						null,
-						com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
-						fullReport
-					);
-				} else {
-					// The priority depends on the log level
-					String priorityName = com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.getPriorityName(level);
-					TicketHandler.addTicket(
-						conn,
-						invalidateList,
-						rootAccounting,
-						rootAccounting,
-						rootAccounting,
-						Language.EN,
-						null,
-						category,
-						TicketType.LOGS,
-						null,
-						summary,
-						fullReport,
-						null,
-						priorityName,
-						null,
-						Status.OPEN,
-						-1,
-						Collections.emptySet(),
-						"",
-						""
-					);
-				}
-			} catch(SQLException err) {
-				if(conn.rollbackAndClose()) {
-					connRolledBack = true;
-					invalidateList = null;
-				}
-				throw err;
-			} catch(Throwable t) {
-				if(conn.rollback()) {
-					connRolledBack = true;
-					invalidateList = null;
-				}
-				throw t;
-			} finally {
-				if(!connRolledBack && !conn.isClosed()) conn.commit();
+				conn.commit();
 			}
 			MasterServer.invalidateTables(conn, invalidateList, null);
 		}
