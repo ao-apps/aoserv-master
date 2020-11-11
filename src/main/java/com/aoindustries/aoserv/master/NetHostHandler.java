@@ -75,15 +75,12 @@ final public class NetHostHandler {
 		// Security and validity checks
 		String account=UsernameHandler.getAccountForUsername(conn, source.getUsername());
 		if(
-			!conn.queryBoolean(Connection.TRANSACTION_READ_COMMITTED, true, true, "select can_add_backup_server from account.\"Account\" where accounting=?", account)
+			!conn.queryBoolean("select can_add_backup_server from account.\"Account\" where accounting=?", account)
 		) throw new SQLException("Not allowed to add_backup_server: "+source.getUsername());
 
 		MasterServer.checkAccessHostname(conn, source, "addBackupServer", hostname);
 
 		String farm_owner=conn.queryString(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true,
-			true,
 			"select\n"
 			+ "  pk.accounting\n"
 			+ "from\n"

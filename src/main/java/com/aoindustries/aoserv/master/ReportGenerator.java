@@ -29,7 +29,6 @@ import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.util.logging.ProcessTimer;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -141,7 +140,7 @@ final public class ReportGenerator implements CronJob {
 
 						/* TODO: Implement as calls to the aoserv daemons to get the quota reports
 						String sqlString=null;
-						Statement stmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).createStatement();
+						Statement stmt=conn.getConnection(true).createStatement();
 						try {
 							// First, count up the total number of files per host and per package
 							conn.incrementQueryCount();
@@ -256,7 +255,7 @@ final public class ReportGenerator implements CronJob {
 						}*/
 
 						// Add these stats to the table
-						try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,CURRENT_DATE,?,?::int8);")) {
+						try (PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO backup.\"BackupReport\" VALUES (default,?,?,CURRENT_DATE,?,?::int8);")) {
 							try {
 								Iterator<Integer> hostKeys = stats.keySet().iterator();
 								while(hostKeys.hasNext()) {

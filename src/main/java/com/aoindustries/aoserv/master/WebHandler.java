@@ -54,7 +54,6 @@ import com.aoindustries.net.Port;
 import com.aoindustries.security.Identifier;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -1121,7 +1120,7 @@ final public class WebHandler {
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
 			);
-			try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)")) {
+			try (PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)")) {
 				pstmt.setInt(1, httpdSitePKey);
 				pstmt.setInt(2, jBossVersion);
 				pstmt.setInt(3, jnpBind);
@@ -2209,10 +2208,9 @@ final public class WebHandler {
 		// First, find the net_bind
 		int netBind;
 		try (
-			PreparedStatement pstmt = conn.getConnection(
-				Connection.TRANSACTION_READ_COMMITTED,
-				true
-			).prepareStatement("select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"")
+			PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+				"select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\""
+			)
 		) {
 			pstmt.setInt(1, linuxServer);
 			pstmt.setInt(2, ipAddress);
@@ -2301,7 +2299,7 @@ final public class WebHandler {
 			int lowestId=-1;
 			int lowestCount=Integer.MAX_VALUE;
 			try (
-				PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
+				PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
 					"select\n"
 					+ "  hs.id,\n"
 					+ "  (\n"
@@ -3800,7 +3798,7 @@ final public class WebHandler {
 		String oldPath=conn.queryString("select path from \"web.tomcat\".\"Context\" where id=?", context);
 		if(oldPath.length()==0 && path.length() > 0) throw new SQLException("Not allowed to change the path of the default context: "+path);
 
-		try (PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+		try (PreparedStatement pstmt=conn.getConnection().prepareStatement(
 			"update\n"
 			+ "  \"web.tomcat\".\"Context\"\n"
 			+ "set\n"

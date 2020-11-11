@@ -30,8 +30,8 @@ import com.aoindustries.aoserv.client.net.reputation.Network;
 import com.aoindustries.aoserv.client.net.reputation.Set;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.sql.Connections;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
@@ -140,10 +140,7 @@ final public class NetReputationSetHandler {
 		Set.ReputationType reputationType,
 		String suffix
 	) throws SQLException {
-		PreparedStatement pstmt = conn.getConnection(
-			Connection.TRANSACTION_READ_COMMITTED,
-			false
-		).prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)");
+		PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)");
 		try {
 			boolean hasRow = false;
 			for(Set.AddReputation addRep : addReputations) {
@@ -253,9 +250,7 @@ final public class NetReputationSetHandler {
 				Set.ReputationType reputationType = addRep.getReputationType();
 				short score = addRep.getScore();
 				Host dbHost = conn.queryObject(
-					Connection.TRANSACTION_READ_COMMITTED,
-					true,
-					false,
+					Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 					(ResultSet result) -> {
 						Host obj = new Host();
 						obj.init(result);
@@ -340,9 +335,7 @@ final public class NetReputationSetHandler {
 					// Update network when positive change applied
 					int network = getNetwork(host, networkPrefix);
 					Network dbNetwork = conn.queryObject(
-						Connection.TRANSACTION_READ_COMMITTED,
-						true,
-						false,
+						Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 						(ResultSet result) -> {
 							Network obj = new Network();
 							obj.init(result);

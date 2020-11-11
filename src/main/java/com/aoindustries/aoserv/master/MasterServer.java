@@ -77,6 +77,7 @@ import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
 import com.aoindustries.security.Identifier;
+import com.aoindustries.sql.Connections;
 import com.aoindustries.sql.SQLStreamables;
 import com.aoindustries.sql.SQLUtility;
 import com.aoindustries.sql.WrappedSQLException;
@@ -10830,9 +10831,7 @@ public abstract class MasterServer {
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
 		String existingZone=conn.queryString(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true,
-			false,
+			Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 			"select zone from dns.\"Zone\" where zone=?",
 			zone
 		);
@@ -10986,7 +10985,7 @@ public abstract class MasterServer {
 		Object ... params
 	) throws IOException, SQLException {
 		AoservProtocol.Version version = source.getProtocolVersion();
-		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+		Connection dbConn = conn.getConnection(true);
 		try (PreparedStatement pstmt = dbConn.prepareStatement(sql)) {
 			try {
 				DatabaseConnection.setParams(dbConn, pstmt, params);
@@ -11026,7 +11025,7 @@ public abstract class MasterServer {
 
 		long progressCount;
 		long rowCount;
-		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false);
+		Connection dbConn = conn.getConnection();
 		try (
 			PreparedStatement pstmt = dbConn.prepareStatement(
 				"DECLARE fetch_objects "
@@ -11136,7 +11135,7 @@ public abstract class MasterServer {
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
-		Connection dbConn = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true);
+		Connection dbConn = conn.getConnection(true);
 		try (
 			PreparedStatement pstmt = dbConn.prepareStatement(
 				sql,
@@ -11216,7 +11215,7 @@ public abstract class MasterServer {
 		Timestamp param3
 	) throws IOException, NoRowException, SQLException {
 		AccountHandler.checkAccessAccount(conn, source, action, account);
-		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+		try (PreparedStatement pstmt = conn.getConnection(true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
 				pstmt.setString(2, param2);
@@ -11256,7 +11255,7 @@ public abstract class MasterServer {
 		String param2
 	) throws IOException, NoRowException, SQLException {
 		AccountHandler.checkAccessAccount(conn, source, action, account);
-		try (PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(sql)) {
+		try (PreparedStatement pstmt = conn.getConnection(true).prepareStatement(sql)) {
 			try {
 				pstmt.setString(1, param1);
 				pstmt.setString(2, param2);

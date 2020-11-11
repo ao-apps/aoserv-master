@@ -48,7 +48,6 @@ import com.aoindustries.util.InternUtils;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -574,9 +573,7 @@ final public class LinuxAccountHandler {
 	 */
 	public static com.aoindustries.aoserv.client.linux.User.Name getUserByUid(DatabaseConnection conn, int linuxServer, int uid) throws SQLException {
 		return conn.queryObject(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true,
-			false,
+			Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 			ObjectFactories.linuxUserNameFactory,
 			"select username from linux.\"UserServer\" where ao_server=? and uid=?",
 			linuxServer,
@@ -1794,7 +1791,7 @@ final public class LinuxAccountHandler {
 			);
 		}
 		try (
-			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement(
+			PreparedStatement pstmt = conn.getConnection().prepareStatement(
 				"update\n"
 				+ "  linux.\"UserServer\"\n"
 				+ "set\n"

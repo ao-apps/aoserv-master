@@ -34,11 +34,11 @@ import com.aoindustries.creditcards.TransactionRequest;
 import com.aoindustries.creditcards.TransactionResult;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.dbc.ObjectFactory;
+import com.aoindustries.sql.Connections;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.security.Principal;
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -156,9 +156,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 			return null;
 		}
 		return conn.queryObject(
-			Connection.TRANSACTION_READ_COMMITTED,
-			true,
-			false,
+			Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
 			creditCardObjectFactory,
 			"SELECT\n"
 			+ COLUMNS + "\n"

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -95,7 +95,7 @@ public class Column_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 		);
 		/*
 		List<Column> clientColumns=new ArrayList<>();
-		PreparedStatement pstmt=conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, true).prepareStatement(
+		PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
 			"select\n"
 			+ "  sc.id,\n"
 			+ "  st.\"name\" as \"table\",\n"

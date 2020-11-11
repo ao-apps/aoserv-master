@@ -31,7 +31,6 @@ import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
 import java.io.IOException;
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
@@ -140,7 +139,7 @@ final public class SignupHandler {
 
 		// Add the signup_options
 		try (
-			PreparedStatement pstmt = conn.getConnection(Connection.TRANSACTION_READ_COMMITTED, false).prepareStatement("insert into signup.\"Option\" values(default,?,?,?)")
+			PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into signup.\"Option\" values(default,?,?,?)")
 		) {
 			for(String name : options.keySet()) {
 				String value = options.get(name);
