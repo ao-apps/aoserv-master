@@ -184,8 +184,8 @@ final public class SignupHandler {
 						public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 							try {
 								InvalidateList invalidateList = new InvalidateList();
-								MasterDatabase.getDatabase().run(IOException.class, conn -> {
-									if(conn.update("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31")>0) {
+								try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+									if(conn.update("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31") > 0) {
 										invalidateList.addTable(
 											conn,
 											Table.TableID.SIGNUP_REQUESTS,
@@ -200,12 +200,10 @@ final public class SignupHandler {
 											InvalidateList.allHosts,
 											false
 										);
-										conn.commit();
 										MasterServer.invalidateTables(conn, invalidateList, null);
-									} else {
-										conn.rollback();
 									}
-								});
+									conn.commit();
+								}
 							} catch(ThreadDeath td) {
 								throw td;
 							} catch(Throwable t) {
