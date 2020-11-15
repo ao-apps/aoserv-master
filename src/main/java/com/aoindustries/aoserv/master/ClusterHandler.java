@@ -31,6 +31,7 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.lang.Throwables;
 import com.aoindustries.util.Tuple3;
 import com.aoindustries.util.logging.ProcessTimer;
 import java.io.IOException;
@@ -125,6 +126,12 @@ final public class ClusterHandler implements CronJob {
 
 		public ClusterException(String message, Throwable cause) {
 			super(message, cause);
+		}
+
+		static {
+			Throwables.registerSurrogateFactory(ClusterException.class, (template, cause) ->
+				new ClusterException(template.getMessage(), cause)
+			);
 		}
 	}
 

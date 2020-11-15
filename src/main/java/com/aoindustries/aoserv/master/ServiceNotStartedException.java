@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018  AO Industries, Inc.
+ * Copyright (C) 2018, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,6 +22,8 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoindustries.lang.Throwables;
+
 /**
  * @author  AO Industries, Inc.
  */
@@ -39,5 +41,11 @@ public class ServiceNotStartedException extends MasterServiceException {
 
 	public ServiceNotStartedException(Throwable cause) {
 		super(cause);
+	}
+
+	static {
+		Throwables.registerSurrogateFactory(ServiceNotStartedException.class, (template, cause) ->
+			new ServiceNotStartedException(template.getMessage(), cause)
+		);
 	}
 }
