@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-11-29T05:33:46-06:00"
+		dateModified="2020-11-29T06:48:29-06:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -71,6 +71,10 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 							This is used to maintain exception types and states across thread boundaries, such as when an exception cause
 							is obtained from an <code>ExecutionException</code>.
 						</p>
+					</li>
+					<li>
+						<strong><core:link book="/ao-credit-cards/sagePayments" page="/index.jspx" /> has been deprecated.</strong>
+						We have removed it from this package.  If still in-use, it must be added as a direct dependency.
 					</li>
 				</ul>
 			</changelog:release>
