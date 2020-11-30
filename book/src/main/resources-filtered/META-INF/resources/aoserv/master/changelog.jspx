@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-11-29T19:59:55-06:00"
+		dateModified="2020-11-29T23:44:35-06:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -52,43 +52,52 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				groupId="@{project.groupId}"
 				artifactId="@{documented.artifactId}"
 				scmUrl="@{project.scm.url}"
-			>
-				<ul>
-					<li>
-						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
-						which uses <ao:a href="https://stripe.com/docs/upgrades#2020-08-27">Stripe API version 2020-08-27</ao:a>.
-					</li>
-					<li>Updated PostgreSQL JDBC Drivers to 42.2.16.</li>
-					<li>Updated to <ao:a href="https://aoindustries.com/ao-dbc/changelog#release-notes-2.0.0">AO Database Connectivity 2.0.0</ao:a>.</li>
-					<li>
-						<p>
-							Now registering exception types for use with <code>Throwables.newSurrogate(…)</code> that supports creating new instances
-							of throwables in order to have caller stack trace.  When wrapped, the original throwable is the
-							cause of the new throwable.  When not wrapped, the original throwable is used directly and
-							caller stack trace is lost.
-						</p>
-						<p>
-							This is used to maintain exception types and states across thread boundaries, such as when an exception cause
-							is obtained from an <code>ExecutionException</code>.
-						</p>
-					</li>
-					<li>
-						<strong><core:link book="/ao-credit-cards/sagePayments" page="/index.jspx" /> has been deprecated.</strong>
-						We have removed it from this package.  If still in-use, it must be added as a direct dependency.
-					</li>
-					<li>
-						<p>
-							Fetch size increased from 1000 to 10000 rows.
-						</p>
-						<p>
-							This value may be increased over time as the amount of typical system memory increases.  As
-							this may affect the number of round trips, and the speed of light is not likely to change,
-							future increases may be of benefit.
-						</p>
-					</li>
-				</ul>
-			</changelog:release>
+			/>
 		</c:if>
+
+		<changelog:release
+			projectName="@{documented.name}"
+			version="1.84.12"
+			datePublished="2020-11-29T23:44:35-06:00"
+			groupId="@{project.groupId}"
+			artifactId="@{documented.artifactId}"
+			scmUrl="@{project.scm.url}"
+		>
+			<ul>
+				<li>
+					Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
+					which uses <ao:a href="https://stripe.com/docs/upgrades#2020-08-27">Stripe API version 2020-08-27</ao:a>.
+				</li>
+				<li>Updated PostgreSQL JDBC Drivers to 42.2.18.</li>
+				<li>Updated to <ao:a href="https://aoindustries.com/ao-dbc/changelog#release-notes-2.0.0">AO Database Connectivity 2.0.0</ao:a>.</li>
+				<li>
+					<p>
+						Now registering exception types for use with <code>Throwables.newSurrogate(…)</code> that supports creating new instances
+						of throwables in order to have caller stack trace.  When wrapped, the original throwable is the
+						cause of the new throwable.  When not wrapped, the original throwable is used directly and
+						caller stack trace is lost.
+					</p>
+					<p>
+						This is used to maintain exception types and states across thread boundaries, such as when an exception cause
+						is obtained from an <code>ExecutionException</code>.
+					</p>
+				</li>
+				<li>
+					<strong><core:link book="/ao-credit-cards/sagePayments" page="/index.jspx" /> has been deprecated.</strong>
+					We have removed it from this package.  If still in-use, it must be added as a direct dependency.
+				</li>
+				<li>
+					<p>
+						Fetch size increased from 1000 to 10000 rows.
+					</p>
+					<p>
+						This value may be increased over time as the amount of typical system memory increases.  As
+						this may affect the number of round trips, and the speed of light is not likely to change,
+						future increases may be of benefit.
+					</p>
+				</li>
+			</ul>
+		</changelog:release>
 
 		<changelog:release
 			projectName="@{documented.name}"
