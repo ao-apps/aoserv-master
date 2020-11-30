@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-11-29T06:48:29-06:00"
+		dateModified="2020-11-29T19:59:55-06:00"
 	>
 		<!-- The current snapshot, unreleased version -->
 		<c:set var="version" value="@{com.aoindustries:aoserv-master:pom.version}" />
@@ -75,6 +75,16 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 					<li>
 						<strong><core:link book="/ao-credit-cards/sagePayments" page="/index.jspx" /> has been deprecated.</strong>
 						We have removed it from this package.  If still in-use, it must be added as a direct dependency.
+					</li>
+					<li>
+						<p>
+							Fetch size increased from 1000 to 10000 rows.
+						</p>
+						<p>
+							This value may be increased over time as the amount of typical system memory increases.  As
+							this may affect the number of round trips, and the speed of light is not likely to change,
+							future increases may be of benefit.
+						</p>
 					</li>
 				</ul>
 			</changelog:release>

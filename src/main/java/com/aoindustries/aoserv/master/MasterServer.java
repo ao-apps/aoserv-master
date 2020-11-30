@@ -11043,7 +11043,7 @@ public abstract class MasterServer {
 		}
 		try (Statement stmt = dbConn.createStatement()) {
 			try {
-				final String fetchSql = "FETCH " + TableHandler.RESULT_SET_BATCH_SIZE + " FROM fetch_objects";
+				final String fetchSql = "FETCH " + DatabaseConnection.FETCH_SIZE + " FROM fetch_objects";
 
 				// Make one pass counting the rows if providing progress information
 				if(provideProgress) {
@@ -11059,7 +11059,7 @@ public abstract class MasterServer {
 								}
 							}
 							progressCount += batchSize;
-							if(batchSize < TableHandler.RESULT_SET_BATCH_SIZE) break;
+							if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 						}
 					} catch(SQLException err) {
 						throw new WrappedSQLException(err, fetchSql);
@@ -11101,7 +11101,7 @@ public abstract class MasterServer {
 							}
 						}
 						rowCount += batchSize;
-						if(batchSize < TableHandler.RESULT_SET_BATCH_SIZE) break;
+						if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 					}
 				} catch(SQLException err) {
 					throw new WrappedSQLException(err, fetchSql);

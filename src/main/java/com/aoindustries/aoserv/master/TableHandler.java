@@ -84,16 +84,6 @@ final public class TableHandler {
 	}
 
 	/**
-	 * The number of rows that will be loaded into each ResultSet for large tables.
-	 * This is done to get around the fact that the PostgreSQL JDBC loads all results
-	 * into the ResultSet, causing OutOfMemoryErrors on tables with millions of rows.
-	 *
-	 * @see  CursorMode#AUTO
-	 * @see  CursorMode#AUTO_CURSOR_ABOVE
-	 */
-	public static final int RESULT_SET_BATCH_SIZE = 1000;
-
-	/**
 	 * The number of rows statements that should typically be used per update/insert/delete batch.
 	 */
 	public static final int UPDATE_BATCH_SIZE = 1000;

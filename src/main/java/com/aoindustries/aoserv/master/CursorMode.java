@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -21,6 +21,8 @@
  * along with aoserv-master.  If not, see <http://www.gnu.org/licenses/>.
  */
 package com.aoindustries.aoserv.master;
+
+import com.aoindustries.dbc.DatabaseConnection;
 
 /**
  * The cursor mode used by a {@link TableHandler}.
@@ -70,12 +72,12 @@ public enum CursorMode {
 
 	/**
 	 * The number of rows above which when cursors are enabled in auto mode.
-	 * By default, triple {@link TableHandler#RESULT_SET_BATCH_SIZE}, which avoids
+	 * By default, triple {@link DatabaseConnection#FETCH_SIZE}, which avoids
 	 * round-trips to the server for tables that would result in only a few
 	 * batches.
 	 *
-	 * @see  TableHandler#RESULT_SET_BATCH_SIZE
+	 * @see  DatabaseConnection#FETCH_SIZE
 	 */
-	public static final int AUTO_CURSOR_ABOVE = TableHandler.RESULT_SET_BATCH_SIZE * 3;
+	public static final int AUTO_CURSOR_ABOVE = DatabaseConnection.FETCH_SIZE * 3;
 
 }
