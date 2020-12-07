@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-11-29T23:44:35-06:00"
+		dateModified="2020-12-07T13:45:10-06:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -59,8 +59,14 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		>
 			<ul>
 				<li>
-					Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
-					which uses <ao:a href="https://stripe.com/docs/upgrades#2020-08-27">Stripe API version 2020-08-27</ao:a>.
+					<p>
+						Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
+						which uses <ao:a href="https://stripe.com/docs/upgrades#2020-08-27">Stripe API version 2020-08-27</ao:a>.
+					</p>
+					<p>
+						Stripe releases minor updates on a regular basis.  We will only note future updates when they
+						change the Stripe API version, otherwise they will just be part of "Updated dependencies".
+					</p>
 				</li>
 				<li>Updated PostgreSQL JDBC Drivers to 42.2.18.</li>
 				<li>Updated to <ao:a href="https://aoindustries.com/ao-dbc/changelog#release-notes-2.0.0">AO Database Connectivity 2.0.0</ao:a>.</li>
