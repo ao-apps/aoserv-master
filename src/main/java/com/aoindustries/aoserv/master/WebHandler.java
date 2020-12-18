@@ -4050,7 +4050,8 @@ final public class WebHandler {
 		int site = getSiteForVirtualHost(conn, virtualHost);
 		checkAccessSite(conn, source, "setPrimaryVirtualHostName", site);
 
-		conn.update("update web.\"VirtualHostName\" set is_primary=(id=?) where httpd_site_bind=?", virtualHostName, virtualHost);
+		conn.update("update web.\"VirtualHostName\" set is_primary=false where is_primary and httpd_site_bind=?", virtualHost);
+		conn.update("update web.\"VirtualHostName\" set is_primary=true where id=? and httpd_site_bind=?", virtualHostName, virtualHost);
 		invalidateList.addTable(conn,
 			Table.TableID.HTTPD_SITE_URLS,
 			getAccountForSite(conn, site),

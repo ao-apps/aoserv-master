@@ -46,7 +46,14 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				groupId="@{project.groupId}"
 				artifactId="@{documented.artifactId}"
 				scmUrl="@{project.scm.url}"
-			/>
+			>
+				<ul>
+					<li>
+						Fixed bug in <code>set_primary_httpd_site_url</code> implementation.  The previous technique
+						to clear and set in a single SQL update was failing on current versions of PostgreSQL.
+					</li>
+				</ul>
+			</changelog:release>
 		</c:if>
 
 		<changelog:release
