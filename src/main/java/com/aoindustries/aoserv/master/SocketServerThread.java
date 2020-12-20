@@ -35,6 +35,7 @@ import com.aoindustries.lang.Strings;
 import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.security.Identifier;
+import com.aoindustries.security.SecurityStreamables;
 import com.aoindustries.validation.ValidationException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -243,7 +244,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					long existingIdLong = in.readLong();
 					existingId = existingIdLong == -1 ? null : new Identifier(0, existingIdLong);
 				} else {
-					existingId = in.readNullIdentifier();
+					existingId = SecurityStreamables.readNullIdentifier(in);
 				}
 
 				switch(protocolVersion) {
@@ -442,7 +443,7 @@ final public class SocketServerThread extends Thread implements RequestSource {
 										assert connectorId.getLo() != -1;
 										out.writeLong(connectorId.getLo());
 									} else {
-										out.writeIdentifier(connectorId);
+										SecurityStreamables.writeIdentifier(connectorId, out);
 									}
 								} else {
 									process.setConnectorId(existingId);
