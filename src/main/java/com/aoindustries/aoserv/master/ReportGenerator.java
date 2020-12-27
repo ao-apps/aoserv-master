@@ -28,6 +28,7 @@ import com.aoindustries.cron.CronDaemon;
 import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
+import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.logging.ProcessTimer;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -139,13 +140,11 @@ final public class ReportGenerator implements CronJob {
 						Map<Integer,Map<Integer,TempBackupReport>> stats=new HashMap<>();
 
 						/* TODO: Implement as calls to the aoserv daemons to get the quota reports
-						String sqlString=null;
-						Statement stmt=conn.getConnection(true).createStatement();
-						try {
+						String currentSQL = null;
+						try (Statement stmt = conn.getConnection(true).createStatement()) {
 							// First, count up the total number of files per host and per package
 							conn.incrementQueryCount();
-							ResultSet results=stmt.executeQuery(sqlString="select server, package, count(*) from file_backups group by server, package");
-							try {
+							try (ResultSet results = stmt.executeQuery(currentSQL = "select server, package, count(*) from file_backups group by server, package")) {
 								while(results.next()) {
 									int host=results.getInt(1);
 									int packageNum=results.getInt(2);
@@ -161,70 +160,69 @@ final public class ReportGenerator implements CronJob {
 									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer,TempBackupReport>());
 									packages.put(Integer.valueOf(packageNum), tbr);
 								}
-							} finally {
-								results.close();
 							}
 
 							// Count up the data sizes by host and package
 							conn.incrementQueryCount();
-							results=stmt.executeQuery(
-								sqlString=
-								  "select\n"
-								+ "  fb.server,\n"
-								+ "  fb.package,\n"
-								+ "  sum(bd.data_size),\n"
-								+ "  sum(coalesce(bd.compressed_size, bd.data_size)),\n"
-								+ "  sum(\n"
-								+ "    case when\n"
-								+ "      (coalesce(bd.compressed_size, bd.data_size)%(4096::int8))=0\n"
-								+ "    then\n"
-								+ "      coalesce(bd.compressed_size, bd.data_size)\n"
-								+ "    else\n"
-								+ "      ((coalesce(bd.compressed_size, bd.data_size)/4096)+1)*4096\n"
-								+ "    end\n"
-								+ "  )\n"
-								+ "from\n"
-								+ "  (\n"
-								+ "    select\n"
-								+ "      server,\n"
-								+ "      package,\n"
-								+ "      backup_data\n"
-								+ "    from\n"
-								+ "      file_backups\n"
-								+ "    where\n"
-								+ "      backup_data is not null\n"
-								+ "    union select\n"
-								+ "      ao_server,\n"
-								+ "      package,\n"
-								+ "      backup_data\n"
-								+ "    from\n"
-								+ "      interbase_backups\n"
-								+ "    union select\n"
-								+ "      ms.ao_server,\n"
-								+ "      mb.package,\n"
-								+ "      mb.backup_data\n"
-								+ "    from\n"
-								+ "      mysql_backups mb,\n"
-								+ "      mysql.\"Server\" ms\n"
-								+ "    where\n"
-								+ "      mb.mysql_server=ms.bind\n"
-								+ "    union select\n"
-								+ "      ps.ao_server,\n"
-								+ "      pb.package,\n"
-								+ "      pb.backup_data\n"
-								+ "    from\n"
-								+ "      postgres_backups pb\n"
-								+ "      INNER JOIN postgresql.\"Server\" ps ON pb.postgres_server = ps.bind\n"
-								+ "  ) as fb,\n"
-								+ "  backup_data bd\n"
-								+ "where\n"
-								+ "  fb.backup_data=bd.id\n"
-								+ "  and bd.is_stored\n"
-								+ "group by\n"
-								+ "  fb.server,\n"
-								+ "  fb.package"
-							);
-							try {
+							try (
+								ResultSet results = stmt.executeQuery(
+									currentSQL =
+									  "select\n"
+									+ "  fb.server,\n"
+									+ "  fb.package,\n"
+									+ "  sum(bd.data_size),\n"
+									+ "  sum(coalesce(bd.compressed_size, bd.data_size)),\n"
+									+ "  sum(\n"
+									+ "    case when\n"
+									+ "      (coalesce(bd.compressed_size, bd.data_size)%(4096::int8))=0\n"
+									+ "    then\n"
+									+ "      coalesce(bd.compressed_size, bd.data_size)\n"
+									+ "    else\n"
+									+ "      ((coalesce(bd.compressed_size, bd.data_size)/4096)+1)*4096\n"
+									+ "    end\n"
+									+ "  )\n"
+									+ "from\n"
+									+ "  (\n"
+									+ "    select\n"
+									+ "      server,\n"
+									+ "      package,\n"
+									+ "      backup_data\n"
+									+ "    from\n"
+									+ "      file_backups\n"
+									+ "    where\n"
+									+ "      backup_data is not null\n"
+									+ "    union select\n"
+									+ "      ao_server,\n"
+									+ "      package,\n"
+									+ "      backup_data\n"
+									+ "    from\n"
+									+ "      interbase_backups\n"
+									+ "    union select\n"
+									+ "      ms.ao_server,\n"
+									+ "      mb.package,\n"
+									+ "      mb.backup_data\n"
+									+ "    from\n"
+									+ "      mysql_backups mb,\n"
+									+ "      mysql.\"Server\" ms\n"
+									+ "    where\n"
+									+ "      mb.mysql_server=ms.bind\n"
+									+ "    union select\n"
+									+ "      ps.ao_server,\n"
+									+ "      pb.package,\n"
+									+ "      pb.backup_data\n"
+									+ "    from\n"
+									+ "      postgres_backups pb\n"
+									+ "      INNER JOIN postgresql.\"Server\" ps ON pb.postgres_server = ps.bind\n"
+									+ "  ) as fb,\n"
+									+ "  backup_data bd\n"
+									+ "where\n"
+									+ "  fb.backup_data=bd.id\n"
+									+ "  and bd.is_stored\n"
+									+ "group by\n"
+									+ "  fb.server,\n"
+									+ "  fb.package"
+								)
+							) {
 								while(results.next()) {
 									int host=results.getInt(1);
 									int packageNum=results.getInt(2);
@@ -247,11 +245,10 @@ final public class ReportGenerator implements CronJob {
 									tbr.compressedSize=compressedSize;
 									tbr.diskSize=diskSize;
 								}
-							} finally {
-								results.close();
 							}
-						} finally {
-							stmt.close();
+						} catch(Error | RuntimeException | SQLException e) {
+							ErrorPrinter.addSQL(e, currentSQL);
+							throw e;
 						}*/
 
 						// Add these stats to the table
@@ -271,9 +268,9 @@ final public class ReportGenerator implements CronJob {
 									}
 								}
 								pstmt.executeBatch();
-							} catch(SQLException err) {
-								System.err.println("Error from update: "+pstmt.toString());
-								throw err;
+							} catch(Error | RuntimeException | SQLException e) {
+								ErrorPrinter.addSQL(e, pstmt);
+								throw e;
 							}
 						}
 

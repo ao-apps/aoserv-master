@@ -52,6 +52,7 @@ import com.aoindustries.net.DomainName;
 import com.aoindustries.net.Email;
 import com.aoindustries.net.Port;
 import com.aoindustries.security.Identifier;
+import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -1121,14 +1122,19 @@ final public class WebHandler {
 				MINIMUM_AUTO_PORT_NUMBER
 			);
 			try (PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)")) {
-				pstmt.setInt(1, httpdSitePKey);
-				pstmt.setInt(2, jBossVersion);
-				pstmt.setInt(3, jnpBind);
-				pstmt.setInt(4, webserverBind);
-				pstmt.setInt(5, rmiBind);
-				pstmt.setInt(6, hypersonicBind);
-				pstmt.setInt(7, jmxBind);
-				pstmt.executeUpdate();
+				try {
+					pstmt.setInt(1, httpdSitePKey);
+					pstmt.setInt(2, jBossVersion);
+					pstmt.setInt(3, jnpBind);
+					pstmt.setInt(4, webserverBind);
+					pstmt.setInt(5, rmiBind);
+					pstmt.setInt(6, hypersonicBind);
+					pstmt.setInt(7, jmxBind);
+					pstmt.executeUpdate();
+				} catch(Error | RuntimeException | SQLException e) {
+					ErrorPrinter.addSQL(e, pstmt);
+					throw e;
+				}
 			}
 			invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, account, linuxServer, false);
 		} else if ("tomcat_shared".equals(siteType)) {
@@ -2212,31 +2218,36 @@ final public class WebHandler {
 				"select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\""
 			)
 		) {
-			pstmt.setInt(1, linuxServer);
-			pstmt.setInt(2, ipAddress);
-			pstmt.setInt(3, httpPort.getPort());
-			pstmt.setString(4, httpPort.getProtocol().name());
-			try (ResultSet results = pstmt.executeQuery()) {
-				if(results.next()) {
-					netBind=results.getInt(1);
-					String bindProtocol=results.getString(2);
-					if(!protocol.equals(bindProtocol)) throw new SQLException(
-						"Protocol mismatch on net.\"Bind\"(id="
-						+ netBind
-						+ " ao_server="
-						+ linuxServer
-						+ " ipAddress="
-						+ ipAddress
-						+ " port="
-						+ httpPort
-						+ " net_protocol=tcp), app_protocol is "
-						+ bindProtocol
-						+ ", requested protocol is "
-						+ protocol
-					);
-				} else {
-					netBind = -1;
+			try {
+				pstmt.setInt(1, linuxServer);
+				pstmt.setInt(2, ipAddress);
+				pstmt.setInt(3, httpPort.getPort());
+				pstmt.setString(4, httpPort.getProtocol().name());
+				try (ResultSet results = pstmt.executeQuery()) {
+					if(results.next()) {
+						netBind=results.getInt(1);
+						String bindProtocol=results.getString(2);
+						if(!protocol.equals(bindProtocol)) throw new SQLException(
+							"Protocol mismatch on net.\"Bind\"(id="
+							+ netBind
+							+ " ao_server="
+							+ linuxServer
+							+ " ipAddress="
+							+ ipAddress
+							+ " port="
+							+ httpPort
+							+ " net_protocol=tcp), app_protocol is "
+							+ bindProtocol
+							+ ", requested protocol is "
+							+ protocol
+						);
+					} else {
+						netBind = -1;
+					}
 				}
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 
@@ -2328,17 +2339,22 @@ final public class WebHandler {
 					+ "  )"
 				)
 			) {
-				pstmt.setInt(1, linuxServer);
-				pstmt.setString(2, packageName.toString());
-				try (ResultSet results = pstmt.executeQuery()) {
-					while(results.next()) {
-						int site = results.getInt(1);
-						int useCount = results.getInt(2);
-						if(useCount < lowestCount) {
-							lowestId = site;
-							lowestCount = useCount;
+				try {
+					pstmt.setInt(1, linuxServer);
+					pstmt.setString(2, packageName.toString());
+					try (ResultSet results = pstmt.executeQuery()) {
+						while(results.next()) {
+							int site = results.getInt(1);
+							int useCount = results.getInt(2);
+							if(useCount < lowestCount) {
+								lowestId = site;
+								lowestCount = useCount;
+							}
 						}
 					}
+				} catch(Error | RuntimeException | SQLException e) {
+					ErrorPrinter.addSQL(e, pstmt);
+					throw e;
 				}
 			}
 			if(lowestId==-1) throw new SQLException("Unable to determine which httpd_server to add the new httpd_bind to");
@@ -3835,9 +3851,9 @@ final public class WebHandler {
 				pstmt.setInt(14, context);
 
 				pstmt.executeUpdate();
-			} catch(SQLException err) {
-				System.err.println("Error from update: "+pstmt.toString());
-				throw err;
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 

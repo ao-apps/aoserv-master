@@ -140,8 +140,7 @@ final public class NetReputationSetHandler {
 		Set.ReputationType reputationType,
 		String suffix
 	) throws SQLException {
-		PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)");
-		try {
+		try (PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)")) {
 			boolean hasRow = false;
 			for(Set.AddReputation addRep : addReputations) {
 				if(addRep.getReputationType()==reputationType) {
@@ -155,11 +154,9 @@ final public class NetReputationSetHandler {
 				}
 			}
 			if(hasRow) pstmt.executeBatch();
-		} catch(SQLException e) {
-			throw new WrappedSQLException(e, pstmt);
-		} finally {
-			pstmt.close();
-			pstmt = null;
+		} catch(Error | RuntimeException | SQLException e) {
+			ErrorPrinter.addSQL(e, pstmt);
+			throw e;
 		}
 	}
 	 */

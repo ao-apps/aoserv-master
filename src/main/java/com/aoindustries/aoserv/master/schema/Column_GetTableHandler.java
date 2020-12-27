@@ -95,81 +95,82 @@ public class Column_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 		);
 		/*
 		List<Column> clientColumns=new ArrayList<>();
-		PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
-			"select\n"
-			+ "  sc.id,\n"
-			+ "  st.\"name\" as \"table\",\n"
-			+ "  sc.\"name\",\n"
-			+ "  sc.\"sinceVersion\",\n"
-			+ "  sc.\"lastVersion\",\n"
-			+ "  sc.index,\n"
-			+ "  ty.\"name\" as \"type\",\n"
-			+ "  sc.\"isNullable\",\n"
-			+ "  sc.\"isUnique\",\n"
-			+ "  sc.\"isPublic\",\n"
-			+ "  coalesce(sc.description, d.description, '') as description\n"
-			+ "from\n"
-			+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-			+ "             \"schema\".\"Column\"              sc\n"
-			+ "  inner join \"schema\".\"Table\"               st on sc.\"table\"        =      st.id\n"
-			+ "  inner join \"schema\".\"Schema\"               s on st.\"schema\"       =       s.id\n"
-			+ "  inner join \"schema\".\"Type\"                ty on sc.\"type\"         =      ty.id\n"
-			+ "  inner join \"schema\".\"AoservProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
-			+ "  left  join \"schema\".\"AoservProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version\n"
-			+ "  left  join (\n"
-			+ "    select\n"
-			+ "      pn.nspname, pc.relname, pa.attname, pd.description\n"
-			+ "    from\n"
-			+ "                 pg_catalog.pg_namespace   pn\n"
-			+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
-			+ "      inner join pg_catalog.pg_attribute   pa on pc.oid = pa.attrelid\n"
-			+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid = pa.attnum\n"
-			+ "  ) d on (s.\"name\", st.\"name\", sc.\"name\") = (d.nspname, d.relname, d.attname)\n"
-			+ "where\n"
-			+ "  client_ap.version=?\n"
-			+ "  and client_ap.created >= sc_ap.created\n"
-			+ "  and (last_ap.created is null or client_ap.created <= last_ap.created)\n"
-			+ "order by\n"
-			+ "  st.id,\n"
-			+ "  sc.index"
-		);
-		try {
-			pstmt.setString(1, source.getProtocolVersion().getVersion());
-
-			ResultSet results=pstmt.executeQuery();
+		try (
+			PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+				"select\n"
+				+ "  sc.id,\n"
+				+ "  st.\"name\" as \"table\",\n"
+				+ "  sc.\"name\",\n"
+				+ "  sc.\"sinceVersion\",\n"
+				+ "  sc.\"lastVersion\",\n"
+				+ "  sc.index,\n"
+				+ "  ty.\"name\" as \"type\",\n"
+				+ "  sc.\"isNullable\",\n"
+				+ "  sc.\"isUnique\",\n"
+				+ "  sc.\"isPublic\",\n"
+				+ "  coalesce(sc.description, d.description, '') as description\n"
+				+ "from\n"
+				+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
+				+ "             \"schema\".\"Column\"              sc\n"
+				+ "  inner join \"schema\".\"Table\"               st on sc.\"table\"        =      st.id\n"
+				+ "  inner join \"schema\".\"Schema\"               s on st.\"schema\"       =       s.id\n"
+				+ "  inner join \"schema\".\"Type\"                ty on sc.\"type\"         =      ty.id\n"
+				+ "  inner join \"schema\".\"AoservProtocol\"   sc_ap on sc.\"sinceVersion\" =   sc_ap.version\n"
+				+ "  left  join \"schema\".\"AoservProtocol\" last_ap on sc.\"lastVersion\"  = last_ap.version\n"
+				+ "  left  join (\n"
+				+ "    select\n"
+				+ "      pn.nspname, pc.relname, pa.attname, pd.description\n"
+				+ "    from\n"
+				+ "                 pg_catalog.pg_namespace   pn\n"
+				+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
+				+ "      inner join pg_catalog.pg_attribute   pa on pc.oid = pa.attrelid\n"
+				+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid = pa.attnum\n"
+				+ "  ) d on (s.\"name\", st.\"name\", sc.\"name\") = (d.nspname, d.relname, d.attname)\n"
+				+ "where\n"
+				+ "  client_ap.version=?\n"
+				+ "  and client_ap.created >= sc_ap.created\n"
+				+ "  and (last_ap.created is null or client_ap.created <= last_ap.created)\n"
+				+ "order by\n"
+				+ "  st.id,\n"
+				+ "  sc.index"
+			)
+		) {
 			try {
-				short clientColumnIndex = 0;
-				String lastTableName=null;
-				Column tempSC=new Column();
-				while(results.next()) {
-					tempSC.init(results);
-					// Change the table ID if on next table
-					String tableName = tempSC.getTable_name();
-					if(lastTableName==null || !lastTableName.equals(tableName)) {
-						clientColumnIndex = 0;
-						lastTableName=tableName;
+				pstmt.setString(1, source.getProtocolVersion().getVersion());
+
+				try (ResultSet results = pstmt.executeQuery()) {
+					short clientColumnIndex = 0;
+					String lastTableName=null;
+					Column tempSC=new Column();
+					while(results.next()) {
+						tempSC.init(results);
+						// Change the table ID if on next table
+						String tableName = tempSC.getTable_name();
+						if(lastTableName==null || !lastTableName.equals(tableName)) {
+							clientColumnIndex = 0;
+							lastTableName=tableName;
+						}
+						clientColumns.add(
+							new Column(
+								tempSC.getPkey(),
+								tableName,
+								tempSC.getName(),
+								tempSC.getSinceVersion_version(),
+								tempSC.getLastVersion_version(),
+								clientColumnIndex++,
+								tempSC.getType_name(),
+								tempSC.isNullable(),
+								tempSC.isUnique(),
+								tempSC.isPublic(),
+								tempSC.getDescription()
+							)
+						);
 					}
-					clientColumns.add(
-						new Column(
-							tempSC.getPkey(),
-							tableName,
-							tempSC.getName(),
-							tempSC.getSinceVersion_version(),
-							tempSC.getLastVersion_version(),
-							clientColumnIndex++,
-							tempSC.getType_name(),
-							tempSC.isNullable(),
-							tempSC.isUnique(),
-							tempSC.isPublic(),
-							tempSC.getDescription()
-						)
-					);
 				}
-			} finally {
-				results.close();
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
-		} finally {
-			pstmt.close();
 		}
 		MasterServer.writeObjects(
 			source,

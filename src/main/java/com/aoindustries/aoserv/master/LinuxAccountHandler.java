@@ -44,6 +44,7 @@ import com.aoindustries.collections.IntList;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Throwables;
 import com.aoindustries.sql.Connections;
+import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.InternUtils;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.validation.ValidationException;
@@ -1811,9 +1812,9 @@ final public class LinuxAccountHandler {
 				pstmt.setBoolean(4, enabled);
 				pstmt.setInt(5, userServer);
 				pstmt.executeUpdate();
-			} catch(SQLException err) {
-				System.err.println("Error from update: "+pstmt.toString());
-				throw err;
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 

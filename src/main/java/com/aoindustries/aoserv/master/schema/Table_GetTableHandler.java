@@ -86,62 +86,63 @@ public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 		);
 		/*
 		List<Table> clientTables=new ArrayList<>();
-		PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
-			"select\n"
-			+ "  st.id,\n"
-			+ "  st.\"name\",\n"
-			+ "  st.\"sinceVersion\",\n"
-			+ "  st.\"lastVersion\",\n"
-			+ "  st.display,\n"
-			+ "  st.\"isPublic\",\n"
-			+ "  coalesce(st.description, d.description, '') as description\n"
-			+ "from\n"
-			+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-			+ "             \"schema\".\"Table\"                        st\n"
-			+ "  inner join \"schema\".\"Schema\"                        s on st.\"schema\"       =                s.id\n"
-			+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-			+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
-			+ "  left  join (\n"
-			+ "    select\n"
-			+ "      pn.nspname, pc.relname, pd.description\n"
-			+ "    from\n"
-			+ "                 pg_catalog.pg_namespace   pn\n"
-			+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
-			+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid=0\n"
-			+ "  ) d on (s.\"name\", st.\"name\") = (d.nspname, d.relname)\n"
-			+ "where\n"
-			+ "  client_ap.version=?\n"
-			+ "  and client_ap.created >= \"sinceVersion\".created\n"
-			+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-			+ "order by\n"
-			+ "  st.id"
-		);
-		try {
-			pstmt.setString(1, source.getProtocolVersion().getVersion());
-
-			ResultSet results=pstmt.executeQuery();
+		try (
+			PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+				"select\n"
+				+ "  st.id,\n"
+				+ "  st.\"name\",\n"
+				+ "  st.\"sinceVersion\",\n"
+				+ "  st.\"lastVersion\",\n"
+				+ "  st.display,\n"
+				+ "  st.\"isPublic\",\n"
+				+ "  coalesce(st.description, d.description, '') as description\n"
+				+ "from\n"
+				+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
+				+ "             \"schema\".\"Table\"                        st\n"
+				+ "  inner join \"schema\".\"Schema\"                        s on st.\"schema\"       =                s.id\n"
+				+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+				+ "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+				+ "  left  join (\n"
+				+ "    select\n"
+				+ "      pn.nspname, pc.relname, pd.description\n"
+				+ "    from\n"
+				+ "                 pg_catalog.pg_namespace   pn\n"
+				+ "      inner join pg_catalog.pg_class       pc on pn.oid = pc.relnamespace\n"
+				+ "      inner join pg_catalog.pg_description pd on pc.oid = pd.objoid and pd.objsubid=0\n"
+				+ "  ) d on (s.\"name\", st.\"name\") = (d.nspname, d.relname)\n"
+				+ "where\n"
+				+ "  client_ap.version=?\n"
+				+ "  and client_ap.created >= \"sinceVersion\".created\n"
+				+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
+				+ "order by\n"
+				+ "  st.id"
+			)
+		) {
 			try {
-				int clientTableID=0;
-				Table tempST=new Table();
-				while(results.next()) {
-					tempST.init(results);
-					clientTables.add(
-						new Table(
-							clientTableID++,
-							tempST.getName(),
-							tempST.getSinceVersion_version(),
-							tempST.getLastVersion_version(),
-							tempST.getDisplay(),
-							tempST.isPublic(),
-							tempST.getDescription()
-						)
-					);
+				pstmt.setString(1, source.getProtocolVersion().getVersion());
+
+				try (ResultSet results = pstmt.executeQuery()) {
+					int clientTableID=0;
+					Table tempST=new Table();
+					while(results.next()) {
+						tempST.init(results);
+						clientTables.add(
+							new Table(
+								clientTableID++,
+								tempST.getName(),
+								tempST.getSinceVersion_version(),
+								tempST.getLastVersion_version(),
+								tempST.getDisplay(),
+								tempST.isPublic(),
+								tempST.getDescription()
+							)
+						);
+					}
 				}
-			} finally {
-				results.close();
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
-		} finally {
-			pstmt.close();
 		}
 		MasterServer.writeObjects(
 			source,

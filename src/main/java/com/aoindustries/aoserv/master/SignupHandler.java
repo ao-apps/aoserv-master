@@ -30,6 +30,7 @@ import com.aoindustries.cron.CronJob;
 import com.aoindustries.cron.Schedule;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.util.ErrorPrinter;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -138,16 +139,19 @@ final public class SignupHandler {
 		);
 
 		// Add the signup_options
-		try (
-			PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into signup.\"Option\" values(default,?,?,?)")
-		) {
-			for(String name : options.keySet()) {
-				String value = options.get(name);
-				pstmt.setInt(1, requestId);
-				pstmt.setString(2, name);
-				pstmt.setString(3, value);
+		try (PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into signup.\"Option\" values(default,?,?,?)")) {
+			try {
+				for(String name : options.keySet()) {
+					String value = options.get(name);
+					pstmt.setInt(1, requestId);
+					pstmt.setString(2, name);
+					pstmt.setString(3, value);
 
-				pstmt.executeUpdate();
+					pstmt.executeUpdate();
+				}
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 

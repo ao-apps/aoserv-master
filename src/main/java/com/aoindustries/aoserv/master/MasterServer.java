@@ -80,8 +80,8 @@ import com.aoindustries.security.Identifier;
 import com.aoindustries.sql.Connections;
 import com.aoindustries.sql.SQLStreamables;
 import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.sql.WrappedSQLException;
 import com.aoindustries.util.BufferManager;
+import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.Tuple2;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.validation.ValidationException;
@@ -10999,8 +10999,9 @@ public abstract class MasterServer {
 						out.writeByte(AoservProtocol.DONE);
 					}
 				}
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 	}
@@ -11037,32 +11038,30 @@ public abstract class MasterServer {
 			try {
 				DatabaseConnection.setParams(dbConn, pstmt, params);
 				pstmt.executeUpdate();
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
+		String currentSQL = null;
 		try (Statement stmt = dbConn.createStatement()) {
 			try {
 				final String fetchSql = "FETCH " + DatabaseConnection.FETCH_SIZE + " FROM fetch_objects";
 
 				// Make one pass counting the rows if providing progress information
 				if(provideProgress) {
-					try {
-						progressCount = 0;
-						while(true) {
-							final int batchSize;
-							try (ResultSet results = stmt.executeQuery(fetchSql)) {
-								if(results.last()) {
-									batchSize = results.getRow();
-								} else {
-									batchSize = 0;
-								}
+					progressCount = 0;
+					while(true) {
+						final int batchSize;
+						try (ResultSet results = stmt.executeQuery(currentSQL = fetchSql)) {
+							if(results.last()) {
+								batchSize = results.getRow();
+							} else {
+								batchSize = 0;
 							}
-							progressCount += batchSize;
-							if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 						}
-					} catch(SQLException err) {
-						throw new WrappedSQLException(err, fetchSql);
+						progressCount += batchSize;
+						if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 					}
 					out.writeByte(AoservProtocol.NEXT);
 					if(version.compareTo(AoservProtocol.Version.VERSION_1_81_19) < 0) {
@@ -11079,41 +11078,30 @@ public abstract class MasterServer {
 					// If progressCount is zero, no rows from query, short-cut here to avoid resetting and refetching empty results
 					if(progressCount == 0) return 0;
 					// Reset cursor
-					final String resetSql = "FETCH ABSOLUTE 0 FROM fetch_objects";
-					try {
-						stmt.executeQuery(resetSql);
-					} catch(SQLException err) {
-						throw new WrappedSQLException(err, resetSql);
-					}
+					stmt.executeQuery(currentSQL = "FETCH ABSOLUTE 0 FROM fetch_objects");
 				} else {
 					progressCount = -1;
 				}
 				rowCount = 0;
-				try {
-					while(true) {
-						int batchSize = 0;
-						try (ResultSet results = stmt.executeQuery(fetchSql)) {
-							while(results.next()) {
-								obj.init(results);
-								out.writeByte(AoservProtocol.NEXT);
-								obj.write(out, version);
-								batchSize++;
-							}
+				while(true) {
+					int batchSize = 0;
+					try (ResultSet results = stmt.executeQuery(currentSQL = fetchSql)) {
+						while(results.next()) {
+							obj.init(results);
+							out.writeByte(AoservProtocol.NEXT);
+							obj.write(out, version);
+							batchSize++;
 						}
-						rowCount += batchSize;
-						if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 					}
-				} catch(SQLException err) {
-					throw new WrappedSQLException(err, fetchSql);
+					rowCount += batchSize;
+					if(batchSize < DatabaseConnection.FETCH_SIZE) break;
 				}
 			} finally {
-				final String closeSql = "CLOSE fetch_objects";
-				try {
-					stmt.executeUpdate(closeSql);
-				} catch(SQLException err) {
-					throw new WrappedSQLException(err, closeSql);
-				}
+				stmt.executeUpdate(currentSQL = "CLOSE fetch_objects");
 			}
+		} catch(Error | RuntimeException | SQLException e) {
+			ErrorPrinter.addSQL(e, currentSQL);
+			throw e;
 		}
 		if(provideProgress && progressCount != rowCount) throw new AssertionError("progressCount != rowCount: " + progressCount + " != " + rowCount);
 		return rowCount;
@@ -11148,8 +11136,9 @@ public abstract class MasterServer {
 				try (ResultSet results = pstmt.executeQuery()) {
 					return writeObjects(source, out, provideProgress, obj, results);
 				}
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 	}
@@ -11230,8 +11219,9 @@ public abstract class MasterServer {
 						throw new NoRowException();
 					}
 				}
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 	}
@@ -11269,8 +11259,9 @@ public abstract class MasterServer {
 						throw new NoRowException();
 					}
 				}
-			} catch(SQLException err) {
-				throw new WrappedSQLException(err, pstmt);
+			} catch(Error | RuntimeException | SQLException e) {
+				ErrorPrinter.addSQL(e, pstmt);
+				throw e;
 			}
 		}
 	}

@@ -33,6 +33,7 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.io.stream.StreamableOutput;
 import com.aoindustries.lang.Strings;
+import com.aoindustries.util.ErrorPrinter;
 import com.aoindustries.util.i18n.Money;
 import com.aoindustries.util.i18n.Monies;
 import java.io.IOException;
@@ -563,11 +564,16 @@ final public class BillingTransactionHandler {
 					ResultSet.CONCUR_READ_ONLY
 				)
 			) {
-				DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
-				try (ResultSet results = pstmt.executeQuery()) {
-					// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
-					// TODO: release conn before writing to out
-					MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
+				try {
+					DatabaseConnection.setParams(dbConn, pstmt, params.toArray());
+					try (ResultSet results = pstmt.executeQuery()) {
+						// TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
+						// TODO: release conn before writing to out
+						MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
+					}
+				} catch(Error | RuntimeException | SQLException e) {
+					ErrorPrinter.addSQL(e, pstmt);
+					throw e;
 				}
 			}
 		} else {
