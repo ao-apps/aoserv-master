@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -257,7 +258,7 @@ final public class TicketHandler /*implements Runnable*/ {
 			createdBy,
 			category==-1 ? DatabaseAccess.Null.INTEGER : category,
 			type,
-			AOServObject.USE_SQL_DATA_WRITE ? fromAddress : fromAddress.toString(),
+			AOServObject.USE_SQL_DATA_WRITE ? fromAddress : Objects.toString(fromAddress, null),
 			summary,
 			details,
 			rawEmail,
