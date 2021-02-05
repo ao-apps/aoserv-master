@@ -1433,16 +1433,7 @@ final public class AccountHandler {
 				if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: " + PasswordChecker.getResultsString(results).replace('\n', '|'));
 			}
 
-			setAdministratorPassword(conn, administrator, password);
-
-			// Notify all clients of the update
-			invalidateList.addTable(
-				conn,
-				Table.TableID.BUSINESS_ADMINISTRATORS,
-				AccountUserHandler.getAccountForUser(conn, administrator),
-				InvalidateList.allHosts,
-				false
-			);
+			setAdministratorPassword(conn, invalidateList, administrator, password);
 		} finally {
 			if(password != null) password.destroy();
 		}
@@ -1454,6 +1445,7 @@ final public class AccountHandler {
 	 */
 	public static void setAdministratorPassword(
 		DatabaseAccess db,
+		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.account.User.Name administrator,
 		UnprotectedPassword password
 	) throws IOException, SQLException {
@@ -1472,6 +1464,15 @@ final public class AccountHandler {
 				encrypted.getIterations(),
 				encrypted.getHash()      == null ? Null.VARBINARY : encrypted.getHash(),
 				administrator
+			);
+
+			// Notify all clients of the update
+			invalidateList.addTable(
+				db,
+				Table.TableID.BUSINESS_ADMINISTRATORS,
+				AccountUserHandler.getAccountForUser(db, administrator),
+				InvalidateList.allHosts,
+				false
 			);
 		} finally {
 			if(password != null) password.destroy();

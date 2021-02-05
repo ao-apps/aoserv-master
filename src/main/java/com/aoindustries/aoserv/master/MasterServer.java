@@ -10804,7 +10804,9 @@ public abstract class MasterServer {
 			) return "Connection attempted with invalid password";
 
 			if(correctCrypted.isRehashRecommended()) {
-				AccountHandler.setAdministratorPassword(db, authenticateAs, password);
+				InvalidateList invalidateList = new InvalidateList();
+				AccountHandler.setAdministratorPassword(db, invalidateList, authenticateAs, password);
+				invalidateTables(db, invalidateList, null);
 			}
 		} finally {
 			if(password != null) password.destroy();
