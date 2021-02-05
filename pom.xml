@@ -276,7 +276,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoindustries</groupId><artifactId>ao-net-types</artifactId><version>1.2.4${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>ao-security</artifactId><version>2.2.0${POST-SNAPSHOT}</version>
+				<groupId>com.aoindustries</groupId><artifactId>ao-security</artifactId><version>2.3.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
 				<groupId>com.aoindustries</groupId><artifactId>ao-sql</artifactId><version>1.0.1${POST-SNAPSHOT}</version>
@@ -320,7 +320,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoindustries</groupId><artifactId>ao-net-types</artifactId><version>1.2.4${POST-SNAPSHOT}</version><classifier>sql</classifier>
 			</dependency>
 			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>ao-security</artifactId><version>2.2.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
+				<groupId>com.aoindustries</groupId><artifactId>ao-security</artifactId><version>2.3.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version><classifier>sql</classifier>
 			</dependency>
 			<dependency>
 				<groupId>com.aoindustries</groupId><artifactId>ao-sql-failfast</artifactId><version>1.0.1${POST-SNAPSHOT}</version>
