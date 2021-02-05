@@ -43,6 +43,7 @@ import com.aoindustries.lang.Strings;
 import com.aoindustries.net.Email;
 import com.aoindustries.security.HashedPassword;
 import com.aoindustries.security.Password;
+import com.aoindustries.security.UnprotectedPassword;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
@@ -1409,56 +1410,72 @@ final public class AccountHandler {
 		invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accts, InvalidateList.allHosts, false);
 	}
 
+	/**
+	 * @param password  Is destroyed before this method returns.  If the original password is
+	 *                  needed, pass a clone to this method.
+	 */
 	public static void setAdministratorPassword(
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.account.User.Name administrator,
-		String plaintext
+		UnprotectedPassword password
 	) throws IOException, SQLException {
-		// An administrator may always reset their own passwords
-		if(!administrator.equals(source.getCurrentAdministrator())) checkPermission(conn, source, "setAdministratorPassword", Permission.Name.set_business_administrator_password);
+		try {
+			// An administrator may always reset their own passwords
+			if(!administrator.equals(source.getCurrentAdministrator())) checkPermission(conn, source, "setAdministratorPassword", Permission.Name.set_business_administrator_password);
 
-		AccountUserHandler.checkAccessUser(conn, source, "setAdministratorPassword", administrator);
+			AccountUserHandler.checkAccessUser(conn, source, "setAdministratorPassword", administrator);
 
-		if(plaintext != null && !plaintext.isEmpty()) {
-			// Perform the password check here, too.
-			List<PasswordChecker.Result> results = Administrator.checkPassword(administrator, plaintext);
-			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: " + PasswordChecker.getResultsString(results).replace('\n', '|'));
+			if(password != null) {
+				// Perform the password check here, too.
+				List<PasswordChecker.Result> results = password.invoke(chars -> Administrator.checkPassword(administrator, new String(chars)));
+				if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: " + PasswordChecker.getResultsString(results).replace('\n', '|'));
+			}
+
+			setAdministratorPassword(conn, administrator, password);
+
+			// Notify all clients of the update
+			invalidateList.addTable(
+				conn,
+				Table.TableID.BUSINESS_ADMINISTRATORS,
+				AccountUserHandler.getAccountForUser(conn, administrator),
+				InvalidateList.allHosts,
+				false
+			);
+		} finally {
+			if(password != null) password.destroy();
 		}
-
-		setAdministratorPassword(conn, administrator, plaintext);
-
-		// Notify all clients of the update
-		invalidateList.addTable(
-			conn,
-			Table.TableID.BUSINESS_ADMINISTRATORS,
-			AccountUserHandler.getAccountForUser(conn, administrator),
-			InvalidateList.allHosts,
-			false
-		);
 	}
 
+	/**
+	 * @param password  Is destroyed before this method returns.  If the original password is
+	 *                  needed, pass a clone to this method.
+	 */
 	public static void setAdministratorPassword(
 		DatabaseAccess db,
 		com.aoindustries.aoserv.client.account.User.Name administrator,
-		String plaintext
+		UnprotectedPassword password
 	) throws IOException, SQLException {
-		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set password for Administrator named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+		try {
+			if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set password for Administrator named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
-		if(isAdministratorDisabled(db, administrator)) throw new SQLException("Unable to set password, Administrator disabled: "+administrator);
+			if(isAdministratorDisabled(db, administrator)) throw new SQLException("Unable to set password, Administrator disabled: "+administrator);
 
-		HashedPassword encrypted = (plaintext == null || plaintext.isEmpty())
-			? HashedPassword.NO_PASSWORD
-			: new HashedPassword(new Password(plaintext.toCharArray()));
-		db.update(
-			"update account.\"Administrator\" set password=ROW(?,?,?,?) where username=?",
-			encrypted.getAlgorithm() == null ? Null.VARCHAR   : encrypted.getAlgorithm().getAlgorithmName(),
-			encrypted.getSalt()      == null ? Null.VARBINARY : encrypted.getSalt(),
-			encrypted.getIterations(),
-			encrypted.getHash()      == null ? Null.VARBINARY : encrypted.getHash(),
-			administrator
-		);
+			HashedPassword encrypted = (password == null)
+				? HashedPassword.NO_PASSWORD
+				: new HashedPassword(password);
+			db.update(
+				"update account.\"Administrator\" set password=ROW(?,?,?,?) where username=?",
+				encrypted.getAlgorithm() == null ? Null.VARCHAR   : encrypted.getAlgorithm().getAlgorithmName(),
+				encrypted.getSalt()      == null ? Null.VARBINARY : encrypted.getSalt(),
+				encrypted.getIterations(),
+				encrypted.getHash()      == null ? Null.VARBINARY : encrypted.getHash(),
+				administrator
+			);
+		} finally {
+			if(password != null) password.destroy();
+		}
 	}
 
 	/**

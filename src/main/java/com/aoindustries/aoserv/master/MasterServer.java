@@ -78,6 +78,7 @@ import com.aoindustries.net.Protocol;
 import com.aoindustries.security.HashedPassword;
 import com.aoindustries.security.Identifier;
 import com.aoindustries.security.Password;
+import com.aoindustries.security.UnprotectedPassword;
 import com.aoindustries.sql.Connections;
 import com.aoindustries.sql.SQLStreamables;
 import com.aoindustries.sql.SQLUtility;
@@ -127,6 +128,7 @@ import java.util.logging.Logger;
  * </p>
  * @author  AO Industries, Inc.
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public abstract class MasterServer {
 
 	private static final Logger logger = Logger.getLogger(MasterServer.class.getName());
@@ -502,7 +504,7 @@ public abstract class MasterServer {
 	 * @return  <code>true</code> if another request could be made on this stream, or
 	 *          <code>false</code> if this connection should be closed.
 	 */
-	@SuppressWarnings("try")
+	@SuppressWarnings({"try", "UseSpecificCatch", "BroadCatchBlock"})
 	final boolean handleRequest(
 		RequestSource source,
 		long seq,
@@ -959,8 +961,8 @@ public abstract class MasterServer {
 													byte[] cardholderName=new byte[in.readCompressedInt()]; in.readFully(cardholderName);
 													byte[] streetAddress=new byte[in.readCompressedInt()]; in.readFully(streetAddress);
 													byte[] city=new byte[in.readCompressedInt()]; in.readFully(city);
-													int len=in.readCompressedInt(); byte[] state=len>=0?new byte[len]:null; if(len>=0) in.readFully(state);
-													len=in.readCompressedInt(); byte[] zip=len>=0?new byte[len]:null; if(len>=0) in.readFully(zip);
+													int len=in.readCompressedInt(); if(len >= 0) in.readFully(new byte[len]); // state
+													len=in.readCompressedInt(); if(len >= 0) in.readFully(new byte[len]); // zip
 													boolean useMonthly=in.readBoolean();
 													String description=in.readNullUTF();
 													throw new SQLException("add_credit_card for protocol version "+AoservProtocol.Version.VERSION_1_28+" or older is no longer supported.");
@@ -7298,19 +7300,21 @@ public abstract class MasterServer {
 								case SET_BUSINESS_ADMINISTRATOR_PASSWORD :
 									{
 										com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
-										String password = in.readUTF();
-										process.setCommand(
-											Command.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
-											administrator,
-											AoservProtocol.FILTERED
-										);
-										AccountHandler.setAdministratorPassword(
-											conn,
-											source,
-											invalidateList,
-											administrator,
-											password
-										);
+										char[] chars = in.readUTF().toCharArray(); // TODO: Write as char[] so can be zeroed
+										try (UnprotectedPassword password = (chars.length == 0) ? null : new UnprotectedPassword(chars)) {
+											process.setCommand(
+												Command.SET_BUSINESS_ADMINISTRATOR_PASSWORD,
+												administrator,
+												Password.MASKED_PASSWORD
+											);
+											AccountHandler.setAdministratorPassword(
+												conn,
+												source,
+												invalidateList,
+												administrator,
+												password
+											);
+										}
 										resp = Response.DONE;
 										sendInvalidateList = true;
 									}
@@ -10769,33 +10773,41 @@ public abstract class MasterServer {
 		return count;
 	}
 
+	/**
+	 * @param password  Is destroyed before this method returns.  If the original password is
+	 *                  needed, pass a clone to this method.
+	 */
 	public static String authenticate(
 		DatabaseAccess db,
 		String remoteHost, 
 		com.aoindustries.aoserv.client.account.User.Name connectAs, 
 		com.aoindustries.aoserv.client.account.User.Name authenticateAs, 
-		String password
+		UnprotectedPassword password
 	) throws IOException, SQLException {
-		if(connectAs == null) return "Connection attempted with empty connect username";
-		if(authenticateAs == null) return "Connection attempted with empty authentication username";
+		try {
+			if(connectAs == null) return "Connection attempted with empty connect username";
+			if(authenticateAs == null) return "Connection attempted with empty authentication username";
 
-		if(!AccountHandler.isAdministrator(db, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
+			if(!AccountHandler.isAdministrator(db, authenticateAs)) return "Unable to find Administrator: "+authenticateAs;
 
-		if(AccountHandler.isAdministratorDisabled(db, authenticateAs)) return "Administrator disabled: "+authenticateAs;
+			if(AccountHandler.isAdministratorDisabled(db, authenticateAs)) return "Administrator disabled: "+authenticateAs;
 
-		if (!isHostAllowed(db, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
+			if (!isHostAllowed(db, authenticateAs, remoteHost)) return "Connection from "+remoteHost+" as "+authenticateAs+" not allowed.";
 
-		// Authenticate the client first
-		if(password.length() == 0) return "Connection attempted with empty password";
+			// Authenticate the client first
+			if(password == null) return "Connection attempted with empty password";
 
-		HashedPassword correctCrypted = AccountHandler.getAdministrator(db, authenticateAs).getPassword();
-		if(
-			correctCrypted == null
-			|| !correctCrypted.matches(new Password(password.toCharArray()))
-		) return "Connection attempted with invalid password";
+			HashedPassword correctCrypted = AccountHandler.getAdministrator(db, authenticateAs).getPassword();
+			if(
+				correctCrypted == null
+				|| !correctCrypted.matches(password.clone())
+			) return "Connection attempted with invalid password";
 
-		if(correctCrypted.isRehashRecommended()) {
-			AccountHandler.setAdministratorPassword(db, authenticateAs, password);
+			if(correctCrypted.isRehashRecommended()) {
+				AccountHandler.setAdministratorPassword(db, authenticateAs, password);
+			}
+		} finally {
+			if(password != null) password.destroy();
 		}
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions

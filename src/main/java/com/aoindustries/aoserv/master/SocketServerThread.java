@@ -36,6 +36,7 @@ import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.security.Identifier;
 import com.aoindustries.security.SecurityStreamables;
+import com.aoindustries.security.UnprotectedPassword;
 import com.aoindustries.validation.ValidationException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -238,248 +239,250 @@ final public class SocketServerThread extends Thread implements RequestSource {
 					+ process.getAuthenticatedAdministrator_username()
 					+ ")"
 				);
-				String password = in.readUTF();
-				Identifier existingId;
-				if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-					long existingIdLong = in.readLong();
-					existingId = existingIdLong == -1 ? null : new Identifier(0, existingIdLong);
-				} else {
-					existingId = SecurityStreamables.readNullIdentifier(in);
-				}
+				char[] chars = in.readUTF().toCharArray(); // TODO: Write as char[] so can be zeroed
+				try (UnprotectedPassword password = (chars.length == 0) ? null : new UnprotectedPassword(chars)) {
+					Identifier existingId;
+					if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+						long existingIdLong = in.readLong();
+						existingId = existingIdLong == -1 ? null : new Identifier(0, existingIdLong);
+					} else {
+						existingId = SecurityStreamables.readNullIdentifier(in);
+					}
 
-				switch(protocolVersion) {
-					case VERSION_1_84_13 :
-					case VERSION_1_83_2 :
-					case VERSION_1_83_1 :
-					case VERSION_1_83_0 :
-					case VERSION_1_82_1 :
-					case VERSION_1_82_0 :
-					case VERSION_1_81_22 :
-					case VERSION_1_81_21 :
-					case VERSION_1_81_20 :
-					case VERSION_1_81_19 :
-					case VERSION_1_81_18 :
-					case VERSION_1_81_17 :
-					case VERSION_1_81_16 :
-					case VERSION_1_81_15 :
-					case VERSION_1_81_14 :
-					case VERSION_1_81_13 :
-					case VERSION_1_81_12 :
-					case VERSION_1_81_11 :
-					case VERSION_1_81_10 :
-					case VERSION_1_81_9 :
-					case VERSION_1_81_8 :
-					case VERSION_1_81_7 :
-					case VERSION_1_81_6 :
-					case VERSION_1_81_5 :
-					case VERSION_1_81_4 :
-					case VERSION_1_81_3 :
-					case VERSION_1_81_2 :
-					case VERSION_1_81_1 :
-					case VERSION_1_81_0 :
-					case VERSION_1_80_2 :
-					case VERSION_1_80_1 :
-					case VERSION_1_80_0 :
-					case VERSION_1_80 :
-					case VERSION_1_79 :
-					case VERSION_1_78 :
-					case VERSION_1_77 :
-					case VERSION_1_76 :
-					case VERSION_1_75 :
-					case VERSION_1_74 :
-					case VERSION_1_73 :
-					case VERSION_1_72 :
-					case VERSION_1_71 :
-					case VERSION_1_70 :
-					case VERSION_1_69 :
-					case VERSION_1_68 :
-					case VERSION_1_67 :
-					case VERSION_1_66 :
-					case VERSION_1_65 :
-					case VERSION_1_64 :
-					case VERSION_1_63 :
-					case VERSION_1_62 :
-					case VERSION_1_61 :
-					case VERSION_1_60 :
-					case VERSION_1_59 :
-					case VERSION_1_58 :
-					case VERSION_1_57 :
-					case VERSION_1_56 :
-					case VERSION_1_55 :
-					case VERSION_1_54 :
-					case VERSION_1_53 :
-					case VERSION_1_52 :
-					case VERSION_1_51 :
-					case VERSION_1_50 :
-					case VERSION_1_49 :
-					case VERSION_1_48 :
-					case VERSION_1_47 :
-					case VERSION_1_46 :
-					case VERSION_1_45 :
-					case VERSION_1_44 :
-					case VERSION_1_43 :
-					case VERSION_1_42 :
-					case VERSION_1_41 :
-					case VERSION_1_40 :
-					case VERSION_1_39 :
-					case VERSION_1_38 :
-					case VERSION_1_37 :
-					case VERSION_1_36 :
-					case VERSION_1_35 :
-					case VERSION_1_34 :
-					case VERSION_1_33 :
-					case VERSION_1_32 :
-					case VERSION_1_31 :
-					case VERSION_1_30 :
-					case VERSION_1_29 :
-					case VERSION_1_28 :
-					case VERSION_1_27 :
-					case VERSION_1_26 :
-					case VERSION_1_25 :
-					case VERSION_1_24 :
-					case VERSION_1_23 :
-					case VERSION_1_22 :
-					case VERSION_1_21 :
-					case VERSION_1_20 :
-					case VERSION_1_19 :
-					case VERSION_1_18 :
-					case VERSION_1_17 :
-					case VERSION_1_16 :
-					case VERSION_1_15 :
-					case VERSION_1_14 :
-					case VERSION_1_13 :
-					case VERSION_1_12 :
-					case VERSION_1_11 :
-					case VERSION_1_10 :
-					case VERSION_1_9 :
-					case VERSION_1_8 :
-					case VERSION_1_7 :
-					case VERSION_1_6 :
-					case VERSION_1_5 :
-					case VERSION_1_4 :
-					case VERSION_1_3 :
-					case VERSION_1_2 :
-					case VERSION_1_1 :
-					case VERSION_1_0_A_130 :
-					case VERSION_1_0_A_129 :
-					case VERSION_1_0_A_128 :
-					case VERSION_1_0_A_127 :
-					case VERSION_1_0_A_126 :
-					case VERSION_1_0_A_125 :
-					case VERSION_1_0_A_124 :
-					case VERSION_1_0_A_123 :
-					case VERSION_1_0_A_122 :
-					case VERSION_1_0_A_121 :
-					case VERSION_1_0_A_120 :
-					case VERSION_1_0_A_119 :
-					case VERSION_1_0_A_118 :
-					case VERSION_1_0_A_117 :
-					case VERSION_1_0_A_116 :
-					case VERSION_1_0_A_115 :
-					case VERSION_1_0_A_114 :
-					case VERSION_1_0_A_113 :
-					case VERSION_1_0_A_112 :
-					case VERSION_1_0_A_111 :
-					case VERSION_1_0_A_110 :
-					case VERSION_1_0_A_109 :
-					case VERSION_1_0_A_108 :
-					case VERSION_1_0_A_107 :
-					case VERSION_1_0_A_106 :
-					case VERSION_1_0_A_105 :
-					case VERSION_1_0_A_104 :
-					case VERSION_1_0_A_103 :
-					case VERSION_1_0_A_102 :
-					case VERSION_1_0_A_101 :
-					case VERSION_1_0_A_100 :
-					{
-						DatabaseAccess db = MasterDatabase.getDatabase();
-						String message = MasterServer.authenticate(
-							db,
-							socket.getInetAddress().getHostAddress(),
-							process.getEffectiveAdministrator_username(),
-							process.getAuthenticatedAdministrator_username(),
-							password
-						);
+					switch(protocolVersion) {
+						case VERSION_1_84_13 :
+						case VERSION_1_83_2 :
+						case VERSION_1_83_1 :
+						case VERSION_1_83_0 :
+						case VERSION_1_82_1 :
+						case VERSION_1_82_0 :
+						case VERSION_1_81_22 :
+						case VERSION_1_81_21 :
+						case VERSION_1_81_20 :
+						case VERSION_1_81_19 :
+						case VERSION_1_81_18 :
+						case VERSION_1_81_17 :
+						case VERSION_1_81_16 :
+						case VERSION_1_81_15 :
+						case VERSION_1_81_14 :
+						case VERSION_1_81_13 :
+						case VERSION_1_81_12 :
+						case VERSION_1_81_11 :
+						case VERSION_1_81_10 :
+						case VERSION_1_81_9 :
+						case VERSION_1_81_8 :
+						case VERSION_1_81_7 :
+						case VERSION_1_81_6 :
+						case VERSION_1_81_5 :
+						case VERSION_1_81_4 :
+						case VERSION_1_81_3 :
+						case VERSION_1_81_2 :
+						case VERSION_1_81_1 :
+						case VERSION_1_81_0 :
+						case VERSION_1_80_2 :
+						case VERSION_1_80_1 :
+						case VERSION_1_80_0 :
+						case VERSION_1_80 :
+						case VERSION_1_79 :
+						case VERSION_1_78 :
+						case VERSION_1_77 :
+						case VERSION_1_76 :
+						case VERSION_1_75 :
+						case VERSION_1_74 :
+						case VERSION_1_73 :
+						case VERSION_1_72 :
+						case VERSION_1_71 :
+						case VERSION_1_70 :
+						case VERSION_1_69 :
+						case VERSION_1_68 :
+						case VERSION_1_67 :
+						case VERSION_1_66 :
+						case VERSION_1_65 :
+						case VERSION_1_64 :
+						case VERSION_1_63 :
+						case VERSION_1_62 :
+						case VERSION_1_61 :
+						case VERSION_1_60 :
+						case VERSION_1_59 :
+						case VERSION_1_58 :
+						case VERSION_1_57 :
+						case VERSION_1_56 :
+						case VERSION_1_55 :
+						case VERSION_1_54 :
+						case VERSION_1_53 :
+						case VERSION_1_52 :
+						case VERSION_1_51 :
+						case VERSION_1_50 :
+						case VERSION_1_49 :
+						case VERSION_1_48 :
+						case VERSION_1_47 :
+						case VERSION_1_46 :
+						case VERSION_1_45 :
+						case VERSION_1_44 :
+						case VERSION_1_43 :
+						case VERSION_1_42 :
+						case VERSION_1_41 :
+						case VERSION_1_40 :
+						case VERSION_1_39 :
+						case VERSION_1_38 :
+						case VERSION_1_37 :
+						case VERSION_1_36 :
+						case VERSION_1_35 :
+						case VERSION_1_34 :
+						case VERSION_1_33 :
+						case VERSION_1_32 :
+						case VERSION_1_31 :
+						case VERSION_1_30 :
+						case VERSION_1_29 :
+						case VERSION_1_28 :
+						case VERSION_1_27 :
+						case VERSION_1_26 :
+						case VERSION_1_25 :
+						case VERSION_1_24 :
+						case VERSION_1_23 :
+						case VERSION_1_22 :
+						case VERSION_1_21 :
+						case VERSION_1_20 :
+						case VERSION_1_19 :
+						case VERSION_1_18 :
+						case VERSION_1_17 :
+						case VERSION_1_16 :
+						case VERSION_1_15 :
+						case VERSION_1_14 :
+						case VERSION_1_13 :
+						case VERSION_1_12 :
+						case VERSION_1_11 :
+						case VERSION_1_10 :
+						case VERSION_1_9 :
+						case VERSION_1_8 :
+						case VERSION_1_7 :
+						case VERSION_1_6 :
+						case VERSION_1_5 :
+						case VERSION_1_4 :
+						case VERSION_1_3 :
+						case VERSION_1_2 :
+						case VERSION_1_1 :
+						case VERSION_1_0_A_130 :
+						case VERSION_1_0_A_129 :
+						case VERSION_1_0_A_128 :
+						case VERSION_1_0_A_127 :
+						case VERSION_1_0_A_126 :
+						case VERSION_1_0_A_125 :
+						case VERSION_1_0_A_124 :
+						case VERSION_1_0_A_123 :
+						case VERSION_1_0_A_122 :
+						case VERSION_1_0_A_121 :
+						case VERSION_1_0_A_120 :
+						case VERSION_1_0_A_119 :
+						case VERSION_1_0_A_118 :
+						case VERSION_1_0_A_117 :
+						case VERSION_1_0_A_116 :
+						case VERSION_1_0_A_115 :
+						case VERSION_1_0_A_114 :
+						case VERSION_1_0_A_113 :
+						case VERSION_1_0_A_112 :
+						case VERSION_1_0_A_111 :
+						case VERSION_1_0_A_110 :
+						case VERSION_1_0_A_109 :
+						case VERSION_1_0_A_108 :
+						case VERSION_1_0_A_107 :
+						case VERSION_1_0_A_106 :
+						case VERSION_1_0_A_105 :
+						case VERSION_1_0_A_104 :
+						case VERSION_1_0_A_103 :
+						case VERSION_1_0_A_102 :
+						case VERSION_1_0_A_101 :
+						case VERSION_1_0_A_100 :
+						{
+							DatabaseAccess db = MasterDatabase.getDatabase();
+							String message = MasterServer.authenticate(
+								db,
+								socket.getInetAddress().getHostAddress(),
+								process.getEffectiveAdministrator_username(),
+								process.getAuthenticatedAdministrator_username(),
+								password
+							);
 
-						if(message!=null) {
-							//UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
-							out.writeBoolean(false);
-							out.writeUTF(message);
-							out.flush();
-						} else {
-							// Only master users may provide a daemon_server
-							boolean isOK=true;
-							int daemonServer=process.getDaemonServer();
-							if(daemonServer!=-1) {
-								if(MasterServer.getUser(db, process.getEffectiveAdministrator_username())==null) {
-									out.writeBoolean(false);
-									out.writeUTF("Only master users may register a daemon server.");
-									out.flush();
-									isOK=false;
-								} else {
-									UserHost[] servers=MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
-									if(servers.length!=0) {
+							if(message!=null) {
+								//UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
+								out.writeBoolean(false);
+								out.writeUTF(message);
+								out.flush();
+							} else {
+								// Only master users may provide a daemon_server
+								boolean isOK=true;
+								int daemonServer=process.getDaemonServer();
+								if(daemonServer!=-1) {
+									if(MasterServer.getUser(db, process.getEffectiveAdministrator_username())==null) {
+										out.writeBoolean(false);
+										out.writeUTF("Only master users may register a daemon server.");
+										out.flush();
 										isOK=false;
-										for (UserHost server1 : servers) {
-											if (server1.getServerPKey() == daemonServer) {
-												isOK=true;
-												break;
+									} else {
+										UserHost[] servers=MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
+										if(servers.length!=0) {
+											isOK=false;
+											for (UserHost server1 : servers) {
+												if (server1.getServerPKey() == daemonServer) {
+													isOK=true;
+													break;
+												}
+											}
+											if(!isOK) {
+												out.writeBoolean(false);
+												out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
+												out.flush();
 											}
 										}
-										if(!isOK) {
-											out.writeBoolean(false);
-											out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
-											out.flush();
+									}
+								}
+								if(isOK) {
+									out.writeBoolean(true);
+									if(existingId == null) {
+										Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
+										process.setConnectorId(connectorId);
+										if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+											assert connectorId.getHi() == 0;
+											assert connectorId.getLo() != -1;
+											out.writeLong(connectorId.getLo());
+										} else {
+											SecurityStreamables.writeIdentifier(connectorId, out);
 										}
-									}
-								}
-							}
-							if(isOK) {
-								out.writeBoolean(true);
-								if(existingId == null) {
-									Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
-									process.setConnectorId(connectorId);
-									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-										assert connectorId.getHi() == 0;
-										assert connectorId.getLo() != -1;
-										out.writeLong(connectorId.getLo());
 									} else {
-										SecurityStreamables.writeIdentifier(connectorId, out);
+										process.setConnectorId(existingId);
 									}
-								} else {
-									process.setConnectorId(existingId);
-								}
-								// Command sequence starts at a random value
-								final long startSeq;
-								if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-									startSeq = MasterServer.getSecureRandom().nextLong();
-									out.writeLong(startSeq);
-								} else {
-									startSeq = 0;
-								}
-								out.flush();
+									// Command sequence starts at a random value
+									final long startSeq;
+									if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
+										startSeq = MasterServer.getSecureRandom().nextLong();
+										out.writeLong(startSeq);
+									} else {
+										startSeq = 0;
+									}
+									out.flush();
 
-								MasterServer.updateAOServProtocolLastUsed(db, protocolVersion);
+									MasterServer.updateAOServProtocolLastUsed(db, protocolVersion);
 
-								long seq = startSeq;
-								while(server.handleRequest(this, seq++, in, out, process)) {
-									// Do nothing in loop
+									long seq = startSeq;
+									while(server.handleRequest(this, seq++, in, out, process)) {
+										// Do nothing in loop
+									}
 								}
 							}
+							break;
 						}
-						break;
-					}
-					default :
-					{
-						out.writeBoolean(false);
-						out.writeUTF(
-							"Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
-							+protocolVersion
-							+", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-							+Strings.join(AoservProtocol.Version.values(), ", ")
-							+".  Please upgrade the client code to match the server."
-						);
-						out.flush();
+						default :
+						{
+							out.writeBoolean(false);
+							out.writeUTF(
+								"Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
+								+protocolVersion
+								+", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
+								+Strings.join(AoservProtocol.Version.values(), ", ")
+								+".  Please upgrade the client code to match the server."
+							);
+							out.flush();
+						}
 					}
 				}
 			} catch(EOFException err) {
