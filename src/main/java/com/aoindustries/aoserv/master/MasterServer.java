@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -47,7 +47,6 @@ import com.aoindustries.aoserv.client.net.reputation.Set.AddReputation;
 import com.aoindustries.aoserv.client.net.reputation.Set.ConfidenceType;
 import com.aoindustries.aoserv.client.net.reputation.Set.ReputationType;
 import com.aoindustries.aoserv.client.pki.Certificate;
-import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.schema.Type;
@@ -76,7 +75,9 @@ import com.aoindustries.net.HostAddress;
 import com.aoindustries.net.InetAddress;
 import com.aoindustries.net.Port;
 import com.aoindustries.net.Protocol;
+import com.aoindustries.security.HashedPassword;
 import com.aoindustries.security.Identifier;
+import com.aoindustries.security.Password;
 import com.aoindustries.sql.Connections;
 import com.aoindustries.sql.SQLStreamables;
 import com.aoindustries.sql.SQLUtility;
@@ -10787,11 +10788,15 @@ public abstract class MasterServer {
 		// Authenticate the client first
 		if(password.length() == 0) return "Connection attempted with empty password";
 
-		HashedPassword correctCrypted=AccountHandler.getAdministrator(db, authenticateAs).getPassword();
+		HashedPassword correctCrypted = AccountHandler.getAdministrator(db, authenticateAs).getPassword();
 		if(
-			correctCrypted==null
-			|| !correctCrypted.passwordMatches(password)
+			correctCrypted == null
+			|| !correctCrypted.matches(new Password(password.toCharArray()))
 		) return "Connection attempted with invalid password";
+
+		if(correctCrypted.isRehashRecommended()) {
+			AccountHandler.setAdministratorPassword(db, authenticateAs, password);
+		}
 
 		// If connectAs is not authenticateAs, must be authenticated with switch user permissions
 		if(!connectAs.equals(authenticateAs)) {

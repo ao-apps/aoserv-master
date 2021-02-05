@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -42,6 +42,36 @@ import java.util.Set;
  */
 public class Administrator_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
+	public static final String MASTER_QUERY =
+		"select\n"
+		+ "  username,\n"
+		+ "  (password).algorithm  as \"password.algorithm\",\n"
+		+ "  (password).salt       as \"password.salt\",\n"
+		+ "  (password).iterations as \"password.iterations\",\n"
+		+ "  (password).hash       as \"password.hash\",\n"
+		+ "  name,\n"
+		+ "  title,\n"
+		+ "  birthday,\n"
+		+ "  is_preferred,\n"
+		+ "  private,\n"
+		+ "  created,\n"
+		+ "  work_phone,\n"
+		+ "  home_phone,\n"
+		+ "  cell_phone,\n"
+		+ "  fax,\n"
+		+ "  email,\n"
+		+ "  address1,\n"
+		+ "  address2,\n"
+		+ "  city,\n"
+		+ "  state,\n"
+		+ "  country,\n"
+		+ "  zip,\n"
+		+ "  disable_log,\n"
+		+ "  can_switch_users,\n"
+		+ "  support_code\n"
+		+ "from\n"
+		+ "  account.\"Administrator\"";
+
 	@Override
 	public Set<Table.TableID> getTableIds() {
 		return EnumSet.of(Table.TableID.BUSINESS_ADMINISTRATORS);
@@ -55,7 +85,7 @@ public class Administrator_GetTableHandler extends TableHandler.GetTableHandlerB
 			provideProgress,
 			CursorMode.AUTO,
 			new Administrator(),
-			"select * from account.\"Administrator\""
+			MASTER_QUERY
 		);
 	}
 
@@ -70,7 +100,10 @@ public class Administrator_GetTableHandler extends TableHandler.GetTableHandlerB
 			new Administrator(),
 			"select distinct\n"
 			+ "  ba.username,\n"
-			+ "  null::text,\n"
+			+ "  NULL::text  as \"password.algorithm\",\n"
+			+ "  NULL::bytea as \"password.salt\",\n"
+			+ "  0::integer  as \"password.iterations\",\n"
+			+ "  NULL::bytea as \"password.hash\",\n"
 			+ "  ba.name,\n"
 			+ "  ba.title,\n"
 			+ "  ba.birthday,\n"
@@ -90,7 +123,7 @@ public class Administrator_GetTableHandler extends TableHandler.GetTableHandlerB
 			+ "  ba.zip,\n"
 			+ "  ba.disable_log,\n"
 			+ "  ba.can_switch_users,\n"
-			+ "  null\n"
+			+ "  null AS support_code\n"
 			+ "from\n"
 			+ "  master.\"UserHost\" ms,\n"
 			+ "  account.\"AccountHost\" bs,\n"
@@ -118,7 +151,10 @@ public class Administrator_GetTableHandler extends TableHandler.GetTableHandlerB
 			new Administrator(),
 			"select\n"
 			+ "  ba.username,\n"
-			+ "  null::text,\n"
+			+ "  NULL::text  as \"password.algorithm\",\n"
+			+ "  NULL::bytea as \"password.salt\",\n"
+			+ "  0::integer  as \"password.iterations\",\n"
+			+ "  NULL::bytea as \"password.hash\",\n"
 			+ "  ba.name,\n"
 			+ "  ba.title,\n"
 			+ "  ba.birthday,\n"

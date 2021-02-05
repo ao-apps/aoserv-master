@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -31,8 +31,8 @@ import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.payment.CountryCode;
-import com.aoindustries.aoserv.client.pki.HashedPassword;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.account.Administrator_GetTableHandler;
 import com.aoindustries.collections.AoCollections;
 import com.aoindustries.collections.IntList;
 import com.aoindustries.collections.SortedArrayList;
@@ -41,6 +41,8 @@ import com.aoindustries.dbc.DatabaseAccess.Null;
 import com.aoindustries.dbc.DatabaseConnection;
 import com.aoindustries.lang.Strings;
 import com.aoindustries.net.Email;
+import com.aoindustries.security.HashedPassword;
+import com.aoindustries.security.Password;
 import com.aoindustries.validation.ValidationException;
 import com.aoindustries.validation.ValidationResult;
 import java.io.IOException;
@@ -442,7 +444,26 @@ final public class AccountHandler {
 
 		String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
 		conn.update(
-			"insert into account.\"Administrator\" values(?,null,?,?,?,false,?,now(),?,?,?,?,?,?,?,?,?,?,?,null,true,?)",
+			"insert into account.\"Administrator\" (\n"
+			+ "  username,\n"
+			+ "  name,\n"
+			+ "  title,\n"
+			+ "  birthday,\n"
+			+ "  private,\n"
+			+ "  work_phone,\n"
+			+ "  home_phone,\n"
+			+ "  cell_phone,\n"
+			+ "  fax,\n"
+			+ "  email,\n"
+			+ "  address1,\n"
+			+ "  address2,\n"
+			+ "  city,\n"
+			+ "  state,\n"
+			+ "  country,\n"
+			+ "  zip,\n"
+			+ "  can_switch_users,\n"
+			+ "  support_code\n"
+			+ ") values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,true,?)",
 			user.toString(),
 			name,
 			title,
@@ -946,7 +967,7 @@ final public class AccountHandler {
 		com.aoindustries.aoserv.client.account.User.Name administrator
 	) throws IOException, SQLException {
 		AccountUserHandler.checkAccessUser(conn, source, "isAdministratorPasswordSet", administrator);
-		return conn.queryBoolean("select password is not null from account.\"Administrator\" where username=?", administrator);
+		return conn.queryBoolean("select (password).algorithm is not null from account.\"Administrator\" where username=?", administrator);
 	}
 
 	public static void removeAdministrator(
@@ -1399,27 +1420,45 @@ final public class AccountHandler {
 		if(!administrator.equals(source.getCurrentAdministrator())) checkPermission(conn, source, "setAdministratorPassword", Permission.Name.set_business_administrator_password);
 
 		AccountUserHandler.checkAccessUser(conn, source, "setAdministratorPassword", administrator);
-		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set password for Administrator named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
 
-		if(isAdministratorDisabled(conn, administrator)) throw new SQLException("Unable to set password, Administrator disabled: "+administrator);
-
-		if(plaintext!=null && plaintext.length()>0) {
+		if(plaintext != null && !plaintext.isEmpty()) {
 			// Perform the password check here, too.
-			List<PasswordChecker.Result> results=Administrator.checkPassword(administrator, plaintext);
-			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: "+PasswordChecker.getResultsString(results).replace('\n', '|'));
+			List<PasswordChecker.Result> results = Administrator.checkPassword(administrator, plaintext);
+			if(PasswordChecker.hasResults(results)) throw new SQLException("Invalid password: " + PasswordChecker.getResultsString(results).replace('\n', '|'));
 		}
 
-		String encrypted =
-			plaintext==null || plaintext.length()==0
-			? null
-			: HashedPassword.hash(plaintext)
-		;
-
-		Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
-		conn.update("update account.\"Administrator\" set password=? where username=?", encrypted, administrator);
+		setAdministratorPassword(conn, administrator, plaintext);
 
 		// Notify all clients of the update
-		invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
+		invalidateList.addTable(
+			conn,
+			Table.TableID.BUSINESS_ADMINISTRATORS,
+			AccountUserHandler.getAccountForUser(conn, administrator),
+			InvalidateList.allHosts,
+			false
+		);
+	}
+
+	public static void setAdministratorPassword(
+		DatabaseAccess db,
+		com.aoindustries.aoserv.client.account.User.Name administrator,
+		String plaintext
+	) throws IOException, SQLException {
+		if(administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) throw new SQLException("Not allowed to set password for Administrator named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+
+		if(isAdministratorDisabled(db, administrator)) throw new SQLException("Unable to set password, Administrator disabled: "+administrator);
+
+		HashedPassword encrypted = (plaintext == null || plaintext.isEmpty())
+			? HashedPassword.NO_PASSWORD
+			: new HashedPassword(new Password(plaintext.toCharArray()));
+		db.update(
+			"update account.\"Administrator\" set password=ROW(?,?,?,?) where username=?",
+			encrypted.getAlgorithm() == null ? Null.VARCHAR   : encrypted.getAlgorithm().getAlgorithmName(),
+			encrypted.getSalt()      == null ? Null.VARBINARY : encrypted.getSalt(),
+			encrypted.getIterations(),
+			encrypted.getHash()      == null ? Null.VARBINARY : encrypted.getHash(),
+			administrator
+		);
 	}
 
 	/**
@@ -1532,7 +1571,7 @@ final public class AccountHandler {
 						}
 						return table;
 					},
-					"select * from account.\"Administrator\""
+					Administrator_GetTableHandler.MASTER_QUERY
 				);
 			}
 			return administrators.get(user);

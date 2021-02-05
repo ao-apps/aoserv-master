@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 aoserv-master - Master server for the AOServ Platform.
-Copyright (C) 2020  AO Industries, Inc.
+Copyright (C) 2020, 2021  AO Industries, Inc.
     support@aoindustries.com
     7262 Bull Pen Cir
     Mobile, AL 36695
@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2020-12-07T13:45:10-06:00"
+		dateModified="2021-02-04T20:32:15-06:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -51,6 +51,12 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 					<li>
 						Fixed bug in <code>set_primary_httpd_site_url</code> implementation.  The previous technique
 						to clear and set in a single SQL update was failing on current versions of PostgreSQL.
+					</li>
+					<li>New <code>"schema"."AoservProtocol"</code>: <code>1.84.13</code></li>
+					<li>Removed <code>linux.Server.daemon_key</code>, now stored in <code>aoserv-daemon.properties</code></li>
+					<li>
+						<code>account."Administrator".password</code> changed from <code>text</code> to the newer
+						<code>"com.aoindustries.security"."HashedPassword"</code> composite type.
 					</li>
 				</ul>
 			</changelog:release>

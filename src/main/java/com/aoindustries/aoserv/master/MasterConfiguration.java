@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -26,14 +26,19 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.dbc.DatabaseAccess;
 import com.aoindustries.io.AOPool;
 import com.aoindustries.lang.Strings;
+import com.aoindustries.net.DomainName;
 import com.aoindustries.net.InetAddress;
+import com.aoindustries.security.UnprotectedKey;
 import com.aoindustries.util.PropertiesUtils;
 import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * The configuration for all AOServ processes is stored in a properties file.
@@ -42,6 +47,8 @@ import java.util.Properties;
  */
 public final class MasterConfiguration {
 
+	private static final String PROPERTIES_FILENAME = "aoserv-master.properties";
+
 	private static Properties props;
 
 	private MasterConfiguration() {
@@ -49,7 +56,7 @@ public final class MasterConfiguration {
 
 	private static String getProperty(String name) throws IOException {
 		synchronized (MasterConfiguration.class) {
-			if (props == null) props = PropertiesUtils.loadFromResource(MasterConfiguration.class, "aoserv-master.properties");
+			if (props == null) props = PropertiesUtils.loadFromResource(MasterConfiguration.class, PROPERTIES_FILENAME);
 			return props.getProperty(name);
 		}
 	}
@@ -158,8 +165,18 @@ public final class MasterConfiguration {
 		return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
 	}
 
-	public static String getDaemonKey(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		return getProperty("aoserv.daemon.client.key."+NetHostHandler.getHostnameForLinuxServer(database, linuxServer));
+	private static final ConcurrentMap<Integer,UnprotectedKey> daemonKeys = new ConcurrentHashMap<>();
+	public static UnprotectedKey getDaemonKey(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
+		UnprotectedKey daemonKey = daemonKeys.get(linuxServer);
+		if(daemonKey == null) {
+			DomainName hostname = NetHostHandler.getHostnameForLinuxServer(database, linuxServer);
+			String propValue = getProperty("aoserv.daemon.client.key." + hostname);
+			if(propValue == null || (propValue = propValue.trim()).isEmpty()) throw new IOException("No daemon key in " + PROPERTIES_FILENAME + " for " + hostname);
+			daemonKey = new UnprotectedKey(Base64.getDecoder().decode(propValue));
+			UnprotectedKey existing = daemonKeys.putIfAbsent(linuxServer, daemonKey);
+			if(existing != null) daemonKey = existing;
+		}
+		return daemonKey;
 	}
 
 	public static String getTicketSmtpServer() throws IOException {

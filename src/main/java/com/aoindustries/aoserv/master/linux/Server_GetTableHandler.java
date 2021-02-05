@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -25,7 +25,6 @@ package com.aoindustries.aoserv.master.linux;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
-import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.MasterServer;
@@ -61,7 +60,6 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  server,\n"
 			+ "  hostname,\n"
 			+ "  daemon_bind,\n"
-			+ "  daemon_key,\n"
 			+ "  pool_size,\n"
 			+ "  distro_hour,\n"
 			+ "  last_distro_time,\n"
@@ -102,7 +100,6 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  ao2.server,\n"
 			+ "  ao2.hostname,\n"
 			+ "  ao2.daemon_bind,\n"
-			+ "  ao2.daemon_key,\n"
 			+ "  ao2.pool_size,\n"
 			+ "  ao2.distro_hour,\n"
 			+ "  ao2.last_distro_time,\n"
@@ -165,7 +162,6 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			+ "  ao.server,\n"
 			+ "  ao.hostname,\n"
 			+ "  ao.daemon_bind,\n"
-			+ "  ?,\n"
 			+ "  ao.pool_size,\n"
 			+ "  ao.distro_hour,\n"
 			+ "  ao.last_distro_time,\n"
@@ -205,7 +201,6 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 			// Allow servers it replicates to
 			//+ "    or bp.ao_server=ao.server\n"
 			+ "  )",
-			AoservProtocol.FILTERED,
 			source.getCurrentAdministrator()
 		);
 	}
