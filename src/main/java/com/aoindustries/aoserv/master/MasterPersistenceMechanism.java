@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -95,14 +95,14 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	// TODO: 2.0: Nullable Byte
 	private static byte getExpirationMonth(ResultSet result, String columnLabel) throws SQLException {
 		byte expirationMonth = result.getByte(columnLabel);
-		if(result.wasNull()) return CreditCard.UNKNOWN_EXPRIATION_MONTH;
+		if(result.wasNull()) return CreditCard.UNKNOWN_EXPIRATION_MONTH;
 		return expirationMonth;
 	}
 
 	// TODO: 2.0: Nullable Short
 	private static short getExpirationYear(ResultSet result, String columnLabel) throws SQLException {
 		short expirationYear = result.getShort(columnLabel);
-		if(result.wasNull()) return CreditCard.UNKNOWN_EXPRIATION_YEAR;
+		if(result.wasNull()) return CreditCard.UNKNOWN_EXPIRATION_YEAR;
 		return expirationYear;
 	}
 
@@ -311,9 +311,9 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 				creditCard.getPersistenceUniqueId()
 			);
 			Byte expirationMonth = creditCard.getExpirationMonth(); // TODO: 2.0: Nullable Byte
-			if(expirationMonth == CreditCard.UNKNOWN_EXPRIATION_MONTH) expirationMonth = null;
+			if(expirationMonth == CreditCard.UNKNOWN_EXPIRATION_MONTH) expirationMonth = null;
 			Short expirationYear = creditCard.getExpirationYear(); // TODO: 2.0: Nullable Short
-			if(expirationYear == CreditCard.UNKNOWN_EXPRIATION_YEAR) expirationYear = null;
+			if(expirationYear == CreditCard.UNKNOWN_EXPIRATION_YEAR) expirationYear = null;
 			Currency currency = transactionRequest.getCurrency();
 			int payment = PaymentHandler.addPayment(
 				conn,

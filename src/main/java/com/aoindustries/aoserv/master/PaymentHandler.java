@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1800,8 +1800,8 @@ final public class PaymentHandler /*implements CronJob*/ {
 								automaticPayment.cc_providerUniqueId,
 								null, // cardNumber
 								automaticPayment.cardInfo,
-								automaticPayment.expirationMonth == null ? CreditCard.UNKNOWN_EXPRIATION_MONTH : automaticPayment.expirationMonth,
-								automaticPayment.expirationYear == null ? CreditCard.UNKNOWN_EXPRIATION_YEAR : automaticPayment.expirationYear,
+								automaticPayment.expirationMonth == null ? CreditCard.UNKNOWN_EXPIRATION_MONTH : automaticPayment.expirationMonth,
+								automaticPayment.expirationYear == null ? CreditCard.UNKNOWN_EXPIRATION_YEAR : automaticPayment.expirationYear,
 								null, // cardCode
 								automaticPayment.firstName,
 								automaticPayment.lastName,
