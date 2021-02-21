@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -238,7 +238,7 @@ public class IpAddress_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "      and nd5.id=ia5.device\n"
 			+ "      and (ia5.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" or ia5.\"isOverflow\")\n"
 			/*+ "  ) or ia.id in (\n"
-			+ "    select \n"
+			+ "    select\n"
 			+ "      ia6.id\n"
 			+ "    from\n"
 			+ "      account.\"User\" un6,\n"
