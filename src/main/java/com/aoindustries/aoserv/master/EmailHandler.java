@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -68,9 +68,9 @@ final public class EmailHandler {
 	private EmailHandler() {
 	}
 
-	private final static Map<Integer,Boolean> disabledLists = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledPipes = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledSmtpRelays = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledLists = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledPipes = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledSmtpRelays = new HashMap<>();
 
 	public static boolean canAccessDomain(DatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
@@ -597,7 +597,7 @@ final public class EmailHandler {
 	 * Only report each error at most once per 12 hours per package.
 	 */
 	private static final long SMTP_STAT_REPORT_INTERVAL=12L*60*60*1000;
-	private static final Map<String,Long> smtpStatLastReports=new HashMap<>();
+	private static final Map<String, Long> smtpStatLastReports=new HashMap<>();
 
 	public static int addSpamMessage(
 		DatabaseConnection conn,

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -143,12 +143,12 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
 
 	// <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
 	@Override
-	public Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+	public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.queryCall(
 			(ResultSet results) -> {
 				try {
-					Map<DomainName,Set<Account.Name>> map = new HashMap<>();
+					Map<DomainName, Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {
 						DomainName hostname = DomainName.valueOf(results.getString(1));
 						Account.Name account = Account.Name.valueOf(results.getString(2));

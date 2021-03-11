@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -82,8 +82,8 @@ final public class LinuxAccountHandler {
 	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
 	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
 
-	private final static Map<com.aoindustries.aoserv.client.linux.User.Name,Boolean> disabledUsers=new HashMap<>();
-	private final static Map<Integer,Boolean> disabledUserServers=new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.linux.User.Name, Boolean> disabledUsers=new HashMap<>();
+	private final static Map<Integer, Boolean> disabledUserServers=new HashMap<>();
 
 	public static void checkAccessUser(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
@@ -738,7 +738,7 @@ final public class LinuxAccountHandler {
 		/**
 		 * The set of allowed system group patterns for CentOS 7.
 		 */
-		private static final Map<com.aoindustries.aoserv.client.linux.User.Name,SystemUser> centos7SystemUsers = new HashMap<>();
+		private static final Map<com.aoindustries.aoserv.client.linux.User.Name, SystemUser> centos7SystemUsers = new HashMap<>();
 		private static void addCentos7SystemUser(
 			com.aoindustries.aoserv.client.linux.User.Name user,
 			int uid,
@@ -1044,7 +1044,7 @@ final public class LinuxAccountHandler {
 		AOServDaemonConnector fromDemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
 		AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
 		conn.close(); // Don't hold database connection while connecting to the daemon
-		Tuple2<String,Integer> enc_password = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
+		Tuple2<String, Integer> enc_password = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
 		toDaemonConnector.setEncryptedLinuxAccountPassword(to_user, enc_password.getElement1(), enc_password.getElement2());
 
 		//Account.Name from_account=UsernameHandler.getAccountForUsername(conn, from_username);

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2003-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2003-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -137,7 +137,7 @@ final public class ReportGenerator implements CronJob {
 						)
 					) {
 						// HashMap keyed on host, containing HashMaps keyed on package, containing TempBackupReport objects
-						Map<Integer,Map<Integer,TempBackupReport>> stats=new HashMap<>();
+						Map<Integer, Map<Integer, TempBackupReport>> stats=new HashMap<>();
 
 						/* TODO: Implement as calls to the aoserv daemons to get the quota reports
 						String currentSQL = null;
@@ -156,8 +156,8 @@ final public class ReportGenerator implements CronJob {
 									tbr.fileCount=fileCount;
 
 									Integer hostInteger=Integer.valueOf(host);
-									Map<Integer,TempBackupReport> packages=stats.get(hostInteger);
-									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer,TempBackupReport>());
+									Map<Integer, TempBackupReport> packages=stats.get(hostInteger);
+									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer, TempBackupReport>());
 									packages.put(Integer.valueOf(packageNum), tbr);
 								}
 							}
@@ -231,8 +231,8 @@ final public class ReportGenerator implements CronJob {
 									long diskSize=results.getLong(5);
 
 									Integer hostInteger=Integer.valueOf(host);
-									Map<Integer,TempBackupReport> packages=stats.get(hostInteger);
-									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer,TempBackupReport>());
+									Map<Integer, TempBackupReport> packages=stats.get(hostInteger);
+									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer, TempBackupReport>());
 									Integer packageInteger=Integer.valueOf(packageNum);
 									TempBackupReport tbr=(TempBackupReport)packages.get(packageInteger);
 									if(tbr==null) {
@@ -256,7 +256,7 @@ final public class ReportGenerator implements CronJob {
 							try {
 								Iterator<Integer> hostKeys = stats.keySet().iterator();
 								while(hostKeys.hasNext()) {
-									Map<Integer,TempBackupReport> packages = stats.get(hostKeys.next());
+									Map<Integer, TempBackupReport> packages = stats.get(hostKeys.next());
 									Iterator<Integer> packageKeys=packages.keySet().iterator();
 									while(packageKeys.hasNext()) {
 										TempBackupReport tbr=packages.get(packageKeys.next());

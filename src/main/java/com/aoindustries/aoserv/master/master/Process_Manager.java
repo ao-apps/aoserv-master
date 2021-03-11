@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -44,7 +44,7 @@ final public class Process_Manager {
 	private Process_Manager() {
 	}
 
-	private static final Map<SmallIdentifier,Process> processes = new LinkedHashMap<>();
+	private static final Map<SmallIdentifier, Process> processes = new LinkedHashMap<>();
 
 	public static Process createProcess(InetAddress host, String protocol, boolean is_secure) {
 		Instant now = Instant.now();

@@ -165,7 +165,7 @@ public final class MasterConfiguration {
 		return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
 	}
 
-	private static final ConcurrentMap<Integer,UnprotectedKey> daemonKeys = new ConcurrentHashMap<>();
+	private static final ConcurrentMap<Integer, UnprotectedKey> daemonKeys = new ConcurrentHashMap<>();
 	public static UnprotectedKey getDaemonKey(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
 		UnprotectedKey daemonKey = daemonKeys.get(linuxServer);
 		if(daemonKey == null) {

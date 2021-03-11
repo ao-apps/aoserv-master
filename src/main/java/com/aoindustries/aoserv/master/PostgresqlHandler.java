@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -50,8 +50,8 @@ import java.util.Set;
  */
 final public class PostgresqlHandler {
 
-	private final static Map<Integer,Boolean> disabledUserServers = new HashMap<>();
-	private final static Map<com.aoindustries.aoserv.client.postgresql.User.Name,Boolean> disabledUsers = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledUserServers = new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.postgresql.User.Name, Boolean> disabledUsers = new HashMap<>();
 
 	public static void checkAccessDatabase(DatabaseConnection conn, RequestSource source, String action, int database) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

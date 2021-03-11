@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -141,25 +141,25 @@ final public class ClusterHandler implements CronJob {
 	 * The set of virtual servers that have primary DRBD roles on a per physical
 	 * server basis.
 	 */
-	private static Map<Integer,Set<Integer>> primaryMappings = Collections.emptyMap();
+	private static Map<Integer, Set<Integer>> primaryMappings = Collections.emptyMap();
 
 	/**
 	 * The set of virtual servers that have secondary DRBD roles on a per physical
 	 * server basis.
 	 */
-	private static Map<Integer,Set<Integer>> secondaryMappings = Collections.emptyMap();
+	private static Map<Integer, Set<Integer>> secondaryMappings = Collections.emptyMap();
 
 	/**
 	 * The set of virtual servers that have Xen auto start links on a per physical
 	 * server basis.
 	 */
-	private static Map<Integer,Set<Integer>> autoMappings = Collections.emptyMap();
+	private static Map<Integer, Set<Integer>> autoMappings = Collections.emptyMap();
 
 	@SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter") // private only
 	private static void setMappings(
-		Map<Integer,Set<Integer>> newPrimaryMappings,
-		Map<Integer,Set<Integer>> newSecondaryMappings,
-		Map<Integer,Set<Integer>> newAutoMappings
+		Map<Integer, Set<Integer>> newPrimaryMappings,
+		Map<Integer, Set<Integer>> newSecondaryMappings,
+		Map<Integer, Set<Integer>> newAutoMappings
 	) {
 		synchronized(mappingsLock) {
 			primaryMappings = newPrimaryMappings;
@@ -184,7 +184,7 @@ final public class ClusterHandler implements CronJob {
 		int physicalServer = -1;
 		boolean physicalServerFound = false;
 		synchronized(mappingsLock) {
-			for(Map.Entry<Integer,Set<Integer>> entry : primaryMappings.entrySet()) {
+			for(Map.Entry<Integer, Set<Integer>> entry : primaryMappings.entrySet()) {
 				if(entry.getValue().contains(virtualServerInt)) {
 					if(physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " primary found on more than one physical server");
 					physicalServer = entry.getKey();
@@ -192,7 +192,7 @@ final public class ClusterHandler implements CronJob {
 				}
 			}
 			if(!physicalServerFound) {
-				for(Map.Entry<Integer,Set<Integer>> entry : autoMappings.entrySet()) {
+				for(Map.Entry<Integer, Set<Integer>> entry : autoMappings.entrySet()) {
 					if(entry.getValue().contains(virtualServerInt)) {
 						if(physicalServerFound) throw new ClusterException("Virtual server #" + virtualServer + " auto start link found on more than one physical server");
 						physicalServer = entry.getKey();
@@ -221,7 +221,7 @@ final public class ClusterHandler implements CronJob {
 		synchronized(mappingsLock) {
 			// Find the set of all physical servers that have this as secondary
 			Set<Integer> physicalServers = new HashSet<>();
-			for(Map.Entry<Integer,Set<Integer>> entry : secondaryMappings.entrySet()) {
+			for(Map.Entry<Integer, Set<Integer>> entry : secondaryMappings.entrySet()) {
 				if(entry.getValue().contains(virtualServerInt)) {
 					physicalServers.add(entry.getKey());
 				}
@@ -298,7 +298,7 @@ final public class ClusterHandler implements CronJob {
 					// Query the servers in parallel
 					final MasterDatabase database = MasterDatabase.getDatabase();
 					IntList xenPhysicalServers = NetHostHandler.getEnabledXenPhysicalServers(database);
-					Map<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> futures = AoCollections.newHashMap(xenPhysicalServers.size());
+					Map<Integer, Future<Tuple3<Set<Integer>, Set<Integer>, Set<Integer>>>> futures = AoCollections.newHashMap(xenPhysicalServers.size());
 					for(final Integer xenPhysicalServer : xenPhysicalServers) {
 						futures.put(
 							xenPhysicalServer,
@@ -381,13 +381,13 @@ final public class ClusterHandler implements CronJob {
 							})
 						);
 					}
-					Map<Integer,Set<Integer>> newPrimaryMappings = AoCollections.newHashMap(futures.size());
-					Map<Integer,Set<Integer>> newSecondaryMappings = AoCollections.newHashMap(futures.size());
-					Map<Integer,Set<Integer>> newAutoMappings = AoCollections.newHashMap(futures.size());
-					for(Map.Entry<Integer,Future<Tuple3<Set<Integer>,Set<Integer>,Set<Integer>>>> future : futures.entrySet()) {
+					Map<Integer, Set<Integer>> newPrimaryMappings = AoCollections.newHashMap(futures.size());
+					Map<Integer, Set<Integer>> newSecondaryMappings = AoCollections.newHashMap(futures.size());
+					Map<Integer, Set<Integer>> newAutoMappings = AoCollections.newHashMap(futures.size());
+					for(Map.Entry<Integer, Future<Tuple3<Set<Integer>, Set<Integer>, Set<Integer>>>> future : futures.entrySet()) {
 						Integer xenPhysicalServer = future.getKey();
 						try {
-							Tuple3<Set<Integer>,Set<Integer>,Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
+							Tuple3<Set<Integer>, Set<Integer>, Set<Integer>> retVal = future.getValue().get(30, TimeUnit.SECONDS);
 							newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
 							newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
 							newAutoMappings.put(xenPhysicalServer, retVal.getElement3());

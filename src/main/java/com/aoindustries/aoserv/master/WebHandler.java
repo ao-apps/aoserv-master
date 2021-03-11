@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -81,9 +81,9 @@ final public class WebHandler {
 	 */
 	public static final int MINIMUM_AUTO_PORT_NUMBER = 16384;
 
-	private final static Map<Integer,Boolean> disabledSharedTomcats = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledVirtualHosts = new HashMap<>();
-	private final static Map<Integer,Boolean> disabledSites = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledSharedTomcats = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledVirtualHosts = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledSites = new HashMap<>();
 
 	public static void addTomcatWorker(
 		DatabaseConnection conn,

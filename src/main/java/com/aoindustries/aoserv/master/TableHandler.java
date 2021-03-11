@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -214,7 +214,7 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	private static final ConcurrentMap<Table.TableID,GetObjectHandler> getObjectHandlers = new ConcurrentHashMap<>();
+	private static final ConcurrentMap<Table.TableID, GetObjectHandler> getObjectHandlers = new ConcurrentHashMap<>();
 
 	/**
 	 * This is available, but recommend registering via {@link ServiceLoader}.
@@ -426,7 +426,7 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	private static final ConcurrentMap<Table.TableID,GetTableHandler> getTableHandlers = new ConcurrentHashMap<>();
+	private static final ConcurrentMap<Table.TableID, GetTableHandler> getTableHandlers = new ConcurrentHashMap<>();
 
 	/**
 	 * This is available, but recommend registering via {@link ServiceLoader}.
@@ -867,7 +867,7 @@ final public class TableHandler {
 	}
 
 	private static final Object tableNamesLock = new Object();
-	private static Map<Integer,String> tableNames;
+	private static Map<Integer, String> tableNames;
 
 	/**
 	 * Gets the table name, with schema prefixed.
@@ -879,7 +879,7 @@ final public class TableHandler {
 			if(tableNames == null) {
 				tableNames = db.queryCall(
 					(ResultSet results) -> {
-						Map<Integer,String> newMap = new HashMap<>();
+						Map<Integer, String> newMap = new HashMap<>();
 						while(results.next()) {
 							Integer id = results.getInt("id");
 							String schema = results.getString("schema");
@@ -917,7 +917,7 @@ final public class TableHandler {
 		);
 	}
 
-	final private static EnumMap<AoservProtocol.Version,Map<Integer,Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version, Map<Integer, Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	/**
 	 * Converts a specific AoservProtocol version table ID to the number used in the database storage.
@@ -930,7 +930,7 @@ final public class TableHandler {
 		int clientTableID
 	) throws IOException, SQLException {
 		synchronized(fromClientTableIDs) {
-			Map<Integer,Integer> tableIDs = fromClientTableIDs.get(version);
+			Map<Integer, Integer> tableIDs = fromClientTableIDs.get(version);
 			if(tableIDs == null) {
 				IntList clientTables = db.queryIntList(
 					"select\n"
@@ -960,7 +960,7 @@ final public class TableHandler {
 		}
 	}
 
-	final private static EnumMap<AoservProtocol.Version,Map<Integer,Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version, Map<Integer, Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	public static int convertDBTableIDToClientTableID(
 		DatabaseAccess db,
@@ -968,7 +968,7 @@ final public class TableHandler {
 		int tableID
 	) throws IOException, SQLException {
 		synchronized(toClientTableIDs) {
-			Map<Integer,Integer> clientTableIDs = toClientTableIDs.get(version);
+			Map<Integer, Integer> clientTableIDs = toClientTableIDs.get(version);
 			if(clientTableIDs == null) {
 				IntList clientTables = db.queryIntList(
 					"select\n"
@@ -1029,7 +1029,7 @@ final public class TableHandler {
 		return convertDBTableIDToClientTableID(db, source.getProtocolVersion(), dbTableID);
 	}
 
-	final private static EnumMap<AoservProtocol.Version,Map<Table.TableID,Map<String,Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
+	final private static EnumMap<AoservProtocol.Version, Map<Table.TableID, Map<String, Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
 
 	/*
 	 * 2018-11-18: This method appears unused.
@@ -1044,11 +1044,11 @@ final public class TableHandler {
 		// Get the list of resolved tables for the requested version
 		AoservProtocol.Version version = source.getProtocolVersion();
 		synchronized(clientColumnIndexes) {
-			Map<Table.TableID,Map<String,Integer>> tables = clientColumnIndexes.get(version);
+			Map<Table.TableID, Map<String, Integer>> tables = clientColumnIndexes.get(version);
 			if(tables==null) clientColumnIndexes.put(version, tables = new EnumMap<>(Table.TableID.class));
 
 			// Find the list of columns for this table
-			Map<String,Integer> columns = tables.get(tableID);
+			Map<String, Integer> columns = tables.get(tableID);
 			if(columns == null) {
 				// TODO: Why is tableID not used in this query???
 				List<String> clientColumns = conn.queryStringList(

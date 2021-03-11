@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -45,8 +45,8 @@ final public class AccountUserHandler {
 	private AccountUserHandler() {
 	}
 
-	private final static Map<User.Name,Boolean> disabledUsers = new HashMap<>();
-	private final static Map<User.Name,Account.Name> userAccounts = new HashMap<>();
+	private final static Map<User.Name, Boolean> disabledUsers = new HashMap<>();
+	private final static Map<User.Name, Account.Name> userAccounts = new HashMap<>();
 
 	public static boolean canAccessUser(DatabaseConnection conn, RequestSource source, User.Name user) throws IOException, SQLException {
 		return PackageHandler.canAccessPackage(conn, source, getPackageForUser(conn, user));

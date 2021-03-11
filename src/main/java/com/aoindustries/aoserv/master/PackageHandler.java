@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -50,7 +50,7 @@ final public class PackageHandler {
 	private PackageHandler() {
 	}
 
-	private final static Map<Account.Name,Boolean> disabledPackages=new HashMap<>();
+	private final static Map<Account.Name, Boolean> disabledPackages=new HashMap<>();
 
 	public static boolean canPackageAccessHost(DatabaseConnection conn, RequestSource source, Account.Name packageName, int host) throws IOException, SQLException {
 		return conn.queryBoolean(
@@ -648,7 +648,7 @@ final public class PackageHandler {
 		return getAccountForPackage(database, getIdForPackage(database, packageName));
 	}
 
-	private static final Map<Integer,Account.Name> packageAccounts = new HashMap<>();
+	private static final Map<Integer, Account.Name> packageAccounts = new HashMap<>();
 	public static Account.Name getAccountForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
 		Integer I = packageId;
 		synchronized(packageAccounts) {
@@ -664,7 +664,7 @@ final public class PackageHandler {
 		}
 	}
 
-	private static final Map<Integer,Account.Name> packageNames = new HashMap<>();
+	private static final Map<Integer, Account.Name> packageNames = new HashMap<>();
 	public static Account.Name getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
 		Integer I = packageId;
 		synchronized(packageNames) {
@@ -680,7 +680,7 @@ final public class PackageHandler {
 		}
 	}
 
-	private static final Map<Account.Name,Integer> packageIds = new HashMap<>();
+	private static final Map<Account.Name, Integer> packageIds = new HashMap<>();
 	public static int getIdForPackage(DatabaseAccess database, Account.Name name) throws IOException, SQLException {
 		synchronized(packageIds) {
 			Integer O = packageIds.get(name);

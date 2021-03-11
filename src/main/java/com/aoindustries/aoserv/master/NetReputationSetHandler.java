@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2012, 2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2012, 2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -422,7 +422,7 @@ final public class NetReputationSetHandler {
 				);
 			}
 			// Also notify routers
-			for(Map.Entry<com.aoindustries.aoserv.client.account.User.Name,User> entry : MasterServer.getUsers(conn).entrySet()) {
+			for(Map.Entry<com.aoindustries.aoserv.client.account.User.Name, User> entry : MasterServer.getUsers(conn).entrySet()) {
 				com.aoindustries.aoserv.client.account.User.Name user = entry.getKey();
 				User mu = entry.getValue();
 				if(mu.isRouter()) {

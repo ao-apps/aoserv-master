@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -61,8 +61,8 @@ final public class MysqlHandler {
 	private MysqlHandler() {
 	}
 
-	private final static Map<Integer,Boolean> disabledUserServers = new HashMap<>();
-	private final static Map<com.aoindustries.aoserv.client.mysql.User.Name,Boolean> disabledUsers = new HashMap<>();
+	private final static Map<Integer, Boolean> disabledUserServers = new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.mysql.User.Name, Boolean> disabledUsers = new HashMap<>();
 
 	public static void checkAccessDatabase(DatabaseConnection conn, RequestSource source, String action, int database) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
@@ -1111,7 +1111,7 @@ final public class MysqlHandler {
 		);
 	}
 
-	public static Tuple2<Server.Name,Port> getNameAndPortForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
+	public static Tuple2<Server.Name, Port> getNameAndPortForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
 		return conn.queryObject(
 			(ResultSet result) -> new Tuple2<>(
 				ObjectFactories.mysqlServerNameFactory.createObject(result),
@@ -1246,7 +1246,7 @@ final public class MysqlHandler {
 				throw new SQLException(e);
 			}
 		}
-		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name, Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.close(); // Don't hold database connection while connecting to the daemon
 		MysqlReplication.SlaveStatus slaveStatus = daemonConnector.getMySQLSlaveStatus(chrootPath, osv, serverNameAndPort.getElement1(), serverNameAndPort.getElement2());
@@ -1318,7 +1318,7 @@ final public class MysqlHandler {
 				}
 			}
 		}
-		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name, Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		Database.Name databaseName = getNameForDatabase(conn, database);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.close(); // Don't hold database connection while connecting to the daemon
@@ -1398,7 +1398,7 @@ final public class MysqlHandler {
 				}
 			}
 		}
-		Tuple2<Server.Name,Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
+		Tuple2<Server.Name, Port> serverNameAndPort = getNameAndPortForServer(conn, mysqlServer);
 		Database.Name databaseName = getNameForDatabase(conn, database);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, daemonServer);
 		conn.close(); // Don't hold database connection while connecting to the daemon

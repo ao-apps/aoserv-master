@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -55,7 +55,7 @@ final public class NetHostHandler {
 	private NetHostHandler() {
 	}
 
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<Integer>> userHosts;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, List<Integer>> userHosts;
 
 	/*
 	public static int addBackupServer(
@@ -258,7 +258,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer,Integer> failoverServers=new HashMap<>();
+	final private static Map<Integer, Integer> failoverServers=new HashMap<>();
 	public static int getFailoverServer(DatabaseAccess db, int linuxServer) throws IOException, SQLException {
 		synchronized(failoverServers) {
 			if(failoverServers.containsKey(linuxServer)) return failoverServers.get(linuxServer);
@@ -281,7 +281,7 @@ final public class NetHostHandler {
 		}
 	}
 
-	final private static Map<Integer,String> farmForHosts = new HashMap<>();
+	final private static Map<Integer, String> farmForHosts = new HashMap<>();
 	public static String getFarmForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
 		Integer I=host;
 		synchronized(farmForHosts) {
@@ -295,7 +295,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer,DomainName> hostnamesForLinuxServers = new HashMap<>();
+	final private static Map<Integer, DomainName> hostnamesForLinuxServers = new HashMap<>();
 	public static DomainName getHostnameForLinuxServer(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
 		Integer mapKey = linuxServer;
 		synchronized(hostnamesForLinuxServers) {
@@ -320,7 +320,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<DomainName,Integer> hostsForLinuxServerHostnames = new HashMap<>();
+	final private static Map<DomainName, Integer> hostsForLinuxServerHostnames = new HashMap<>();
 	public static int getHostForLinuxServerHostname(DatabaseAccess db, DomainName hostname) throws IOException, SQLException {
 		synchronized(hostsForLinuxServerHostnames) {
 			Integer I = hostsForLinuxServerHostnames.get(hostname);
@@ -357,7 +357,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer,Boolean> linuxServers = new HashMap<>();
+	final private static Map<Integer, Boolean> linuxServers = new HashMap<>();
 	public static boolean isLinuxServer(DatabaseConnection conn, int host) throws IOException, SQLException {
 		Integer I = host;
 		synchronized(linuxServers) {
@@ -406,12 +406,12 @@ final public class NetHostHandler {
 	/**
 	 * HashMap(server)->HashMap(Long(id))->RequestSource
 	 */
-	private static final Map<Integer,Map<Long,RequestSource>> invalidateSyncEntries = new HashMap<>();
+	private static final Map<Integer, Map<Long, RequestSource>> invalidateSyncEntries = new HashMap<>();
 
 	/**
 	 * HashMap(Host)->Long(lastID)
 	 */
-	private static final Map<Integer,Long> lastIDs = new HashMap<>();
+	private static final Map<Integer, Long> lastIDs = new HashMap<>();
 
 	public static Long addInvalidateSyncEntry(int host, RequestSource source) {
 		Integer S=host;
@@ -423,7 +423,7 @@ final public class NetHostHandler {
 			Long idLong=id;
 			lastIDs.put(S, idLong);
 
-			Map<Long,RequestSource> ids=invalidateSyncEntries.get(S);
+			Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
 			if(ids==null) invalidateSyncEntries.put(S, ids=new HashMap<>());
 			ids.put(idLong, source);
 
@@ -434,7 +434,7 @@ final public class NetHostHandler {
 	public static void removeInvalidateSyncEntry(int host, Long id) {
 		Integer S=host;
 		synchronized(invalidateSyncLock) {
-			Map<Long,RequestSource> ids=invalidateSyncEntries.get(S);
+			Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
 			if(ids!=null) ids.remove(id);
 			invalidateSyncLock.notify();
 		}
@@ -446,7 +446,7 @@ final public class NetHostHandler {
 			Long L=lastIDs.get(S);
 			if(L!=null) {
 				long lastID=L;
-				Map<Long,RequestSource> ids=invalidateSyncEntries.get(S);
+				Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
 				if(ids!=null) {
 					// Wait until the most recent ID and all previous IDs have been completed, but do
 					// not wait for more than 60 seconds total to prevent locked-up daemons from

@@ -1529,7 +1529,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 						(ResultSet results) -> {
 							try {
 								List<AutomaticPayment> list = new ArrayList<>();
-								SortedMap<Currency,BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
+								SortedMap<Currency, BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
 								// Look for duplicate accounting codes and report a warning
 								Account.Name lastAccounting = null;
 								while(results.next()) {
@@ -1597,7 +1597,7 @@ final public class PaymentHandler /*implements CronJob*/ {
 									assert list.isEmpty();
 									System.out.println("Nothing to process");
 								} else {
-									for(Map.Entry<Currency,BigDecimal> entry : totals.entrySet()) {
+									for(Map.Entry<Currency, BigDecimal> entry : totals.entrySet()) {
 										System.out.println("Processing a total of " + new Money(entry.getKey(), entry.getValue()));
 									}
 								}

@@ -71,13 +71,13 @@ final public class AccountHandler {
 	}
 
 	private static final Object administratorsLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,Administrator> administrators;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, Administrator> administrators;
 
 	private static final Object userAccountsLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<Account.Name>> userAccounts;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, List<Account.Name>> userAccounts;
 
-	private final static Map<com.aoindustries.aoserv.client.account.User.Name,Boolean> disabledAdministrators = new HashMap<>();
-	private final static Map<Account.Name,Boolean> disabledAccounts = new HashMap<>();
+	private final static Map<com.aoindustries.aoserv.client.account.User.Name, Boolean> disabledAdministrators = new HashMap<>();
+	private final static Map<Account.Name, Boolean> disabledAccounts = new HashMap<>();
 
 	public static boolean canAccessAccount(DatabaseAccess db, RequestSource source, Account.Name account) throws IOException, SQLException {
 		//com.aoindustries.aoserv.client.account.User.Name administrator = source.getAdministrator();
@@ -221,14 +221,14 @@ final public class AccountHandler {
 	}
 
 	private static final Object cachedPermissionsLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,Set<String>> cachedPermissions;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, Set<String>> cachedPermissions;
 
 	public static boolean hasPermission(DatabaseConnection conn, RequestSource source, Permission.Name permission) throws IOException, SQLException {
 		synchronized(cachedPermissionsLock) {
 			if(cachedPermissions == null) {
 				cachedPermissions = conn.queryCall(
 					(ResultSet results) -> {
-						Map<com.aoindustries.aoserv.client.account.User.Name,Set<String>> newCache = new HashMap<>();
+						Map<com.aoindustries.aoserv.client.account.User.Name, Set<String>> newCache = new HashMap<>();
 						while(results.next()) {
 							com.aoindustries.aoserv.client.account.User.Name administrator;
 							try {
@@ -928,7 +928,7 @@ final public class AccountHandler {
 		return conn.queryInt("select coalesce(disable_log, -1) from account.\"Account\" where accounting=?", account);
 	}
 
-	final private static Map<com.aoindustries.aoserv.client.account.User.Name,Integer> administratorDisableLogs = new HashMap<>();
+	final private static Map<com.aoindustries.aoserv.client.account.User.Name, Integer> administratorDisableLogs = new HashMap<>();
 	public static int getDisableLogForAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
 		synchronized(administratorDisableLogs) {
 			if(administratorDisableLogs.containsKey(administrator)) return administratorDisableLogs.get(administrator);
@@ -1581,7 +1581,7 @@ final public class AccountHandler {
 			if(administrators == null) {
 				administrators = db.queryCall(
 					(ResultSet results) -> {
-						Map<com.aoindustries.aoserv.client.account.User.Name,Administrator> table=new HashMap<>();
+						Map<com.aoindustries.aoserv.client.account.User.Name, Administrator> table=new HashMap<>();
 						while(results.next()) {
 							Administrator ba=new Administrator();
 							ba.init(results);
@@ -1723,11 +1723,11 @@ final public class AccountHandler {
 	 *
 	 * @return  a <code>HashMap</code> of <code>ArrayList</code>
 	 */
-	public static Map<Account.Name,List<String>> getAccountContacts(DatabaseConnection conn) throws IOException, SQLException {
+	public static Map<Account.Name, List<String>> getAccountContacts(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.queryCall(
 			(ResultSet results) -> {
 				// Load the list of account.Account and their contacts
-				Map<Account.Name,List<String>> accountContacts = new HashMap<>();
+				Map<Account.Name, List<String>> accountContacts = new HashMap<>();
 				List<String> foundAddresses = new SortedArrayList<>();
 				try {
 					while(results.next()) {
@@ -1780,10 +1780,10 @@ final public class AccountHandler {
 	 */
 	public static Account.Name getAccountFromEmailAddresses(DatabaseConnection conn, List<String> addresses) throws IOException, SQLException {
 		// Load the list of account.Account and their contacts
-		Map<Account.Name,List<String>> accountContacts = getAccountContacts(conn);
+		Map<Account.Name, List<String>> accountContacts = getAccountContacts(conn);
 
 		// The cumulative weights are added up here, per account
-		Map<Account.Name,Integer> accountWeights = new HashMap<>();
+		Map<Account.Name, Integer> accountWeights = new HashMap<>();
 
 		// Go through all addresses
 		for (String address : addresses) {
@@ -1890,7 +1890,7 @@ final public class AccountHandler {
 		return highestAccounting;
 	}
 
-	private static void addWeight(Map<Account.Name,Integer> accountWeights, Account.Name account, int weight) {
+	private static void addWeight(Map<Account.Name, Integer> accountWeights, Account.Name account, int weight) {
 		Integer I=accountWeights.get(account);
 		int previous=I==null ? 0 : I;
 		accountWeights.put(account, previous + weight);

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -70,8 +70,8 @@ final public class InvalidateList {
 	public static final List<Account.Name> allAccounts = Collections.unmodifiableList(new ArrayList<>());
 	public static final IntList allHosts = new IntArrayList();
 
-	private final Map<Table.TableID,List<Integer>> hostLists = new EnumMap<>(Table.TableID.class);
-	private final Map<Table.TableID,List<Account.Name>> accountLists = new EnumMap<>(Table.TableID.class);
+	private final Map<Table.TableID, List<Integer>> hostLists = new EnumMap<>(Table.TableID.class);
+	private final Map<Table.TableID, List<Account.Name>> accountLists = new EnumMap<>(Table.TableID.class);
 
 	/**
 	 * Resets back to default state.

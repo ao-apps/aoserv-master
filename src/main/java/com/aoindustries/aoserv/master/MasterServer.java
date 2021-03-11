@@ -144,11 +144,11 @@ public abstract class MasterServer {
 	 * The database values are read the first time this data is needed.
 	 */
 	private static final Object masterUsersLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,User> masterUsers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, User> masterUsers;
 	private static final Object masterHostsLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> masterHosts;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, List<HostAddress>> masterHosts;
 	private static final Object masterServersLock = new Object();
-	private static Map<com.aoindustries.aoserv.client.account.User.Name,UserHost[]> masterServers;
+	private static Map<com.aoindustries.aoserv.client.account.User.Name, UserHost[]> masterServers;
 
 	/**
 	 * The time the system started up
@@ -159,7 +159,7 @@ public abstract class MasterServer {
 	 * The central list of all objects that are notified of
 	 * cache updates.
 	 */
-	private static final Map<Identifier,List<RequestSource>> cacheListeners = new LinkedHashMap<>();
+	private static final Map<Identifier, List<RequestSource>> cacheListeners = new LinkedHashMap<>();
 	private static int cacheListenersSize = 0;
 
 	/**
@@ -3009,7 +3009,7 @@ public abstract class MasterServer {
 												String ciphertext = in.readUTF();
 												// options
 												int numOptions = in.readCompressedInt();
-												Map<String,String> options = AoCollections.newHashMap(numOptions);
+												Map<String, String> options = AoCollections.newHashMap(numOptions);
 												for(int c=0;c<numOptions;c++) {
 													String name = in.readUTF();
 													String value = in.readNullUTF();
@@ -5022,7 +5022,7 @@ public abstract class MasterServer {
 											Command.GET_FAILOVER_FILE_REPLICATION_ACTIVITY,
 											replication
 										);
-										Tuple2<Long,String> activity = FailoverHandler.getFileReplicationActivity(
+										Tuple2<Long, String> activity = FailoverHandler.getFileReplicationActivity(
 											conn,
 											source,
 											replication
@@ -5965,7 +5965,7 @@ public abstract class MasterServer {
 											"get_whois_history_whois_output",
 											whoisHistoryAccount
 										);
-										Tuple2<String,String> whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
+										Tuple2<String, String> whoisOutput = MasterServer.getService(WhoisHistoryService.class).getWhoisHistoryOutput(
 											conn,
 											source,
 											whoisHistoryAccount
@@ -10398,7 +10398,7 @@ public abstract class MasterServer {
 		private volatile boolean started;
 	}
 
-	private static final PolymorphicMultimap<Object,MasterServiceState> serviceRegistry = new PolymorphicMultimap<>(Object.class);
+	private static final PolymorphicMultimap<Object, MasterServiceState> serviceRegistry = new PolymorphicMultimap<>(Object.class);
 
 	/**
 	 * Gets a started service of the given class or interface.
@@ -10409,9 +10409,9 @@ public abstract class MasterServer {
 	 * @throws ServiceNotStartedException when no services of the given class are started
 	 */
 	public static <T> T getService(Class<T> clazz) throws MasterServiceException {
-		List<Map.Entry<T,MasterServiceState>> entries = serviceRegistry.getEntries(clazz);
+		List<Map.Entry<T, MasterServiceState>> entries = serviceRegistry.getEntries(clazz);
 		if(!entries.isEmpty()) {
-			for(Map.Entry<T,MasterServiceState> entry : entries) {
+			for(Map.Entry<T, MasterServiceState> entry : entries) {
 				MasterServiceState state = entry.getValue();
 				if(state.started) {
 					return entry.getKey();
@@ -10448,7 +10448,7 @@ public abstract class MasterServer {
 		int[] notStartedCount = new int[1];
 		List<T> matches = serviceRegistry.getKeysFilterEntry(
 			clazz,
-			(Map.Entry<T,MasterServiceState> e) -> {
+			(Map.Entry<T, MasterServiceState> e) -> {
 				if(!e.getValue().started) notStartedCount[0]++;
 				// Stop storing, but continue to count, once a failed service is located
 				return notStartedCount[0] == 0;
@@ -10510,7 +10510,7 @@ public abstract class MasterServer {
 
 			// Instantiate all services
 			System.out.print("Loading services: ");
-			List<Tuple2<MasterService,MasterServiceState>> servicesToStart = new ArrayList<>();
+			List<Tuple2<MasterService, MasterServiceState>> servicesToStart = new ArrayList<>();
 			ServiceLoader<MasterService> loader = ServiceLoader.load(MasterService.class);
 			Iterator<MasterService> iter = loader.iterator();
 			while(iter.hasNext()) {
@@ -10521,7 +10521,7 @@ public abstract class MasterServer {
 			}
 			System.out.println(servicesToStart.size() + " " + (servicesToStart.size() == 1 ? "service" : "services") + " loaded");
 
-			List<Tuple2<MasterService,MasterServiceState>> failedServices = startServices(servicesToStart, true, System.out);
+			List<Tuple2<MasterService, MasterServiceState>> failedServices = startServices(servicesToStart, true, System.out);
 
 			// Start listening after initialization to allow all modules to be loaded
 			// TODO: Should the network protocol be a service, too?
@@ -10566,11 +10566,11 @@ public abstract class MasterServer {
 	/**
 	 * Starts the given services, returning a list of those that failed to start.
 	 */
-	private static List<Tuple2<MasterService,MasterServiceState>> startServices(List<Tuple2<MasterService,MasterServiceState>> servicesToStart, boolean isFirstStart, PrintStream out) {
+	private static List<Tuple2<MasterService, MasterServiceState>> startServices(List<Tuple2<MasterService, MasterServiceState>> servicesToStart, boolean isFirstStart, PrintStream out) {
 		// TODO: Support starting in dependency order
 		out.println(isFirstStart ? "Starting services:" : "Starting failed services:");
-		List<Tuple2<MasterService,MasterServiceState>> failedServices = new ArrayList<>();
-		for(Tuple2<MasterService,MasterServiceState> serviceAndState : servicesToStart) {
+		List<Tuple2<MasterService, MasterServiceState>> failedServices = new ArrayList<>();
+		for(Tuple2<MasterService, MasterServiceState> serviceAndState : servicesToStart) {
 			MasterService service = serviceAndState.getElement1();
 			out.print("    " + service.getClass().getName());
 			boolean started = false;
@@ -10653,7 +10653,7 @@ public abstract class MasterServer {
 	 *
 	 * @return  The number of rows written
 	 */
-	public static <T extends AOServObject<?,?>> long writeObjects(
+	public static <T extends AOServObject<?, ?>> long writeObjects(
 		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
@@ -10915,13 +10915,13 @@ public abstract class MasterServer {
 	}
 
 	@SuppressWarnings("ReturnOfCollectionOrArrayField") // Returning unmodifiable
-	public static Map<com.aoindustries.aoserv.client.account.User.Name,User> getUsers(DatabaseAccess db) throws IOException, SQLException {
+	public static Map<com.aoindustries.aoserv.client.account.User.Name, User> getUsers(DatabaseAccess db) throws IOException, SQLException {
 		synchronized(masterUsersLock) {
 			if(masterUsers == null) {
 				masterUsers = Collections.unmodifiableMap(
 					db.queryCall(
 						results -> {
-							Map<com.aoindustries.aoserv.client.account.User.Name,User> table = new HashMap<>();
+							Map<com.aoindustries.aoserv.client.account.User.Name, User> table = new HashMap<>();
 							while(results.next()) {
 								User mu = new User();
 								mu.init(results);
@@ -10945,13 +10945,13 @@ public abstract class MasterServer {
 	 * Gets the hosts that are allowed for the provided username.
 	 */
 	public static boolean isHostAllowed(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name user, String host) throws IOException, SQLException {
-		Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> myMasterHosts;
+		Map<com.aoindustries.aoserv.client.account.User.Name, List<HostAddress>> myMasterHosts;
 		synchronized(masterHostsLock) {
 			myMasterHosts = masterHosts;
 			if(myMasterHosts == null) {
 				myMasterHosts = masterHosts = db.queryCall(
 					results -> {
-						Map<com.aoindustries.aoserv.client.account.User.Name,List<HostAddress>> table = new HashMap<>();
+						Map<com.aoindustries.aoserv.client.account.User.Name, List<HostAddress>> table = new HashMap<>();
 						while(results.next()) {
 							com.aoindustries.aoserv.client.account.User.Name un;
 							HostAddress ho;
@@ -10999,7 +10999,7 @@ public abstract class MasterServer {
 		DatabaseConnection conn,
 		RequestSource source,
 		StreamableOutput out,
-		AOServObject<?,?> obj,
+		AOServObject<?, ?> obj,
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
@@ -11037,7 +11037,7 @@ public abstract class MasterServer {
 		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
-		AOServObject<?,?> obj,
+		AOServObject<?, ?> obj,
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
@@ -11138,7 +11138,7 @@ public abstract class MasterServer {
 		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
-		AOServObject<?,?> obj,
+		AOServObject<?, ?> obj,
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {
@@ -11183,7 +11183,7 @@ public abstract class MasterServer {
 		StreamableOutput out,
 		boolean provideProgress,
 		CursorMode cursorMode,
-		AOServObject<?,?> obj,
+		AOServObject<?, ?> obj,
 		String sql,
 		Object ... params
 	) throws IOException, SQLException {

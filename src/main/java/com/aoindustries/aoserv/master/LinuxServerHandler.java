@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2003-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2003-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -70,7 +70,7 @@ final public class LinuxServerHandler {
 		return conn.queryInt("select \"gidMax\" from linux.\"Server\" where server=?", linuxServer);
 	}
 
-	private static final Map<Integer,Object> mrtgLocks = new HashMap<>();
+	private static final Map<Integer, Object> mrtgLocks = new HashMap<>();
 
 	public static void getMrtgFile(
 		DatabaseConnection conn,

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -267,7 +267,7 @@ final public class WhoisHistoryService implements MasterService {
 						 * The add new records
 						 */
 						// Get the set of unique registrable domains and accounts in the system
-						Map<DomainName,Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
+						Map<DomainName, Set<Account.Name>> registrableDomains = getWhoisHistoryDomains(conn);
 						conn.close(); // Don't hold database connection while sleeping
 
 						// Find the number of distinct registrable domains
@@ -290,10 +290,10 @@ final public class WhoisHistoryService implements MasterService {
 							// Sort the domains by those never looked up first, then by their order from oldest to newest/
 							// The list is not pruned yet, because it might become time while slowly processing the list
 							// Timestamp null when never looked-up
-							Map<DomainName,Timestamp> lookupOrder;
+							Map<DomainName, Timestamp> lookupOrder;
 							{
 								// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
-								final Map<DomainName,Timestamp> lastChecked = conn.queryCall(
+								final Map<DomainName, Timestamp> lastChecked = conn.queryCall(
 									(ResultSet results) -> {
 										try {
 											Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
@@ -329,7 +329,7 @@ final public class WhoisHistoryService implements MasterService {
 								assert registrableDomains.keySet().equals(lookupOrder.keySet());
 							}
 							// Performs the whois lookup once per unique registrable domain
-							for(Map.Entry<DomainName,Timestamp> entry : lookupOrder.entrySet()) {
+							for(Map.Entry<DomainName, Timestamp> entry : lookupOrder.entrySet()) {
 								DomainName registrableDomain = entry.getKey();
 								Timestamp time = entry.getValue();
 								boolean checkNow;
@@ -431,10 +431,10 @@ final public class WhoisHistoryService implements MasterService {
 	 * Merges the results of calling {@link WhoisHistoryDomainLocator#getWhoisHistoryDomains(com.aoindustries.dbc.DatabaseConnection)}
 	 * on all {@link MasterService services}.
 	 */
-	private Map<DomainName,Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
-		Map<DomainName,Set<Account.Name>> merged = new HashMap<>();
+	private Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
+		Map<DomainName, Set<Account.Name>> merged = new HashMap<>();
 		for(WhoisHistoryDomainLocator locator : MasterServer.getServices(WhoisHistoryDomainLocator.class)) {
-			for(Map.Entry<DomainName,Set<Account.Name>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
+			for(Map.Entry<DomainName, Set<Account.Name>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
 				DomainName registrableDomain = entry.getKey();
 				Set<Account.Name> accounts = merged.get(registrableDomain);
 				if(accounts == null) merged.put(registrableDomain, accounts = new LinkedHashSet<>());
@@ -451,7 +451,7 @@ final public class WhoisHistoryService implements MasterService {
 	 *
 	 * The same filtering as {@link #startGetTableHandler()}
 	 */
-	public Tuple2<String,String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
+	public Tuple2<String, String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 		User masterUser = MasterServer.getUser(conn, currentAdministrator);
 		if(masterUser != null) {
