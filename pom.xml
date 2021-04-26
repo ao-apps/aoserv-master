@@ -354,7 +354,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			</dependency>
 			<!-- Runtime Direct -->
 			<dependency>
-				<groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.2.19</version>
+				<groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.2.20</version>
 			</dependency>
 			<!-- Runtime Transitive -->
 			<dependency>
