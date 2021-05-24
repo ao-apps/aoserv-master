@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 aoserv-master - Master server for the AOServ Platform.
-Copyright (C) 2020  AO Industries, Inc.
+Copyright (C) 2020, 2021  AO Industries, Inc.
     support@aoindustries.com
     7262 Bull Pen Cir
     Mobile, AL 36695
@@ -33,7 +33,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 	<core:page
 		title="@{documented.name}"
 		description="@{documented.description}"
-		datePublished="2017-04-09T18:48:32-0500"
+		datePublished="2017-04-09T18:48:32-05:00"
 		dateModified="2020-04-13T15:17:05-05:00"
 	>
 		<core:child page="changelog.jspx" />
