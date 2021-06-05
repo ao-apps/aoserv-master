@@ -22,12 +22,12 @@
  */
 package com.aoindustries.aoserv.master.billing;
 
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.net.DomainName;
+import com.aoapps.tlds.TopLevelDomain;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.dns.DnsService;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.net.DomainName;
-import com.aoindustries.tlds.TopLevelDomain;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Map;
@@ -45,7 +45,7 @@ public interface WhoisHistoryDomainLocator {
 	 * Gets the set of all unique business accounting codes and registrable
 	 * domains that are subject to whois history logging.
 	 *
-	 * @see  DnsService#getDNSTLDs(com.aoindustries.dbc.DatabaseConnection)
+	 * @see  DnsService#getDNSTLDs(com.aoapps.dbc.DatabaseConnection)
 	 * @see  TopLevelDomain
 	 */
 	Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;

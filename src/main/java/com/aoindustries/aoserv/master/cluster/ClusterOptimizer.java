@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2009, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2007-2009, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,8 +22,8 @@
  */
 package com.aoindustries.aoserv.master.cluster;
 
-import com.aoindustries.lang.Strings;
-import com.aoindustries.sql.SQLUtility;
+import com.aoapps.lang.Strings;
+import com.aoapps.sql.SQLUtility;
 
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.

@@ -22,6 +22,25 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.cron.CronDaemon;
+import com.aoapps.cron.CronJob;
+import com.aoapps.cron.Schedule;
+import com.aoapps.dbc.DatabaseAccess;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.logging.ProcessTimer;
+import com.aoapps.lang.SysExits;
+import com.aoapps.lang.i18n.CurrencyComparator;
+import com.aoapps.lang.i18n.Money;
+import com.aoapps.lang.math.SafeMath;
+import com.aoapps.lang.validation.ValidationException;
+import com.aoapps.payments.AuthorizationResult;
+import com.aoapps.payments.CreditCard;
+import com.aoapps.payments.CreditCardProcessor;
+import com.aoapps.payments.MerchantServicesProvider;
+import com.aoapps.payments.MerchantServicesProviderFactory;
+import com.aoapps.payments.TokenizedCreditCard;
+import com.aoapps.payments.Transaction;
+import com.aoapps.payments.TransactionRequest;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.User;
 import com.aoindustries.aoserv.client.billing.TransactionType;
@@ -31,25 +50,6 @@ import com.aoindustries.aoserv.client.payment.PaymentType;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.schema.Type;
-import com.aoindustries.creditcards.AuthorizationResult;
-import com.aoindustries.creditcards.CreditCard;
-import com.aoindustries.creditcards.CreditCardProcessor;
-import com.aoindustries.creditcards.MerchantServicesProvider;
-import com.aoindustries.creditcards.MerchantServicesProviderFactory;
-import com.aoindustries.creditcards.TokenizedCreditCard;
-import com.aoindustries.creditcards.Transaction;
-import com.aoindustries.creditcards.TransactionRequest;
-import com.aoindustries.cron.CronDaemon;
-import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.Schedule;
-import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.lang.SysExits;
-import com.aoindustries.math.SafeMath;
-import com.aoindustries.util.i18n.CurrencyComparator;
-import com.aoindustries.util.i18n.Money;
-import com.aoindustries.util.logging.ProcessTimer;
-import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -1167,9 +1167,9 @@ final public class PaymentHandler /*implements CronJob*/ {
 			"update\n"
 			+ "  payment.\"Payment\"\n"
 			+ "set\n"
-			+ "  authorization_communication_result=?::\"com.aoindustries.creditcards\".\"TransactionResult.CommunicationResult\",\n"
+			+ "  authorization_communication_result=?::\"com.aoapps.payments\".\"TransactionResult.CommunicationResult\",\n"
 			+ "  authorization_provider_error_code=?,\n"
-			+ "  authorization_error_code=?::\"com.aoindustries.creditcards\".\"TransactionResult.ErrorCode\",\n"
+			+ "  authorization_error_code=?::\"com.aoapps.payments\".\"TransactionResult.ErrorCode\",\n"
 			+ "  authorization_provider_error_message=?,\n"
 			+ "  authorization_provider_unique_id=?,\n"
 			+ "  \"authorizationResult.providerReplacementMaskedCardNumber\"=?,\n"
@@ -1178,25 +1178,25 @@ final public class PaymentHandler /*implements CronJob*/ {
 			+ "  \"authorizationResult.replacementExpirationMonth\"=?,\n"
 			+ "  \"authorizationResult.replacementExpirationYear\"=?,\n"
 			+ "  authorization_provider_approval_result=?,\n"
-			+ "  authorization_approval_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ApprovalResult\",\n"
+			+ "  authorization_approval_result=?::\"com.aoapps.payments\".\"AuthorizationResult.ApprovalResult\",\n"
 			+ "  authorization_provider_decline_reason=?,\n"
-			+ "  authorization_decline_reason=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.DeclineReason\",\n"
+			+ "  authorization_decline_reason=?::\"com.aoapps.payments\".\"AuthorizationResult.DeclineReason\",\n"
 			+ "  authorization_provider_review_reason=?,\n"
-			+ "  authorization_review_reason=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ReviewReason\",\n"
+			+ "  authorization_review_reason=?::\"com.aoapps.payments\".\"AuthorizationResult.ReviewReason\",\n"
 			+ "  authorization_provider_cvv_result=?,\n"
-			+ "  authorization_cvv_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.CvvResult\",\n"
+			+ "  authorization_cvv_result=?::\"com.aoapps.payments\".\"AuthorizationResult.CvvResult\",\n"
 			+ "  authorization_provider_avs_result=?,\n"
-			+ "  authorization_avs_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.AvsResult\",\n"
+			+ "  authorization_avs_result=?::\"com.aoapps.payments\".\"AuthorizationResult.AvsResult\",\n"
 			+ "  authorization_approval_code=?,\n"
 			+ "  capture_time=?::timestamp,\n"
 			+ "  capture_username=?,\n"
 			+ "  capture_principal_name=?,\n"
-			+ "  capture_communication_result=?::\"com.aoindustries.creditcards\".\"TransactionResult.CommunicationResult\",\n"
+			+ "  capture_communication_result=?::\"com.aoapps.payments\".\"TransactionResult.CommunicationResult\",\n"
 			+ "  capture_provider_error_code=?,\n"
-			+ "  capture_error_code=?::\"com.aoindustries.creditcards\".\"TransactionResult.ErrorCode\",\n"
+			+ "  capture_error_code=?::\"com.aoapps.payments\".\"TransactionResult.ErrorCode\",\n"
 			+ "  capture_provider_error_message=?,\n"
 			+ "  capture_provider_unique_id=?,\n"
-			+ "  status=?::\"com.aoindustries.creditcards\".\"Transaction.Status\"\n"
+			+ "  status=?::\"com.aoapps.payments\".\"Transaction.Status\"\n"
 			+ "where\n"
 			+ "  id=?\n"
 			+ "  and status in ('PROCESSING', 'AUTHORIZED')",
@@ -1332,9 +1332,9 @@ final public class PaymentHandler /*implements CronJob*/ {
 			"update\n"
 			+ "  payment.\"Payment\"\n"
 			+ "set\n"
-			+ "  authorization_communication_result=?::\"com.aoindustries.creditcards\".\"TransactionResult.CommunicationResult\",\n"
+			+ "  authorization_communication_result=?::\"com.aoapps.payments\".\"TransactionResult.CommunicationResult\",\n"
 			+ "  authorization_provider_error_code=?,\n"
-			+ "  authorization_error_code=?::\"com.aoindustries.creditcards\".\"TransactionResult.ErrorCode\",\n"
+			+ "  authorization_error_code=?::\"com.aoapps.payments\".\"TransactionResult.ErrorCode\",\n"
 			+ "  authorization_provider_error_message=?,\n"
 			+ "  authorization_provider_unique_id=?,\n"
 			+ "  \"authorizationResult.providerReplacementMaskedCardNumber\"=?,\n"
@@ -1343,17 +1343,17 @@ final public class PaymentHandler /*implements CronJob*/ {
 			+ "  \"authorizationResult.replacementExpirationMonth\"=?,\n"
 			+ "  \"authorizationResult.replacementExpirationYear\"=?,\n"
 			+ "  authorization_provider_approval_result=?,\n"
-			+ "  authorization_approval_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ApprovalResult\",\n"
+			+ "  authorization_approval_result=?::\"com.aoapps.payments\".\"AuthorizationResult.ApprovalResult\",\n"
 			+ "  authorization_provider_decline_reason=?,\n"
-			+ "  authorization_decline_reason=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.DeclineReason\",\n"
+			+ "  authorization_decline_reason=?::\"com.aoapps.payments\".\"AuthorizationResult.DeclineReason\",\n"
 			+ "  authorization_provider_review_reason=?,\n"
-			+ "  authorization_review_reason=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.ReviewReason\",\n"
+			+ "  authorization_review_reason=?::\"com.aoapps.payments\".\"AuthorizationResult.ReviewReason\",\n"
 			+ "  authorization_provider_cvv_result=?,\n"
-			+ "  authorization_cvv_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.CvvResult\",\n"
+			+ "  authorization_cvv_result=?::\"com.aoapps.payments\".\"AuthorizationResult.CvvResult\",\n"
 			+ "  authorization_provider_avs_result=?,\n"
-			+ "  authorization_avs_result=?::\"com.aoindustries.creditcards\".\"AuthorizationResult.AvsResult\",\n"
+			+ "  authorization_avs_result=?::\"com.aoapps.payments\".\"AuthorizationResult.AvsResult\",\n"
 			+ "  authorization_approval_code=?,\n"
-			+ "  status=?::\"com.aoindustries.creditcards\".\"Transaction.Status\"\n"
+			+ "  status=?::\"com.aoapps.payments\".\"Transaction.Status\"\n"
 			+ "where\n"
 			+ "  id=?\n"
 			+ "  and status='PROCESSING'", // TODO: Use enum here instead of literal

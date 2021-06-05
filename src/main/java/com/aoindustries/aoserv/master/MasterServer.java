@@ -22,6 +22,37 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.collections.AoCollections;
+import com.aoapps.collections.IntArrayList;
+import com.aoapps.collections.IntList;
+import com.aoapps.collections.MinimalList;
+import com.aoapps.collections.PolymorphicMultimap;
+import com.aoapps.collections.SortedArrayList;
+import com.aoapps.dbc.DatabaseAccess;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.dbc.NoRowException;
+import com.aoapps.hodgepodge.io.stream.StreamableInput;
+import com.aoapps.hodgepodge.io.stream.StreamableOutput;
+import com.aoapps.hodgepodge.util.Tuple2;
+import com.aoapps.lang.Strings;
+import com.aoapps.lang.i18n.Money;
+import com.aoapps.lang.io.IoUtils;
+import com.aoapps.lang.util.BufferManager;
+import com.aoapps.lang.util.ErrorPrinter;
+import com.aoapps.lang.validation.ValidationException;
+import com.aoapps.net.DomainName;
+import com.aoapps.net.Email;
+import com.aoapps.net.HostAddress;
+import com.aoapps.net.InetAddress;
+import com.aoapps.net.Port;
+import com.aoapps.net.Protocol;
+import com.aoapps.security.HashedPassword;
+import com.aoapps.security.Identifier;
+import com.aoapps.security.Password;
+import com.aoapps.security.UnprotectedPassword;
+import com.aoapps.sql.Connections;
+import com.aoapps.sql.SQLStreamables;
+import com.aoapps.sql.SQLUtility;
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
@@ -56,37 +87,6 @@ import com.aoindustries.aoserv.client.web.tomcat.Context;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryService;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import com.aoindustries.aoserv.master.master.Process;
-import com.aoindustries.collections.AoCollections;
-import com.aoindustries.collections.IntArrayList;
-import com.aoindustries.collections.IntList;
-import com.aoindustries.collections.MinimalList;
-import com.aoindustries.collections.PolymorphicMultimap;
-import com.aoindustries.collections.SortedArrayList;
-import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.dbc.NoRowException;
-import com.aoindustries.io.IoUtils;
-import com.aoindustries.io.stream.StreamableInput;
-import com.aoindustries.io.stream.StreamableOutput;
-import com.aoindustries.lang.Strings;
-import com.aoindustries.net.DomainName;
-import com.aoindustries.net.Email;
-import com.aoindustries.net.HostAddress;
-import com.aoindustries.net.InetAddress;
-import com.aoindustries.net.Port;
-import com.aoindustries.net.Protocol;
-import com.aoindustries.security.HashedPassword;
-import com.aoindustries.security.Identifier;
-import com.aoindustries.security.Password;
-import com.aoindustries.security.UnprotectedPassword;
-import com.aoindustries.sql.Connections;
-import com.aoindustries.sql.SQLStreamables;
-import com.aoindustries.sql.SQLUtility;
-import com.aoindustries.util.BufferManager;
-import com.aoindustries.util.ErrorPrinter;
-import com.aoindustries.util.Tuple2;
-import com.aoindustries.util.i18n.Money;
-import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -10291,7 +10291,7 @@ public abstract class MasterServer {
 	 * that initiated this request.
 	 * <p>
 	 * TODO: We need a way to convert invalidations of current tables to old table mappings.
-	 * This would be the counterpart to {@link TableHandler#getOldTable(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, java.lang.String)}.
+	 * This would be the counterpart to {@link TableHandler#getOldTable(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, java.lang.String)}.
 	 * </p>
 	 */
 	public static void invalidateTables(
@@ -10824,7 +10824,7 @@ public abstract class MasterServer {
 	}
 
 	/**
-	 * @see  #checkAccessHostname(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, java.lang.String, java.lang.String, java.util.List)
+	 * @see  #checkAccessHostname(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, java.lang.String, java.lang.String, java.util.List)
 	 */
 	public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname) throws IOException, SQLException {
 		checkAccessHostname(conn, source, action, hostname, MasterServer.getService(DnsService.class).getDNSTLDs(conn));
@@ -11030,7 +11030,7 @@ public abstract class MasterServer {
 	 *
 	 * @return  The number of rows written
 	 *
-	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  #writeObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	private static long fetchObjects(
 		DatabaseConnection conn,
@@ -11131,7 +11131,7 @@ public abstract class MasterServer {
 	 *
 	 * @return  The number of rows written
 	 *
-	 * @see  #writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  #writeObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	private static long selectObjects(
 		DatabaseConnection conn,
@@ -11164,8 +11164,8 @@ public abstract class MasterServer {
 
 	/**
 	 * Performs a query and writes all rows of the result set.
-	 * Calls either {@link #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) selectObjects}
-	 * or {@link #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) fetchObjects}
+	 * Calls either {@link #selectObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) selectObjects}
+	 * or {@link #fetchObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...) fetchObjects}
 	 * based on the {@link CursorMode}.
 	 * <p>
 	 * In particular, implements the {@link CursorMode#AUTO} mode for cursor selection.
@@ -11174,8 +11174,8 @@ public abstract class MasterServer {
 	 * @return  The number of rows written
 	 *
 	 * @see  CursorMode#AUTO
-	 * @see  #selectObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
-	 * @see  #fetchObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 * @see  #selectObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
+	 * @see  #fetchObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)}
 	 */
 	public static long writeObjects(
 		DatabaseConnection conn,

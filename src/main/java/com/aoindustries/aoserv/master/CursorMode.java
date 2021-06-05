@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,7 +22,7 @@
  */
 package com.aoindustries.aoserv.master;
 
-import com.aoindustries.dbc.DatabaseConnection;
+import com.aoapps.dbc.DatabaseConnection;
 
 /**
  * The cursor mode used by a {@link TableHandler}.
@@ -66,7 +66,7 @@ public enum CursorMode {
 	 * skip cursor on the first query.  Hint: cache rultuples to bigint.
 	 * </p>
 	 *
-	 * @see  MasterServer#writeObjects(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
+	 * @see  MasterServer#writeObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AOServObject, java.lang.String, java.lang.Object...)
 	 */
 	AUTO;
 

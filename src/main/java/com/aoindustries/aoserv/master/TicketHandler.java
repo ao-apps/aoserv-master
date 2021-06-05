@@ -22,6 +22,13 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.cron.CronDaemon;
+import com.aoapps.cron.CronJob;
+import com.aoapps.cron.Schedule;
+import com.aoapps.dbc.DatabaseAccess;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.lang.Strings;
+import com.aoapps.net.Email;
 import com.aoindustries.aoserv.client.AOServObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.Permission;
@@ -30,13 +37,6 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.ActionType;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.TicketType;
-import com.aoindustries.cron.CronDaemon;
-import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.Schedule;
-import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.lang.Strings;
-import com.aoindustries.net.Email;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -249,7 +249,7 @@ final public class TicketHandler /*implements Runnable*/ {
 		conn.update(
 			AOServObject.USE_SQL_DATA_WRITE
 				? "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)"
-				: "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?::\"com.aoindustries.net\".\"Email\",?,?,?,now(),?,?,?,?,?,?,?)",
+				: "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?::\"com.aoapps.net\".\"Email\",?,?,?,now(),?,?,?,?,?,?,?)",
 			ticket,
 			brand,
 			reseller,

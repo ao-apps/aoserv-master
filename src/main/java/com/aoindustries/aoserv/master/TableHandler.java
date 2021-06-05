@@ -22,6 +22,12 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.collections.AoCollections;
+import com.aoapps.collections.IntList;
+import com.aoapps.dbc.DatabaseAccess;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.io.stream.StreamableInput;
+import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.AOServWritable;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.AccountHost;
@@ -32,12 +38,6 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.Host;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.collections.AoCollections;
-import com.aoindustries.collections.IntList;
-import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.stream.StreamableInput;
-import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.sql.ResultSet;
@@ -590,7 +590,7 @@ final public class TableHandler {
 		/**
 		 * Checks if has permission, writing an empty table when does not have the permission.
 		 *
-		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		@Override
 		final public void getTable(
@@ -613,7 +613,7 @@ final public class TableHandler {
 		/**
 		 * Handles a request for the given table, once permission has been verified.
 		 *
-		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableHasPermission(
 			DatabaseConnection conn,
@@ -658,7 +658,7 @@ final public class TableHandler {
 		 * permission has been verified, with access to all {@link Account accounts}
 		 * and {@link Host hosts}.
 		 *
-		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableMasterHasPermission(
 			DatabaseConnection conn,
@@ -675,7 +675,7 @@ final public class TableHandler {
 		 * {@link Host hosts}.  This is the filtering generally used by
 		 * <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
 		 *
-		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableDaemonHasPermission(
 			DatabaseConnection conn,
@@ -693,7 +693,7 @@ final public class TableHandler {
 		 * {@link Account accounts} and the {@link Host hosts} those accounts
 		 * can access (see {@link AccountHost}.
 		 *
-		 * @see  AccountHandler#hasPermission(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
+		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		abstract protected void getTableAdministratorHasPermission(
 			DatabaseConnection conn,
@@ -779,7 +779,7 @@ final public class TableHandler {
 					&& source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
 				) {
 					// Send in lowercase
-					com.aoindustries.net.Protocol[] netProtocols = com.aoindustries.net.Protocol.values();
+					com.aoapps.net.Protocol[] netProtocols = com.aoapps.net.Protocol.values();
 					conn.close(); // Don't hold database connection while writing response
 					MasterServer.writeObjects(
 						source,
@@ -872,7 +872,7 @@ final public class TableHandler {
 	/**
 	 * Gets the table name, with schema prefixed.
 	 *
-	 * @see  #getTableName(com.aoindustries.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableID)
+	 * @see  #getTableName(com.aoapps.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableID)
 	 */
 	public static String getTableNameForDBTableID(DatabaseAccess db, Integer dbTableId) throws SQLException {
 		synchronized(tableNamesLock) {
@@ -904,7 +904,7 @@ final public class TableHandler {
 	/**
 	 * Gets the table name, with schema prefixed.
 	 *
-	 * @see  #getTableNameForDBTableID(com.aoindustries.dbc.DatabaseAccess, java.lang.Integer)
+	 * @see  #getTableNameForDBTableID(com.aoapps.dbc.DatabaseAccess, java.lang.Integer)
 	 */
 	public static String getTableName(DatabaseAccess db, Table.TableID tableID) throws IOException, SQLException {
 		return getTableNameForDBTableID(

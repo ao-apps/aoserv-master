@@ -22,8 +22,8 @@
  */
 package com.aoindustries.aoserv.master.master;
 
-import com.aoindustries.net.InetAddress;
-import com.aoindustries.security.SmallIdentifier;
+import com.aoapps.net.InetAddress;
+import com.aoapps.security.SmallIdentifier;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;

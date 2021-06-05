@@ -22,6 +22,8 @@
  */
 package com.aoindustries.aoserv.master.net;
 
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -33,8 +35,6 @@ import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import static com.aoindustries.aoserv.master.TableHandler.BU2_PARENTS_JOIN;
 import static com.aoindustries.aoserv.master.TableHandler.PK3_BU2_PARENTS_WHERE;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -123,7 +123,7 @@ public class IpAddress_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "      net.\"Device\" nd\n"
 			+ "      right outer join net.\"IpAddress\" ia2 on nd.id=ia2.device\n"
 			+ "    where\n"
-			+ "      ia2.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" or (\n"
+			+ "      ia2.\"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\" or (\n"
 			+ "        ms.username=?\n"
 			+ "        and (\n"
 			+ "          ms.server=nd.server\n"
@@ -181,7 +181,7 @@ public class IpAddress_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "  net.\"IpAddress\" ia\n"
 			+ "  inner join \"net.monitoring\".\"IpAddressMonitoring\" iam on ia.id = iam.id\n"
 			+ "where\n"
-			+ "  ia.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"\n"
+			+ "  ia.\"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\"\n"
 			+ "  or ia.id in (\n"
 			+ "    select\n"
 			+ "      ia2.id\n"
@@ -236,7 +236,7 @@ public class IpAddress_GetTableHandler extends TableHandler.GetTableHandlerByRol
 			+ "      and pk5.accounting=bs5.accounting\n"
 			+ "      and bs5.server=nd5.server\n"
 			+ "      and nd5.id=ia5.device\n"
-			+ "      and (ia5.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" or ia5.\"isOverflow\")\n"
+			+ "      and (ia5.\"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\" or ia5.\"isOverflow\")\n"
 			/*+ "  ) or ia.id in (\n"
 			+ "    select\n"
 			+ "      ia6.id\n"

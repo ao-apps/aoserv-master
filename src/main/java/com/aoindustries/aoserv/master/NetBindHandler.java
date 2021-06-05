@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,16 +22,16 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.collections.AoCollections;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.net.InetAddress;
+import com.aoapps.net.Port;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.FirewallZone;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.collections.AoCollections;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.net.InetAddress;
-import com.aoindustries.net.Port;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Set;
@@ -103,8 +103,8 @@ final public class NetBindHandler {
 						+ "      net.\"Bind\"\n"
 						+ "    where\n"
 						+ "      server=?\n"
-						+ "      and port=?::\"com.aoindustries.net\".\"Port\"\n"
-						+ "      and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
+						+ "      and port=?::\"com.aoapps.net\".\"Port\"\n"
+						+ "      and net_protocol=?::\"com.aoapps.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						host,
@@ -126,11 +126,11 @@ final public class NetBindHandler {
 						+ "    where\n"
 						+ "      nb.server=?\n"
 						+ "      and ia.\"inetAddress\" in (\n"
-						+ "        ?::\"com.aoindustries.net\".\"InetAddress\",\n"
-						+ "        ?::\"com.aoindustries.net\".\"InetAddress\"\n"
+						+ "        ?::\"com.aoapps.net\".\"InetAddress\",\n"
+						+ "        ?::\"com.aoapps.net\".\"InetAddress\"\n"
 						+ "      )\n"
-						+ "      and nb.port=?::\"com.aoindustries.net\".\"Port\"\n"
-						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
+						+ "      and nb.port=?::\"com.aoapps.net\".\"Port\"\n"
+						+ "      and nb.net_protocol=?::\"com.aoapps.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						host,
@@ -154,11 +154,11 @@ final public class NetBindHandler {
 						+ "    where\n"
 						+ "      nb.server=?\n"
 						+ "      and (\n"
-						+ "        ia.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"\n"
+						+ "        ia.\"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\"\n"
 						+ "        or nb.\"ipAddress\"=?\n"
 						+ "      )\n"
-						+ "      and nb.port=?::\"com.aoindustries.net\".\"Port\"\n"
-						+ "      and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
+						+ "      and nb.port=?::\"com.aoapps.net\".\"Port\"\n"
+						+ "      and nb.net_protocol=?::\"com.aoapps.net\".\"Protocol\"\n"
 						+ "    limit 1\n"
 						+ "  ) is not null",
 						host,
@@ -179,8 +179,8 @@ final public class NetBindHandler {
 				+ "  ?,\n"
 				+ "  ?,\n"
 				+ "  ?,\n"
-				+ "  ?::\"com.aoindustries.net\".\"Port\",\n"
-				+ "  ?::\"com.aoindustries.net\".\"Protocol\",\n"
+				+ "  ?::\"com.aoapps.net\".\"Port\",\n"
+				+ "  ?::\"com.aoapps.net\".\"Protocol\",\n"
 				+ "  ?,\n"
 				+ "  ?\n"
 				+ ") RETURNING id",
@@ -229,7 +229,7 @@ final public class NetBindHandler {
 		InvalidateList invalidateList,
 		int host,
 		int ipAddress,
-		com.aoindustries.net.Protocol netProtocol,
+		com.aoapps.net.Protocol netProtocol,
 		String appProtocol,
 		Account.Name packageName,
 		int minimumPort
@@ -247,11 +247,11 @@ final public class NetBindHandler {
 				+ "  net.find_unused_port(\n"
 				+ "    ?,\n"
 				+ "    ?,\n"
-				+ "    ?::\"com.aoindustries.net\".\"Port\",\n"
-				+ "    ?::\"com.aoindustries.net\".\"Protocol\",\n"
+				+ "    ?::\"com.aoapps.net\".\"Port\",\n"
+				+ "    ?::\"com.aoapps.net\".\"Protocol\",\n"
 				+ "    ?\n"
 			    + "  ),\n" // port
-				+ "  ?::\"com.aoindustries.net\".\"Protocol\",\n" // net_protocol
+				+ "  ?::\"com.aoapps.net\".\"Protocol\",\n" // net_protocol
 				+ "  ?,\n" // app_protocol
 				+ "  true,\n" // monitoring_enabled
 				+ "  null\n" // monitoring_parameters
@@ -303,8 +303,8 @@ final public class NetBindHandler {
 			+ "      where\n"
 			+ "        server=?\n"
 			+ "        and \"ipAddress\"=?\n"
-			+ "        and port=?::\"com.aoindustries.net\".\"Port\"\n"
-			+ "        and net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
+			+ "        and port=?::\"com.aoapps.net\".\"Port\"\n"
+			+ "        and net_protocol=?::\"com.aoapps.net\".\"Protocol\"\n"
 			+ "    ), -1\n"
 			+ "  )",
 			host,

@@ -22,6 +22,19 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.collections.IntList;
+import com.aoapps.collections.SortedArrayList;
+import com.aoapps.collections.SortedIntArrayList;
+import com.aoapps.dbc.DatabaseAccess;
+import com.aoapps.dbc.DatabaseAccess.Null;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.io.stream.StreamableOutput;
+import com.aoapps.lang.util.ErrorPrinter;
+import com.aoapps.lang.validation.ValidationException;
+import com.aoapps.net.DomainName;
+import com.aoapps.net.Email;
+import com.aoapps.net.Port;
+import com.aoapps.security.Identifier;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.distribution.Software;
@@ -41,19 +54,6 @@ import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.aoserv.client.web.tomcat.Version;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import com.aoindustries.aoserv.master.dns.DnsService;
-import com.aoindustries.collections.IntList;
-import com.aoindustries.collections.SortedArrayList;
-import com.aoindustries.collections.SortedIntArrayList;
-import com.aoindustries.dbc.DatabaseAccess;
-import com.aoindustries.dbc.DatabaseAccess.Null;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.stream.StreamableOutput;
-import com.aoindustries.net.DomainName;
-import com.aoindustries.net.Email;
-import com.aoindustries.net.Port;
-import com.aoindustries.security.Identifier;
-import com.aoindustries.util.ErrorPrinter;
-import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -925,7 +925,7 @@ final public class WebHandler {
 
 		Port httpPort;
 		try {
-			httpPort = Port.valueOf(80, com.aoindustries.net.Protocol.TCP);
+			httpPort = Port.valueOf(80, com.aoapps.net.Protocol.TCP);
 		} catch(ValidationException e) {
 			throw new SQLException(e);
 		}
@@ -1076,7 +1076,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				wildcardIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.JNP,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1086,7 +1086,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				wildcardIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.WEBSERVER,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1096,7 +1096,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				wildcardIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.RMI,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1106,7 +1106,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				wildcardIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.HYPERSONIC,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1116,7 +1116,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				wildcardIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.JMX,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1153,7 +1153,7 @@ final public class WebHandler {
 					invalidateList,
 					linuxServer,
 					IpAddressHandler.getLoopbackIpAddress(conn, linuxServer),
-					com.aoindustries.net.Protocol.TCP,
+					com.aoapps.net.Protocol.TCP,
 					AppProtocol.TOMCAT4_SHUTDOWN,
 					packageName,
 					MINIMUM_AUTO_PORT_NUMBER
@@ -1182,7 +1182,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				IpAddressHandler.getLoopbackIpAddress(conn, linuxServer),
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				isTomcat4?JkProtocol.AJP13:JkProtocol.AJP12,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1355,7 +1355,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				loopbackIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				JkProtocol.AJP13,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -1375,7 +1375,7 @@ final public class WebHandler {
 				invalidateList,
 				linuxServer,
 				loopbackIP,
-				com.aoindustries.net.Protocol.TCP,
+				com.aoapps.net.Protocol.TCP,
 				AppProtocol.TOMCAT4_SHUTDOWN,
 				packageName,
 				MINIMUM_AUTO_PORT_NUMBER
@@ -2215,7 +2215,7 @@ final public class WebHandler {
 		int netBind;
 		try (
 			PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
-				"select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoindustries.net\".\"Port\" and net_protocol=?::\"com.aoindustries.net\".\"Protocol\""
+				"select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoapps.net\".\"Port\" and net_protocol=?::\"com.aoapps.net\".\"Protocol\""
 			)
 		) {
 			try {
@@ -2254,7 +2254,7 @@ final public class WebHandler {
 		// Allocate the net_bind, if needed
 		if(netBind == -1) {
 			netBind = conn.updateInt(
-				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?::\"com.aoindustries.net\".\"Port\",?::\"com.aoindustries.net\".\"Protocol\",?,true) RETURNING id",
+				"INSERT INTO net.\"Bind\" VALUES (default,?,?,?,?::\"com.aoapps.net\".\"Port\",?::\"com.aoapps.net\".\"Protocol\",?,true) RETURNING id",
 				packageName.toString(),
 				linuxServer,
 				ipAddress,

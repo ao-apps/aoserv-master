@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,10 +22,10 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.dbc.DatabaseConnection;
 import com.aoindustries.aoserv.client.linux.User;
 import com.aoindustries.aoserv.client.linux.UserType;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.dbc.DatabaseConnection;
 import java.io.IOException;
 import java.sql.SQLException;
 

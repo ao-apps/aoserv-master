@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,16 +22,16 @@
  */
 package com.aoindustries.aoserv.master.tlds;
 
+import com.aoapps.cron.CronDaemon;
+import com.aoapps.cron.CronJob;
+import com.aoapps.cron.Schedule;
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.logging.ProcessTimer;
+import com.aoapps.lang.Strings;
+import com.aoapps.tlds.TopLevelDomain;
 import com.aoindustries.aoserv.master.MasterDatabase;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
-import com.aoindustries.cron.CronDaemon;
-import com.aoindustries.cron.CronJob;
-import com.aoindustries.cron.Schedule;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.lang.Strings;
-import com.aoindustries.tlds.TopLevelDomain;
-import com.aoindustries.util.logging.ProcessTimer;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.util.List;
@@ -103,7 +103,7 @@ public class TopLevelDomainService implements MasterService {
 							if(
 								conn.queryBoolean(
 									"SELECT EXISTS (\n"
-									+ "  SELECT * FROM \"com.aoindustries.tlds\".\"TopLevelDomain.Log\" WHERE \"lastUpdatedTime\"=?\n"
+									+ "  SELECT * FROM \"com.aoapps.tlds\".\"TopLevelDomain.Log\" WHERE \"lastUpdatedTime\"=?\n"
 									+ ")",
 									lastUpdatedTimestamp
 								)
@@ -133,25 +133,25 @@ public class TopLevelDomainService implements MasterService {
 								conn.update(insert.toString(), topLevelDomains.toArray());
 								// Delete old entries
 								int deleted = conn.update(
-									"DELETE FROM \"com.aoindustries.tlds\".\"TopLevelDomain\" WHERE label NOT IN (\n"
+									"DELETE FROM \"com.aoapps.tlds\".\"TopLevelDomain\" WHERE label NOT IN (\n"
 									+ "  SELECT label FROM \"TopLevelDomain_import\"\n"
 									+ ")");
 								// Delete old entries where case changed
 								int delete_for_update = conn.update(
-									"DELETE FROM \"com.aoindustries.tlds\".\"TopLevelDomain\" WHERE label::text NOT IN (\n"
+									"DELETE FROM \"com.aoapps.tlds\".\"TopLevelDomain\" WHERE label::text NOT IN (\n"
 									+ "  SELECT label::text FROM \"TopLevelDomain_import\"\n"
 									+ ")");
 								// Add new entries
 								int inserted = conn.update(
-									"INSERT INTO \"com.aoindustries.tlds\".\"TopLevelDomain\"\n"
+									"INSERT INTO \"com.aoapps.tlds\".\"TopLevelDomain\"\n"
 									+ "SELECT * FROM \"TopLevelDomain_import\" WHERE label NOT IN (\n"
-									+ "  SELECT label FROM \"com.aoindustries.tlds\".\"TopLevelDomain\"\n"
+									+ "  SELECT label FROM \"com.aoapps.tlds\".\"TopLevelDomain\"\n"
 									+ ")");
 								// Drop temp table
 								conn.update("DROP TABLE \"TopLevelDomain_import\"");
 								// Add Log entry
 								conn.update(
-									"INSERT INTO \"com.aoindustries.tlds\".\"TopLevelDomain.Log\" VALUES (\n"
+									"INSERT INTO \"com.aoapps.tlds\".\"TopLevelDomain.Log\" VALUES (\n"
 									+ "  ?,\n"
 									+ "  ?,\n"
 									+ "  ?,\n"

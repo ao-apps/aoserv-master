@@ -22,6 +22,8 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.sql.Connections;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -29,8 +31,6 @@ import com.aoindustries.aoserv.client.net.reputation.Host;
 import com.aoindustries.aoserv.client.net.reputation.Network;
 import com.aoindustries.aoserv.client.net.reputation.Set;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.sql.Connections;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;

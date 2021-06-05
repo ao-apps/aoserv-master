@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,6 +22,8 @@
  */
 package com.aoindustries.aoserv.master.accounting;
 
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
@@ -29,8 +31,6 @@ import com.aoindustries.aoserv.master.BankAccountHandler;
 import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.io.stream.StreamableOutput;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -42,10 +42,10 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 
 	/**
 	 * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
-	 * calls {@link #getTableAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
+	 * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
 	 * Otherwise, writes an empty table.
 	 *
-	 * @see BankAccountHandler#isBankAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
+	 * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
 	 */
 	@Override
 	default void getTable(
@@ -68,7 +68,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 	 * Handles a {@link User master user} request for the given accounting table,
 	 * when has {@link User#canAccessBankAccount()}.
 	 *
-	 * @see BankAccountHandler#isBankAccounting(com.aoindustries.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
+	 * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
 	 */
 	void getTableAccounting(
 		DatabaseConnection conn,

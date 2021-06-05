@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2017, 2018, 2019, 2020  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -22,6 +22,10 @@
  */
 package com.aoindustries.aoserv.master;
 
+import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.lang.validation.ValidationException;
+import com.aoapps.net.DomainName;
+import com.aoapps.net.InetAddress;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.Zone;
 import com.aoindustries.aoserv.client.master.User;
@@ -29,10 +33,6 @@ import com.aoindustries.aoserv.client.net.DeviceId;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.dns.DnsService;
-import com.aoindustries.dbc.DatabaseConnection;
-import com.aoindustries.net.DomainName;
-import com.aoindustries.net.InetAddress;
-import com.aoindustries.validation.ValidationException;
 import java.io.IOException;
 import java.sql.SQLException;
 import org.apache.commons.lang3.NotImplementedException;
@@ -156,7 +156,7 @@ final public class IpAddressHandler {
 		int host = getHostForIpAddress(conn, dhcpAddress);
 
 		// Update the table
-		conn.update("update net.\"IpAddress\" set \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\" where id=?", inetAddress, dhcpAddress);
+		conn.update("update net.\"IpAddress\" set \"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\" where id=?", inetAddress, dhcpAddress);
 
 		// Notify all clients of the update
 		invalidateList.addTable(
@@ -319,7 +319,7 @@ final public class IpAddressHandler {
 			+ "      from\n"
 			+ "        net.\"IpAddress\" ia,\n"
 			+ "        net.\"Device\" nd\n"
-			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?::\"com.aoindustries.net\".\"Protocol\"\n"
+			+ "        left join net.\"Bind\" nb on nd.server=nb.server and nb.port in (80, 443) and nb.net_protocol=?::\"com.aoapps.net\".\"Protocol\"\n"
 			+ "        left join web.\"HttpdBind\" hb on nb.id=hb.net_bind\n"
 			+ "        left join web.\"HttpdServer\" hs on hb.httpd_server=hs.id\n"
 			+ "      where\n"
@@ -348,7 +348,7 @@ final public class IpAddressHandler {
 			+ "      limit 1\n"
 			+ "    ), -1\n"
 			+ "  )",
-			com.aoindustries.net.Protocol.TCP.name(),
+			com.aoapps.net.Protocol.TCP.name(),
 			linuxServer,
 			linuxServer
 		);
@@ -395,7 +395,7 @@ final public class IpAddressHandler {
 	}
 
 	public static int getWildcardIpAddress(DatabaseConnection conn) throws IOException, SQLException {
-		return conn.queryInt("select id from net.\"IpAddress\" where \"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
+		return conn.queryInt("select id from net.\"IpAddress\" where \"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\"", IpAddress.WILDCARD_IP); // No limit, must always be 1 row and error otherwise
 	}
 
 	public static int getLoopbackIpAddress(DatabaseConnection conn, int host) throws IOException, SQLException {
@@ -406,7 +406,7 @@ final public class IpAddressHandler {
 			+ "  net.\"IpAddress\" ia,\n"
 			+ "  net.\"Device\" nd\n"
 			+ "where\n"
-			+ "  ia.\"inetAddress\"=?::\"com.aoindustries.net\".\"InetAddress\"\n"
+			+ "  ia.\"inetAddress\"=?::\"com.aoapps.net\".\"InetAddress\"\n"
 			+ "  and ia.device=nd.id\n"
 			+ "  and nd.server=?\n"
 			+ "limit 1",
