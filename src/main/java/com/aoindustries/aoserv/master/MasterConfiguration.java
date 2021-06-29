@@ -47,7 +47,7 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class MasterConfiguration {
 
-	private static final String PROPERTIES_FILENAME = "aoserv-master.properties";
+	private static final String PROPERTIES_FILENAME = "/com/aoindustries/aoserv/master/aoserv-master.properties";
 
 	private static Properties props;
 

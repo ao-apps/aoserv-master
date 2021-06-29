@@ -95,9 +95,9 @@ final public class TableHandler {
 
 	/*
 	 * TODO: Use WITH RECURSIVE and no longer limit business tree depth.
-	 * 
+	 *
 	 * Example query to get an account and all its parents:
-	 * 
+	 *
 	 * WITH RECURSIVE account_and_up(accounting) AS (
 	 *   VALUES ('LOG_NEWRANKS_NET')
 	 * UNION ALL
@@ -194,7 +194,7 @@ final public class TableHandler {
 			+ "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
 	;
 
-	public interface GetObjectHandler {
+	public static interface GetObjectHandler {
 		/**
 		 * Gets the set of tables handled.
 		 */
@@ -406,7 +406,7 @@ final public class TableHandler {
 		}
 	}
 
-	public interface GetTableHandler {
+	public static interface GetTableHandler {
 		/**
 		 * Gets the set of tables handled.
 		 */
