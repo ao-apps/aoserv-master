@@ -69,6 +69,8 @@ final public class DnsService implements MasterService {
 		int priority,
 		int weight,
 		int port,
+		short flag,
+		String tag,
 		String destination,
 		int ttl
 	) throws IOException, SQLException {
@@ -99,11 +101,27 @@ final public class DnsService implements MasterService {
 			if(port != Record.NO_PORT) throw new SQLException("No port allowed for type="+type);
 		}
 
+		// Must have appropriate flag
+		if(conn.queryBoolean("select has_flag from dns.\"RecordType\" where type=?", type)) {
+			if(flag == Record.NO_FLAG) throw new IllegalArgumentException("flag required for type=" + type);
+			else if(flag < 0 || flag > 0xFF) throw new SQLException("Invalid flag: " + flag);
+		} else {
+			if(flag != Record.NO_FLAG) throw new SQLException("No flag allowed for type="+type);
+		}
+
+		// Must have appropriate tag
+		if(conn.queryBoolean("select has_tag from dns.\"RecordType\" where type=?", type)) {
+			if(tag == null) throw new IllegalArgumentException("tag required for type=" + type);
+		} else {
+			if(tag != null) throw new SQLException("No tag allowed for type="+type);
+		}
+
 		// Must have a valid destination type unless is a TXT entry
 		if(!RecordType.TXT.equals(type)) {
 			try {
 				RecordType.checkDestination(
 					type,
+					tag,
 					destination
 				);
 			} catch(IllegalArgumentException err) {
@@ -120,15 +138,19 @@ final public class DnsService implements MasterService {
 			+ "  priority,\n"
 			+ "  weight,\n"
 			+ "  port,\n"
+			+ "  flag,\n"
+			+ "  tag,\n"
 			+ "  destination,\n"
 			+ "  ttl\n"
-			+ ") VALUES (?,?,?,?,?,?,?,?) RETURNING id",
+			+ ") VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id",
 			zone,
 			domain,
 			type,
 			(priority == Record.NO_PRIORITY) ? Null.INTEGER : priority,
 			(weight == Record.NO_WEIGHT) ? Null.INTEGER : weight,
 			(port == Record.NO_PORT) ? Null.INTEGER : port,
+			(flag == Record.NO_FLAG) ? Null.SMALLINT : flag,
+			tag,
 			destination,
 			(ttl == -1) ? Null.INTEGER : ttl
 		);
@@ -174,6 +196,26 @@ final public class DnsService implements MasterService {
 			Zone.DEFAULT_HOSTMASTER,
 			Zone.getCurrentSerial(),
 			ttl
+		);
+
+		// Add the CAA entry defaulting to most protective
+		conn.update(
+			"insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", flag, tag, destination) values(?,?,?,?,?,?)",
+			zone,
+			"@",
+			RecordType.CAA,
+			Zone.DEFAULT_CAA_FLAG,
+			Zone.DEFAULT_CAA_TAG,
+			Zone.DEFAULT_CAA_VALUE
+		);
+		conn.update(
+			"insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", flag, tag, destination) values(?,?,?,?,?,?)",
+			zone,
+			"@",
+			RecordType.CAA,
+			0,
+			Record.CAA_TAG_IODEF,
+			"mailto:support@aoindustries.com"
 		);
 
 		// Add the MX entry

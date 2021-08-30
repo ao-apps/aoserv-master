@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2021-07-24T13:07:52-05:00"
+		dateModified="2021-08-27T18:56:19-05:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -47,7 +47,12 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				artifactId="@{documented.artifactId}"
 				repository="@{nexusUrl}content/repositories/snapshots/"
 				scmUrl="@{project.scm.url}"
-			/>
+			>
+				<ul>
+					<!-- TODO: Link to our page once we have one -->
+					<li>Added support for <ao:a href="https://tools.ietf.org/html/rfc6844">DNS Certification Authority Authorization (CAA) Resource Records</ao:a>.</li>
+				</ul>
+			</changelog:release>
 		</c:if>
 
 		<changelog:release

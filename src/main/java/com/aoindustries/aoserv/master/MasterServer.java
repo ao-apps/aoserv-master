@@ -1363,6 +1363,16 @@ public abstract class MasterServer {
 													weight         = Record.NO_WEIGHT;
 													port           = Record.NO_PORT;
 												}
+												short flag;
+												String tag;
+												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_86_0) >= 0) {
+													flag           = in.readShort();
+													tag            = in.readUTF();
+													if(tag.isEmpty()) tag = null;
+												} else {
+													flag           = Record.NO_FLAG;
+													tag            = null;
+												}
 												String destination = in.readUTF().trim();
 												int ttl;
 												if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_127)>=0) {
@@ -1378,6 +1388,8 @@ public abstract class MasterServer {
 													priority==Record.NO_PRIORITY ? null : priority,
 													weight==Record.NO_WEIGHT ? null : weight,
 													port==Record.NO_PORT ? null : port,
+													flag == Record.NO_FLAG ? null : flag,
+													tag,
 													destination,
 													ttl==Record.NO_TTL ? null : ttl
 												);
@@ -1393,6 +1405,8 @@ public abstract class MasterServer {
 														priority,
 														weight,
 														port,
+														flag,
+														tag,
 														destination,
 														ttl
 													)
@@ -1900,7 +1914,7 @@ public abstract class MasterServer {
 													)
 												);
 											}
-											break;							
+											break;
 										case HTTPD_SITE_URLS :
 											{
 												int virtualHost = in.readCompressedInt();
@@ -1983,7 +1997,7 @@ public abstract class MasterServer {
 													)
 												);
 											}
-											break;							
+											break;
 										case HTTPD_TOMCAT_DATA_SOURCES :
 											{
 												int context=in.readCompressedInt();
@@ -2029,7 +2043,7 @@ public abstract class MasterServer {
 													)
 												);
 											}
-											break;							
+											break;
 										case HTTPD_TOMCAT_PARAMETERS :
 											{
 												int context=in.readCompressedInt();
@@ -2060,7 +2074,7 @@ public abstract class MasterServer {
 													)
 												);
 											}
-											break;							
+											break;
 										case HTTPD_TOMCAT_SITE_JK_MOUNTS :
 											{
 												int tomcatSite = in.readCompressedInt();
@@ -2084,7 +2098,7 @@ public abstract class MasterServer {
 													)
 												);
 											}
-											break;							
+											break;
 										case HTTPD_TOMCAT_SHARED_SITES :
 											{
 												int linuxServer = in.readCompressedInt();
@@ -3517,7 +3531,7 @@ public abstract class MasterServer {
 									break;
 								/*case CHANGE_TICKET_ADMIN_PRIORITY :
 									{
-										int ticketID=in.readCompressedInt(); 
+										int ticketID=in.readCompressedInt();
 										String priority=in.readUTF().trim();
 										if(priority.length() == 0) priority=null;
 										String username=in.readUTF().trim();
@@ -8941,7 +8955,7 @@ public abstract class MasterServer {
 									break;
 								/*case SET_TICKET_ASSIGNED_TO :
 									{
-										int ticketID=in.readCompressedInt(); 
+										int ticketID=in.readCompressedInt();
 										String assignedTo=in.readUTF().trim();
 										if(assignedTo.length() == 0) assignedTo=null;
 										String username=in.readUTF().trim();
@@ -9001,7 +9015,7 @@ public abstract class MasterServer {
 									break;
 								case SET_TICKET_CONTACT_PHONE_NUMBERS :
 									{
-										int ticketID = in.readCompressedInt(); 
+										int ticketID = in.readCompressedInt();
 										String contactPhoneNumbers = in.readUTF();
 										if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43)<=0) {
 											String username=in.readUTF();
@@ -10779,9 +10793,9 @@ public abstract class MasterServer {
 	 */
 	public static String authenticate(
 		DatabaseAccess db,
-		String remoteHost, 
-		com.aoindustries.aoserv.client.account.User.Name connectAs, 
-		com.aoindustries.aoserv.client.account.User.Name authenticateAs, 
+		String remoteHost,
+		com.aoindustries.aoserv.client.account.User.Name connectAs,
+		com.aoindustries.aoserv.client.account.User.Name authenticateAs,
 		UnprotectedPassword password
 	) throws IOException, SQLException {
 		try {
