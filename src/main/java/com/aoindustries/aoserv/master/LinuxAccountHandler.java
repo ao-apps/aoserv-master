@@ -1821,6 +1821,7 @@ final public class LinuxAccountHandler {
 		// Store the content on the server
 		if(path!=null) {
 			AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+			conn.commit();
 			conn.close(); // Don't hold database connection while connecting to the daemon
 			daemonConnector.setAutoresponderContent(path, content==null?"":content, uid, gid);
 		}

@@ -336,6 +336,7 @@ final public class EmailHandler {
 		int gid = LinuxAccountHandler.getGidForGroupServer(conn, linuxGroupServer);
 		int mode = path.toString().startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString() + '/') ? 0644 : 0640;
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, userServer_linuxServer);
+		conn.commit();
 		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.setEmailListFile(path, "", uid, gid, mode);
 
@@ -729,6 +730,7 @@ final public class EmailHandler {
 		int uid = LinuxAccountHandler.getUidForUserServer(conn, lsa);
 		int gid = LinuxAccountHandler.getGidForGroupServer(conn, lsg);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+		conn.commit();
 		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.setEmailListFile(infoPath, file, uid, gid, 0664);
 		daemonConnector.setEmailListFile(introPath, introFile, uid, gid, 0664);
@@ -1525,6 +1527,7 @@ final public class EmailHandler {
 
 		// Remove the list file from the server
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+		conn.commit();
 		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.removeEmailList(path);
 	}
