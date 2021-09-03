@@ -170,9 +170,9 @@ final public class EmailHandler {
 
 	public static int addAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		String address, 
+		String address,
 		int domain
 	) throws IOException, SQLException {
 		checkAccessDomain(conn, source, "addAddress", domain);
@@ -183,7 +183,7 @@ final public class EmailHandler {
 	private static int addAddress0(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		String address, 
+		String address,
 		int domain
 	) throws IOException, SQLException {
 		{
@@ -213,9 +213,9 @@ final public class EmailHandler {
 
 	public static int addForwarding(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		Email destination
 	) throws IOException, SQLException {
 		String destinationStr = destination.toString();
@@ -258,7 +258,7 @@ final public class EmailHandler {
 
 	public static int addList(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		PosixPath path,
 		int userServer,
@@ -353,9 +353,9 @@ final public class EmailHandler {
 
 	public static int addListAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		int list
 	) throws IOException, SQLException {
 		checkAccessAddress(conn, source, "addListAddress", address);
@@ -372,7 +372,7 @@ final public class EmailHandler {
 	private static int addListAddress0(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		int list
 	) throws IOException, SQLException {
 		// The email_domain and the email_list must be on the same server
@@ -447,9 +447,9 @@ final public class EmailHandler {
 
 	public static int addPipeAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		int pipe
 	) throws IOException, SQLException {
 		checkAccessAddress(conn, source, "addPipeAddress", address);
@@ -466,7 +466,7 @@ final public class EmailHandler {
 	private static int addPipeAddress0(
 		DatabaseConnection conn,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		int pipe
 	) throws IOException, SQLException {
 		int pipeAddress = conn.updateInt("INSERT INTO email.\"PipeAddress\" VALUES (default,?,?) RETURNING id", address, pipe);
@@ -485,9 +485,9 @@ final public class EmailHandler {
 
 	public static int addInboxAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		int address, 
+		int address,
 		int userServer
 	) throws IOException, SQLException {
 		checkAccessAddress(conn, source, "addInboxAddress", address);
@@ -631,7 +631,7 @@ final public class EmailHandler {
 
 	public static int addMajordomoList(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int majordomoServer,
 		String listName
@@ -740,7 +740,7 @@ final public class EmailHandler {
 
 	public static void addMajordomoServer(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int domain,
 		int userServer,
@@ -1192,7 +1192,7 @@ final public class EmailHandler {
 
 	public static void getSpamMessagesForSmtpRelay(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
 		int esr
@@ -1307,7 +1307,7 @@ final public class EmailHandler {
 
 	public static void removeBlackholeAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int address
 	) throws IOException, SQLException {
@@ -1332,7 +1332,7 @@ final public class EmailHandler {
 
 	public static void removeAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int address
 	) throws IOException, SQLException {
@@ -1374,7 +1374,7 @@ final public class EmailHandler {
 
 	public static void removeForwarding(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int forwarding
 	) throws IOException, SQLException {
@@ -1394,7 +1394,7 @@ final public class EmailHandler {
 
 	public static void removeListAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int listAddress
 	) throws IOException, SQLException {
@@ -1534,7 +1534,7 @@ final public class EmailHandler {
 
 	public static void removeInboxAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int inboxAddress
 	) throws IOException, SQLException {
@@ -1598,7 +1598,7 @@ final public class EmailHandler {
 
 	public static void removePipeAddress(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int pipeAddress
 	) throws IOException, SQLException {

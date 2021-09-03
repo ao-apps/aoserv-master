@@ -1349,7 +1349,7 @@ final public class LinuxAccountHandler {
 
 	public static boolean isUserServerPasswordSet(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		int userServer
 	) throws IOException, SQLException {
 		checkAccessUserServer(conn, source, "isUserServerPasswordSet", userServer);
@@ -1365,7 +1365,7 @@ final public class LinuxAccountHandler {
 
 	public static int isUserServerProcmailManual(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		int userServer
 	) throws IOException, SQLException {
 		checkAccessUserServer(conn, source, "isUserServerProcmailManual", userServer);
@@ -1600,7 +1600,7 @@ final public class LinuxAccountHandler {
 
 	public static void removeUserServer(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int userServer
 	) throws IOException, SQLException {
@@ -2505,8 +2505,8 @@ final public class LinuxAccountHandler {
 
 	public static boolean comparePassword(
 		DatabaseConnection conn,
-		RequestSource source, 
-		int userServer, 
+		RequestSource source,
+		int userServer,
 		String password
 	) throws IOException, SQLException {
 		checkAccessUserServer(conn, source, "comparePassword", userServer);
