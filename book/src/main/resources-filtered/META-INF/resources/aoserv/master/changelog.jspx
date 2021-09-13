@@ -47,7 +47,9 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				artifactId="@{documented.artifactId}"
 				repository="@{nexusUrl}content/repositories/snapshots/"
 				scmUrl="@{project.scm.url}"
-			/>
+			>
+				<!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
+			</changelog:release>
 		</c:if>
 
 		<changelog:release
