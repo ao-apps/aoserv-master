@@ -25,7 +25,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>com.aoapps</groupId><artifactId>ao-oss-parent</artifactId><version>1.17.2-POST-SNAPSHOT</version>
+		<groupId>com.aoapps</groupId><artifactId>ao-oss-parent</artifactId><version>1.17.3-SNAPSHOT</version>
 		<relativePath>../../oss/parent/pom.xml</relativePath>
 	</parent>
 
@@ -170,16 +170,19 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 											<includes>element-list, package-list</includes>
 											<outputDirectory>${project.build.directory}/offlineLinks/com.aoapps/ao-net-types</outputDirectory>
 										</artifactItem>
+										<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><classifier>sql</classifier> -->
 										<artifactItem>
 											<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><classifier>javadoc</classifier>
 											<includes>element-list, package-list</includes>
 											<outputDirectory>${project.build.directory}/offlineLinks/com.aoapps/ao-payments-api</outputDirectory>
 										</artifactItem>
+										<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><classifier>sql</classifier> -->
 										<artifactItem>
 											<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><classifier>javadoc</classifier>
 											<includes>element-list, package-list</includes>
 											<outputDirectory>${project.build.directory}/offlineLinks/com.aoapps/ao-security</outputDirectory>
 										</artifactItem>
+										<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><classifier>sql</classifier> -->
 										<artifactItem>
 											<groupId>com.aoapps</groupId><artifactId>ao-sql</artifactId><classifier>javadoc</classifier>
 											<includes>element-list, package-list</includes>
@@ -195,6 +198,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 											<includes>element-list, package-list</includes>
 											<outputDirectory>${project.build.directory}/offlineLinks/com.aoapps/ao-tlds</outputDirectory>
 										</artifactItem>
+										<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><classifier>sql</classifier> -->
 										<artifactItem>
 											<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><classifier>javadoc</classifier>
 											<includes>element-list, package-list</includes>
@@ -244,14 +248,17 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 									<url>https://oss.aoapps.com/net-types/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoapps/ao-net-types</location>
 								</offlineLink>
+								<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><classifier>sql</classifier> -->
 								<offlineLink>
 									<url>https://oss.aoapps.com/payments/api/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoapps/ao-payments-api</location>
 								</offlineLink>
+								<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><classifier>sql</classifier> -->
 								<offlineLink>
 									<url>https://oss.aoapps.com/security/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoapps/ao-security</location>
 								</offlineLink>
+								<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><classifier>sql</classifier> -->
 								<offlineLink>
 									<url>https://oss.aoapps.com/sql/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoapps/ao-sql</location>
@@ -264,6 +271,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 									<url>https://oss.aoapps.com/tlds/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoapps/ao-tlds</location>
 								</offlineLink>
+								<!-- Secondary artifact: <groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><classifier>sql</classifier> -->
 								<offlineLink>
 									<url>https://aoindustries.com/aoserv/client/apidocs/</url>
 									<location>${project.build.directory}/offlineLinks/com.aoindustries/aoserv-client</location>
@@ -288,28 +296,40 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		<dependencies>
 			<!-- Direct -->
 			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-collections</artifactId><version>2.0.0${POST-SNAPSHOT}</version>
+				<groupId>com.aoapps</groupId><artifactId>ao-collections</artifactId><version>3.0.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-cron</artifactId><version>3.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-dbc</artifactId><version>3.0.0${POST-SNAPSHOT}</version>
+				<groupId>com.aoapps</groupId><artifactId>ao-dbc</artifactId><version>3.1.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-hodgepodge</artifactId><version>5.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-lang</artifactId><version>5.0.1${POST-SNAPSHOT}</version>
+				<groupId>com.aoapps</groupId><artifactId>ao-lang</artifactId><version>5.1.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><version>2.0.1${POST-SNAPSHOT}</version>
+				<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><version>2.0.2-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
+			</dependency>
+			<dependency>
+				<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><version>2.0.2-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version><classifier>sql</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><version>2.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
+				<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><version>2.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.0.0${POST-SNAPSHOT}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-sql</artifactId><version>2.0.0${POST-SNAPSHOT}</version>
@@ -321,7 +341,11 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><version>2.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><version>1.86.0${POST-SNAPSHOT}</version>
+				<groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><version>2.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><version>1.87.1-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
 			</dependency>
 			<dependency>
 				<groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId><version>1.85.0${POST-SNAPSHOT}</version>
@@ -344,15 +368,6 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoapps</groupId><artifactId>ao-encoding</artifactId><version>6.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><version>2.0.1${POST-SNAPSHOT}</version><classifier>sql</classifier>
-			</dependency>
-			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><version>2.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
-			</dependency>
-			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
-			</dependency>
-			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-sql-failfast</artifactId><version>2.0.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
@@ -363,9 +378,6 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			</dependency>
 			<dependency>
 				<groupId>com.aoapps</groupId><artifactId>ao-tempfiles</artifactId><version>3.0.0${POST-SNAPSHOT}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><version>2.0.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
 			</dependency>
 			<dependency>
 				<groupId>commons-beanutils</groupId><artifactId>commons-beanutils</artifactId><version>1.9.4</version>
@@ -444,10 +456,19 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 			<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId><classifier>sql</classifier>
+		</dependency>
+		<dependency>
 			<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId><classifier>sql</classifier>
+		</dependency>
+		<dependency>
 			<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><classifier>sql</classifier>
 		</dependency>
 		<dependency>
 			<groupId>com.aoapps</groupId><artifactId>ao-sql</artifactId>
@@ -457,6 +478,9 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		</dependency>
 		<dependency>
 			<groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId><classifier>sql</classifier>
 		</dependency>
 		<dependency>
 			<groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId>
