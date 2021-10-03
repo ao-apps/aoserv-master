@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2021-09-25T23:27:50-05:00"
+		dateModified="2021-10-03T05:49:28-05:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -62,7 +62,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		>
 			<ul>
 				<!-- TODO: Link to our page once we have one -->
-				<li>Added support for <ao:a href="https://datatracker.ietf.org/doc/html/rfc6844">DNS Certification Authority Authorization (CAA) Resource Records</ao:a>.</li>
+				<li>Added support for <ao:a href="https://datatracker.ietf.org/doc/html/rfc8659">DNS Certification Authority Authorization (CAA) Resource Records</ao:a>.</li>
 				<li>Added some missing database commits, since underlying connections now rollback on close.</li>
 			</ul>
 		</changelog:release>
