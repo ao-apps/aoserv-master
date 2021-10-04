@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author  AO Industries, Inc.
  */
-final public class PkiCertificateHandler {
+public final class PkiCertificateHandler {
 
 	private PkiCertificateHandler() {
 	}

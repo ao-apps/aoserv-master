@@ -49,7 +49,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class AccountCleaner implements CronJob {
+public final class AccountCleaner implements CronJob {
 
 	private static final Logger logger = Logger.getLogger(AccountCleaner.class.getName());
 

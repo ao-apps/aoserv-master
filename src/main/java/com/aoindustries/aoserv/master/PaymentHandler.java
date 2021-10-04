@@ -77,7 +77,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class PaymentHandler /*implements CronJob*/ {
+public final class PaymentHandler /*implements CronJob*/ {
 
 	private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
 
@@ -1388,36 +1388,36 @@ final public class PaymentHandler /*implements CronJob*/ {
 	}
 
 	private static class AutomaticPayment {
-		final private Account.Name account;
-		final private Money amount;
-		final private int cc_id;
-		final private String cardInfo;
-		final private Byte expirationMonth;
-		final private Short expirationYear;
-		final private String principalName;
-		final private String groupName;
-		final private String cc_providerUniqueId;
-		final private String firstName;
-		final private String lastName;
-		final private String companyName;
-		final private String email;
-		final private String phone;
-		final private String fax;
-		final private String customerId;
-		final private String customerTaxId;
-		final private String streetAddress1;
-		final private String streetAddress2;
-		final private String city;
-		final private String state;
-		final private String postalCode;
-		final private String countryCode;
-		final private String description;
-		final private String ccp_providerId;
-		final private String ccp_className;
-		final private String ccp_param1;
-		final private String ccp_param2;
-		final private String ccp_param3;
-		final private String ccp_param4;
+		private final Account.Name account;
+		private final Money amount;
+		private final int cc_id;
+		private final String cardInfo;
+		private final Byte expirationMonth;
+		private final Short expirationYear;
+		private final String principalName;
+		private final String groupName;
+		private final String cc_providerUniqueId;
+		private final String firstName;
+		private final String lastName;
+		private final String companyName;
+		private final String email;
+		private final String phone;
+		private final String fax;
+		private final String customerId;
+		private final String customerTaxId;
+		private final String streetAddress1;
+		private final String streetAddress2;
+		private final String city;
+		private final String state;
+		private final String postalCode;
+		private final String countryCode;
+		private final String description;
+		private final String ccp_providerId;
+		private final String ccp_className;
+		private final String ccp_param1;
+		private final String ccp_param2;
+		private final String ccp_param3;
+		private final String ccp_param4;
 
 		private AutomaticPayment(
 			Account.Name account,

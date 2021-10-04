@@ -57,7 +57,7 @@ import javax.net.ssl.SSLHandshakeException;
  *
  * @author  AO Industries, Inc.
  */
-final public class SocketServerThread extends Thread implements RequestSource {
+public final class SocketServerThread extends Thread implements RequestSource {
 
 	private static final Logger logger = Logger.getLogger(SocketServerThread.class.getName());
 

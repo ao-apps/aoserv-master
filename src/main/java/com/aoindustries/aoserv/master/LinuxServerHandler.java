@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class LinuxServerHandler {
+public final class LinuxServerHandler {
 
 	private static final Logger logger = Logger.getLogger(LinuxServerHandler.class.getName());
 

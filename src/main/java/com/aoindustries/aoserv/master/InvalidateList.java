@@ -50,7 +50,7 @@ import java.util.logging.Logger;
  * @author  AO Industries, Inc.
  */
 // TODO: This should use HashSet instead of SortedArrayList
-final public class InvalidateList {
+public final class InvalidateList {
 
 	/**
 	 * The invalidate list is used as part of the error logging, so it is not
@@ -59,10 +59,10 @@ final public class InvalidateList {
 	private static final Logger logger = Logger.getLogger(InvalidateList.class.getName());
 
 	/** Copy once to avoid repeated copies. */
-	final private static Table.TableID[] tableIDs = Table.TableID.values();
-	// TODO: Unused 2018-11-18: final private static int numTables = tableIDs.length;
+	private static final Table.TableID[] tableIDs = Table.TableID.values();
+	// TODO: Unused 2018-11-18: private static final int numTables = tableIDs.length;
 
-	// TODO: Unused 2018-11-18: final private static String[] tableNames=new String[numTables];
+	// TODO: Unused 2018-11-18: private static final String[] tableNames=new String[numTables];
 
 	/**
 	 * Indicates that all hosts or account.Account should receive the invalidate signal.

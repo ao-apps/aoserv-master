@@ -50,7 +50,7 @@ public class SpamMessageHandler {
 	private static final String QUERY_MASTER =
 		"select * from email.\"SpamMessage\"";
 
-	static public class GetObject implements TableHandler.GetObjectHandler {
+	public static class GetObject implements TableHandler.GetObjectHandler {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
@@ -75,7 +75,7 @@ public class SpamMessageHandler {
 		}
 	}
 
-	static public class GetTable extends TableHandler.GetTableHandlerByRole {
+	public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

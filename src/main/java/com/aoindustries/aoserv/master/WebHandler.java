@@ -68,7 +68,7 @@ import java.util.Objects;
  *
  * @author  AO Industries, Inc.
  */
-final public class WebHandler {
+public final class WebHandler {
 
 	/**
 	 * Make no instances.
@@ -81,9 +81,9 @@ final public class WebHandler {
 	 */
 	public static final int MINIMUM_AUTO_PORT_NUMBER = 16384;
 
-	private final static Map<Integer, Boolean> disabledSharedTomcats = new HashMap<>();
-	private final static Map<Integer, Boolean> disabledVirtualHosts = new HashMap<>();
-	private final static Map<Integer, Boolean> disabledSites = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledSharedTomcats = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledVirtualHosts = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledSites = new HashMap<>();
 
 	public static void addTomcatWorker(
 		DatabaseConnection conn,

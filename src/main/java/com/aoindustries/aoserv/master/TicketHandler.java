@@ -51,7 +51,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class TicketHandler /*implements Runnable*/ {
+public final class TicketHandler /*implements Runnable*/ {
 
 	private static final Logger logger = Logger.getLogger(TicketHandler.class.getName());
 

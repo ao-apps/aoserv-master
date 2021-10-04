@@ -45,12 +45,12 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-final public class PackageHandler {
+public final class PackageHandler {
 
 	private PackageHandler() {
 	}
 
-	private final static Map<Account.Name, Boolean> disabledPackages=new HashMap<>();
+	private static final Map<Account.Name, Boolean> disabledPackages=new HashMap<>();
 
 	public static boolean canPackageAccessHost(DatabaseConnection conn, RequestSource source, Account.Name packageName, int host) throws IOException, SQLException {
 		return conn.queryBoolean(

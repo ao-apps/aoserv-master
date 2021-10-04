@@ -54,7 +54,7 @@ import org.apache.commons.lang3.NotImplementedException;
  * @author  AO Industries, Inc.
  */
 // TODO: Move Zone-specific stuff into ZoneService
-final public class DnsService implements MasterService {
+public final class DnsService implements MasterService {
 
 	/**
 	 * Creates a new <code>Record</code>.

@@ -40,13 +40,13 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-final public class AccountUserHandler {
+public final class AccountUserHandler {
 
 	private AccountUserHandler() {
 	}
 
-	private final static Map<User.Name, Boolean> disabledUsers = new HashMap<>();
-	private final static Map<User.Name, Account.Name> userAccounts = new HashMap<>();
+	private static final Map<User.Name, Boolean> disabledUsers = new HashMap<>();
+	private static final Map<User.Name, Account.Name> userAccounts = new HashMap<>();
 
 	public static boolean canAccessUser(DatabaseConnection conn, RequestSource source, User.Name user) throws IOException, SQLException {
 		return PackageHandler.canAccessPackage(conn, source, getPackageForUser(conn, user));

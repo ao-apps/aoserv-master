@@ -72,7 +72,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
 		this.state_start_time = this.connect_time;
 	}
 
-	synchronized public void commandCompleted() {
+	public synchronized void commandCompleted() {
 		long time = System.currentTimeMillis();
 		total_time += time - state_start_time.getTime();
 		state = SLEEP;
@@ -80,13 +80,13 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
 		state_start_time = new UnmodifiableTimestamp(time);
 	}
 
-	synchronized public void commandRunning() {
+	public synchronized void commandRunning() {
 		use_count++;
 		state = RUN;
 		state_start_time = new UnmodifiableTimestamp(System.currentTimeMillis());
 	}
 
-	synchronized public void commandSleeping() {
+	public synchronized void commandSleeping() {
 		if(!state.equals(SLEEP)) {
 			long time = System.currentTimeMillis();
 			state = SLEEP;
@@ -117,7 +117,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
 		return params.toArray(new String[params.size()]);
 	}
 
-	synchronized public void setCommand(Object ... command) {
+	public synchronized void setCommand(Object ... command) {
 		this.command = command;
 	}
 

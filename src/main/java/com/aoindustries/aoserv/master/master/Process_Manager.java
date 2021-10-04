@@ -36,7 +36,7 @@ import java.util.Map;
 /**
  * @author  AO Industries, Inc.
  */
-final public class Process_Manager {
+public final class Process_Manager {
 
 	/**
 	 * Make no instances.

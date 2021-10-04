@@ -53,7 +53,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class ClusterHandler implements CronJob {
+public final class ClusterHandler implements CronJob {
 
 	private static final Logger logger = Logger.getLogger(ClusterHandler.class.getName());
 

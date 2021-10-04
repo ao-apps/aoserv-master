@@ -32,7 +32,7 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-final public class ResellerHandler {
+public final class ResellerHandler {
 
 	private ResellerHandler() {
 	}

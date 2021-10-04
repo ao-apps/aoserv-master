@@ -134,8 +134,8 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		result.getString("comments")
 	);
 
-	final private DatabaseConnection conn;
-	final private InvalidateList invalidateList;
+	private final DatabaseConnection conn;
+	private final InvalidateList invalidateList;
 
 	public MasterPersistenceMechanism(DatabaseConnection conn, InvalidateList invalidateList) {
 		this.conn = conn;

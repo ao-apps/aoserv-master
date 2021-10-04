@@ -61,16 +61,16 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class EmailHandler {
+public final class EmailHandler {
 
 	private static final Logger logger = Logger.getLogger(EmailHandler.class.getName());
 
 	private EmailHandler() {
 	}
 
-	private final static Map<Integer, Boolean> disabledLists = new HashMap<>();
-	private final static Map<Integer, Boolean> disabledPipes = new HashMap<>();
-	private final static Map<Integer, Boolean> disabledSmtpRelays = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledLists = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledPipes = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledSmtpRelays = new HashMap<>();
 
 	public static boolean canAccessDomain(DatabaseConnection conn, RequestSource source, int domain) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

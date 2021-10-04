@@ -77,7 +77,7 @@ import java.util.logging.Logger;
 //       SendmailServer
 //       ftp.PrivateServer.hostname
 //       IpAddress.hostname (for unmanaged servers, too?
-final public class WhoisHistoryService implements MasterService {
+public final class WhoisHistoryService implements MasterService {
 
 	private static final Logger logger = Logger.getLogger(WhoisHistoryService.class.getName());
 

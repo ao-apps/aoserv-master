@@ -30,7 +30,7 @@ import com.aoapps.collections.IntList;
  *
  * @author  AO Industries, Inc.
  */
-final public class InvalidateCacheEntry {
+public final class InvalidateCacheEntry {
 
 	private final IntList invalidateList;
 	private final int host;

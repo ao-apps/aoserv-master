@@ -48,7 +48,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class ReportGenerator implements CronJob {
+public final class ReportGenerator implements CronJob {
 
 	private static final Logger logger = Logger.getLogger(ReportGenerator.class.getName());
 

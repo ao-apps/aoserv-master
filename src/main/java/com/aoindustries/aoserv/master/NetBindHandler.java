@@ -41,7 +41,7 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-final public class NetBindHandler {
+public final class NetBindHandler {
 
 	private NetBindHandler() {
 	}

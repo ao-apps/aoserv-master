@@ -43,7 +43,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class SignupHandler {
+public final class SignupHandler {
 
 	private static final Logger logger = Logger.getLogger(SignupHandler.class.getName());
 

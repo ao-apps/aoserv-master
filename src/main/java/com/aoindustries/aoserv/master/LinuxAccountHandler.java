@@ -62,7 +62,7 @@ import java.util.Objects;
  *
  * @author  AO Industries, Inc.
  */
-final public class LinuxAccountHandler {
+public final class LinuxAccountHandler {
 
 	private LinuxAccountHandler() {
 	}
@@ -82,8 +82,8 @@ final public class LinuxAccountHandler {
 	/** Default sudo setting for newly added "aoserv-xen-migration" system users. */
 	private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
 
-	private final static Map<com.aoindustries.aoserv.client.linux.User.Name, Boolean> disabledUsers=new HashMap<>();
-	private final static Map<Integer, Boolean> disabledUserServers=new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.linux.User.Name, Boolean> disabledUsers=new HashMap<>();
+	private static final Map<Integer, Boolean> disabledUserServers=new HashMap<>();
 
 	public static void checkAccessUser(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
 		com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

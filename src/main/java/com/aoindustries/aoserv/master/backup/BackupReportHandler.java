@@ -76,7 +76,7 @@ public class BackupReportHandler {
 		+ "  and bu1.accounting=pk2.accounting\n"
 		+ "  and pk2.id=br.package";
 
-	static public class GetObject implements TableHandler.GetObjectHandler {
+	public static class GetObject implements TableHandler.GetObjectHandler {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
@@ -124,7 +124,7 @@ public class BackupReportHandler {
 		}
 	}
 
-	static public class GetTable extends TableHandler.GetTableHandlerByRole {
+	public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

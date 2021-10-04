@@ -39,9 +39,9 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-final public class CvsHandler {
+public final class CvsHandler {
 
-	private final static Map<Integer, Boolean> disabledCvsRepositories = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledCvsRepositories = new HashMap<>();
 
 	public static int addCvsRepository(
 		DatabaseConnection conn,

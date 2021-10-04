@@ -35,7 +35,7 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-final public class VirtualServerHandler {
+public final class VirtualServerHandler {
 
 	// private static final Logger logger = Logger.getLogger(VirtualServerHandler.class.getName());
 

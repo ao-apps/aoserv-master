@@ -32,7 +32,7 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-final public class NetDeviceHandler {
+public final class NetDeviceHandler {
 
 	private NetDeviceHandler() {
 	}

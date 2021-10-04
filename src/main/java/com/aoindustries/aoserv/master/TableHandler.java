@@ -61,7 +61,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class TableHandler {
+public final class TableHandler {
 
 	private static final Logger logger = Logger.getLogger(TableHandler.class.getName());
 
@@ -481,7 +481,7 @@ final public class TableHandler {
 		initGetTableHandlers(ServiceLoader.load(GetTableHandler.class).iterator(), out, false);
 	}
 
-	static abstract public class GetTableHandlerByRole implements GetTableHandler {
+	public abstract static class GetTableHandlerByRole implements GetTableHandler {
 
 		/**
 		 * Calls role-specific implementations.
@@ -512,7 +512,7 @@ final public class TableHandler {
 		 * Handles a {@link User master user} request for the given table, with
 		 * access to all {@link Account accounts} and {@link Host hosts}.
 		 */
-		abstract protected void getTableMaster(
+		protected abstract void getTableMaster(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -526,7 +526,7 @@ final public class TableHandler {
 		 * access limited to a set of {@link Host hosts}.  This is the filtering
 		 * generally used by <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
 		 */
-		abstract protected void getTableDaemon(
+		protected abstract void getTableDaemon(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -541,7 +541,7 @@ final public class TableHandler {
 		 * access limited by their set of {@link Account accounts} and the
 		 * {@link Host hosts} those accounts can access (see {@link AccountHost}.
 		 */
-		abstract protected void getTableAdministrator(
+		protected abstract void getTableAdministrator(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -550,7 +550,7 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	static abstract public class GetTableHandlerPublic implements GetTableHandler {
+	public abstract static class GetTableHandlerPublic implements GetTableHandler {
 
 		/**
 		 * Handles requests for public tables, where nothing is filtered.
@@ -571,7 +571,7 @@ final public class TableHandler {
 		/**
 		 * Handles the request for a public table.
 		 */
-		abstract protected void getTablePublic(
+		protected abstract void getTablePublic(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -580,12 +580,12 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	static abstract public class GetTableHandlerPermission implements GetTableHandler {
+	public abstract static class GetTableHandlerPermission implements GetTableHandler {
 
 		/**
 		 * Gets the permission that is required to query this table.
 		 */
-		abstract protected Permission.Name getPermissionName();
+		protected abstract Permission.Name getPermissionName();
 
 		/**
 		 * Checks if has permission, writing an empty table when does not have the permission.
@@ -593,7 +593,7 @@ final public class TableHandler {
 		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
 		@Override
-		final public void getTable(
+		public final void getTable(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -615,7 +615,7 @@ final public class TableHandler {
 		 *
 		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
-		abstract protected void getTableHasPermission(
+		protected abstract void getTableHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -626,7 +626,7 @@ final public class TableHandler {
 		) throws IOException, SQLException;
 	}
 
-	static abstract public class GetTableHandlerPermissionByRole extends GetTableHandlerPermission {
+	public abstract static class GetTableHandlerPermissionByRole extends GetTableHandlerPermission {
 
 		/**
 		 * Calls role-specific implementations.
@@ -660,7 +660,7 @@ final public class TableHandler {
 		 *
 		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
-		abstract protected void getTableMasterHasPermission(
+		protected abstract void getTableMasterHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -677,7 +677,7 @@ final public class TableHandler {
 		 *
 		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
-		abstract protected void getTableDaemonHasPermission(
+		protected abstract void getTableDaemonHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -695,7 +695,7 @@ final public class TableHandler {
 		 *
 		 * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
 		 */
-		abstract protected void getTableAdministratorHasPermission(
+		protected abstract void getTableAdministratorHasPermission(
 			DatabaseConnection conn,
 			RequestSource source,
 			StreamableOutput out,
@@ -917,7 +917,7 @@ final public class TableHandler {
 		);
 	}
 
-	final private static EnumMap<AoservProtocol.Version, Map<Integer, Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+	private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	/**
 	 * Converts a specific AoservProtocol version table ID to the number used in the database storage.
@@ -960,7 +960,7 @@ final public class TableHandler {
 		}
 	}
 
-	final private static EnumMap<AoservProtocol.Version, Map<Integer, Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+	private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
 
 	public static int convertDBTableIDToClientTableID(
 		DatabaseAccess db,
@@ -1029,7 +1029,7 @@ final public class TableHandler {
 		return convertDBTableIDToClientTableID(db, source.getProtocolVersion(), dbTableID);
 	}
 
-	final private static EnumMap<AoservProtocol.Version, Map<Table.TableID, Map<String, Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
+	private static final EnumMap<AoservProtocol.Version, Map<Table.TableID, Map<String, Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
 
 	/*
 	 * 2018-11-18: This method appears unused.

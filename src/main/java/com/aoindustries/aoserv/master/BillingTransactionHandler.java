@@ -52,7 +52,7 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
-final public class BillingTransactionHandler {
+public final class BillingTransactionHandler {
 
 	private BillingTransactionHandler() {
 	}

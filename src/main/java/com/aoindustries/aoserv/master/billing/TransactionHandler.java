@@ -68,7 +68,7 @@ public class TransactionHandler {
 		+ "  )\n"
 		+ "  and bu1.accounting=tr.accounting";
 
-	static public class GetObject implements TableHandler.GetObjectHandler {
+	public static class GetObject implements TableHandler.GetObjectHandler {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
@@ -114,7 +114,7 @@ public class TransactionHandler {
 		}
 	}
 
-	static public class GetTable extends TableHandler.GetTableHandlerByRole {
+	public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

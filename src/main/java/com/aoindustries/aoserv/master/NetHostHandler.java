@@ -48,7 +48,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-final public class NetHostHandler {
+public final class NetHostHandler {
 
 	private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
 
@@ -258,7 +258,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer, Integer> failoverServers=new HashMap<>();
+	private static final Map<Integer, Integer> failoverServers=new HashMap<>();
 	public static int getFailoverServer(DatabaseAccess db, int linuxServer) throws IOException, SQLException {
 		synchronized(failoverServers) {
 			if(failoverServers.containsKey(linuxServer)) return failoverServers.get(linuxServer);
@@ -281,7 +281,7 @@ final public class NetHostHandler {
 		}
 	}
 
-	final private static Map<Integer, String> farmForHosts = new HashMap<>();
+	private static final Map<Integer, String> farmForHosts = new HashMap<>();
 	public static String getFarmForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
 		Integer I=host;
 		synchronized(farmForHosts) {
@@ -295,7 +295,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer, DomainName> hostnamesForLinuxServers = new HashMap<>();
+	private static final Map<Integer, DomainName> hostnamesForLinuxServers = new HashMap<>();
 	public static DomainName getHostnameForLinuxServer(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
 		Integer mapKey = linuxServer;
 		synchronized(hostnamesForLinuxServers) {
@@ -320,7 +320,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<DomainName, Integer> hostsForLinuxServerHostnames = new HashMap<>();
+	private static final Map<DomainName, Integer> hostsForLinuxServerHostnames = new HashMap<>();
 	public static int getHostForLinuxServerHostname(DatabaseAccess db, DomainName hostname) throws IOException, SQLException {
 		synchronized(hostsForLinuxServerHostnames) {
 			Integer I = hostsForLinuxServerHostnames.get(hostname);
@@ -357,7 +357,7 @@ final public class NetHostHandler {
 	}
 
 	// TODO: Move to LinuxServerHandler
-	final private static Map<Integer, Boolean> linuxServers = new HashMap<>();
+	private static final Map<Integer, Boolean> linuxServers = new HashMap<>();
 	public static boolean isLinuxServer(DatabaseConnection conn, int host) throws IOException, SQLException {
 		Integer I = host;
 		synchronized(linuxServers) {

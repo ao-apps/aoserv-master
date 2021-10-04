@@ -34,7 +34,7 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-final public class FTPHandler {
+public final class FTPHandler {
 
 	public static void addGuestUser(
 		DatabaseConnection conn,

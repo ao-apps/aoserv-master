@@ -138,7 +138,7 @@ public abstract class MasterServer {
 	/**
 	 * An unbounded executor for master-wide tasks.
 	 */
-	public final static ExecutorService executorService = Executors.newCachedThreadPool();
+	public static final ExecutorService executorService = Executors.newCachedThreadPool();
 
 	/**
 	 * The database values are read the first time this data is needed.
@@ -230,7 +230,7 @@ public abstract class MasterServer {
 	/**
 	 * Gets the interface address this server is listening on.
 	 */
-	final public String getBindAddress() {
+	public final String getBindAddress() {
 		return serverBind;
 	}
 
@@ -260,11 +260,11 @@ public abstract class MasterServer {
 	/**
 	 * Gets the interface port this server is listening on.
 	 */
-	final public int getPort() {
+	public final int getPort() {
 		return serverPort;
 	}
 
-	abstract public String getProtocol();
+	public abstract String getProtocol();
 
 	/**
 	 * A single random number generator is shared by all master resources to provide better randomness.
@@ -322,7 +322,7 @@ public abstract class MasterServer {
 	private static final Table.TableID[] tableIDs = Table.TableID.values();
 
 	// TODO: Make this an interface to leverage lambdas
-	static abstract class Response {
+	abstract static class Response {
 
 		abstract void writeResponse(StreamableOutput out, AoservProtocol.Version protocolVersion) throws IOException;
 

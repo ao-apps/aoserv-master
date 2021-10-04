@@ -56,13 +56,13 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-final public class MysqlHandler {
+public final class MysqlHandler {
 
 	private MysqlHandler() {
 	}
 
-	private final static Map<Integer, Boolean> disabledUserServers = new HashMap<>();
-	private final static Map<com.aoindustries.aoserv.client.mysql.User.Name, Boolean> disabledUsers = new HashMap<>();
+	private static final Map<Integer, Boolean> disabledUserServers = new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.mysql.User.Name, Boolean> disabledUsers = new HashMap<>();
 
 	public static void checkAccessDatabase(DatabaseConnection conn, RequestSource source, String action, int database) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

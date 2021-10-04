@@ -63,7 +63,7 @@ public class BankTransactionHandler {
 		+ "from\n"
 		+ "  accounting.\"BankTransaction\"";
 
-	static public class GetObject implements TableHandler.GetObjectHandler {
+	public static class GetObject implements TableHandler.GetObjectHandler {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {
@@ -90,7 +90,7 @@ public class BankTransactionHandler {
 		}
 	}
 
-	static public class GetTable implements GetTableHandlerAccountingOnly {
+	public static class GetTable implements GetTableHandlerAccountingOnly {
 
 		@Override
 		public Set<Table.TableID> getTableIds() {

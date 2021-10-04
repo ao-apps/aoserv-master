@@ -64,7 +64,7 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-final public class AccountHandler {
+public final class AccountHandler {
 
 	private AccountHandler() {
 	}
@@ -75,8 +75,8 @@ final public class AccountHandler {
 	private static final Object userAccountsLock = new Object();
 	private static Map<com.aoindustries.aoserv.client.account.User.Name, List<Account.Name>> userAccounts;
 
-	private final static Map<com.aoindustries.aoserv.client.account.User.Name, Boolean> disabledAdministrators = new HashMap<>();
-	private final static Map<Account.Name, Boolean> disabledAccounts = new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.account.User.Name, Boolean> disabledAdministrators = new HashMap<>();
+	private static final Map<Account.Name, Boolean> disabledAccounts = new HashMap<>();
 
 	public static boolean canAccessAccount(DatabaseAccess db, RequestSource source, Account.Name account) throws IOException, SQLException {
 		//com.aoindustries.aoserv.client.account.User.Name administrator = source.getAdministrator();
@@ -927,7 +927,7 @@ final public class AccountHandler {
 		return conn.queryInt("select coalesce(disable_log, -1) from account.\"Account\" where accounting=?", account);
 	}
 
-	final private static Map<com.aoindustries.aoserv.client.account.User.Name, Integer> administratorDisableLogs = new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.account.User.Name, Integer> administratorDisableLogs = new HashMap<>();
 	public static int getDisableLogForAdministrator(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
 		synchronized(administratorDisableLogs) {
 			if(administratorDisableLogs.containsKey(administrator)) return administratorDisableLogs.get(administrator);

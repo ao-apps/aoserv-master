@@ -45,7 +45,7 @@ import java.util.Locale;
  *
  * @author  AO Industries, Inc.
  */
-final public class ObjectFactories {
+public final class ObjectFactories {
 
 	/**
 	 * Make no instances.

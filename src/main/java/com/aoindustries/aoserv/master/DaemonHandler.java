@@ -43,7 +43,7 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-final public class DaemonHandler {
+public final class DaemonHandler {
 
 	private DaemonHandler() {
 	}
@@ -290,7 +290,7 @@ final public class DaemonHandler {
 		}
 	}
 
-	private final static Map<Long, Long> recentKeys = new HashMap<>();
+	private static final Map<Long, Long> recentKeys = new HashMap<>();
 	private static long lastKeyCleanTime = -1;
 
 	/**

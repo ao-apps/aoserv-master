@@ -36,7 +36,7 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
-final public class BankAccountHandler {
+public final class BankAccountHandler {
 
 	private BankAccountHandler() {
 	}

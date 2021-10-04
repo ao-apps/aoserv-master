@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-final public class NetReputationSetHandler {
+public final class NetReputationSetHandler {
 
 	/**
 	 * Make no instances.
