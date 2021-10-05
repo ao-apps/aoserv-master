@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2021-10-03T05:49:28-05:00"
+		dateModified="2021-10-05T04:07:33-05:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -163,7 +163,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 					</p>
 				</li>
 				<li>
-					<strong><ao:a href="https://github.com/aoindustries/ao-credit-cards-sagePayments">AO Credit Cards Sage Payment Solutions</ao:a> has been deprecated.</strong>
+					<strong><ao:a href="https://github.com/ao-apps/ao-credit-cards-sagePayments">AO Credit Cards Sage Payment Solutions</ao:a> has been deprecated.</strong>
 					We have removed it from this package.  If still in-use, it must be added as a direct dependency.
 				</li>
 				<li>

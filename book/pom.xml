@@ -75,20 +75,20 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://github.com/aoindustries/aoserv-master.git</connection>
-		<developerConnection>scm:git:git@github.com:aoindustries/aoserv-master.git</developerConnection>
-		<url>https://github.com/aoindustries/aoserv-master</url>
+		<connection>scm:git:git://github.com/ao-apps/aoserv-master.git</connection>
+		<developerConnection>scm:git:git@github.com:ao-apps/aoserv-master.git</developerConnection>
+		<url>https://github.com/ao-apps/aoserv-master</url>
 		<tag>HEAD</tag>
 	</scm>
 
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/aoindustries/aoserv-master/issues</url>
+		<url>https://github.com/ao-apps/aoserv-master/issues</url>
 	</issueManagement>
 
 	<ciManagement>
 		<system>GitHub Actions</system>
-		<url>https://github.com/aoindustries/aoserv-master/actions</url>
+		<url>https://github.com/ao-apps/aoserv-master/actions</url>
 	</ciManagement>
 
 	<repositories>
