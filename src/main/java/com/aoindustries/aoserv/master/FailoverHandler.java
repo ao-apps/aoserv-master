@@ -181,7 +181,7 @@ public final class FailoverHandler implements CronJob {
 		}
 		// Delete the unmatched ids
 		if(ids.size()>0) {
-			for(int c=0,len=ids.size(); c<len; c++) {
+			for(int c=0, len=ids.size(); c<len; c++) {
 				conn.update("delete from backup.\"FileReplicationSchedule\" where id=?", ids.getInt(c));
 			}
 			modified = true;
@@ -259,7 +259,7 @@ public final class FailoverHandler implements CronJob {
 		}
 		// Delete the unmatched ids
 		if(ids.size()>0) {
-			for(int c=0,len=ids.size(); c<len; c++) {
+			for(int c=0, len=ids.size(); c<len; c++) {
 				conn.update("delete from backup.\"FileReplicationSetting\" where id=?", ids.getInt(c));
 			}
 			modified = true;

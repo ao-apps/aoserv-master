@@ -313,8 +313,8 @@ public final class TableHandler {
 	/**
 	 * Caches row counts for each table on a per-username basis.
 	 */
-	private static final Map<com.aoindustries.aoserv.client.account.User.Name,int[]> rowCountsPerUsername=new HashMap<>();
-	private static final Map<com.aoindustries.aoserv.client.account.User.Name,long[]> expireTimesPerUsername=new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.account.User.Name, int[]> rowCountsPerUsername=new HashMap<>();
+	private static final Map<com.aoindustries.aoserv.client.account.User.Name, long[]> expireTimesPerUsername=new HashMap<>();
 
 	static final int MAX_ROW_COUNT_CACHE_AGE = 60*60*1000; // One hour
 

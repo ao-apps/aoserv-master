@@ -2058,9 +2058,9 @@ public final class PaymentHandler /*implements CronJob*/ {
 				if(command.length()==7) {
 					if(command.charAt(4)=='-') {
 						try {
-							int year = Integer.parseInt(command.substring(0,4));
+							int year = Integer.parseInt(command.substring(0, 4));
 							try {
-								int month = Integer.parseInt(command.substring(5,7));
+								int month = Integer.parseInt(command.substring(5, 7));
 								if(dryRun) {
 									System.err.println("Dry run not implemented for batch processing");
 									exitStatus = SysExits.EX_SOFTWARE;

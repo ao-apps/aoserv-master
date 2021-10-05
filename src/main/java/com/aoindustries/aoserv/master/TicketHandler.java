@@ -60,7 +60,7 @@ public final class TicketHandler /*implements Runnable*/ {
 
 	// <editor-fold desc="Security">
 	/**
-	 * To be able to access a ticket action, must both have access to its 
+	 * To be able to access a ticket action, must both have access to its
 	 */
 	public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int action) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
@@ -425,8 +425,8 @@ public final class TicketHandler /*implements Runnable*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ticket, 
-		String priority, 
+		int ticket,
+		String priority,
 		String username,
 		String comments
 	) throws IOException, SQLException {
@@ -471,8 +471,8 @@ public final class TicketHandler /*implements Runnable*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ticket, 
-		String assignedTo, 
+		int ticket,
+		String assignedTo,
 		String username,
 		String comments
 	) throws IOException, SQLException {
@@ -1002,7 +1002,7 @@ public final class TicketHandler /*implements Runnable*/ {
 
 	public static void changeTicketClientPriority(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int ticket,
 		// TODO: oldClientPriority as a concurrent update check
@@ -1248,7 +1248,7 @@ public final class TicketHandler /*implements Runnable*/ {
 /*
 	public static void completeTicket(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int ticket,
 		String username,
@@ -1356,7 +1356,7 @@ public final class TicketHandler /*implements Runnable*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ticket, 
+		int ticket,
 		String username,
 		String comments
 	) throws IOException, SQLException {
@@ -1476,7 +1476,7 @@ public final class TicketHandler /*implements Runnable*/ {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int ticket, 
+		int ticket,
 		String username,
 		String comments
 	) throws IOException, SQLException {
@@ -1928,7 +1928,7 @@ public final class TicketHandler /*implements Runnable*/ {
 		}
 	}
 */
-	// private static final String[] MATCH_HEADERS=new String[]{"Subject","Date","From","Cc"};
+	// private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
 
 	/**
 	 * Gets the String form of the message body.

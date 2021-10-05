@@ -100,7 +100,7 @@ public final class MasterConfiguration {
 		String ports = getProperty("aoserv.master."+protocol+".ports");
 		List<String> strings = Strings.splitCommaSpace(ports);
 		List<Integer> ints = new ArrayList<>(strings.size());
-		for(int c=0,len=strings.size();c<len;c++) {
+		for(int c=0, len=strings.size();c<len;c++) {
 			ints.add(Integer.parseInt(strings.get(c)));
 		}
 		return ints;
