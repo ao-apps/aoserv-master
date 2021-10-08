@@ -415,6 +415,7 @@ public final class NetHostHandler {
 
 	public static Long addInvalidateSyncEntry(int host, RequestSource source) {
 		Integer S=host;
+		// Note: No notify() or notifyAll() since notification is done in removeInvalidateSyncEntry(int, Long) below
 		synchronized(invalidateSyncLock) {
 			long id;
 			Long L=lastIDs.get(S);
@@ -436,7 +437,7 @@ public final class NetHostHandler {
 		synchronized(invalidateSyncLock) {
 			Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
 			if(ids!=null) ids.remove(id);
-			invalidateSyncLock.notify();
+			invalidateSyncLock.notify(); // notifyAll() not needed: each waiting thread also calls notify() before returning
 		}
 	}
 
@@ -485,12 +486,12 @@ public final class NetHostHandler {
 									logger.log(Level.WARNING, null, err);
 								}
 							} else {
-								invalidateSyncLock.notify();
+								invalidateSyncLock.notify(); // notifyAll() not needed: each waiting thread also calls notify() before returning
 								return;
 							}
 						} else {
 							logger.log(Level.WARNING, "waitForInvalidates has taken more than 60 seconds, returning even though the invalidates have not completed synchronization: {0}", host);
-							invalidateSyncLock.notify();
+							invalidateSyncLock.notify(); // notifyAll() not needed: each waiting thread also calls notify() before returning
 							return;
 						}
 					}

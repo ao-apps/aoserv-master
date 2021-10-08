@@ -140,7 +140,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
 					daemonServer==-1?null:NetHostHandler.addInvalidateSyncEntry(daemonServer, this)
 				);
 				invalidateLists.addLast(ice);
-				notify();
+				notifyAll();
 			}
 		}
 	}
