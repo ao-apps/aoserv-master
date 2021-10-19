@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2021-10-18T18:59:37-05:00"
+		dateModified="2021-10-18T20:18:17-05:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -49,12 +49,22 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				scmUrl="@{project.scm.url}"
 			>
 				<!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
-				<ul>
-					<li><code>notify()</code> replaced with <code>notifyAll()</code> since more than one thread can be waiting.</li>
-					<li>Updated PostgreSQL JDBC Drivers to 42.3.0.</li>
-				</ul>
 			</changelog:release>
 		</c:if>
+
+		<changelog:release
+			projectName="@{documented.name}"
+			version="1.88.0"
+			datePublished="2021-10-18T20:18:17-05:00"
+			groupId="@{project.groupId}"
+			artifactId="@{documented.artifactId}"
+			scmUrl="@{project.scm.url}"
+		>
+			<ul>
+				<li><code>notify()</code> replaced with <code>notifyAll()</code> since more than one thread can be waiting.</li>
+				<li>Updated PostgreSQL JDBC Drivers to 42.3.0.</li>
+			</ul>
+		</changelog:release>
 
 		<changelog:release
 			projectName="@{documented.name}"
