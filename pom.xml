@@ -351,7 +351,7 @@ along with aoserv-master.  If not, see <http://www.gnu.org/licenses />.
 				<groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId><version>1.85.0${POST-SNAPSHOT}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.aoindustries</groupId><artifactId>aoserv-schema</artifactId><version>1.88.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version><classifier>sql</classifier>
+				<groupId>com.aoindustries</groupId><artifactId>aoserv-schema</artifactId><version>1.88.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
