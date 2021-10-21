@@ -1341,7 +1341,7 @@ public final class LinuxAccountHandler {
 			+ "  and (\n"
 			+ "    \"operatingSystemVersion\" is null\n"
 			+ "    or \"operatingSystemVersion\"=?\n"
-		    + ")",
+			+ ")",
 			user,
 			operatingSystemVersion
 		);
@@ -2399,7 +2399,7 @@ public final class LinuxAccountHandler {
 			+ "  and lsa.username=la.username",
 			userServer
 		);
-   }
+	}
 
 	public static String getTypeForGroupServer(DatabaseConnection conn, int groupServer) throws IOException, SQLException {
 		return conn.queryString(
