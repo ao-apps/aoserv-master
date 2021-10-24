@@ -391,10 +391,10 @@ public final class ClusterHandler implements CronJob {
 							newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
 							newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
 							newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
-						} catch(ThreadDeath TD) {
-							throw TD;
-						} catch(Throwable T) {
-							logger.log(Level.SEVERE, "xenPhysicalServer="+xenPhysicalServer, T);
+						} catch(ThreadDeath td) {
+							throw td;
+						} catch(Throwable t) {
+							logger.log(Level.SEVERE, "xenPhysicalServer=" + xenPhysicalServer, t);
 						}
 					}
 					setMappings(

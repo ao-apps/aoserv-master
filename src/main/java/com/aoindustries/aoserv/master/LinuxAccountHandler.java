@@ -1285,9 +1285,9 @@ public final class LinuxAccountHandler {
 
 	public static boolean isUserDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
-			Boolean O = disabledUsers.get(user);
-			if(O != null) return O;
-			boolean isDisabled = getDisableLogForUser(conn, user)!=-1;
+			Boolean o = disabledUsers.get(user);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUser(conn, user) != -1;
 			disabledUsers.put(user, isDisabled);
 			return isDisabled;
 		}
@@ -1309,11 +1309,11 @@ public final class LinuxAccountHandler {
 
 	public static boolean isUserServerDisabled(DatabaseConnection conn, int userServer) throws IOException, SQLException {
 		synchronized(LinuxAccountHandler.class) {
-			Integer I=userServer;
-			Boolean O=disabledUserServers.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUserServer(conn, userServer)!=-1;
-			disabledUserServers.put(I, isDisabled);
+			Integer i = userServer;
+			Boolean o = disabledUserServers.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUserServer(conn, userServer) != -1;
+			disabledUserServers.put(i, isDisabled);
 			return isDisabled;
 		}
 	}

@@ -102,17 +102,17 @@ public class SSLServer extends TCPServer {
 							socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
 							//socket.setTcpNoDelay(true);
 							new SocketServerThread(this, socket).start();
-						} catch(ThreadDeath TD) {
-							throw TD;
-						} catch(Throwable T) {
-							logger.log(Level.SEVERE, "serverPort=" + serverPort + ", address=" + address, T);
+						} catch(ThreadDeath td) {
+							throw td;
+						} catch(Throwable t) {
+							logger.log(Level.SEVERE, "serverPort=" + serverPort + ", address=" + address, t);
 						}
 					}
 				}
-			} catch (ThreadDeath TD) {
-				throw TD;
-			} catch (Throwable T) {
-				logger.log(Level.SEVERE, null, T);
+			} catch (ThreadDeath td) {
+				throw td;
+			} catch (Throwable t) {
+				logger.log(Level.SEVERE, null, t);
 			}
 			try {
 				Thread.sleep(15000);

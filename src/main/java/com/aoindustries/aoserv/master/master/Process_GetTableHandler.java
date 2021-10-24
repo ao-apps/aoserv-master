@@ -62,9 +62,9 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 	private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
 		List<Process> processesCopy = Process_Manager.getSnapshot();
 		List<Process> filtered = new ArrayList<>();
-		Iterator<Process> I = processesCopy.iterator();
-		while(I.hasNext()) {
-			Process process = I.next();
+		Iterator<Process> iter = processesCopy.iterator();
+		while(iter.hasNext()) {
+			Process process = iter.next();
 			com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
 			if(
 				effectiveUser != null

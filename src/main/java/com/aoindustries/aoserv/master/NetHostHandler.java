@@ -213,21 +213,21 @@ public final class NetHostHandler {
 		synchronized(NetHostHandler.class) {
 			com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 			if(userHosts==null) userHosts=new HashMap<>();
-			List<Integer> SV=userHosts.get(currentAdministrator);
-			if(SV==null) {
-				SV=new SortedIntArrayList();
+			List<Integer> sv = userHosts.get(currentAdministrator);
+			if(sv == null) {
+				sv = new SortedIntArrayList();
 					User mu = MasterServer.getUser(db, currentAdministrator);
 					if(mu!=null) {
 						UserHost[] masterServers = MasterServer.getUserHosts(db, currentAdministrator);
 						if(masterServers.length!=0) {
 							for(UserHost masterServer : masterServers) {
-								SV.add(masterServer.getServerPKey());
+								sv.add(masterServer.getServerPKey());
 							}
 						} else {
-							SV.addAll(db.queryIntList("select id from net.\"Host\""));
+							sv.addAll(db.queryIntList("select id from net.\"Host\""));
 						}
 					} else {
-						SV.addAll(
+						sv.addAll(
 							db.queryIntList(
 								"select\n"
 								+ "  bs.server\n"
@@ -243,9 +243,9 @@ public final class NetHostHandler {
 							)
 						);
 					}
-				userHosts.put(currentAdministrator, SV);
+				userHosts.put(currentAdministrator, sv);
 			}
-			return SV;
+			return sv;
 		}
 	}
 
@@ -283,12 +283,12 @@ public final class NetHostHandler {
 
 	private static final Map<Integer, String> farmForHosts = new HashMap<>();
 	public static String getFarmForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
-		Integer I=host;
+		Integer i = host;
 		synchronized(farmForHosts) {
-			String farm=farmForHosts.get(I);
-			if(farm==null) {
-				farm=conn.queryString("select farm from net.\"Host\" where id=?", host);
-				farmForHosts.put(I, farm);
+			String farm = farmForHosts.get(i);
+			if(farm == null) {
+				farm = conn.queryString("select farm from net.\"Host\" where id=?", host);
+				farmForHosts.put(i, farm);
 			}
 			return farm;
 		}
@@ -323,13 +323,13 @@ public final class NetHostHandler {
 	private static final Map<DomainName, Integer> hostsForLinuxServerHostnames = new HashMap<>();
 	public static int getHostForLinuxServerHostname(DatabaseAccess db, DomainName hostname) throws IOException, SQLException {
 		synchronized(hostsForLinuxServerHostnames) {
-			Integer I = hostsForLinuxServerHostnames.get(hostname);
+			Integer i = hostsForLinuxServerHostnames.get(hostname);
 			int host;
-			if(I == null) {
+			if(i == null) {
 				host = db.queryInt("select server from linux.\"Server\" where hostname=?", hostname);
 				hostsForLinuxServerHostnames.put(hostname, host);
 			} else {
-				host = I;
+				host = i;
 			}
 			return host;
 		}
@@ -359,14 +359,14 @@ public final class NetHostHandler {
 	// TODO: Move to LinuxServerHandler
 	private static final Map<Integer, Boolean> linuxServers = new HashMap<>();
 	public static boolean isLinuxServer(DatabaseConnection conn, int host) throws IOException, SQLException {
-		Integer I = host;
+		Integer i = host;
 		synchronized(linuxServers) {
-			if(linuxServers.containsKey(I)) return linuxServers.get(I);
+			if(linuxServers.containsKey(i)) return linuxServers.get(i);
 			boolean isLinuxServer = conn.queryBoolean(
 				"select (select server from linux.\"Server\" where server=?) is not null",
 				host
 			);
-			linuxServers.put(I, isLinuxServer);
+			linuxServers.put(i, isLinuxServer);
 			return isLinuxServer;
 		}
 	}
@@ -414,18 +414,18 @@ public final class NetHostHandler {
 	private static final Map<Integer, Long> lastIDs = new HashMap<>();
 
 	public static Long addInvalidateSyncEntry(int host, RequestSource source) {
-		Integer S=host;
+		Integer s = host;
 		// Note: No notify() or notifyAll() since notification is done in removeInvalidateSyncEntry(int, Long) below
 		synchronized(invalidateSyncLock) {
 			long id;
-			Long L=lastIDs.get(S);
-			if(L==null) id=0;
-			else id=L;
-			Long idLong=id;
-			lastIDs.put(S, idLong);
+			Long l = lastIDs.get(s);
+			if(l == null) id = 0;
+			else id = l;
+			Long idLong = id;
+			lastIDs.put(s, idLong);
 
-			Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
-			if(ids==null) invalidateSyncEntries.put(S, ids=new HashMap<>());
+			Map<Long, RequestSource> ids=invalidateSyncEntries.get(s);
+			if(ids == null) invalidateSyncEntries.put(s, ids = new HashMap<>());
 			ids.put(idLong, source);
 
 			return idLong;
@@ -433,22 +433,22 @@ public final class NetHostHandler {
 	}
 
 	public static void removeInvalidateSyncEntry(int host, Long id) {
-		Integer S=host;
+		Integer s = host;
 		synchronized(invalidateSyncLock) {
-			Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
-			if(ids!=null) ids.remove(id);
+			Map<Long, RequestSource> ids = invalidateSyncEntries.get(s);
+			if(ids != null) ids.remove(id);
 			invalidateSyncLock.notify(); // notifyAll() not needed: each waiting thread also calls notify() before returning
 		}
 	}
 
 	public static void waitForInvalidates(int host) {
-		Integer S=host;
+		Integer s = host;
 		synchronized(invalidateSyncLock) {
-			Long L=lastIDs.get(S);
-			if(L!=null) {
-				long lastID=L;
-				Map<Long, RequestSource> ids=invalidateSyncEntries.get(S);
-				if(ids!=null) {
+			Long l = lastIDs.get(s);
+			if(l != null) {
+				long lastID = l;
+				Map<Long, RequestSource> ids = invalidateSyncEntries.get(s);
+				if(ids != null) {
 					// Wait until the most recent ID and all previous IDs have been completed, but do
 					// not wait for more than 60 seconds total to prevent locked-up daemons from
 					// locking up everything.
@@ -457,10 +457,10 @@ public final class NetHostHandler {
 						long maxWait=startTime+60000-System.currentTimeMillis();
 						if(maxWait>0 && maxWait<=60000) {
 							LongList closedIDs=null;
-							Iterator<Long> I=ids.keySet().iterator();
-							boolean foundOlder=false;
-							while(I.hasNext()) {
-								Long idLong=I.next();
+							Iterator<Long> iter = ids.keySet().iterator();
+							boolean foundOlder = false;
+							while(iter.hasNext()) {
+								Long idLong = iter.next();
 								RequestSource source=ids.get(idLong);
 								if(source.isClosed()) {
 									if(closedIDs==null) closedIDs=new LongArrayList();

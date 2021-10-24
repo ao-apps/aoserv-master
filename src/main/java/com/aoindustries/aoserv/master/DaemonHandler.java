@@ -58,20 +58,20 @@ public final class DaemonHandler {
 
 	public static int getDaemonConcurrency() {
 		int total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getConcurrency();
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getConcurrency();
 		}
 		return total;
 	}
 
 	public static int getDaemonConnections() {
 		int total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getConnectionCount();
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getConnectionCount();
 		}
 		return total;
 	}
@@ -168,10 +168,10 @@ public final class DaemonHandler {
 	}
 
 	public static AOServDaemonConnector getDaemonConnector(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-		Integer I = linuxServer;
+		Integer i = linuxServer;
 		synchronized(DaemonHandler.class) {
-			AOServDaemonConnector O=connectors.get(I);
-			if(O!=null) return O;
+			AOServDaemonConnector o = connectors.get(i);
+			if(o != null) return o;
 			AOServDaemonConnector conn = AOServDaemonConnector.getConnector(
 				getDaemonConnectAddress(database, linuxServer),
 				MasterConfiguration.getLocalIp(),
@@ -183,17 +183,17 @@ public final class DaemonHandler {
 				MasterConfiguration.getSSLTruststorePath(),
 				MasterConfiguration.getSSLTruststorePassword()
 			);
-			connectors.put(I, conn);
+			connectors.put(i, conn);
 			return conn;
 		}
 	}
 
 	public static int getDaemonConnects() {
-		int total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getConnects();
+		int total = 0;
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getConnects();
 		}
 		return total;
 	}
@@ -203,41 +203,41 @@ public final class DaemonHandler {
 	}
 
 	public static int getDaemonMaxConcurrency() {
-		int total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getMaxConcurrency();
+		int total = 0;
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getMaxConcurrency();
 		}
 		return total;
 	}
 
 	public static int getDaemonPoolSize() {
-		int total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getPoolSize();
+		int total = 0;
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getPoolSize();
 		}
 		return total;
 	}
 
 	public static long getDaemonTotalTime() {
-		long total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getTotalTime();
+		long total = 0;
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getTotalTime();
 		}
 		return total;
 	}
 
 	public static long getDaemonTransactions() {
-		long total=0;
-		Iterator<Integer> I=connectors.keySet().iterator();
-		while(I.hasNext()) {
-			Integer key=I.next();
-			total+=connectors.get(key).getTransactionCount();
+		long total = 0;
+		Iterator<Integer> iter = connectors.keySet().iterator();
+		while(iter.hasNext()) {
+			Integer key = iter.next();
+			total += connectors.get(key).getTransactionCount();
 		}
 		return total;
 	}
@@ -261,26 +261,26 @@ public final class DaemonHandler {
 	 * a daemon that is not responding while other daemons could be used.
 	 */
 	public static boolean isDaemonAvailable(int linuxServer) {
-		Integer I = linuxServer;
+		Integer i = linuxServer;
 		synchronized(downDaemons) {
-			Long O=downDaemons.get(I);
-			if(O!=null) {
-				long downTime=System.currentTimeMillis() - O;
-				if(downTime<0) {
-					downDaemons.remove(I);
+			Long o = downDaemons.get(i);
+			if(o != null) {
+				long downTime = System.currentTimeMillis() - o;
+				if(downTime < 0) {
+					downDaemons.remove(i);
 					return true;
 				}
-				if(downTime<DAEMON_RETRY_DELAY) return false;
-				downDaemons.remove(I);
+				if(downTime < DAEMON_RETRY_DELAY) return false;
+				downDaemons.remove(i);
 			}
 		}
 		return true;
 	}
 
 	public static void flagDaemonAsDown(int linuxServer) throws IOException {
-		Integer I = linuxServer;
+		Integer i = linuxServer;
 		synchronized(downDaemons) {
-			downDaemons.put(I, System.currentTimeMillis());
+			downDaemons.put(i, System.currentTimeMillis());
 		}
 	}
 
@@ -314,13 +314,13 @@ public final class DaemonHandler {
 				long timeSince=currentTime-lastKeyCleanTime;
 				if(timeSince<0 || timeSince>=(5L*60*1000)) {
 					// Clean up the entries over one hour old
-					Iterator<Long> I=recentKeys.keySet().iterator();
-					while(I.hasNext()) {
-						Long keyObj=I.next();
+					Iterator<Long> iter = recentKeys.keySet().iterator();
+					while(iter.hasNext()) {
+						Long keyObj = iter.next();
 						long time = recentKeys.get(keyObj);
-						timeSince=currentTime-time;
-						if(timeSince<0 || timeSince>=(60L*60*1000)) {
-							I.remove();
+						timeSince = currentTime - time;
+						if(timeSince < 0 || timeSince >= (60L * 60 * 1000)) {
+							iter.remove();
 						}
 					}
 					lastKeyCleanTime=currentTime;
@@ -331,9 +331,9 @@ public final class DaemonHandler {
 			SecureRandom secureRandom = MasterServer.getSecureRandom();
 			while(true) {
 				key=secureRandom.nextLong();
-				Long L = key;
-				if(!recentKeys.containsKey(L)) {
-					recentKeys.put(L, System.currentTimeMillis());
+				Long l = key;
+				if(!recentKeys.containsKey(l)) {
+					recentKeys.put(l, System.currentTimeMillis());
 					break;
 				}
 			}

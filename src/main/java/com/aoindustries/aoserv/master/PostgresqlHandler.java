@@ -201,9 +201,9 @@ public final class PostgresqlHandler {
 	 */
 	public static int addUserServer(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		com.aoindustries.aoserv.client.postgresql.User.Name user, 
+		com.aoindustries.aoserv.client.postgresql.User.Name user,
 		int postgresqlServer
 	) throws IOException, SQLException {
 		if(com.aoindustries.aoserv.client.postgresql.User.isSpecial(user)) {
@@ -240,7 +240,7 @@ public final class PostgresqlHandler {
 	 */
 	public static void addUser(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.postgresql.User.Name user
 	) throws IOException, SQLException {
@@ -502,11 +502,11 @@ public final class PostgresqlHandler {
 
 	public static boolean isUserServerDisabled(DatabaseConnection conn, int userServer) throws IOException, SQLException {
 		synchronized(PostgresqlHandler.class) {
-			Integer I = userServer;
-			Boolean O=disabledUserServers.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUserServer(conn, userServer)!=-1;
-			disabledUserServers.put(I, isDisabled);
+			Integer i = userServer;
+			Boolean o = disabledUserServers.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUserServer(conn, userServer) != -1;
+			disabledUserServers.put(i, isDisabled);
 			return isDisabled;
 		}
 	}
@@ -529,9 +529,9 @@ public final class PostgresqlHandler {
 
 	public static boolean isUserDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.postgresql.User.Name user) throws IOException, SQLException {
 		synchronized(PostgresqlHandler.class) {
-			Boolean O=disabledUsers.get(user);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUser(conn, user)!=-1;
+			Boolean o = disabledUsers.get(user);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUser(conn, user) != -1;
 			disabledUsers.put(user, isDisabled);
 			return isDisabled;
 		}
@@ -585,7 +585,7 @@ public final class PostgresqlHandler {
 
 	public static boolean isUserServerPasswordSet(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		int userServer
 	) throws IOException, SQLException {
 		checkAccessUserServer(conn, source, "isUserServerPasswordSet", userServer);
@@ -646,7 +646,7 @@ public final class PostgresqlHandler {
 	 */
 	public static void removeUserServer(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		int userServer
 	) throws IOException, SQLException {

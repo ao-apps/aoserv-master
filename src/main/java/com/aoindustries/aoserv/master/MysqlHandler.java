@@ -331,7 +331,7 @@ public final class MysqlHandler {
 	 */
 	public static void addUser(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.mysql.User.Name user
 	) throws IOException, SQLException {
@@ -590,11 +590,11 @@ public final class MysqlHandler {
 
 	public static boolean isUserServerDisabled(DatabaseConnection conn, int userServer) throws IOException, SQLException {
 		synchronized(MysqlHandler.class) {
-			Integer I=userServer;
-			Boolean O=disabledUserServers.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUserServer(conn, userServer)!=-1;
-			disabledUserServers.put(I, isDisabled);
+			Integer i = userServer;
+			Boolean o = disabledUserServers.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUserServer(conn, userServer) != -1;
+			disabledUserServers.put(i, isDisabled);
 			return isDisabled;
 		}
 	}
@@ -617,9 +617,9 @@ public final class MysqlHandler {
 
 	public static boolean isUserDisabled(DatabaseConnection conn, com.aoindustries.aoserv.client.mysql.User.Name user) throws IOException, SQLException {
 		synchronized(MysqlHandler.class) {
-			Boolean O=disabledUsers.get(user);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUser(conn, user)!=-1;
+			Boolean o = disabledUsers.get(user);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUser(conn, user) != -1;
 			disabledUsers.put(user, isDisabled);
 			return isDisabled;
 		}
@@ -648,7 +648,7 @@ public final class MysqlHandler {
 		com.aoindustries.aoserv.client.mysql.User.Name user = getUserForUserServer(conn, userServer);
 		if(com.aoindustries.aoserv.client.mysql.User.isSpecial(user)) throw new SQLException("Refusing to check if passwords set on special MySQL user: " + user);
 		if(isUserServerDisabled(conn, userServer)) throw new SQLException("Unable to determine if the UserServer password is set, account disabled: " + userServer);
-		
+
 		int mysqlServer = getServerForUserServer(conn, userServer);
 		int linuxServer = getLinuxServerForServer(conn, mysqlServer);
 		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
@@ -817,7 +817,7 @@ public final class MysqlHandler {
 	 */
 	public static void removeUser(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		com.aoindustries.aoserv.client.mysql.User.Name user
 	) throws IOException, SQLException {

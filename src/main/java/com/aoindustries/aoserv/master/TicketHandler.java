@@ -1720,10 +1720,10 @@ public final class TicketHandler /*implements Runnable*/ {
 									conn.commit();
 									MasterServer.invalidateTables(conn, invalidateList, null);
 								}
-							} catch(ThreadDeath TD) {
-								throw TD;
-							} catch(Throwable T) {
-								logger.log(Level.SEVERE, null, T);
+							} catch(ThreadDeath td) {
+								throw td;
+							} catch(Throwable t) {
+								logger.log(Level.SEVERE, null, t);
 							}
 						}
 
@@ -1823,14 +1823,14 @@ public final class TicketHandler /*implements Runnable*/ {
 													if(fromAddresses!=null) {
 														for(int d=0;d<fromAddresses.length;d++) {
 															Address addy=fromAddresses[d];
-															String S;
-															if(addy instanceof InternetAddress) S=((InternetAddress)addy).getAddress().toLowerCase();
-															else S=addy.toString().toLowerCase();
-															froms.add(S);
-															if(!notifyUsed.contains(S)) {
+															String s;
+															if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
+															else s = addy.toString().toLowerCase();
+															froms.add(s);
+															if(!notifyUsed.contains(s)) {
 																if(notifyEmails.length()>0) notifyEmails.append('\n');
-																notifyEmails.append(S);
-																notifyUsed.add(S);
+																notifyEmails.append(s);
+																notifyUsed.add(s);
 															}
 														}
 													}
@@ -1840,24 +1840,24 @@ public final class TicketHandler /*implements Runnable*/ {
 													if(toAddresses!=null) {
 														for(int d=0;d<toAddresses.length;d++) {
 															Address addy=toAddresses[d];
-															String S;
-															if(addy instanceof InternetAddress) S=((InternetAddress)addy).getAddress().toLowerCase();
-															else S=addy.toString().toLowerCase();
+															String s;
+															if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
+															else s = addy.toString().toLowerCase();
 															// Skip if in the ignore list
 															boolean ignored=false;
 															for(int e=0;e<ignore_recipients.size();e++) {
 																String ignoredAddy=ignore_recipients.get(e);
-																if(ignoredAddy.equalsIgnoreCase(S)) {
+																if(ignoredAddy.equalsIgnoreCase(s)) {
 																	ignored=true;
 																	break;
 																}
 															}
 															if(!ignored) {
-																tos.add(S);
-																if(!notifyUsed.contains(S)) {
+																tos.add(s);
+																if(!notifyUsed.contains(s)) {
 																	if(notifyEmails.length()>0) notifyEmails.append('\n');
-																	notifyEmails.append(S);
-																	notifyUsed.add(S);
+																	notifyEmails.append(s);
+																	notifyUsed.add(s);
 																}
 															}
 														}
@@ -1920,10 +1920,10 @@ public final class TicketHandler /*implements Runnable*/ {
 						timer.stop();
 					}
 				}
-			} catch(ThreadDeath TD) {
-				throw TD;
-			} catch(Throwable T) {
-				logger.log(Level.SEVERE, null, T);
+			} catch(ThreadDeath td) {
+				throw td;
+			} catch(Throwable t) {
+				logger.log(Level.SEVERE, null, t);
 			}
 		}
 	}
@@ -1936,45 +1936,45 @@ public final class TicketHandler /*implements Runnable*/ {
 	/*
 	public String getMessageBody(Message message) throws IOException, MessagingException {
 		try {
-			StringBuilder SB=new StringBuilder();
+			StringBuilder sb = new StringBuilder();
 			Enumeration headers=message.getMatchingHeaders(MATCH_HEADERS);
 			while(headers.hasMoreElements()) {
 				Header h=(Header)headers.nextElement();
 				String name=h.getName();
 				String val=h.getValue();
 				if (val!=null && (val=val.trim()).length()>0)
-					SB.append(name).append(": ").append(val).append('\n');
+					sb.append(name).append(": ").append(val).append('\n');
 			}
-			if(SB.length()>0) SB.append('\n');
-			getMessageBody0(message.getContent(), SB);
-			return SB.toString();
+			if(sb.length()>0) sb.append('\n');
+			getMessageBody0(message.getContent(), sb);
+			return sb.toString();
 		} catch(UnsupportedEncodingException err) {
 			logger.log(Level.WARNING, null, err);
 			return message.getContent().toString();
 		}
 	}
 
-	private void getMessageBody0(Object content, StringBuilder SB) throws IOException, MessagingException {
+	private void getMessageBody0(Object content, StringBuilder sb) throws IOException, MessagingException {
 		if(content instanceof MimeMultipart) {
 			MimeMultipart mpart = (MimeMultipart)content;
 			int partCount = mpart.getCount();
 			for (int i = 0; i<partCount; i++) {
-				getMessageBody0(mpart.getBodyPart(i), SB);
+				getMessageBody0(mpart.getBodyPart(i), sb);
 			}
 		} else if(content instanceof String) {
-			if(SB.length()>0) SB.append(PART_SEPARATOR);
-			SB.append(Strings.wordWrap((String)content, 100));
+			if(sb.length()>0) sb.append(PART_SEPARATOR);
+			sb.append(Strings.wordWrap((String)content, 100));
 		} else if(content instanceof Part) {
 			Part part=(Part)content;
 			if(part.isMimeType("multipart/*")) {
-				getMessageBody0(part.getContent(), SB);
+				getMessageBody0(part.getContent(), sb);
 			} else {
-				if(SB.length()>0) SB.append(PART_SEPARATOR);
-				SB.append(Strings.wordWrap(part.getContent().toString(), 100));
+				if(sb.length()>0) sb.append(PART_SEPARATOR);
+				sb.append(Strings.wordWrap(part.getContent().toString(), 100));
 			}
 		} else {
-			if(SB.length()>0) SB.append(PART_SEPARATOR);
-			SB.append(Strings.wordWrap(content.toString(), 100));
+			if(sb.length()>0) sb.append(PART_SEPARATOR);
+			sb.append(Strings.wordWrap(content.toString(), 100));
 		}
 	}*/
 	// </editor-fold>

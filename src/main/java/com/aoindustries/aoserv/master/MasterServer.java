@@ -204,26 +204,26 @@ public abstract class MasterServer {
 	}
 
 	/*
-	private static void appendParam(String S, StringBuilder SB) {
-		if(S==null) SB.append("null");
+	private static void appendParam(String s, StringBuilder sb) {
+		if(s==null) sb.append("null");
 		else {
-			int len=S.length();
+			int len=s.length();
 			// Figure out to use quotes or not
 			boolean useQuotes=false;
 			for(int c=0;c<len;c++) {
-				char ch=S.charAt(c);
+				char ch=s.charAt(c);
 				if(ch<=' ' || ch=='\'') {
 					useQuotes=true;
 					break;
 				}
 			}
-			if(useQuotes) SB.append('\'');
+			if(useQuotes) sb.append('\'');
 			for(int c=0;c<len;c++) {
-				char ch=S.charAt(c);
-				if(ch=='\'') SB.append('\\');
-				SB.append(ch);
+				char ch=s.charAt(c);
+				if(ch=='\'') sb.append('\\');
+				sb.append(ch);
 			}
-			if(useQuotes) SB.append('\'');
+			if(useQuotes) sb.append('\'');
 		}
 	}*/
 
@@ -10329,10 +10329,10 @@ public abstract class MasterServer {
 			}
 			assert listenerCopy.size() == cacheListenersSize;
 		}
-		Iterator<RequestSource> I = listenerCopy.iterator();
-		while(I.hasNext()) {
+		Iterator<RequestSource> iter = listenerCopy.iterator();
+		while(iter.hasNext()) {
 			try {
-				RequestSource source = I.next();
+				RequestSource source = iter.next();
 				Identifier connectorId = source.getConnectorId();
 				if(connectorId == null) throw new AssertionError("source does not have a connectorId");
 				// Notify all clients other than the source of this invalidation.  The invalidation for this source

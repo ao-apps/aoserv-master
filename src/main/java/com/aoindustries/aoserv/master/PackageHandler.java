@@ -576,9 +576,9 @@ public final class PackageHandler {
 
 	public static boolean isPackageDisabled(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
 		synchronized(PackageHandler.class) {
-			Boolean O=disabledPackages.get(packageName);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForPackage(conn, packageName)!=-1;
+			Boolean o = disabledPackages.get(packageName);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForPackage(conn, packageName) != -1;
 			disabledPackages.put(packageName, isDisabled);
 			return isDisabled;
 		}
@@ -650,32 +650,32 @@ public final class PackageHandler {
 
 	private static final Map<Integer, Account.Name> packageAccounts = new HashMap<>();
 	public static Account.Name getAccountForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
-		Integer I = packageId;
+		Integer i = packageId;
 		synchronized(packageAccounts) {
-			Account.Name O=packageAccounts.get(I);
-			if(O!=null) return O;
+			Account.Name o = packageAccounts.get(i);
+			if(o != null) return o;
 			Account.Name business = database.queryObject(
 				ObjectFactories.accountNameFactory,
 				"select accounting from billing.\"Package\" where id=?",
 				packageId
 			);
-			packageAccounts.put(I, business);
+			packageAccounts.put(i, business);
 			return business;
 		}
 	}
 
 	private static final Map<Integer, Account.Name> packageNames = new HashMap<>();
 	public static Account.Name getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
-		Integer I = packageId;
+		Integer i = packageId;
 		synchronized(packageNames) {
-			Account.Name O=packageNames.get(I);
-			if(O!=null) return O;
+			Account.Name o = packageNames.get(i);
+			if(o != null) return o;
 			Account.Name name = conn.queryObject(
 				ObjectFactories.accountNameFactory,
 				"select name from billing.\"Package\" where id=?",
 				packageId
 			);
-			packageNames.put(I, name);
+			packageNames.put(i, name);
 			return name;
 		}
 	}
@@ -683,8 +683,8 @@ public final class PackageHandler {
 	private static final Map<Account.Name, Integer> packageIds = new HashMap<>();
 	public static int getIdForPackage(DatabaseAccess database, Account.Name name) throws IOException, SQLException {
 		synchronized(packageIds) {
-			Integer O = packageIds.get(name);
-			if(O != null) return O;
+			Integer o = packageIds.get(name);
+			if(o != null) return o;
 			int packageId = database.queryInt("select id from billing.\"Package\" where name=?", name);
 			packageIds.put(name, packageId);
 			return packageId;

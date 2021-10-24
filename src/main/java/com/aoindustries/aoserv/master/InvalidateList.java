@@ -157,12 +157,12 @@ public final class InvalidateList {
 		if(hosts==null || hosts==allHosts) {
 			hostLists.put(tableID, allHosts);
 		} else if(!hosts.isEmpty()) {
-			List<Integer> SV = hostLists.get(tableID);
+			List<Integer> sv = hostLists.get(tableID);
 			// TODO: Just use HashSet here
-			if(SV == null) hostLists.put(tableID, SV = new SortedArrayList<>());
+			if(sv == null) hostLists.put(tableID, sv = new SortedArrayList<>());
 			for(Integer id : hosts) {
 				if(id == null) logger.log(Level.WARNING, null, new RuntimeException("Warning: id is null"));
-				else if(!SV.contains(id)) SV.add(id);
+				else if(!sv.contains(id)) sv.add(id);
 			}
 		}
 
@@ -315,9 +315,9 @@ public final class InvalidateList {
 	}
 
 	public List<Integer> getAffectedHosts(Table.TableID tableID) {
-		List<Integer> SV=hostLists.get(tableID);
-		if(SV != null || accountLists.containsKey(tableID)) {
-			return (SV == null) ? allHosts : SV;
+		List<Integer> sv = hostLists.get(tableID);
+		if(sv != null || accountLists.containsKey(tableID)) {
+			return (sv == null) ? allHosts : sv;
 		} else {
 			return null;
 		}

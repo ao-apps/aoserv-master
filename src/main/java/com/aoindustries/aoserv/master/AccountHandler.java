@@ -857,14 +857,14 @@ public final class AccountHandler {
 	 */
 	public static String generateSupportCode(DatabaseConnection conn) throws IOException, SQLException {
 		SecureRandom secureRandom = MasterServer.getSecureRandom();
-		StringBuilder SB = new StringBuilder(11);
-		for(int range=1000000; range<1000000000; range *= 10) {
-			for(int attempt=0; attempt<1000; attempt++) {
-				SB.setLength(0);
-				SB.append((char)('a'+secureRandom.nextInt('z'+1-'a')));
-				SB.append((char)('a'+secureRandom.nextInt('z'+1-'a')));
-				SB.append(secureRandom.nextInt(range));
-				String supportCode = SB.toString();
+		StringBuilder sb = new StringBuilder(11);
+		for(int range = 1000000; range < 1000000000; range *= 10) {
+			for(int attempt = 0; attempt < 1000; attempt++) {
+				sb.setLength(0);
+				sb.append((char)('a' + secureRandom.nextInt('z' + 1 - 'a')));
+				sb.append((char)('a' + secureRandom.nextInt('z' + 1 - 'a')));
+				sb.append(secureRandom.nextInt(range));
+				String supportCode = sb.toString();
 				if(conn.queryBoolean("select (select support_code from account.\"Administrator\" where support_code=?) is null", supportCode)) return supportCode;
 			}
 		}
@@ -897,7 +897,7 @@ public final class AccountHandler {
 
 	/**
 	 * Gets the depth of the account in the account tree.  root_accounting is at depth 1.
-	 * 
+	 *
 	 * @return  the depth between 1 and Account.MAXIMUM_ACCOUNT_TREE_DEPTH, inclusive.
 	 */
 	public static int getDepthInAccountTree(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
@@ -1660,11 +1660,11 @@ public final class AccountHandler {
 	}
 
 	public static boolean isAdministratorDisabled(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name administrator) throws IOException, SQLException {
-		Boolean O;
+		Boolean o;
 		synchronized(disabledAdministrators) {
-			O=disabledAdministrators.get(administrator);
+			o = disabledAdministrators.get(administrator);
 		}
-		if(O!=null) return O;
+		if(o != null) return o;
 		boolean isDisabled = getDisableLogForAdministrator(db, administrator)!=-1;
 		synchronized(disabledAdministrators) {
 			disabledAdministrators.put(administrator, isDisabled);
@@ -1674,9 +1674,9 @@ public final class AccountHandler {
 
 	public static boolean isAccountDisabled(DatabaseConnection conn, Account.Name account) throws IOException, SQLException {
 		synchronized(disabledAccounts) {
-			Boolean O=disabledAccounts.get(account);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForAccount(conn, account)!=-1;
+			Boolean o = disabledAccounts.get(account);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForAccount(conn, account) != -1;
 			disabledAccounts.put(account, isDisabled);
 			return isDisabled;
 		}
@@ -1890,8 +1890,8 @@ public final class AccountHandler {
 	}
 
 	private static void addWeight(Map<Account.Name, Integer> accountWeights, Account.Name account, int weight) {
-		Integer I=accountWeights.get(account);
-		int previous=I==null ? 0 : I;
+		Integer i = accountWeights.get(account);
+		int previous = i == null ? 0 : i;
 		accountWeights.put(account, previous + weight);
 	}
 

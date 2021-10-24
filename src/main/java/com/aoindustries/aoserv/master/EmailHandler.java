@@ -1235,33 +1235,33 @@ public final class EmailHandler {
 
 	public static boolean isListDisabled(DatabaseConnection conn, int list) throws IOException, SQLException {
 		synchronized(EmailHandler.class) {
-			Integer I = list;
-			Boolean O=disabledLists.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForList(conn, list)!=-1;
-			disabledLists.put(I, isDisabled);
+			Integer i = list;
+			Boolean o = disabledLists.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForList(conn, list) != -1;
+			disabledLists.put(i, isDisabled);
 			return isDisabled;
 		}
 	}
 
 	public static boolean isPipeDisabled(DatabaseConnection conn, int pipe) throws IOException, SQLException {
 		synchronized(EmailHandler.class) {
-			Integer I = pipe;
-			Boolean O=disabledPipes.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForPipe(conn, pipe)!=-1;
-			disabledPipes.put(I, isDisabled);
+			Integer i = pipe;
+			Boolean o = disabledPipes.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForPipe(conn, pipe) != -1;
+			disabledPipes.put(i, isDisabled);
 			return isDisabled;
 		}
 	}
 
 	public static boolean isSmtpRelayDisabled(DatabaseConnection conn, int smtpRelay) throws IOException, SQLException {
 		synchronized(EmailHandler.class) {
-			Integer I = smtpRelay;
-			Boolean O=disabledSmtpRelays.get(I);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForSmtpRelay(conn, smtpRelay)!=-1;
-			disabledSmtpRelays.put(I, isDisabled);
+			Integer i = smtpRelay;
+			Boolean o = disabledSmtpRelays.get(i);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForSmtpRelay(conn, smtpRelay) != -1;
+			disabledSmtpRelays.put(i, isDisabled);
 			return isDisabled;
 		}
 	}

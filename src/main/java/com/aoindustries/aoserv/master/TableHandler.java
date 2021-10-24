@@ -955,8 +955,8 @@ public final class TableHandler {
 				}
 				fromClientTableIDs.put(version, tableIDs);
 			}
-			Integer I = tableIDs.get(clientTableID);
-			return (I == null) ? -1 : I;
+			Integer i = tableIDs.get(clientTableID);
+			return (i == null) ? -1 : i;
 		}
 	}
 
@@ -993,8 +993,8 @@ public final class TableHandler {
 				}
 				toClientTableIDs.put(version, clientTableIDs);
 			}
-			Integer I = clientTableIDs.get(tableID);
-			int clientTableID = (I == null) ? -1 : I;
+			Integer i = clientTableIDs.get(tableID);
+			int clientTableID = (i == null) ? -1 : i;
 			return clientTableID;
 		}
 	}

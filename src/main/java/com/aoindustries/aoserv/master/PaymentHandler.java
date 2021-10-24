@@ -96,6 +96,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 
 	private static boolean started=false;
 
+	@SuppressWarnings("UseOfSystemOutOrSystemErr")
 	public static void start() {
 		synchronized(System.out) {
 			if(!started) {
@@ -1900,10 +1901,10 @@ public final class PaymentHandler /*implements CronJob*/ {
 					MasterServer.invalidateTables(conn, invalidateList, null);
 				}
 			}
-		} catch(ThreadDeath TD) {
-			throw TD;
-		} catch(Throwable T) {
-			logger.log(Level.SEVERE, null, T);
+		} catch(ThreadDeath td) {
+			throw td;
+		} catch(Throwable t) {
+			logger.log(Level.SEVERE, null, t);
 		}
 	}
 
@@ -2005,11 +2006,11 @@ public final class PaymentHandler /*implements CronJob*/ {
 					// Generate warning ticket
 					logger.log(Level.WARNING, buff.toString());
 				}
-			} catch(ThreadDeath TD) {
-				throw TD;
-			} catch(Throwable T) {
+			} catch(ThreadDeath td) {
+				throw td;
+			} catch(Throwable t) {
 				// Log failure in ticket
-				logger.log(Level.SEVERE, null, T);
+				logger.log(Level.SEVERE, null, t);
 			}
 		}
 	};

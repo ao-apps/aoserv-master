@@ -136,8 +136,8 @@ public final class MasterConfiguration {
 	}
 
 	public static long getDBMaxConnectionAge() throws IOException {
-		String S=getProperty("aoserv.master.db.max_connection_age");
-		return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
+		String s = getProperty("aoserv.master.db.max_connection_age");
+		return s == null || s.length() == 0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(s);
 	}
 
 	public static String getBackupDBDriver() throws IOException {
@@ -161,8 +161,8 @@ public final class MasterConfiguration {
 	}
 
 	public static long getBackupDBMaxConnectionAge() throws IOException {
-		String S=getProperty("aoserv.master.backup.db.max_connection_age");
-		return S==null || S.length()==0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(S);
+		String s = getProperty("aoserv.master.backup.db.max_connection_age");
+		return s == null || s.length() == 0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(s);
 	}
 
 	private static final ConcurrentMap<Integer, UnprotectedKey> daemonKeys = new ConcurrentHashMap<>();

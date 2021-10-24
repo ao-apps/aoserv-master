@@ -109,17 +109,17 @@ public class TCPServer extends MasterServer implements Runnable {
 							socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
 							//socket.setTcpNoDelay(true);
 							new SocketServerThread(this, socket).start();
-						} catch(ThreadDeath TD) {
-							throw TD;
-						} catch(Throwable T) {
-							logger.log(Level.SEVERE, "serverPort=" + serverPort + ". address=" + address, T);
+						} catch(ThreadDeath td) {
+							throw td;
+						} catch(Throwable t) {
+							logger.log(Level.SEVERE, "serverPort=" + serverPort + ". address=" + address, t);
 						}
 					}
 				}
-			} catch (ThreadDeath TD) {
-				throw TD;
-			} catch (Throwable T) {
-				logger.log(Level.SEVERE, "serverPort=" + serverPort + ", serverBind=" + serverBind, T);
+			} catch (ThreadDeath td) {
+				throw td;
+			} catch (Throwable t) {
+				logger.log(Level.SEVERE, "serverPort=" + serverPort + ", serverBind=" + serverBind, t);
 			}
 			try {
 				Thread.sleep(15000);

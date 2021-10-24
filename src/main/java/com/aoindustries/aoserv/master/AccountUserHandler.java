@@ -68,9 +68,9 @@ public final class AccountUserHandler {
 
 	public static void addUser(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
-		Account.Name packageName, 
+		Account.Name packageName,
 		User.Name name,
 		boolean avoidSecurityChecks
 	) throws IOException, SQLException {
@@ -213,9 +213,9 @@ public final class AccountUserHandler {
 
 	public static boolean isUserDisabled(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
 		synchronized(disabledUsers) {
-			Boolean O=disabledUsers.get(user);
-			if(O!=null) return O;
-			boolean isDisabled=getDisableLogForUser(conn, user)!=-1;
+			Boolean o = disabledUsers.get(user);
+			if(o != null) return o;
+			boolean isDisabled = getDisableLogForUser(conn, user) != -1;
 			disabledUsers.put(user, isDisabled);
 			return isDisabled;
 		}
