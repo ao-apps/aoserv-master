@@ -87,14 +87,14 @@ public class SSLServer extends TCPServer {
 		}
 
 		SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
-		while (true) {
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
 				InetAddress address = InetAddress.getByName(serverBind);
 				synchronized(System.out) {
 					System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
 				}
 				try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
-					while (true) {
+					while (!Thread.currentThread().isInterrupted()) {
 						Socket socket = SS.accept();
 						incConnectionCount();
 						try {
@@ -118,6 +118,8 @@ public class SSLServer extends TCPServer {
 				Thread.sleep(15000);
 			} catch (InterruptedException err) {
 				logger.log(Level.WARNING, null, err);
+				// Restore the interrupted status
+				Thread.currentThread().interrupt();
 			}
 		}
 	}

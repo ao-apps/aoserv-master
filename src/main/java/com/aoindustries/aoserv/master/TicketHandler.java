@@ -1760,73 +1760,102 @@ public final class TicketHandler /*implements Runnable*/ {
 
 	/*
 	public void run() {
-		while(true) {
+		while(!Thread.currentThread().isInterrupted()) {
 			try {
-				while(true) {
-					try {
-						Thread.sleep(SLEEP_INTERVAL);
-					} catch(InterruptedException err) {
-						logger.log(Level.WARNING, null, err);
-					}
-					ProcessTimer timer=new ProcessTimer(
-						MasterConfiguration.getWarningSmtpServer(),
-						MasterConfiguration.getWarningEmailFrom(),
-						MasterConfiguration.getWarningEmailTo(),
-						"Ticket Handler",
-						"Creating ticket.Ticket from IMAP folders",
-						TIMER_MAX_TIME,
-						TIMER_REMINDER_INTERVAL
-					);
-					try {
-						timer.start();
-						// Start the transaction
-						try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
-							InvalidateList invalidateList = new InvalidateList();
-							for(int c=1;c<Integer.MAX_VALUE;c++) {
-								String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
-								if(hostname==null) break;
-								String username=MasterConfiguration.getTicketSource("imap", c, "username");
-								String password=MasterConfiguration.getTicketSource("imap", c, "password");
-								String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
-								String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
-								List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
-								String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
-								if(assign_to!=null) assign_to=assign_to.trim();
+				try {
+					Thread.sleep(SLEEP_INTERVAL);
+				} catch(InterruptedException err) {
+					logger.log(Level.WARNING, null, err);
+					// Restore the interrupted status
+					Thread.currentThread().interrupt();
+					break;
+				}
+				ProcessTimer timer=new ProcessTimer(
+					MasterConfiguration.getWarningSmtpServer(),
+					MasterConfiguration.getWarningEmailFrom(),
+					MasterConfiguration.getWarningEmailTo(),
+					"Ticket Handler",
+					"Creating ticket.Ticket from IMAP folders",
+					TIMER_MAX_TIME,
+					TIMER_REMINDER_INTERVAL
+				);
+				try {
+					timer.start();
+					// Start the transaction
+					try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+						InvalidateList invalidateList = new InvalidateList();
+						for(int c=1;c<Integer.MAX_VALUE;c++) {
+							String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
+							if(hostname==null) break;
+							String username=MasterConfiguration.getTicketSource("imap", c, "username");
+							String password=MasterConfiguration.getTicketSource("imap", c, "password");
+							String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
+							String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
+							List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
+							String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
+							if(assign_to!=null) assign_to=assign_to.trim();
 
-								Properties props = new Properties();
-								props.put("mail.store.protocol", "imap");
-								Session session=Session.getInstance(props, null);
-								Store store=session.getStore();
-								try {
-									store.connect(
-										hostname,
-										username,
-										password
-									);
-									Folder folder=store.getFolder(folderName);
-									if(!folder.exists()) {
-										UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
-									} else {
-										try {
-											folder.open(Folder.READ_WRITE);
-											Message[] messages=folder.getMessages();
-											for(int f=0;f<messages.length;f++) {
-												Message message=messages[f];
-												if(!message.isSet(Flags.Flag.DELETED)) {
-													// The list of emails notified of ticket changes
-													StringBuilder notifyEmails=new StringBuilder();
-													List<String> notifyUsed=new SortedArrayList<String>();
+							Properties props = new Properties();
+							props.put("mail.store.protocol", "imap");
+							Session session=Session.getInstance(props, null);
+							Store store=session.getStore();
+							try {
+								store.connect(
+									hostname,
+									username,
+									password
+								);
+								Folder folder=store.getFolder(folderName);
+								if(!folder.exists()) {
+									UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
+								} else {
+									try {
+										folder.open(Folder.READ_WRITE);
+										Message[] messages=folder.getMessages();
+										for(int f=0;f<messages.length;f++) {
+											Message message=messages[f];
+											if(!message.isSet(Flags.Flag.DELETED)) {
+												// The list of emails notified of ticket changes
+												StringBuilder notifyEmails=new StringBuilder();
+												List<String> notifyUsed=new SortedArrayList<String>();
 
-													// Get the from addresses
-													Address[] fromAddresses=message.getFrom();
-													List<String> froms=new ArrayList<String>(fromAddresses==null ? 0 : fromAddresses.length);
-													if(fromAddresses!=null) {
-														for(int d=0;d<fromAddresses.length;d++) {
-															Address addy=fromAddresses[d];
-															String s;
-															if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
-															else s = addy.toString().toLowerCase();
-															froms.add(s);
+												// Get the from addresses
+												Address[] fromAddresses=message.getFrom();
+												List<String> froms=new ArrayList<String>(fromAddresses==null ? 0 : fromAddresses.length);
+												if(fromAddresses!=null) {
+													for(int d=0;d<fromAddresses.length;d++) {
+														Address addy=fromAddresses[d];
+														String s;
+														if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
+														else s = addy.toString().toLowerCase();
+														froms.add(s);
+														if(!notifyUsed.contains(s)) {
+															if(notifyEmails.length()>0) notifyEmails.append('\n');
+															notifyEmails.append(s);
+															notifyUsed.add(s);
+														}
+													}
+												}
+												// Get the to addresses
+												Address[] toAddresses=message.getAllRecipients();
+												List<String> tos=new ArrayList<String>(toAddresses==null ? 0 : toAddresses.length);
+												if(toAddresses!=null) {
+													for(int d=0;d<toAddresses.length;d++) {
+														Address addy=toAddresses[d];
+														String s;
+														if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
+														else s = addy.toString().toLowerCase();
+														// Skip if in the ignore list
+														boolean ignored=false;
+														for(int e=0;e<ignore_recipients.size();e++) {
+															String ignoredAddy=ignore_recipients.get(e);
+															if(ignoredAddy.equalsIgnoreCase(s)) {
+																ignored=true;
+																break;
+															}
+														}
+														if(!ignored) {
+															tos.add(s);
 															if(!notifyUsed.contains(s)) {
 																if(notifyEmails.length()>0) notifyEmails.append('\n');
 																notifyEmails.append(s);
@@ -1834,91 +1863,63 @@ public final class TicketHandler /*implements Runnable*/ {
 															}
 														}
 													}
-													// Get the to addresses
-													Address[] toAddresses=message.getAllRecipients();
-													List<String> tos=new ArrayList<String>(toAddresses==null ? 0 : toAddresses.length);
-													if(toAddresses!=null) {
-														for(int d=0;d<toAddresses.length;d++) {
-															Address addy=toAddresses[d];
-															String s;
-															if(addy instanceof InternetAddress) s=((InternetAddress)addy).getAddress().toLowerCase();
-															else s = addy.toString().toLowerCase();
-															// Skip if in the ignore list
-															boolean ignored=false;
-															for(int e=0;e<ignore_recipients.size();e++) {
-																String ignoredAddy=ignore_recipients.get(e);
-																if(ignoredAddy.equalsIgnoreCase(s)) {
-																	ignored=true;
-																	break;
-																}
-															}
-															if(!ignored) {
-																tos.add(s);
-																if(!notifyUsed.contains(s)) {
-																	if(notifyEmails.length()>0) notifyEmails.append('\n');
-																	notifyEmails.append(s);
-																	notifyUsed.add(s);
-																}
-															}
-														}
-													}
-
-													// Try to guess the business ownership, but never guess for a cancelled business
-													String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
-
-													String emailBody=getMessageBody(message);
-
-													// Add ticket
-													addTicket(
-														conn,
-														invalidateList,
-														account,
-														null,
-														TicketType.NONE,
-														emailBody,
-														-1,
-														Priority.NORMAL,
-														Priority.NORMAL,
-														null,
-														assign_to==null || assign_to.length()==0 ? null : assign_to,
-														notifyEmails.toString(),
-														""
-													);
-
-													// Commit individual ticket
-													conn.commit();
 												}
+
+												// Try to guess the business ownership, but never guess for a cancelled business
+												String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
+
+												String emailBody=getMessageBody(message);
+
+												// Add ticket
+												addTicket(
+													conn,
+													invalidateList,
+													account,
+													null,
+													TicketType.NONE,
+													emailBody,
+													-1,
+													Priority.NORMAL,
+													Priority.NORMAL,
+													null,
+													assign_to==null || assign_to.length()==0 ? null : assign_to,
+													notifyEmails.toString(),
+													""
+												);
+
+												// Commit individual ticket
+												conn.commit();
 											}
-											// Archive all messages
-											if (archiveFolderName!=null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
-												Folder archiveFolder=store.getFolder(archiveFolderName);
-												try {
-													if (!archiveFolder.exists()) {
-														UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
-													} else {
-														folder.copyMessages(messages, archiveFolder);
-													}
-												} finally {
-													if (archiveFolder.isOpen()) archiveFolder.close(true);
-												}
-											}
-											// Delete all messages
-											folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
-											folder.expunge();
-										} finally {
-											if(folder.isOpen()) folder.close(true);
 										}
+										// Archive all messages
+										if (archiveFolderName!=null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
+											Folder archiveFolder=store.getFolder(archiveFolderName);
+											try {
+												if (!archiveFolder.exists()) {
+													UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
+												} else {
+													folder.copyMessages(messages, archiveFolder);
+												}
+											} finally {
+												if (archiveFolder.isOpen()) archiveFolder.close(true);
+											}
+										}
+										// Delete all messages
+										folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
+										folder.expunge();
+									} finally {
+										if(folder.isOpen()) folder.close(true);
 									}
-								} finally {
-									if(store.isConnected()) store.close();
 								}
+							} finally {
+								if(store.isConnected()) store.close();
 							}
-							conn.commit();
-							MasterServer.invalidateTables(conn, invalidateList, null);
 						}
-					} finally {
-						timer.stop();
+						conn.commit();
+						MasterServer.invalidateTables(conn, invalidateList, null);
 					}
+				} finally {
+					timer.stop();
 				}
 			} catch(ThreadDeath td) {
 				throw td;

@@ -94,7 +94,9 @@ public final class LinuxServerHandler {
 						try {
 							mrtgLocks.wait(startTime + 15000 - currentTime);
 						} catch(InterruptedException err) {
-							IOException ioErr = new InterruptedIOException();
+							// Restore the interrupted status
+							Thread.currentThread().interrupt();
+							InterruptedIOException ioErr = new InterruptedIOException();
 							ioErr.initCause(err);
 							throw ioErr;
 						}

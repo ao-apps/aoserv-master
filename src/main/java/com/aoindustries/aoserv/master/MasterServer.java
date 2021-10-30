@@ -564,6 +564,7 @@ public abstract class MasterServer {
 								final AoservProtocol.Version protocolVersion = source.getProtocolVersion();
 								final com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 								boolean didInitialInvalidateAll = false;
+								LOOP:
 								while(!AccountHandler.isAdministratorDisabled(conn, currentAdministrator)) {
 									InvalidateCacheEntry ice;
 									if(!didInitialInvalidateAll) {
@@ -587,7 +588,9 @@ public abstract class MasterServer {
 													source.wait(delay);
 												} catch(InterruptedException err) {
 													logger.log(Level.WARNING, null, err);
-													break;
+													// Restore the interrupted status
+													Thread.currentThread().interrupt();
+													break LOOP;
 												}
 											}
 										}
@@ -10564,11 +10567,13 @@ public abstract class MasterServer {
 				}
 			}
 
-			while(!failedServices.isEmpty()) {
+			while(!failedServices.isEmpty() && !Thread.currentThread().isInterrupted()) {
 				try {
 					Thread.sleep(SERVICE_RETRY_INTERVAL);
 				} catch(InterruptedException e) {
 					logger.log(Level.WARNING, null, e);
+					// Restore the interrupted status
+					Thread.currentThread().interrupt();
 				}
 				failedServices = startServices(failedServices, false, System.out);
 			}

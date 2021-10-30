@@ -94,14 +94,14 @@ public class TCPServer extends MasterServer implements Runnable {
 
 	@Override
 	public void run() {
-		while (true) {
+		while (!Thread.currentThread().isInterrupted()) {
 			try {
 				InetAddress address=InetAddress.getByName(serverBind);
 				synchronized(System.out) {
 					System.out.println("Accepting TCP connections on " + address.getHostAddress() + ':' + serverPort);
 				}
 				try (ServerSocket SS = new ServerSocket(serverPort, 50, address)) {
-					while (true) {
+					while (!Thread.currentThread().isInterrupted()) {
 						Socket socket = SS.accept();
 						incConnectionCount();
 						try {
@@ -125,6 +125,8 @@ public class TCPServer extends MasterServer implements Runnable {
 				Thread.sleep(15000);
 			} catch (InterruptedException err) {
 				logger.log(Level.WARNING, null, err);
+				// Restore the interrupted status
+				Thread.currentThread().interrupt();
 			}
 		}
 	}

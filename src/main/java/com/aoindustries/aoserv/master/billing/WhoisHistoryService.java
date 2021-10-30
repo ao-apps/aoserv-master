@@ -329,87 +329,89 @@ public final class WhoisHistoryService implements MasterService {
 								assert registrableDomains.keySet().equals(lookupOrder.keySet());
 							}
 							// Performs the whois lookup once per unique registrable domain
-							for(Map.Entry<DomainName, Timestamp> entry : lookupOrder.entrySet()) {
-								DomainName registrableDomain = entry.getKey();
-								Timestamp time = entry.getValue();
-								boolean checkNow;
-								if(time == null) {
-									checkNow = true;
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked, checkNow: " + checkNow);
-								} else {
-									long timeSince = System.currentTimeMillis() - time.getTime();
-									checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + ", checkNow: " + checkNow);
-								}
-								// Since they are in order by time, quite once the first one to not check is found
-								if(!checkNow) {
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": checkNow is false, it is not time for any remaining in the list, breaking loop now");
-									break;
-								}
-								long startTime = System.currentTimeMillis();
-								Integer exitStatus;
-								String output;
-								String error;
-								try {
-									String lower = registrableDomain.toLowerCase();
-									ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
-									exitStatus = result.getExitVal();
-									output = result.getStdout();
-									error = result.getStderr();
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
-								} catch(ThreadDeath td) {
-									throw td;
-								} catch(Throwable t) {
-									logger.log(Level.FINE, null, t);
-									exitStatus = null;
-									output = "";
-									error = t.toString();
-									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
-								}
-								// update database
-								// TODO: Store the parsed nameservers, too?  At least for when is success.
-								// This could be a batch, but this is short and simple
-								int whoisHistory = conn.updateInt(
-									"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
-									registrableDomain,
-									exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
-									output,
-									error
-								);
-								Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
-								for(Account.Name account : accounts) {
-									conn.update(
-										"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
-										whoisHistory,
-										account
+							try {
+								for(Map.Entry<DomainName, Timestamp> entry : lookupOrder.entrySet()) {
+									DomainName registrableDomain = entry.getKey();
+									Timestamp time = entry.getValue();
+									boolean checkNow;
+									if(time == null) {
+										checkNow = true;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Never checked, checkNow: " + checkNow);
+									} else {
+										long timeSince = System.currentTimeMillis() - time.getTime();
+										checkNow = timeSince >= RECHECK_MILLIS || timeSince <= -RECHECK_MILLIS;
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Last checked " + time + ", checkNow: " + checkNow);
+									}
+									// Since they are in order by time, quite once the first one to not check is found
+									if(!checkNow) {
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": checkNow is false, it is not time for any remaining in the list, breaking loop now");
+										break;
+									}
+									long startTime = System.currentTimeMillis();
+									Integer exitStatus;
+									String output;
+									String error;
+									try {
+										String lower = registrableDomain.toLowerCase();
+										ProcessResult result = ProcessResult.exec(COMMAND, "-H", lower);
+										exitStatus = result.getExitVal();
+										output = result.getStdout();
+										error = result.getStderr();
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
+									} catch(ThreadDeath td) {
+										throw td;
+									} catch(Throwable t) {
+										logger.log(Level.FINE, null, t);
+										exitStatus = null;
+										output = "";
+										error = t.toString();
+										if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Error");
+									}
+									// update database
+									// TODO: Store the parsed nameservers, too?  At least for when is success.
+									// This could be a batch, but this is short and simple
+									int whoisHistory = conn.updateInt(
+										"INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
+										registrableDomain,
+										exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
+										output,
+										error
 									);
-								}
-								invalidateList.addTable(conn,
-									Table.TableID.WhoisHistory,
-									accounts,
-									InvalidateList.allHosts,
-									false
-								);
-								invalidateList.addTable(conn,
-									Table.TableID.WhoisHistoryAccount,
-									accounts,
-									InvalidateList.allHosts,
-									false
-								);
-								conn.commit();
-								MasterServer.invalidateTables(conn, invalidateList, null);
-								conn.close(); // Don't hold database connection while sleeping
-								invalidateList.reset();
-								try {
+									Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
+									for(Account.Name account : accounts) {
+										conn.update(
+											"insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
+											whoisHistory,
+											account
+										);
+									}
+									invalidateList.addTable(conn,
+										Table.TableID.WhoisHistory,
+										accounts,
+										InvalidateList.allHosts,
+										false
+									);
+									invalidateList.addTable(conn,
+										Table.TableID.WhoisHistoryAccount,
+										accounts,
+										InvalidateList.allHosts,
+										false
+									);
+									conn.commit();
+									MasterServer.invalidateTables(conn, invalidateList, null);
+									conn.close(); // Don't hold database connection while sleeping
+									invalidateList.reset();
 									long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
 									if(sleepTime < LOOKUP_SLEEP_MINIMUM) {
 										sleepTime = LOOKUP_SLEEP_MINIMUM;
 									}
 									if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Completed, sleeping " + sleepTime + " ms");
 									Thread.sleep(sleepTime);
-								} catch(InterruptedException e) {
-									logger.log(Level.WARNING, null, e);
 								}
+							} catch(InterruptedException e) {
+								logger.log(Level.WARNING, null, e);
+								// Restore the interrupted status
+								Thread.currentThread().interrupt();
 							}
 						} else {
 							if(DEBUG) System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
@@ -439,7 +441,7 @@ public final class WhoisHistoryService implements MasterService {
 				Set<Account.Name> accounts = merged.get(registrableDomain);
 				if(accounts == null) merged.put(registrableDomain, accounts = new LinkedHashSet<>());
 				accounts.addAll(entry.getValue());
-				
+
 			}
 		}
 		return merged;

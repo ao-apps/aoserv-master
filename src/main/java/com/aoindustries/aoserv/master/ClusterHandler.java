@@ -304,7 +304,8 @@ public final class ClusterHandler implements CronJob {
 							xenPhysicalServer,
 							MasterServer.executorService.submit(() -> {
 								// Try up to ten times
-								for(int c=0;c<10;c++) {
+								final int ATTEMPTS = 10;
+								for(int c = 0; c < ATTEMPTS; c++) {
 									try {
 										final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
 										AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
@@ -368,16 +369,18 @@ public final class ClusterHandler implements CronJob {
 									} catch(ThreadDeath td) {
 										throw td;
 									} catch(Throwable t) {
-										if(c==9) throw t;
+										if(c == (ATTEMPTS - 1) && Thread.currentThread().isInterrupted()) throw t;
 										logger.log(Level.SEVERE, null, t);
 										try {
 											Thread.sleep(2000);
 										} catch(InterruptedException err) {
 											logger.log(Level.WARNING, null, err);
+											// Restore the interrupted status
+											Thread.currentThread().interrupt();
 										}
 									}
 								}
-								throw new AssertionError("Exception should have been thrown when c==9");
+								throw new AssertionError("Exception should have been thrown when c==" + (ATTEMPTS - 1) + " or thread interrupted");
 							})
 						);
 					}
@@ -393,6 +396,10 @@ public final class ClusterHandler implements CronJob {
 							newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
 						} catch(ThreadDeath td) {
 							throw td;
+						} catch(InterruptedException e) {
+							logger.log(Level.SEVERE, "xenPhysicalServer=" + xenPhysicalServer, e);
+							// Restore the interrupted status
+							Thread.currentThread().interrupt();
 						} catch(Throwable t) {
 							logger.log(Level.SEVERE, "xenPhysicalServer=" + xenPhysicalServer, t);
 						}

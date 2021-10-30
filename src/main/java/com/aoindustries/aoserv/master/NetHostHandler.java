@@ -453,7 +453,7 @@ public final class NetHostHandler {
 					// not wait for more than 60 seconds total to prevent locked-up daemons from
 					// locking up everything.
 					long startTime=System.currentTimeMillis();
-					while(true) {
+					while(!Thread.currentThread().isInterrupted()) {
 						long maxWait=startTime+60000-System.currentTimeMillis();
 						if(maxWait>0 && maxWait<=60000) {
 							LongList closedIDs=null;
@@ -484,6 +484,8 @@ public final class NetHostHandler {
 									invalidateSyncLock.wait(maxWait);
 								} catch(InterruptedException err) {
 									logger.log(Level.WARNING, null, err);
+									// Restore the interrupted status
+									Thread.currentThread().interrupt();
 								}
 							} else {
 								invalidateSyncLock.notify(); // notifyAll() not needed: each waiting thread also calls notify() before returning
