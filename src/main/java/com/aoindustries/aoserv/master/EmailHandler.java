@@ -597,8 +597,8 @@ public final class EmailHandler {
 	/**
 	 * Only report each error at most once per 12 hours per package.
 	 */
-	private static final long SMTP_STAT_REPORT_INTERVAL=12L*60*60*1000;
-	private static final Map<String, Long> smtpStatLastReports=new HashMap<>();
+	private static final long SMTP_STAT_REPORT_INTERVAL = 12L * 60 * 60 * 1000;
+	private static final Map<String, Long> smtpStatLastReports = new HashMap<>();
 
 	public static int addSpamMessage(
 		DatabaseConnection conn,

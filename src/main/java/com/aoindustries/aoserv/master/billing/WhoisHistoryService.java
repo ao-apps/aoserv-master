@@ -209,7 +209,7 @@ public final class WhoisHistoryService implements MasterService {
 	/**
 	 * The interval in which the administrators will be reminded.
 	 */
-	private static final long TIMER_REMINDER_INTERVAL = 24L*60*60*1000; // 1 day
+	private static final long TIMER_REMINDER_INTERVAL = 24L * 60 * 60 * 1000; // 1 day
 
 	/**
 	 * Runs hourly, 12 minutes after the hour.

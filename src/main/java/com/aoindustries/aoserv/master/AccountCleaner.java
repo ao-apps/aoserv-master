@@ -56,12 +56,12 @@ public final class AccountCleaner implements CronJob {
 	/**
 	 * The maximum time for a cleaning.
 	 */
-	private static final long TIMER_MAX_TIME=20L*60*1000;
+	private static final long TIMER_MAX_TIME = 20L * 60 * 1000;
 
 	/**
 	 * The interval in which the administrators will be reminded.
 	 */
-	private static final long TIMER_REMINDER_INTERVAL=6L*60*60*1000;
+	private static final long TIMER_REMINDER_INTERVAL = 6L * 60 * 60 * 1000;
 
 	/**
 	 * The number of days to keep canceled account resources.

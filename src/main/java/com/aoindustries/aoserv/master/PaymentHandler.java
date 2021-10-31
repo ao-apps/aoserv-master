@@ -87,12 +87,12 @@ public final class PaymentHandler /*implements CronJob*/ {
 	/**
 	 * The maximum time for a processing pass.
 	 */
-	private static final long TIMER_MAX_TIME=60L*60*1000;
+	private static final long TIMER_MAX_TIME = 60L * 60 * 1000;
 
 	/**
 	 * The interval in which the administrators will be reminded.
 	 */
-	private static final long TIMER_REMINDER_INTERVAL=2L*60*60*1000;
+	private static final long TIMER_REMINDER_INTERVAL = 2L * 60 * 60 * 1000;
 
 	private static boolean started=false;
 

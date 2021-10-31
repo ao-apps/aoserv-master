@@ -1748,9 +1748,9 @@ public final class TicketHandler /*implements Runnable*/ {
 	 */
 	/*
 	public static final long
-		SLEEP_INTERVAL= (long)60*1000,
-		TIMER_MAX_TIME=(long)15*60*1000,
-		TIMER_REMINDER_INTERVAL=(long)60*60*1000
+		SLEEP_INTERVAL = 60L * 1000,
+		TIMER_MAX_TIME = 15L * 60 * 1000,
+		TIMER_REMINDER_INTERVAL = 60L * 60 * 1000
 	;*/
 
 	/**

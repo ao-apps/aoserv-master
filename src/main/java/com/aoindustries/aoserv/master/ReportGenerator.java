@@ -55,12 +55,12 @@ public final class ReportGenerator implements CronJob {
 	/**
 	 * The maximum time for a backup reporting.
 	 */
-	private static final long BACKUP_REPORT_MAX_TIME=2L*60*60*1000;
+	private static final long BACKUP_REPORT_MAX_TIME = 2L * 60 * 60 * 1000;
 
 	/**
 	 * The interval in which the administrators will be reminded.
 	 */
-	private static final long TIMER_REMINDER_INTERVAL=12L*60*60*1000;
+	private static final long TIMER_REMINDER_INTERVAL = 12L * 60 * 60 * 1000;
 
 	static class TempBackupReport {
 		int host;

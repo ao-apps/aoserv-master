@@ -599,7 +599,7 @@ public final class OriginalClusterOptimizer {
 				2.0f,
 				new VirtualDisk[] {
 					new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-					// new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was 
+					// new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
 				}
 			)
 		);
@@ -926,7 +926,7 @@ public final class OriginalClusterOptimizer {
 		 */
 		//System.out.println(servers.size());
 		//System.out.println(virtualServers.size());
-		System.out.println("Worst-case permutations: " + (Math.pow(servers.size(), virtualServers.size()) * Math.pow(servers.size()-1, virtualServers.size())));
+		System.out.println("Worst-case permutations: " + (Math.pow(servers.size(), virtualServers.size()) * Math.pow(servers.size() - 1D, virtualServers.size())));
 		int[] selectedPrimaries = new int[virtualServers.size()];
 		int[] selectedSecondaries = new int[virtualServers.size()];
 		mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, 0);

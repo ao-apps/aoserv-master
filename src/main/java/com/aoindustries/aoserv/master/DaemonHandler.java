@@ -52,7 +52,7 @@ public final class DaemonHandler {
 	 * The amount of time before a daemon will be accessed again once
 	 * flagged as unavailable.
 	 */
-	public static final int DAEMON_RETRY_DELAY=5*1000; // Used to be 60*1000
+	public static final int DAEMON_RETRY_DELAY = 5 * 1000; // Used to be 60 * 1000
 
 	private static final Map<Integer, AOServDaemonConnector> connectors = new HashMap<>();
 
@@ -311,8 +311,8 @@ public final class DaemonHandler {
 			long currentTime=System.currentTimeMillis();
 			if(lastKeyCleanTime==-1) lastKeyCleanTime=currentTime;
 			else {
-				long timeSince=currentTime-lastKeyCleanTime;
-				if(timeSince<0 || timeSince>=(5L*60*1000)) {
+				long timeSince = currentTime - lastKeyCleanTime;
+				if(timeSince < 0 || timeSince >= (5L * 60 * 1000)) {
 					// Clean up the entries over one hour old
 					Iterator<Long> iter = recentKeys.keySet().iterator();
 					while(iter.hasNext()) {
