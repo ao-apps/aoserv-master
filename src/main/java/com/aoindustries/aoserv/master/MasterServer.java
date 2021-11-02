@@ -238,7 +238,7 @@ public abstract class MasterServer {
 		while(true) {
 			Identifier nextConnectorId;
 			if(protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-				byte[] bytes = new byte[8];
+				byte[] bytes = new byte[Long.BYTES];
 				secureRandom.nextBytes(bytes);
 				long idLo = IoUtils.bufferToLong(bytes);
 				// Avoid the small chance of conflicting with -1 used to communicate null from clients < 1.83.0
