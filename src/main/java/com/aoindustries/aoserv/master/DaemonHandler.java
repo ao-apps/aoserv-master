@@ -330,7 +330,7 @@ public final class DaemonHandler {
 			// Generate the key
 			SecureRandom secureRandom = MasterServer.getSecureRandom();
 			while(true) {
-				key=secureRandom.nextLong();
+				key = secureRandom.nextLong();
 				Long l = key;
 				if(!recentKeys.containsKey(l)) {
 					recentKeys.put(l, System.currentTimeMillis());

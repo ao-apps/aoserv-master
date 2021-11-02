@@ -64,9 +64,9 @@ public final class TicketHandler /*implements Runnable*/ {
 	 */
 	public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int action) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
-		if(mu!=null) {
-			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length==0) return true; // Master users
-			else return false; // daemons
+		if(mu != null) {
+			// Master users allowed, daemon not allowed
+			return MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length == 0;
 		} else {
 			Account.Name account = getAccountForAction(conn, action);
 			if(isTicketAdmin(conn, source)) {
@@ -155,8 +155,8 @@ public final class TicketHandler /*implements Runnable*/ {
 		DatabaseConnection conn
 	) throws IOException, SQLException {
 		SecureRandom secureRandom = MasterServer.getSecureRandom();
-		for(int range=1000000; range<1000000000; range *= 10) {
-			for(int attempt=0; attempt<1000; attempt++) {
+		for(int range = 1000000; range < 1000000000; range *= 10) {
+			for(int attempt = 0; attempt < 1000; attempt++) {
 				int ticket = secureRandom.nextInt(range);
 				if(conn.queryBoolean("select (select id from ticket.\"Ticket\" where id=?) is null", ticket)) return ticket;
 			}
@@ -1671,6 +1671,7 @@ public final class TicketHandler /*implements Runnable*/ {
 						}
 
 						@Override
+						@SuppressWarnings({"UseSpecificCatch", "BroadCatchBlock", "TooBroadCatch"})
 						public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
 							try {
 								try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
