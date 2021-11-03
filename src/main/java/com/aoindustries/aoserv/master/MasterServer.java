@@ -10920,7 +10920,7 @@ public abstract class MasterServer {
 			UserHost[] mss = masterServers.get(user);
 			if(mss == null) {
 				mss = db.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						List<UserHost> v = new ArrayList<>();
 						while(results.next()) {
 							UserHost ms = new UserHost();

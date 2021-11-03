@@ -32,7 +32,6 @@ import com.aoindustries.aoserv.client.net.reputation.Network;
 import com.aoindustries.aoserv.client.net.reputation.Set;
 import com.aoindustries.aoserv.client.schema.Table;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
@@ -248,7 +247,7 @@ public final class NetReputationSetHandler {
 				short score = addRep.getScore();
 				Host dbHost = conn.queryObject(
 					Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
-					(ResultSet result) -> {
+					result -> {
 						Host obj = new Host();
 						obj.init(result);
 						return obj;
@@ -333,7 +332,7 @@ public final class NetReputationSetHandler {
 					int network = getNetwork(host, networkPrefix);
 					Network dbNetwork = conn.queryObject(
 						Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
-						(ResultSet result) -> {
+						result -> {
 							Network obj = new Network();
 							obj.init(result);
 							return obj;

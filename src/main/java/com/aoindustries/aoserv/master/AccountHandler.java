@@ -48,7 +48,6 @@ import com.aoindustries.aoserv.master.account.Administrator_GetTableHandler;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.Date;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -226,7 +225,7 @@ public final class AccountHandler {
 		synchronized(cachedPermissionsLock) {
 			if(cachedPermissions == null) {
 				cachedPermissions = conn.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name, Set<String>> newCache = new HashMap<>();
 						while(results.next()) {
 							com.aoindustries.aoserv.client.account.User.Name administrator;
@@ -1579,7 +1578,7 @@ public final class AccountHandler {
 		synchronized(administratorsLock) {
 			if(administrators == null) {
 				administrators = db.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						Map<com.aoindustries.aoserv.client.account.User.Name, Administrator> table=new HashMap<>();
 						while(results.next()) {
 							Administrator ba=new Administrator();
@@ -1724,7 +1723,7 @@ public final class AccountHandler {
 	 */
 	public static Map<Account.Name, List<String>> getAccountContacts(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.queryCall(
-			(ResultSet results) -> {
+			results -> {
 				// Load the list of account.Account and their contacts
 				Map<Account.Name, List<String>> accountContacts = new HashMap<>();
 				List<String> foundAddresses = new SortedArrayList<>();

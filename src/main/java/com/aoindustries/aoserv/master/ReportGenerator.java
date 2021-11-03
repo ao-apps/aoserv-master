@@ -157,7 +157,7 @@ public final class ReportGenerator implements CronJob {
 
 									Integer hostInteger=Integer.valueOf(host);
 									Map<Integer, TempBackupReport> packages=stats.get(hostInteger);
-									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer, TempBackupReport>());
+									if(packages==null) stats.put(hostInteger, packages=new HashMap<>());
 									packages.put(Integer.valueOf(packageNum), tbr);
 								}
 							}
@@ -232,7 +232,7 @@ public final class ReportGenerator implements CronJob {
 
 									Integer hostInteger=Integer.valueOf(host);
 									Map<Integer, TempBackupReport> packages=stats.get(hostInteger);
-									if(packages==null) stats.put(hostInteger, packages=new HashMap<Integer, TempBackupReport>());
+									if(packages==null) stats.put(hostInteger, packages=new HashMap<>());
 									Integer packageInteger=Integer.valueOf(packageNum);
 									TempBackupReport tbr=(TempBackupReport)packages.get(packageInteger);
 									if(tbr==null) {

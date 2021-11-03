@@ -40,7 +40,6 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.AbstractList;
 import java.util.Collections;
@@ -756,7 +755,7 @@ public final class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new AbstractList<AOServWritable>() {
+						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
 								return (out, clientVersion) -> {
@@ -785,7 +784,7 @@ public final class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new AbstractList<AOServWritable>() {
+						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
 								return (out, clientVersion) -> {
@@ -814,7 +813,7 @@ public final class TableHandler {
 						source,
 						out,
 						provideProgress,
-						new AbstractList<AOServWritable>() {
+						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
 								return (out, clientVersion) -> {
@@ -878,7 +877,7 @@ public final class TableHandler {
 		synchronized(tableNamesLock) {
 			if(tableNames == null) {
 				tableNames = db.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						Map<Integer, String> newMap = new HashMap<>();
 						while(results.next()) {
 							Integer id = results.getInt("id");

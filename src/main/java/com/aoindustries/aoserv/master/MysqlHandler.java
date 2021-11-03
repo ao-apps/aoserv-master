@@ -43,7 +43,6 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -448,7 +447,7 @@ public final class MysqlHandler {
 		daemonConnector.dumpMySQLDatabase(
 			database,
 			gzip,
-			(long dumpSize) -> {
+			dumpSize -> {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 					out.writeLong(dumpSize);
 				}
@@ -1113,7 +1112,7 @@ public final class MysqlHandler {
 
 	public static Tuple2<Server.Name, Port> getNameAndPortForServer(DatabaseConnection conn, int mysqlServer) throws IOException, SQLException {
 		return conn.queryObject(
-			(ResultSet result) -> new Tuple2<>(
+			result -> new Tuple2<>(
 				ObjectFactories.mysqlServerNameFactory.createObject(result),
 				ObjectFactories.portFactory.createObject(result)
 			),

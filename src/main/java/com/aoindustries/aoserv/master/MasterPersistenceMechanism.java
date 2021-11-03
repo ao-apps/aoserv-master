@@ -106,7 +106,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 		return expirationYear;
 	}
 
-	private static final ObjectFactory<CreditCard> creditCardObjectFactory = (ResultSet result) -> new CreditCard(
+	private static final ObjectFactory<CreditCard> creditCardObjectFactory = result -> new CreditCard(
 		Integer.toString(result.getInt("persistenceUniqueId")),
 		result.getString("principalName"),
 		result.getString("groupName"),
@@ -176,7 +176,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal) throws SQLException {
 		return conn.queryCall(
-			(ResultSet results) -> {
+			results -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
 					CreditCard copy = creditCardObjectFactory.createObject(results);
@@ -201,7 +201,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
 	@Override
 	public Map<String, CreditCard> getCreditCards(Principal principal, String providerId) throws SQLException {
 		return conn.queryCall(
-			(ResultSet results) -> {
+			results -> {
 				Map<String, CreditCard> map = new LinkedHashMap<>();
 				while(results.next()) {
 					CreditCard copy = creditCardObjectFactory.createObject(results);

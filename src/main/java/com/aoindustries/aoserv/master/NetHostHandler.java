@@ -124,7 +124,7 @@ public final class NetHostHandler {
 		invalidateList.addTable(conn, Table.TableID.SERVERS, account, InvalidateList.allServers, false);
 
 		// Build a stack of parents, adding each business_server
-		Stack<String> bus=new Stack<String>();
+		Stack<String> bus=new Stack<>();
 		String packageAccount=PackageHandler.getAccountForPackage(conn, owner);
 		String currentAccount=packageAccount;
 		while(true) {

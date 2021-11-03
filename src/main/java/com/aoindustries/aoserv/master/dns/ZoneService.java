@@ -38,7 +38,6 @@ import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -123,7 +122,7 @@ public class ZoneService implements MasterService, WhoisHistoryDomainLocator {
 	@Override
 	public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		return conn.queryCall(
-			(ResultSet results) -> {
+			results -> {
 				try {
 					Map<DomainName, Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {

@@ -1818,11 +1818,11 @@ public final class TicketHandler /*implements Runnable*/ {
 											if(!message.isSet(Flags.Flag.DELETED)) {
 												// The list of emails notified of ticket changes
 												StringBuilder notifyEmails=new StringBuilder();
-												List<String> notifyUsed=new SortedArrayList<String>();
+												List<String> notifyUsed=new SortedArrayList<>();
 
 												// Get the from addresses
 												Address[] fromAddresses=message.getFrom();
-												List<String> froms=new ArrayList<String>(fromAddresses==null ? 0 : fromAddresses.length);
+												List<String> froms=new ArrayList<>(fromAddresses==null ? 0 : fromAddresses.length);
 												if(fromAddresses!=null) {
 													for(int d=0;d<fromAddresses.length;d++) {
 														Address addy=fromAddresses[d];
@@ -1839,7 +1839,7 @@ public final class TicketHandler /*implements Runnable*/ {
 												}
 												// Get the to addresses
 												Address[] toAddresses=message.getAllRecipients();
-												List<String> tos=new ArrayList<String>(toAddresses==null ? 0 : toAddresses.length);
+												List<String> tos=new ArrayList<>(toAddresses==null ? 0 : toAddresses.length);
 												if(toAddresses!=null) {
 													for(int d=0;d<toAddresses.length;d++) {
 														Address addy=toAddresses[d];

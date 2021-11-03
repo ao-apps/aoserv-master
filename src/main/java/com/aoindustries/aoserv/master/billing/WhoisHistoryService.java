@@ -50,7 +50,6 @@ import com.aoindustries.aoserv.master.ObjectFactories;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Collections;
@@ -294,7 +293,7 @@ public final class WhoisHistoryService implements MasterService {
 							{
 								// Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
 								final Map<DomainName, Timestamp> lastChecked = conn.queryCall(
-									(ResultSet results) -> {
+									results -> {
 										try {
 											Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
 											int oldNotUsedCount = 0;
@@ -462,7 +461,7 @@ public final class WhoisHistoryService implements MasterService {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 					// id is that of the associated billing.WhoisHistoryAccount
 					return conn.queryCall(
-						(ResultSet results) -> {
+						results -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
 							} else {
@@ -481,7 +480,7 @@ public final class WhoisHistoryService implements MasterService {
 					);
 				} else {
 					return conn.queryCall(
-						(ResultSet results) -> {
+						results -> {
 							if(results.next()) {
 								return new Tuple2<>(results.getString(1), results.getString(2));
 							} else {
@@ -499,7 +498,7 @@ public final class WhoisHistoryService implements MasterService {
 			if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
 				// id is that of the associated billing.WhoisHistoryAccount
 				return conn.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));
 						} else {
@@ -529,7 +528,7 @@ public final class WhoisHistoryService implements MasterService {
 				);
 			} else {
 				return conn.queryCall(
-					(ResultSet results) -> {
+					results -> {
 						if(results.next()) {
 							return new Tuple2<>(results.getString(1), results.getString(2));
 						} else {

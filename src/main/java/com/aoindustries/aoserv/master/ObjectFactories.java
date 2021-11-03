@@ -35,7 +35,6 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.linux.Group;
 import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.net.FirewallZone;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Currency;
 import java.util.Locale;
@@ -53,7 +52,7 @@ public final class ObjectFactories {
 	private ObjectFactories() {
 	}
 
-	public static final ObjectFactory<Account.Name> accountNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<Account.Name> accountNameFactory = result -> {
 		try {
 			return Account.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -61,7 +60,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<DomainName> domainNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<DomainName> domainNameFactory = result -> {
 		try {
 			return DomainName.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -69,7 +68,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<Email> emailFactory = (ResultSet result) -> {
+	public static final ObjectFactory<Email> emailFactory = result -> {
 		try {
 			return Email.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -77,7 +76,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<Group.Name> groupNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<Group.Name> groupNameFactory = result -> {
 		try {
 			return Group.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -85,7 +84,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<FirewallZone.Name> firewallZoneNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<FirewallZone.Name> firewallZoneNameFactory = result -> {
 		try {
 			return FirewallZone.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -93,7 +92,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<HostAddress> hostAddressFactory = (ResultSet result) -> {
+	public static final ObjectFactory<HostAddress> hostAddressFactory = result -> {
 		try {
 			return HostAddress.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -101,7 +100,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<InetAddress> inetAddressFactory = (ResultSet result) -> {
+	public static final ObjectFactory<InetAddress> inetAddressFactory = result -> {
 		try {
 			return InetAddress.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -109,7 +108,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.linux.User.Name> linuxUserNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.linux.User.Name> linuxUserNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.linux.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -117,7 +116,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<Money> moneyFactory = (ResultSet result) -> {
+	public static final ObjectFactory<Money> moneyFactory = result -> {
 		try {
 			return new Money(Currency.getInstance(result.getString(1)), result.getBigDecimal(2));
 		} catch(NumberFormatException e) {
@@ -125,7 +124,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Database.Name> mysqlDatabaseNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Database.Name> mysqlDatabaseNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.mysql.Database.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -136,7 +135,7 @@ public final class ObjectFactories {
 	/**
 	 * Requires "mysqlServerName".
 	 */
-	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Server.Name> mysqlServerNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.Server.Name> mysqlServerNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.mysql.Server.Name.valueOf(result.getString("mysqlServerName"));
 		} catch(ValidationException e) {
@@ -144,7 +143,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.User.Name> mysqlUserNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.mysql.User.Name> mysqlUserNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.mysql.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -152,7 +151,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.Database.Name> postgresqlDatabaseNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.Database.Name> postgresqlDatabaseNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -160,7 +159,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.User.Name> postgresqlUserNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.postgresql.User.Name> postgresqlUserNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -171,7 +170,7 @@ public final class ObjectFactories {
 	/**
 	 * Requires "port" and "net_protocol".
 	 */
-	public static final ObjectFactory<Port> portFactory = (ResultSet result) -> {
+	public static final ObjectFactory<Port> portFactory = result -> {
 		try {
 			return Port.valueOf(
 				result.getInt("port"),
@@ -182,7 +181,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<com.aoindustries.aoserv.client.account.User.Name> userNameFactory = (ResultSet result) -> {
+	public static final ObjectFactory<com.aoindustries.aoserv.client.account.User.Name> userNameFactory = result -> {
 		try {
 			return com.aoindustries.aoserv.client.account.User.Name.valueOf(result.getString(1));
 		} catch(ValidationException e) {
@@ -190,7 +189,7 @@ public final class ObjectFactories {
 		}
 	};
 
-	public static final ObjectFactory<PosixPath> posixPathFactory = (ResultSet result) -> {
+	public static final ObjectFactory<PosixPath> posixPathFactory = result -> {
 		try {
 			return PosixPath.valueOf(result.getString(1));
 		} catch(ValidationException e) {

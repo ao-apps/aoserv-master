@@ -356,7 +356,7 @@ public final class PostgresqlHandler {
 		daemonConnector.dumpPostgresDatabase(
 			database,
 			gzip,
-			(long dumpSize) -> {
+			dumpSize -> {
 				if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
 					out.writeLong(dumpSize);
 				}

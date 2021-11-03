@@ -40,7 +40,6 @@ import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.billing.WhoisHistoryDomainLocator;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import java.io.IOException;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -140,7 +139,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
 	public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
 		List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
 		return conn.queryCall(
-			(ResultSet results) -> {
+			results -> {
 				try {
 					Map<DomainName, Set<Account.Name>> map = new HashMap<>();
 					while(results.next()) {

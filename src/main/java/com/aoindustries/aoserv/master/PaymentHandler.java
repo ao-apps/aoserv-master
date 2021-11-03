@@ -55,7 +55,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.net.InetAddress;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -1527,7 +1526,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 					InvalidateList invalidateList = new InvalidateList();
 					// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
 					List<AutomaticPayment> automaticPayments = conn.queryCall(
-						(ResultSet results) -> {
+						results -> {
 							try {
 								List<AutomaticPayment> list = new ArrayList<>();
 								SortedMap<Currency, BigDecimal> totals = new TreeMap<>(CurrencyComparator.getInstance());
@@ -1930,7 +1929,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 
 				// Find the accounting code, credit_card id, and account balances of all account.Account that have a credit card set for automatic payments (and is active)
 				List<MerchantServicesProvider> providers = conn.queryList(
-					(ResultSet result) -> {
+					result -> {
 						try {
 							return MerchantServicesProviderFactory.getMerchantServicesProvider(
 								result.getString("providerId"),
