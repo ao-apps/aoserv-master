@@ -2158,7 +2158,7 @@ public final class WebHandler {
 	 */
 	public static String stopJVM(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		int tomcatSite
 	) throws IOException, SQLException {
 		checkAccessSite(conn, source, "stopJVM", tomcatSite);
@@ -2529,7 +2529,7 @@ public final class WebHandler {
 
 		// web.VirtualHost
 		IntList httpdSiteBinds=conn.queryIntList("select id from web.\"VirtualHost\" where httpd_site=?", site);
-		if(httpdSiteBinds.size() > 0) {
+		if(!httpdSiteBinds.isEmpty()) {
 			DnsService dnsService = MasterServer.getService(DnsService.class);
 			List<DomainName> tlds = dnsService.getDNSTLDs(conn);
 			SortedIntArrayList httpdBinds=new SortedIntArrayList();
@@ -2602,7 +2602,7 @@ public final class WebHandler {
 		if(conn.queryBoolean("select (select httpd_site from \"web.tomcat\".\"Site\" where httpd_site=? limit 1) is not null", site)) {
 			// web.tomcat.ContextDataSource
 			IntList htdss=conn.queryIntList("select htds.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextDataSource\" htds where htc.tomcat_site=? and htc.id=htds.tomcat_context", site);
-			if(htdss.size() > 0) {
+			if(!htdss.isEmpty()) {
 				for(int c=0;c<htdss.size();c++) {
 					conn.update("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", htdss.getInt(c));
 				}
@@ -2611,7 +2611,7 @@ public final class WebHandler {
 
 			// web.tomcat.ContextParameter
 			IntList htps=conn.queryIntList("select htp.id from \"web.tomcat\".\"Context\" htc, \"web.tomcat\".\"ContextParameter\" htp where htc.tomcat_site=? and htc.id=htp.tomcat_context", site);
-			if(htps.size() > 0) {
+			if(!htps.isEmpty()) {
 				for(int c=0;c<htps.size();c++) {
 					conn.update("delete from \"web.tomcat\".\"ContextParameter\" where id=?", htps.getInt(c));
 				}
@@ -2620,7 +2620,7 @@ public final class WebHandler {
 
 			// web.tomcat.Context
 			IntList htcs=conn.queryIntList("select id from \"web.tomcat\".\"Context\" where tomcat_site=?", site);
-			if(htcs.size() > 0) {
+			if(!htcs.isEmpty()) {
 				for(int c=0;c<htcs.size();c++) {
 					conn.update("delete from \"web.tomcat\".\"Context\" where id=?", htcs.getInt(c));
 				}
@@ -2629,7 +2629,7 @@ public final class WebHandler {
 
 			// web.tomcat.Worker
 			IntList httpdWorkers = conn.queryIntList("select bind from \"web.tomcat\".\"Worker\" where \"tomcatSite\"=?", site);
-			if(httpdWorkers.size() > 0) {
+			if(!httpdWorkers.isEmpty()) {
 				for(int c=0;c<httpdWorkers.size();c++) {
 					int bind = httpdWorkers.getInt(c);
 					conn.update("delete from \"web.tomcat\".\"Worker\" where bind=?", bind);
