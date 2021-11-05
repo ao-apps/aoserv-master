@@ -32,10 +32,10 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-public final class ResellerHandler {
+public abstract class ResellerHandler {
 
-	private ResellerHandler() {
-	}
+	/** Make no instances. */
+	private ResellerHandler() {throw new AssertionError();}
 
 	/**
 	 * Gets the lowest-level reseller that is at or above the provided account.

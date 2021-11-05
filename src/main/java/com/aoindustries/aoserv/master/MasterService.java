@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018  AO Industries, Inc.
+ * Copyright (C) 2018, 2021  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -52,7 +52,9 @@ public interface MasterService {
 	 * master server will not start.
 	 * </p>
 	 */
-	default void start() throws Exception {}
+	default void start() throws Exception {
+		// Do nothing
+	}
 
 	/**
 	 * In order the reduce the number of services listed in /META-INF/services,

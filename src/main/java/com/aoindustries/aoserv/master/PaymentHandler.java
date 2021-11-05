@@ -76,12 +76,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class PaymentHandler /*implements CronJob*/ {
+public abstract class PaymentHandler /*implements CronJob*/ {
+
+	/** Make no instances. */
+	private PaymentHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
-
-	private PaymentHandler() {
-	}
 
 	/**
 	 * The maximum time for a processing pass.

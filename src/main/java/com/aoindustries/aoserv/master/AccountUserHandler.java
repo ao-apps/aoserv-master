@@ -40,10 +40,10 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public final class AccountUserHandler {
+public abstract class AccountUserHandler {
 
-	private AccountUserHandler() {
-	}
+	/** Make no instances. */
+	private AccountUserHandler() {throw new AssertionError();}
 
 	private static final Map<User.Name, Boolean> disabledUsers = new HashMap<>();
 	private static final Map<User.Name, Account.Name> userAccounts = new HashMap<>();

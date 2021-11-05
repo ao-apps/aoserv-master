@@ -84,6 +84,7 @@ public final class ReportGenerator implements CronJob {
 	}
 
 	private ReportGenerator() {
+		// Do nothing
 	}
 
 	/**

@@ -63,10 +63,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-public final class AccountHandler {
+public abstract class AccountHandler {
 
-	private AccountHandler() {
-	}
+	/** Make no instances. */
+	private AccountHandler() {throw new AssertionError();}
 
 	private static final Object administratorsLock = new Object();
 	private static Map<com.aoindustries.aoserv.client.account.User.Name, Administrator> administrators;

@@ -48,12 +48,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class NetHostHandler {
+public abstract class NetHostHandler {
+
+	/** Make no instances. */
+	private NetHostHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
-
-	private NetHostHandler() {
-	}
 
 	private static Map<com.aoindustries.aoserv.client.account.User.Name, List<Integer>> userHosts;
 
@@ -398,6 +398,7 @@ public final class NetHostHandler {
 				hostsForLinuxServerHostnames.clear();
 			}
 		} else if(tableID==Table.TableID.SERVER_FARMS) {
+			// Do nothing
 		}
 	}
 

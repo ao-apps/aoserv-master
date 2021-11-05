@@ -61,12 +61,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class EmailHandler {
+public abstract class EmailHandler {
+
+	/** Make no instances. */
+	private EmailHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(EmailHandler.class.getName());
-
-	private EmailHandler() {
-	}
 
 	private static final Map<Integer, Boolean> disabledLists = new HashMap<>();
 	private static final Map<Integer, Boolean> disabledPipes = new HashMap<>();

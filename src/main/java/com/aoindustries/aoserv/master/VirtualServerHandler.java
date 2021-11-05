@@ -35,12 +35,12 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-public final class VirtualServerHandler {
+public abstract class VirtualServerHandler {
+
+	/** Make no instances. */
+	private VirtualServerHandler() {throw new AssertionError();}
 
 	// private static final Logger logger = Logger.getLogger(VirtualServerHandler.class.getName());
-
-	private VirtualServerHandler() {
-	}
 
 	/*
 	public static void checkAccessVirtualServer(DatabaseConnection conn, RequestSource source, String action, int virtualServer) throws IOException, SQLException {

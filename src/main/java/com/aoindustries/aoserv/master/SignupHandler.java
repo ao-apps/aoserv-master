@@ -43,12 +43,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class SignupHandler {
+public abstract class SignupHandler {
+
+	/** Make no instances. */
+	private SignupHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(SignupHandler.class.getName());
-
-	private SignupHandler() {
-	}
 
 	/**
 	 * Creates a new <code>signup.Request</code>.

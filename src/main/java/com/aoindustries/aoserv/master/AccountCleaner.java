@@ -83,6 +83,7 @@ public final class AccountCleaner implements CronJob {
 	}
 
 	private AccountCleaner() {
+		// Do nothing
 	}
 
 	/**

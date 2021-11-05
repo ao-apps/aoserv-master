@@ -51,12 +51,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class TicketHandler /*implements Runnable*/ {
+public abstract class TicketHandler /*implements Runnable*/ {
+
+	/** Make no instances. */
+	private TicketHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(TicketHandler.class.getName());
-
-	private TicketHandler() {
-	}
 
 	// <editor-fold desc="Security">
 	/**

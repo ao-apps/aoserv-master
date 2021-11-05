@@ -34,10 +34,10 @@ import java.util.List;
 /**
  * @author  AO Industries, Inc.
  */
-public final class PkiCertificateHandler {
+public abstract class PkiCertificateHandler {
 
-	private PkiCertificateHandler() {
-	}
+	/** Make no instances. */
+	private PkiCertificateHandler() {throw new AssertionError();}
 
 	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int certificate) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());

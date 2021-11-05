@@ -48,7 +48,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-public final class PostgresqlHandler {
+public abstract class PostgresqlHandler {
+
+	/** Make no instances. */
+	private PostgresqlHandler() {throw new AssertionError();}
 
 	private static final Map<Integer, Boolean> disabledUserServers = new HashMap<>();
 	private static final Map<com.aoindustries.aoserv.client.postgresql.User.Name, Boolean> disabledUsers = new HashMap<>();
@@ -987,6 +990,4 @@ public final class PostgresqlHandler {
 		conn.close(); // Don't hold database connection while connecting to the daemon
 		daemonConnector.stopPostgreSQL(postgresqlServer);
 	}
-
-	private PostgresqlHandler() {}
 }

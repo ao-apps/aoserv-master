@@ -36,12 +36,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class BackupHandler {
+public abstract class BackupHandler {
+
+	/** Make no instances. */
+	private BackupHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(BackupHandler.class.getName());
-
-	private BackupHandler() {
-	}
 
 	public static int addFileReplicationSetting(
 		DatabaseConnection conn,

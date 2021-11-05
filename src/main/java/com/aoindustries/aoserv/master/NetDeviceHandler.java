@@ -32,10 +32,10 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-public final class NetDeviceHandler {
+public abstract class NetDeviceHandler {
 
-	private NetDeviceHandler() {
-	}
+	/** Make no instances. */
+	private NetDeviceHandler() {throw new AssertionError();}
 
 	public static String getDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
 		int host = getHostForDevice(conn, device);

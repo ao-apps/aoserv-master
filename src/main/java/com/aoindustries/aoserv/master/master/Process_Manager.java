@@ -36,13 +36,10 @@ import java.util.Map;
 /**
  * @author  AO Industries, Inc.
  */
-public final class Process_Manager {
+public abstract class Process_Manager {
 
-	/**
-	 * Make no instances.
-	 */
-	private Process_Manager() {
-	}
+	/** Make no instances. */
+	private Process_Manager() {throw new AssertionError();}
 
 	private static final Map<SmallIdentifier, Process> processes = new LinkedHashMap<>();
 

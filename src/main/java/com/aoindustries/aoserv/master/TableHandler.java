@@ -60,7 +60,10 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class TableHandler {
+public abstract class TableHandler {
+
+	/** Make no instances. */
+	private TableHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(TableHandler.class.getName());
 
@@ -77,9 +80,6 @@ public final class TableHandler {
 				System.out.println(": Done");
 			}
 		}
-	}
-
-	private TableHandler() {
 	}
 
 	/**

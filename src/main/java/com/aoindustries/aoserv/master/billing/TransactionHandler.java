@@ -45,9 +45,10 @@ import java.util.Set;
  * @author  AO Industries, Inc.
  */
 // TODO: TransactionService
-public class TransactionHandler {
+public abstract class TransactionHandler {
 
-	private TransactionHandler() {}
+	/** Make no instances. */
+	private TransactionHandler() {throw new AssertionError();}
 
 	private static final String QUERY_MASTER =
 		"select * from billing.\"Transaction\"";

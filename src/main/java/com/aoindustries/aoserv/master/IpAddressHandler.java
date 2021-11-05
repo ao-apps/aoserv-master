@@ -42,7 +42,10 @@ import org.apache.commons.lang3.NotImplementedException;
  *
  * @author  AO Industries, Inc.
  */
-public final class IpAddressHandler {
+public abstract class IpAddressHandler {
+
+	/** Make no instances. */
+	private IpAddressHandler() {throw new AssertionError();}
 
 	public static void checkAccessIpAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
 		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
@@ -441,8 +444,5 @@ public final class IpAddressHandler {
 			getHostForIpAddress(conn, ipAddress),
 			false
 		);
-	}
-
-	private IpAddressHandler() {
 	}
 }

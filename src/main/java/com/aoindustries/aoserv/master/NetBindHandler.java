@@ -41,10 +41,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-public final class NetBindHandler {
+public abstract class NetBindHandler {
 
-	private NetBindHandler() {
-	}
+	/** Make no instances. */
+	private NetBindHandler() {throw new AssertionError();}
 
 	/**
 	 * This lock is used to avoid a race condition between check and insert when allocating net.Bind.

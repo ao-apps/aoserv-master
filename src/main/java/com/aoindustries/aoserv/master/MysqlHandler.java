@@ -55,10 +55,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-public final class MysqlHandler {
+public abstract class MysqlHandler {
 
-	private MysqlHandler() {
-	}
+	/** Make no instances. */
+	private MysqlHandler() {throw new AssertionError();}
 
 	private static final Map<Integer, Boolean> disabledUserServers = new HashMap<>();
 	private static final Map<com.aoindustries.aoserv.client.mysql.User.Name, Boolean> disabledUsers = new HashMap<>();

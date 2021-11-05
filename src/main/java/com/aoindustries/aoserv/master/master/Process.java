@@ -55,6 +55,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
 
 	private Object[] command;
 
+	@SuppressWarnings("deprecation")
 	public Process(
 		SmallIdentifier id,
 		InetAddress host,

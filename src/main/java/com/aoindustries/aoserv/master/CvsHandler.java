@@ -39,7 +39,10 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public final class CvsHandler {
+public abstract class CvsHandler {
+
+	/** Make no instances. */
+	private CvsHandler() {throw new AssertionError();}
 
 	private static final Map<Integer, Boolean> disabledCvsRepositories = new HashMap<>();
 
@@ -347,11 +350,5 @@ public final class CvsHandler {
 			LinuxAccountHandler.getServerForUserServer(conn, lsa),
 			false
 		);
-	}
-
-	/**
-	 * Make no instances.
-	 */
-	private CvsHandler() {
 	}
 }

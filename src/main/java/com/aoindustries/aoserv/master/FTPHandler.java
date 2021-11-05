@@ -34,11 +34,14 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-public final class FTPHandler {
+public abstract class FTPHandler {
+
+	/** Make no instances. */
+	private FTPHandler() {throw new AssertionError();}
 
 	public static void addGuestUser(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		InvalidateList invalidateList,
 		User.Name linuxUser
 	) throws IOException, SQLException {
@@ -103,6 +106,4 @@ public final class FTPHandler {
 			false
 		);
 	}
-
-	private FTPHandler() {}
 }

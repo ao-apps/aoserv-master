@@ -43,12 +43,12 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public final class LinuxServerHandler {
+public abstract class LinuxServerHandler {
+
+	/** Make no instances. */
+	private LinuxServerHandler() {throw new AssertionError();}
 
 	private static final Logger logger = Logger.getLogger(LinuxServerHandler.class.getName());
-
-	private LinuxServerHandler() {
-	}
 
 	public static IntList getServers(DatabaseConnection conn) throws SQLException {
 		return conn.queryIntList("select server from linux.\"Server\"");

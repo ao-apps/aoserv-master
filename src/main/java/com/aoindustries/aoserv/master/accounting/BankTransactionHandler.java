@@ -43,9 +43,10 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class BankTransactionHandler {
+public abstract class BankTransactionHandler {
 
-	private BankTransactionHandler() {}
+	/** Make no instances. */
+	private BankTransactionHandler() {throw new AssertionError();}
 
 	private static final String QUERY_ACCOUNTING =
 		"select\n"

@@ -41,13 +41,10 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public final class NetReputationSetHandler {
+public abstract class NetReputationSetHandler {
 
-	/**
-	 * Make no instances.
-	 */
-	private NetReputationSetHandler() {
-	}
+	/** Make no instances. */
+	private NetReputationSetHandler() {throw new AssertionError();}
 
 	public static Account.Name getAccountForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
 		return conn.queryObject(

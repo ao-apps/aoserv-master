@@ -45,10 +45,10 @@ import java.util.Set;
  *
  * @author  AO Industries, Inc.
  */
-public final class PackageHandler {
+public abstract class PackageHandler {
 
-	private PackageHandler() {
-	}
+	/** Make no instances. */
+	private PackageHandler() {throw new AssertionError();}
 
 	private static final Map<Account.Name, Boolean> disabledPackages=new HashMap<>();
 

@@ -43,9 +43,10 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class SpamMessageHandler {
+public abstract class SpamMessageHandler {
 
-	private SpamMessageHandler() {}
+	/** Make no instances. */
+	private SpamMessageHandler() {throw new AssertionError();}
 
 	private static final String QUERY_MASTER =
 		"select * from email.\"SpamMessage\"";

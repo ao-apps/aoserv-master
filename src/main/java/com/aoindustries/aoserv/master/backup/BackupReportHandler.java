@@ -41,9 +41,10 @@ import java.util.Set;
 /**
  * @author  AO Industries, Inc.
  */
-public class BackupReportHandler {
+public abstract class BackupReportHandler {
 
-	private BackupReportHandler() {}
+	/** Make no instances. */
+	private BackupReportHandler() {throw new AssertionError();}
 
 	private static final String QUERY_MASTER =
 		"select * from backup.\"BackupReport\"";
@@ -141,7 +142,7 @@ public class BackupReportHandler {
 				CursorMode.FETCH,
 				new BackupReport(),
 				QUERY_MASTER
-			); 
+			);
 		}
 
 		@Override

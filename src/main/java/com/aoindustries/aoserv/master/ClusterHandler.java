@@ -86,6 +86,7 @@ public final class ClusterHandler implements CronJob {
 	}
 
 	private ClusterHandler() {
+		// Do nothing
 	}
 
 	/**

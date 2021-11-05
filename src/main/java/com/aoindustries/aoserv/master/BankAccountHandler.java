@@ -36,10 +36,10 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
-public final class BankAccountHandler {
+public abstract class BankAccountHandler {
 
-	private BankAccountHandler() {
-	}
+	/** Make no instances. */
+	private BankAccountHandler() {throw new AssertionError();}
 
 	// TODO: Move to an AccountingHandler or BillingHandler
 	public static void checkIsAccounting(

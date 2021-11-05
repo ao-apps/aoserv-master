@@ -68,13 +68,10 @@ import java.util.Objects;
  *
  * @author  AO Industries, Inc.
  */
-public final class WebHandler {
+public abstract class WebHandler {
 
-	/**
-	 * Make no instances.
-	 */
-	private WebHandler() {
-	}
+	/** Make no instances. */
+	private WebHandler() {throw new AssertionError();}
 
 	/**
 	 * The first port number that may be used for automatic port allocations.

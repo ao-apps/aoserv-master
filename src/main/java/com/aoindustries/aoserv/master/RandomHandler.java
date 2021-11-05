@@ -39,7 +39,10 @@ import java.sql.SQLException;
  *
  * @author  AO Industries, Inc.
  */
-public final class RandomHandler {
+public abstract class RandomHandler {
+
+	/** Make no instances. */
+	private RandomHandler() {throw new AssertionError();}
 
 	private static FifoFile fifoFile;
 
@@ -137,6 +140,4 @@ public final class RandomHandler {
 			return fifo.getOutputStream().available();
 		}
 	}
-
-	private RandomHandler() {}
 }

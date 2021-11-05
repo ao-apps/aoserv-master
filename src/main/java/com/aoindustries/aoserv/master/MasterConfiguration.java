@@ -45,14 +45,14 @@ import java.util.concurrent.ConcurrentMap;
  *
  * @author  AO Industries, Inc.
  */
-public final class MasterConfiguration {
+public abstract class MasterConfiguration {
+
+	/** Make no instances. */
+	private MasterConfiguration() {throw new AssertionError();}
 
 	private static final String PROPERTIES_FILENAME = "/com/aoindustries/aoserv/master/aoserv-master.properties";
 
 	private static Properties props;
-
-	private MasterConfiguration() {
-	}
 
 	private static String getProperty(String name) throws IOException {
 		synchronized (MasterConfiguration.class) {

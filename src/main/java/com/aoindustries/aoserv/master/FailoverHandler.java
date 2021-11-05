@@ -359,6 +359,7 @@ public final class FailoverHandler implements CronJob {
 	}
 
 	private FailoverHandler() {
+		// Do nothing
 	}
 
 	@Override

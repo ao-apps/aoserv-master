@@ -62,10 +62,10 @@ import java.util.Objects;
  *
  * @author  AO Industries, Inc.
  */
-public final class LinuxAccountHandler {
+public abstract class LinuxAccountHandler {
 
-	private LinuxAccountHandler() {
-	}
+	/** Make no instances. */
+	private LinuxAccountHandler() {throw new AssertionError();}
 
 	/** Matches value in /etc/login.defs on CentOS 7 */
 	private static final int

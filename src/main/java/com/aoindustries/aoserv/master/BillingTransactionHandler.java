@@ -52,10 +52,10 @@ import java.util.List;
  *
  * @author  AO Industries, Inc.
  */
-public final class BillingTransactionHandler {
+public abstract class BillingTransactionHandler {
 
-	private BillingTransactionHandler() {
-	}
+	/** Make no instances. */
+	private BillingTransactionHandler() {throw new AssertionError();}
 
 	public static boolean canAccessTransaction(DatabaseConnection conn, RequestSource source, int transaction) throws IOException, SQLException {
 		return AccountHandler.canAccessAccount(conn, source, getAccountForTransaction(conn, transaction));
@@ -195,7 +195,7 @@ public final class BillingTransactionHandler {
 	 */
 	public static void getAccountBalance(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		StreamableOutput out,
 		Account.Name account
 	) throws IOException, SQLException {
@@ -223,8 +223,8 @@ public final class BillingTransactionHandler {
 	 */
 	public static void getAccountBalanceBefore(
 		DatabaseConnection conn,
-		RequestSource source, 
-		StreamableOutput out, 
+		RequestSource source,
+		StreamableOutput out,
 		Account.Name account,
 		long before
 	) throws IOException, SQLException {
@@ -341,7 +341,7 @@ public final class BillingTransactionHandler {
 	 */
 	public static void getTransactionsForAccount(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
 		Account.Name account
@@ -408,7 +408,7 @@ public final class BillingTransactionHandler {
 	 */
 	public static void getTransactionsForAdministrator(
 		DatabaseConnection conn,
-		RequestSource source, 
+		RequestSource source,
 		StreamableOutput out,
 		boolean provideProgress,
 		com.aoindustries.aoserv.client.account.User.Name administrator

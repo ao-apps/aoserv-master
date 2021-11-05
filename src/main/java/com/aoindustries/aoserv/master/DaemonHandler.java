@@ -43,10 +43,10 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public final class DaemonHandler {
+public abstract class DaemonHandler {
 
-	private DaemonHandler() {
-	}
+	/** Make no instances. */
+	private DaemonHandler() {throw new AssertionError();}
 
 	/**
 	 * The amount of time before a daemon will be accessed again once

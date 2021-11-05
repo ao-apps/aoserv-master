@@ -44,13 +44,10 @@ import java.util.Locale;
  *
  * @author  AO Industries, Inc.
  */
-public final class ObjectFactories {
+public abstract class ObjectFactories {
 
-	/**
-	 * Make no instances.
-	 */
-	private ObjectFactories() {
-	}
+	/** Make no instances. */
+	private ObjectFactories() {throw new AssertionError();}
 
 	public static final ObjectFactory<Account.Name> accountNameFactory = result -> {
 		try {
