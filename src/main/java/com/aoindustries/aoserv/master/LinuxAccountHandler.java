@@ -671,6 +671,7 @@ public abstract class LinuxAccountHandler {
 						|| group.equals(Group.CLAMSCAN)
 						|| group.equals(Group.CLAMUPDATE)
 						|| group.equals(Group.INPUT)
+						|| group.equals(Group.JENKINS)
 						|| group.equals(Group.MEMCACHED)
 						|| group.equals(Group.NGINX)
 						|| group.equals(Group.POLKITD)
@@ -804,6 +805,7 @@ public abstract class LinuxAccountHandler {
 					addCentos7SystemUser(User.CHRONY,               ANY_SYSTEM_UID, Group.CHRONY,               null,                                                              "/var/lib/chrony",               Shell.NOLOGIN,  null);
 					addCentos7SystemUser(User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
 					addCentos7SystemUser(User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
+					addCentos7SystemUser(User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
 					addCentos7SystemUser(User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
 					addCentos7SystemUser(User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
 					addCentos7SystemUser(User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
