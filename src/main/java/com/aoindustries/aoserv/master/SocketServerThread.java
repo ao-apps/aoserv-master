@@ -192,7 +192,27 @@ public final class SocketServerThread extends Thread implements RequestSource {
 	public void run() {
 		try {
 			try {
-				this.protocolVersion=AoservProtocol.Version.getVersion(in.readUTF());
+				try {
+					this.protocolVersion=AoservProtocol.Version.getVersion(in.readUTF());
+				} catch(SSLHandshakeException err) {
+					String message = err.getMessage();
+					Level level;
+					if(
+						// Do not routinely log messages that are normal due to monitoring simply connecting only
+						!(
+							// Java 11
+							"Remote host terminated the handshake".equals(message)
+							// Java 8
+							|| "Remote host closed connection during handshake".equals(message)
+						)
+					) {
+						level = Level.FINE;
+					} else {
+						level = Level.SEVERE;
+					}
+					logger.log(level, null, err);
+					return;
+				}
 				process.setAOServProtocol(protocolVersion.getVersion());
 				if(in.readBoolean()) {
 					DomainName daemonServer;
@@ -488,19 +508,6 @@ public final class SocketServerThread extends Thread implements RequestSource {
 				}
 			} catch(EOFException err) {
 				// Normal when disconnecting
-			} catch(SSLHandshakeException err) {
-				String message = err.getMessage();
-				if(
-					message == null
-					|| (
-						!message.equals("Remote host closed connection during handshake")
-						&& !message.equals("no cipher suites in common")
-					)
-				) {
-					logger.log(Level.SEVERE, null, err);
-				} else {
-					logger.log(Level.FINE, null, err);
-				}
 			} catch(SSLException err) {
 				String message = err.getMessage();
 				if(
