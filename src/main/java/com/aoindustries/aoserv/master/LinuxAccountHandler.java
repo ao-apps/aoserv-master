@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -698,6 +698,8 @@ public abstract class LinuxAccountHandler {
 						|| group.equals(Group.RESELLER)
 						// Amazon EC2 cloud-init
 						|| group.equals(Group.CENTOS)
+						// SonarQube
+						|| group.equals(Group.SONARQUBE)
 					)
 				)
 			)
@@ -825,6 +827,8 @@ public abstract class LinuxAccountHandler {
 					addCentos7SystemUser(User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
 					// Amazon EC2 cloud-init
 					addCentos7SystemUser(User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CENTOS_SUDO);
+					// SonarQube
+					addCentos7SystemUser(User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
 				} catch(ValidationException e) {
 					throw new AssertionError("These hard-coded values are valid", e);
 				}
