@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -593,12 +593,6 @@ public abstract class EmailHandler {
 		);
 		return smtpRelay;
 	}
-
-	/**
-	 * Only report each error at most once per 12 hours per package.
-	 */
-	private static final long SMTP_STAT_REPORT_INTERVAL = 12L * 60 * 60 * 1000;
-	private static final Map<String, Long> smtpStatLastReports = new HashMap<>();
 
 	public static int addSpamMessage(
 		DatabaseConnection conn,

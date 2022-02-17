@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2003-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2003-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -36,7 +36,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * The <code>LinuxServerHandler</code> handles all the accesses to the linux.Server table.
@@ -47,8 +46,6 @@ public abstract class LinuxServerHandler {
 
 	/** Make no instances. */
 	private LinuxServerHandler() {throw new AssertionError();}
-
-	private static final Logger logger = Logger.getLogger(LinuxServerHandler.class.getName());
 
 	public static IntList getServers(DatabaseConnection conn) throws SQLException {
 		return conn.queryIntList("select server from linux.\"Server\"");
