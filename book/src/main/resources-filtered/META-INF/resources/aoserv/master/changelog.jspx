@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
 		shortTitle="Changelog"
 		tocLevels="1"
 		datePublished="2020-04-13T15:17:05-05:00"
-		dateModified="2022-02-14T12:23:52-06:00"
+		dateModified="2022-02-18T23:36:29-06:00"
 	>
 		<c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
 			<changelog:release
@@ -49,13 +49,23 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
 				scmUrl="@{project.scm.url}"
 			>
 				<!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
-				<ul>
-					<li>Now properly restoring Thread interrupted state on <code>InterruptedException</code>.</li>
-					<li>Added support for <ao:a href="https://www.jenkins.io/">Jenkins</ao:a>.</li>
-					<li>Added support for <ao:a href="https://www.sonarqube.org/">SonarQube</ao:a>.</li>
-				</ul>
 			</changelog:release>
 		</c:if>
+
+		<changelog:release
+			projectName="@{documented.name}"
+			version="1.89.0"
+			datePublished="2022-02-18T23:36:29-06:00"
+			groupId="@{project.groupId}"
+			artifactId="@{documented.artifactId}"
+			scmUrl="@{project.scm.url}"
+		>
+			<ul>
+				<li>Now properly restoring Thread interrupted state on <code>InterruptedException</code>.</li>
+				<li>Added support for <ao:a href="https://www.jenkins.io/">Jenkins</ao:a>.</li>
+				<li>Added support for <ao:a href="https://www.sonarqube.org/">SonarQube</ao:a>.</li>
+			</ul>
+		</changelog:release>
 
 		<changelog:release
 			projectName="@{documented.name}"
