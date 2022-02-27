@@ -42,7 +42,7 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public abstract class LinuxServerHandler {
+public final class LinuxServerHandler {
 
 	/** Make no instances. */
 	private LinuxServerHandler() {throw new AssertionError();}

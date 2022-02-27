@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2021  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -42,9 +42,6 @@ public final class MasterDatabase extends Database {
 	 */
 	private static MasterDatabase masterDatabase;
 
-	/**
-	 * Make no instances.
-	 */
 	private MasterDatabase() throws IOException {
 		super(
 			MasterConfiguration.getDBDriver(),

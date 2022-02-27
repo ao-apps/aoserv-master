@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2021  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -45,7 +45,7 @@ import java.util.Set;
  * @author  AO Industries, Inc.
  */
 // TODO: TransactionService
-public abstract class TransactionHandler {
+public final class TransactionHandler {
 
 	/** Make no instances. */
 	private TransactionHandler() {throw new AssertionError();}

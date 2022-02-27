@@ -62,7 +62,7 @@ import java.util.Objects;
  *
  * @author  AO Industries, Inc.
  */
-public abstract class LinuxAccountHandler {
+public final class LinuxAccountHandler {
 
 	/** Make no instances. */
 	private LinuxAccountHandler() {throw new AssertionError();}

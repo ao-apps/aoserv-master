@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2002-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2002-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -39,7 +39,7 @@ import java.util.Map;
  *
  * @author  AO Industries, Inc.
  */
-public abstract class CvsHandler {
+public final class CvsHandler {
 
 	/** Make no instances. */
 	private CvsHandler() {throw new AssertionError();}

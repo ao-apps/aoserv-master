@@ -61,7 +61,7 @@ import java.util.logging.Logger;
  *
  * @author  AO Industries, Inc.
  */
-public abstract class EmailHandler {
+public final class EmailHandler {
 
 	/** Make no instances. */
 	private EmailHandler() {throw new AssertionError();}
