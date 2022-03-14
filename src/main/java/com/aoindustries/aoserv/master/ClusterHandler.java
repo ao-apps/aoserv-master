@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -78,9 +78,9 @@ public final class ClusterHandler implements CronJob {
 				started=true;
 				System.out.println("Done");
 				// Run immediately to populate mapping on start-up
-				MasterServer.executorService.submit(() -> {
-					updateMappings();
-				});
+				MasterServer.executorService.submit(() ->
+					updateMappings()
+				);
 			}
 		}
 	}

@@ -758,9 +758,8 @@ public final class TableHandler {
 						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
-								return (out, clientVersion) -> {
+								return (out, clientVersion) ->
 									out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
-								};
 							}
 							@Override
 							public int size() {
@@ -787,9 +786,8 @@ public final class TableHandler {
 						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
-								return (out, clientVersion) -> {
+								return (out, clientVersion) ->
 									out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
-								};
 							}
 							@Override
 							public int size() {
@@ -816,9 +814,8 @@ public final class TableHandler {
 						new AbstractList<>() {
 							@Override
 							public AOServWritable get(int index) {
-								return (out, clientVersion) -> {
+								return (out, clientVersion) ->
 									out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
-								};
 							}
 							@Override
 							public int size() {
