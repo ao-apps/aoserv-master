@@ -78,9 +78,7 @@ public final class ClusterHandler implements CronJob {
 				started=true;
 				System.out.println("Done");
 				// Run immediately to populate mapping on start-up
-				MasterServer.executorService.submit(() ->
-					updateMappings()
-				);
+				MasterServer.executorService.submit(ClusterHandler::updateMappings);
 			}
 		}
 	}
