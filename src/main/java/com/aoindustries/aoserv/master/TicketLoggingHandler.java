@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2009-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2009-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -39,7 +39,7 @@ import java.util.logging.LogRecord;
 /**
  * The same as <code>com.aoindustries.aoserv.client.TicketLoggingHandler</code>
  * except with direct database access.
- * 
+ *
  * @author  AO Industries, Inc.
  */
 public class TicketLoggingHandler extends QueuedHandler {
@@ -61,14 +61,14 @@ public class TicketLoggingHandler extends QueuedHandler {
 	}
 
 	@Override
-	protected void backgroundPublish(Formatter formatter, LogRecord record, String fullReport) throws IOException, SQLException {
+	protected void backgroundPublish(Formatter formatter, LogRecord rec, String fullReport) throws IOException, SQLException {
 		Account.Name rootAccounting = AccountHandler.getRootAccount();
-		Level level = record.getLevel();
+		Level level = rec.getLevel();
 		// Generate the summary from level, prefix classname, method
 		StringBuilder tempSB = new StringBuilder();
 		tempSB.append('[').append(level).append(']');
 		if(summaryPrefix != null && summaryPrefix.length() > 0) tempSB.append(' ').append(summaryPrefix);
-		tempSB.append(" - ").append(record.getSourceClassName()).append(" - ").append(record.getSourceMethodName());
+		tempSB.append(" - ").append(rec.getSourceClassName()).append(" - ").append(rec.getSourceMethodName());
 		String summary = tempSB.toString();
 
 		// Start the transaction
@@ -113,7 +113,7 @@ public class TicketLoggingHandler extends QueuedHandler {
 					invalidateList,
 					existingTicket,
 					null,
-					com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, record),
+					com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, rec),
 					fullReport
 				);
 			} else {

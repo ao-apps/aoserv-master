@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -130,7 +130,7 @@ public final class DnsService implements MasterService {
 		}
 
 		// Add the entry
-		int record = conn.updateInt(
+		int recordId = conn.updateInt(
 			"INSERT INTO dns.\"Record\" (\n"
 			+ "  \"zone\",\n"
 			+ "  \"domain\",\n"
@@ -160,7 +160,7 @@ public final class DnsService implements MasterService {
 		updateDNSZoneSerial(conn, invalidateList, zone);
 
 		// Notify all clients of the update
-		return record;
+		return recordId;
 	}
 
 	/**
@@ -276,16 +276,16 @@ public final class DnsService implements MasterService {
 		DatabaseConnection conn,
 		RequestSource source,
 		InvalidateList invalidateList,
-		int record
+		int recordId
 	) throws IOException, SQLException {
 		// Must be allowed to access this zone record
-		checkAccessRecord(conn, source, "removeRecord", record);
+		checkAccessRecord(conn, source, "removeRecord", recordId);
 
 		// Get the zone associated with the id
-		String zone=getZoneForRecord(conn, record);
+		String zone=getZoneForRecord(conn, recordId);
 
 		// Remove the dns.Record entry
-		conn.update("delete from dns.\"Record\" where id=?", record);
+		conn.update("delete from dns.\"Record\" where id=?", recordId);
 		invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
 		// Update the serial of the zone
@@ -398,10 +398,10 @@ public final class DnsService implements MasterService {
 	}
 	 */
 
-	private static void checkAccessRecord(DatabaseConnection conn, RequestSource source, String action, int record) throws IOException, SQLException {
+	private static void checkAccessRecord(DatabaseConnection conn, RequestSource source, String action, int recordId) throws IOException, SQLException {
 		if(
 			!isDNSAdmin(conn, source)
-			&& !PackageHandler.canAccessPackage(conn, source, getPackageForRecord(conn, record))
+			&& !PackageHandler.canAccessPackage(conn, source, getPackageForRecord(conn, recordId))
 		) {
 			String message=
 				"currentAdministrator="
@@ -409,7 +409,7 @@ public final class DnsService implements MasterService {
 				+" is not allowed to access dns_record: action='"
 				+action
 				+", id="
-				+record
+				+recordId
 			;
 			throw new SQLException(message);
 		}
@@ -450,11 +450,11 @@ public final class DnsService implements MasterService {
 	}
 
 	/* Unused 2018-12-02:
-	public Account.Name getAccountForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
+	public Account.Name getAccountForRecord(DatabaseConnection conn, int recordId) throws IOException, SQLException {
 		return conn.queryObject(
 			ObjectFactories.accountingCodeFactory,
 			"select pk.accounting from dns.\"Record\" nr, dns.\"Zone\" nz, billing.\"Package\" pk where nr.\"zone\"=nz.\"zone\" and nz.package=pk.\"name\" and nr.id=?",
-			record
+			recordId
 		);
 	}
 	 */
@@ -511,19 +511,19 @@ public final class DnsService implements MasterService {
 		}
 	}
 
-	private static String getZoneForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
-		return conn.queryString("select \"zone\" from dns.\"Record\" where id=?", record);
+	private static String getZoneForRecord(DatabaseConnection conn, int recordId) throws IOException, SQLException {
+		return conn.queryString("select \"zone\" from dns.\"Record\" where id=?", recordId);
 	}
 
 	public boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
 		return conn.queryBoolean("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
 	}
 
-	private static Account.Name getPackageForRecord(DatabaseConnection conn, int record) throws IOException, SQLException {
+	private static Account.Name getPackageForRecord(DatabaseConnection conn, int recordId) throws IOException, SQLException {
 		return conn.queryObject(
 			ObjectFactories.accountNameFactory,
 			"select nz.package from dns.\"Record\" nr, dns.\"Zone\" nz where nr.id=? and nr.\"zone\"=nz.\"zone\"",
-			record
+			recordId
 		);
 	}
 
@@ -619,10 +619,10 @@ public final class DnsService implements MasterService {
 		List<String> zones=new SortedArrayList<>();
 
 		for(int c=0;c<records.size();c++) {
-			int record = records.getInt(c);
-			String zone = getZoneForRecord(conn, record);
+			int recordId = records.getInt(c);
+			String zone = getZoneForRecord(conn, recordId);
 			if(!zones.contains(zone)) zones.add(zone);
-			conn.update("update dns.\"Record\" set destination=? where id=?", destination, record);
+			conn.update("update dns.\"Record\" set destination=? where id=?", destination, recordId);
 		}
 
 		// Invalidate the records
