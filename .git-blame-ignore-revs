@@ -1,2 +1,14 @@
 # Significant manual code formatting clean-up…
 3f0382db72de6b2550e4ada4ca21254c57e62129
+# Tab indentation and UNIX newlines
+f472164ede9390e2a5b70aa979b9b4d800a8e1ab
+# Added missing spaces after comma
+657c1a59ee72a9f353d06554bc96207fadf65ccf
+# Removed trailing whitespace
+bb9f0d70f22472a741f685e75bd923f57fa78f78
+# Generics whitespace consistency
+018408b74be12311e1c2bc658084344a5d4e86ff
+# Removed unnecessary space before newline
+87b69446fc10ba87794d5a7d023cad5edd72abed
+# Converted to tab indentation.
+3b8403097b2c34c3420103aad8dad317c399cced
