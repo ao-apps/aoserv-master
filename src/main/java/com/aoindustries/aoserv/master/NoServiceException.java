@@ -30,23 +30,23 @@ import com.aoapps.lang.Throwables;
  */
 public class NoServiceException extends MasterServiceException {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	public NoServiceException(String message) {
-		super(message);
-	}
+  public NoServiceException(String message) {
+    super(message);
+  }
 
-	public NoServiceException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public NoServiceException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-	public NoServiceException(Throwable cause) {
-		super(cause);
-	}
+  public NoServiceException(Throwable cause) {
+    super(cause);
+  }
 
-	static {
-		Throwables.registerSurrogateFactory(NoServiceException.class, (template, cause) ->
-			new NoServiceException(template.getMessage(), cause)
-		);
-	}
+  static {
+    Throwables.registerSurrogateFactory(NoServiceException.class, (template, cause) ->
+      new NoServiceException(template.getMessage(), cause)
+    );
+  }
 }

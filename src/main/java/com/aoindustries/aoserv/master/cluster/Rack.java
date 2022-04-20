@@ -27,8 +27,8 @@ package com.aoindustries.aoserv.master.cluster;
  * @author  AO Industries, Inc.
  */
 public enum Rack {
-	FC_9_07,
-	FC_9_14,
-	FC_9_17,
-	KC
+  FC_9_07,
+  FC_9_14,
+  FC_9_17,
+  KC
 }

@@ -27,6 +27,6 @@ package com.aoindustries.aoserv.master.cluster;
  * @author  AO Industries, Inc.
  */
 public enum ProcessorArchitecture {
-	I686,
-	X86_64
+  I686,
+  X86_64
 }

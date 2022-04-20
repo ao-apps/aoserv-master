@@ -34,33 +34,33 @@ import java.io.IOException;
  */
 public interface RequestSource {
 
-	void cachesInvalidated(IntList tableList) throws IOException;
+  void cachesInvalidated(IntList tableList) throws IOException;
 
-	Identifier getConnectorId();
+  Identifier getConnectorId();
 
-	InvalidateCacheEntry getNextInvalidatedTables();
+  InvalidateCacheEntry getNextInvalidatedTables();
 
-	String getSecurityMessageHeader();
+  String getSecurityMessageHeader();
 
-	User.Name getCurrentAdministrator();
+  User.Name getCurrentAdministrator();
 
-	/**
-	 * Determines if the communication with the client is currently secure.
-	 */
-	boolean isSecure() throws IOException;
+  /**
+   * Determines if the communication with the client is currently secure.
+   */
+  boolean isSecure() throws IOException;
 
-	boolean isClosed();
+  boolean isClosed();
 
-	/**
-	 * Gets the id of the server that this connection is created from.  This
-	 * is only used by connections initiated by daemons.
-	 *
-	 * @return  the id of the server or <code>-1</code> for none
-	 */
-	int getDaemonServer();
+  /**
+   * Gets the id of the server that this connection is created from.  This
+   * is only used by connections initiated by daemons.
+   *
+   * @return  the id of the server or <code>-1</code> for none
+   */
+  int getDaemonServer();
 
-	/**
-	 * Gets the protocol version number supported by the client.
-	 */
-	AoservProtocol.Version getProtocolVersion();
+  /**
+   * Gets the protocol version number supported by the client.
+   */
+  AoservProtocol.Version getProtocolVersion();
 }

@@ -43,93 +43,93 @@ import java.util.Set;
  */
 public class InboxAddress_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.LINUX_ACC_ADDRESSES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.LINUX_ACC_ADDRESSES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new InboxAddress(),
-			"SELECT\n"
-			+ "  ia.*,\n"
-			// Protocol conversion <= 1.30:
-			+ "  us.username\n"
-			+ "FROM\n"
-			+ "  email.\"InboxAddress\" ia\n"
-			+ "  INNER JOIN linux.\"UserServer\" us ON ia.linux_server_account = us.id"
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new InboxAddress(),
+      "SELECT\n"
+      + "  ia.*,\n"
+      // Protocol conversion <= 1.30:
+      + "  us.username\n"
+      + "FROM\n"
+      + "  email.\"InboxAddress\" ia\n"
+      + "  INNER JOIN linux.\"UserServer\" us ON ia.linux_server_account = us.id"
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new InboxAddress(),
-			"SELECT\n"
-			+ "  ia.*,\n"
-			// Protocol conversion <= 1.30:
-			+ "  us.username\n"
-			+ "FROM\n"
-			+ "  master.\"UserHost\"    ms,\n"
-			+ "  email.\"Domain\"       ed,\n"
-			+ "  email.\"Address\"      ea,\n"
-			+ "  email.\"InboxAddress\" ia,\n"
-			+ "  linux.\"UserServer\"   us\n"
-			+ "WHERE\n"
-			+ "      ms.username             = ?\n"
-			+ "  AND ms.server               = ed.ao_server\n"
-			+ "  AND ed.id                   = ea.domain\n"
-			+ "  AND ea.id                   = ia.email_address\n"
-			+ "  AND ia.linux_server_account = us.id",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new InboxAddress(),
+      "SELECT\n"
+      + "  ia.*,\n"
+      // Protocol conversion <= 1.30:
+      + "  us.username\n"
+      + "FROM\n"
+      + "  master.\"UserHost\"    ms,\n"
+      + "  email.\"Domain\"       ed,\n"
+      + "  email.\"Address\"      ea,\n"
+      + "  email.\"InboxAddress\" ia,\n"
+      + "  linux.\"UserServer\"   us\n"
+      + "WHERE\n"
+      + "      ms.username             = ?\n"
+      + "  AND ms.server               = ed.ao_server\n"
+      + "  AND ed.id                   = ea.domain\n"
+      + "  AND ea.id                   = ia.email_address\n"
+      + "  AND ia.linux_server_account = us.id",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new InboxAddress(),
-			"SELECT\n"
-			+ "  ia.*,\n"
-			// Protocol conversion <= 1.30:
-			+ "  us.username\n"
-			+ "FROM\n"
-			+ "  account.\"User\"       un,\n"
-			+ "  billing.\"Package\"    pk1,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\"    pk2,\n"
-			+ "  email.\"Domain\"       ed,\n"
-			+ "  email.\"Address\"      ea,\n"
-			+ "  email.\"InboxAddress\" ia,\n"
-			+ "  linux.\"UserServer\"   us\n"
-			+ "WHERE\n"
-			+ "      un.username             = ?\n"
-			+ "  AND un.package              = pk1.name\n"
-			+ "  AND (\n"
-			+ TableHandler.PK1_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  AND bu1.accounting          = pk2.accounting\n"
-			+ "  AND pk2.name                = ed.package\n"
-			+ "  AND ed.id                   = ea.domain\n"
-			+ "  AND ea.id                   = ia.email_address\n"
-			+ "  AND ia.linux_server_account = us.id",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new InboxAddress(),
+      "SELECT\n"
+      + "  ia.*,\n"
+      // Protocol conversion <= 1.30:
+      + "  us.username\n"
+      + "FROM\n"
+      + "  account.\"User\"       un,\n"
+      + "  billing.\"Package\"    pk1,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  billing.\"Package\"    pk2,\n"
+      + "  email.\"Domain\"       ed,\n"
+      + "  email.\"Address\"      ea,\n"
+      + "  email.\"InboxAddress\" ia,\n"
+      + "  linux.\"UserServer\"   us\n"
+      + "WHERE\n"
+      + "      un.username             = ?\n"
+      + "  AND un.package              = pk1.name\n"
+      + "  AND (\n"
+      + TableHandler.PK1_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  AND bu1.accounting          = pk2.accounting\n"
+      + "  AND pk2.name                = ed.package\n"
+      + "  AND ed.id                   = ea.domain\n"
+      + "  AND ea.id                   = ia.email_address\n"
+      + "  AND ia.linux_server_account = us.id",
+      source.getCurrentAdministrator()
+    );
+  }
 }

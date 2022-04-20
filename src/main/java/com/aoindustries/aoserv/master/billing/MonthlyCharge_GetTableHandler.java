@@ -45,59 +45,59 @@ import java.util.Set;
  */
 public class MonthlyCharge_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.MONTHLY_CHARGES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.MONTHLY_CHARGES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new MonthlyCharge(),
-			"select * from billing.\"MonthlyCharge\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new MonthlyCharge(),
+      "select * from billing.\"MonthlyCharge\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		if(AccountHandler.canSeePrices(conn, source)) {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.AUTO,
-				new MonthlyCharge(),
-				"select\n"
-				+ "  mc.*\n"
-				+ "from\n"
-				+ "  account.\"User\" un,\n"
-				+ "  billing.\"Package\" pk1,\n"
-				+ TableHandler.BU1_PARENTS_JOIN
-				+ "  billing.\"Package\" pk2,\n"
-				+ "  billing.\"MonthlyCharge\" mc\n"
-				+ "where\n"
-				+ "  un.username=?\n"
-				+ "  and un.package=pk1.name\n"
-				+ "  and (\n"
-				+ TableHandler.PK1_BU1_PARENTS_WHERE
-				+ "  )\n"
-				+ "  and bu1.accounting=pk2.accounting\n"
-				+ "  and pk2.name=mc.package",
-				source.getCurrentAdministrator()
-			);
-		} else {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-		}
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    if (AccountHandler.canSeePrices(conn, source)) {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new MonthlyCharge(),
+        "select\n"
+        + "  mc.*\n"
+        + "from\n"
+        + "  account.\"User\" un,\n"
+        + "  billing.\"Package\" pk1,\n"
+        + TableHandler.BU1_PARENTS_JOIN
+        + "  billing.\"Package\" pk2,\n"
+        + "  billing.\"MonthlyCharge\" mc\n"
+        + "where\n"
+        + "  un.username=?\n"
+        + "  and un.package=pk1.name\n"
+        + "  and (\n"
+        + TableHandler.PK1_BU1_PARENTS_WHERE
+        + "  )\n"
+        + "  and bu1.accounting=pk2.accounting\n"
+        + "  and pk2.name=mc.package",
+        source.getCurrentAdministrator()
+      );
+    } else {
+      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    }
+  }
 }

@@ -43,94 +43,94 @@ import java.util.Set;
  */
 public class Account_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.BUSINESSES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.BUSINESSES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Account(),
-			"select * from account.\"Account\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Account(),
+      "select * from account.\"Account\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Account(),
-			"select distinct\n"
-			+ "  bu.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  account.\"AccountHost\" bs,\n"
-			+ "  account.\"Account\" bu\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=bs.server\n"
-			+ "  and bs.accounting=bu.accounting",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Account(),
+      "select distinct\n"
+      + "  bu.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms,\n"
+      + "  account.\"AccountHost\" bs,\n"
+      + "  account.\"Account\" bu\n"
+      + "where\n"
+      + "  ms.username=?\n"
+      + "  and ms.server=bs.server\n"
+      + "  and bs.accounting=bu.accounting",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Account(),
-			"WITH RECURSIVE accounts(accounting) AS (\n"
-			+ "  SELECT\n"
-			+ "    ac.*\n"
-			+ "  FROM\n"
-			+ "               account.\"User\"    un\n"
-			+ "    INNER JOIN billing.\"Package\" pk ON un.package    = pk.name\n"
-			+ "    INNER JOIN account.\"Account\" ac ON pk.accounting = ac.accounting\n"
-			+ "  WHERE\n"
-			+ "    un.username=?\n"
-			+ "UNION ALL\n"
-			+ "  SELECT a.* FROM\n"
-			+ "    accounts\n"
-			+ "    INNER JOIN account.\"Account\" a ON accounts.accounting = a.parent\n"
-			+ ")\n"
-			+ "SELECT * FROM accounts",
-			source.getCurrentAdministrator()
-		);
-		/*
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			new Account(),
-			"select\n"
-			+ "  bu1.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ TableHandler.BU1_PARENTS_JOIN_NO_COMMA
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK_BU1_PARENTS_WHERE
-			+ "  )",
-			source.getUsername()
-		);
-		 */
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Account(),
+      "WITH RECURSIVE accounts(accounting) AS (\n"
+      + "  SELECT\n"
+      + "    ac.*\n"
+      + "  FROM\n"
+      + "               account.\"User\"    un\n"
+      + "    INNER JOIN billing.\"Package\" pk ON un.package    = pk.name\n"
+      + "    INNER JOIN account.\"Account\" ac ON pk.accounting = ac.accounting\n"
+      + "  WHERE\n"
+      + "    un.username=?\n"
+      + "UNION ALL\n"
+      + "  SELECT a.* FROM\n"
+      + "    accounts\n"
+      + "    INNER JOIN account.\"Account\" a ON accounts.accounting = a.parent\n"
+      + ")\n"
+      + "SELECT * FROM accounts",
+      source.getCurrentAdministrator()
+    );
+    /*
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      new Account(),
+      "select\n"
+      + "  bu1.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk,\n"
+      + TableHandler.BU1_PARENTS_JOIN_NO_COMMA
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk.name\n"
+      + "  and (\n"
+      + TableHandler.PK_BU1_PARENTS_WHERE
+      + "  )",
+      source.getUsername()
+    );
+     */
+  }
 }

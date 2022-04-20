@@ -35,30 +35,36 @@ import java.sql.SQLException;
  */
 public final class NetDeviceHandler {
 
-	/** Make no instances. */
-	private NetDeviceHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private NetDeviceHandler() {
+    throw new AssertionError();
+  }
 
-	public static String getDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
-		int host = getHostForDevice(conn, device);
-		if(!NetHostHandler.isLinuxServer(conn, host)) throw new SQLException("Host is not a Linux server: " + host);
-		NetHostHandler.checkAccessHost(conn, source, "getDeviceBondingReport", host);
+  public static String getDeviceBondingReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+    int host = getHostForDevice(conn, device);
+    if (!NetHostHandler.isLinuxServer(conn, host)) {
+      throw new SQLException("Host is not a Linux server: " + host);
+    }
+    NetHostHandler.checkAccessHost(conn, source, "getDeviceBondingReport", host);
 
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
-		conn.close(); // Don't hold database connection while connecting to the daemon
-		return daemonConnector.getNetDeviceBondingReport(device);
-	}
+    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
+    conn.close(); // Don't hold database connection while connecting to the daemon
+    return daemonConnector.getNetDeviceBondingReport(device);
+  }
 
-	public static String getDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
-		int host = getHostForDevice(conn, device);
-		if(!NetHostHandler.isLinuxServer(conn, host)) throw new SQLException("Host is not a Linux server: " + host);
-		NetHostHandler.checkAccessHost(conn, source, "getDeviceStatisticsReport", host);
+  public static String getDeviceStatisticsReport(DatabaseConnection conn, RequestSource source, int device) throws IOException, SQLException {
+    int host = getHostForDevice(conn, device);
+    if (!NetHostHandler.isLinuxServer(conn, host)) {
+      throw new SQLException("Host is not a Linux server: " + host);
+    }
+    NetHostHandler.checkAccessHost(conn, source, "getDeviceStatisticsReport", host);
 
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
-		conn.close(); // Don't hold database connection while connecting to the daemon
-		return daemonConnector.getNetDeviceStatisticsReport(device);
-	}
+    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
+    conn.close(); // Don't hold database connection while connecting to the daemon
+    return daemonConnector.getNetDeviceStatisticsReport(device);
+  }
 
-	public static int getHostForDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
-		return conn.queryInt("select server from net.\"Device\" where id=?", device);
-	}
+  public static int getHostForDevice(DatabaseConnection conn, int device) throws IOException, SQLException {
+    return conn.queryInt("select server from net.\"Device\" where id=?", device);
+  }
 }

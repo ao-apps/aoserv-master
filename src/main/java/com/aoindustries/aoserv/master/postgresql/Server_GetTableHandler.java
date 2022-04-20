@@ -43,66 +43,66 @@ import java.util.Set;
  */
 public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.POSTGRES_SERVERS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.POSTGRES_SERVERS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  *\n"
-			+ "FROM\n"
-			+ "  postgresql.\"Server\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  *\n"
+      + "FROM\n"
+      + "  postgresql.\"Server\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  ps.*\n"
-			+ "FROM\n"
-			+ "             master.\"UserHost\"   ms\n"
-			+ "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
-			+ "WHERE\n"
-			+ "  ms.username=?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  ps.*\n"
+      + "FROM\n"
+      + "             master.\"UserHost\"   ms\n"
+      + "  INNER JOIN postgresql.\"Server\" ps ON ms.server = ps.ao_server\n"
+      + "WHERE\n"
+      + "  ms.username=?",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  ps.*\n"
-			+ "FROM\n"
-			+ "             account.\"User\"        un\n"
-			+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
-			+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-			+ "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"
-			+ "WHERE\n"
-			+ "  un.username = ?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  ps.*\n"
+      + "FROM\n"
+      + "             account.\"User\"        un\n"
+      + "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
+      + "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
+      + "  INNER JOIN postgresql.\"Server\"   ps ON bs.server     = ps.ao_server\n"
+      + "WHERE\n"
+      + "  un.username = ?",
+      source.getCurrentAdministrator()
+    );
+  }
 }

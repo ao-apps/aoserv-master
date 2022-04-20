@@ -43,69 +43,69 @@ import java.util.Set;
  */
 public class AccountHost_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.BUSINESS_SERVERS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.BUSINESS_SERVERS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new AccountHost(),
-			"select * from account.\"AccountHost\""
-		); 
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new AccountHost(),
+      "select * from account.\"AccountHost\""
+    ); 
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new AccountHost(),
-			"select distinct\n"
-			+ "  bs.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  account.\"AccountHost\" bs\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=bs.server",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new AccountHost(),
+      "select distinct\n"
+      + "  bs.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms,\n"
+      + "  account.\"AccountHost\" bs\n"
+      + "where\n"
+      + "  ms.username=?\n"
+      + "  and ms.server=bs.server",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new AccountHost(),
-			"select\n"
-			+ "  bs.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  account.\"AccountHost\" bs\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=bs.accounting",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new AccountHost(),
+      "select\n"
+      + "  bs.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  account.\"AccountHost\" bs\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk.name\n"
+      + "  and (\n"
+      + TableHandler.PK_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  and bu1.accounting=bs.accounting",
+      source.getCurrentAdministrator()
+    );
+  }
 }

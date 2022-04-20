@@ -46,56 +46,58 @@ import java.util.Set;
  */
 public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.DISTRO_FILES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.DISTRO_FILES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		if(source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107) <= 0) {
-			MasterServer.writeObjects(source, out, false, Collections.emptyList());
-		} else {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new DistroFile(),
-				"select * from \"distribution.management\".\"DistroFile\""
-			);
-		}
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107) <= 0) {
+      MasterServer.writeObjects(source, out, false, Collections.emptyList());
+    } else {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new DistroFile(),
+        "select * from \"distribution.management\".\"DistroFile\""
+      );
+    }
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		// Restrict to the operating system versions accessible to this user
-		IntList osVersions = TableHandler.getOperatingSystemVersions(conn, source);
-		if(osVersions.isEmpty()) {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-		} else {
-			StringBuilder sql = new StringBuilder();
-			sql.append("select * from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
-			for(int i = 0; i < osVersions.size(); i++) {
-				if(i > 0) sql.append(',');
-				sql.append(osVersions.getInt(i));
-			}
-			sql.append(')');
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new DistroFile(),
-				sql.toString()
-			);
-		}
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    // Restrict to the operating system versions accessible to this user
+    IntList osVersions = TableHandler.getOperatingSystemVersions(conn, source);
+    if (osVersions.isEmpty()) {
+      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    } else {
+      StringBuilder sql = new StringBuilder();
+      sql.append("select * from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
+      for (int i = 0; i < osVersions.size(); i++) {
+        if (i > 0) {
+          sql.append(',');
+        }
+        sql.append(osVersions.getInt(i));
+      }
+      sql.append(')');
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new DistroFile(),
+        sql.toString()
+      );
+    }
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+  }
 }

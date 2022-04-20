@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class Encoding_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.POSTGRES_ENCODINGS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.POSTGRES_ENCODINGS);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new Encoding(),
-			"select * from postgresql.\"Encoding\""
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new Encoding(),
+      "select * from postgresql.\"Encoding\""
+    );
+  }
 }

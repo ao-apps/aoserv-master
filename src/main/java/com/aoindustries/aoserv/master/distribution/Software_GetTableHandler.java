@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class Software_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.TECHNOLOGY_NAMES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.TECHNOLOGY_NAMES);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new Software(),
-			"select * from distribution.\"Software\""
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new Software(),
+      "select * from distribution.\"Software\""
+    );
+  }
 }

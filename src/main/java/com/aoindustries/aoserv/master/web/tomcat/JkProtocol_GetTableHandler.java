@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class JkProtocol_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.HTTPD_JK_PROTOCOLS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.HTTPD_JK_PROTOCOLS);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new JkProtocol(),
-			"select * from \"web.tomcat\".\"JkProtocol\""
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new JkProtocol(),
+      "select * from \"web.tomcat\".\"JkProtocol\""
+    );
+  }
 }

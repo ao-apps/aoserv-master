@@ -44,54 +44,54 @@ import java.util.Set;
  */
 public class SoftwareVersion_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.TECHNOLOGY_VERSIONS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.TECHNOLOGY_VERSIONS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new SoftwareVersion(),
-			"select * from distribution.\"SoftwareVersion\""
-		); 
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new SoftwareVersion(),
+      "select * from distribution.\"SoftwareVersion\""
+    ); 
+  }
 
-	private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new SoftwareVersion(),
-			"select\n"
-			+ "  id,\n"
-			+ "  name,\n"
-			+ "  version,\n"
-			+ "  updated,\n"
-			+ "  ?,\n"
-			+ "  operating_system_version,\n"
-			+ "  disable_time,\n"
-			+ "  disable_reason\n"
-			+ "from\n"
-			+ "  distribution.\"SoftwareVersion\"",
-			AoservProtocol.FILTERED
-		);
-	}
+  private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new SoftwareVersion(),
+      "select\n"
+      + "  id,\n"
+      + "  name,\n"
+      + "  version,\n"
+      + "  updated,\n"
+      + "  ?,\n"
+      + "  operating_system_version,\n"
+      + "  disable_time,\n"
+      + "  disable_reason\n"
+      + "from\n"
+      + "  distribution.\"SoftwareVersion\"",
+      AoservProtocol.FILTERED
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		getTableFiltered(conn, source, out, provideProgress, tableID);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableID);
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		getTableFiltered(conn, source, out, provideProgress, tableID);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableID);
+  }
 }

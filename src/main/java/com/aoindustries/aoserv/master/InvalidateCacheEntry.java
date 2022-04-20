@@ -33,29 +33,29 @@ import com.aoapps.collections.IntList;
  */
 public final class InvalidateCacheEntry {
 
-	private final IntList invalidateList;
-	private final int host;
-	private final Long cacheSyncID;
+  private final IntList invalidateList;
+  private final int host;
+  private final Long cacheSyncID;
 
-	public InvalidateCacheEntry(
-		IntList invalidateList,
-		int host,
-		Long cacheSyncID
-	) {
-		this.invalidateList = invalidateList;
-		this.host = host;
-		this.cacheSyncID = cacheSyncID;
-	}
+  public InvalidateCacheEntry(
+    IntList invalidateList,
+    int host,
+    Long cacheSyncID
+  ) {
+    this.invalidateList = invalidateList;
+    this.host = host;
+    this.cacheSyncID = cacheSyncID;
+  }
 
-	public IntList getInvalidateList() {
-		return invalidateList;
-	}
+  public IntList getInvalidateList() {
+    return invalidateList;
+  }
 
-	public int getHost() {
-		return host;
-	}
+  public int getHost() {
+    return host;
+  }
 
-	public Long getCacheSyncID() {
-		return cacheSyncID;
-	}
+  public Long getCacheSyncID() {
+    return cacheSyncID;
+  }
 }

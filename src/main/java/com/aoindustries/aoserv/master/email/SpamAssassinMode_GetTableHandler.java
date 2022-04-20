@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class SpamAssassinMode_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.EMAIL_SPAMASSASSIN_INTEGRATION_MODES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.EMAIL_SPAMASSASSIN_INTEGRATION_MODES);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new SpamAssassinMode(),
-			"select * from email.\"SpamAssassinMode\""
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new SpamAssassinMode(),
+      "select * from email.\"SpamAssassinMode\""
+    );
+  }
 }

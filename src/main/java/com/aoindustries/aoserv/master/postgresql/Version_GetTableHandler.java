@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class Version_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.POSTGRES_VERSIONS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.POSTGRES_VERSIONS);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new Version(),
-			"select * from postgresql.\"Version\""
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new Version(),
+      "select * from postgresql.\"Version\""
+    );
+  }
 }

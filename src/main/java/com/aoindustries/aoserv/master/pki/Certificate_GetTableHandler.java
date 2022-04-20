@@ -43,70 +43,70 @@ import java.util.Set;
  */
 public class Certificate_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.SSL_CERTIFICATES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.SSL_CERTIFICATES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Certificate(),
-			"select * from pki.\"Certificate\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Certificate(),
+      "select * from pki.\"Certificate\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Certificate(),
-			"select\n"
-			+ "  sc.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms\n"
-			+ "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
-			+ "where\n"
-			+ "  ms.username=?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Certificate(),
+      "select\n"
+      + "  sc.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms\n"
+      + "  inner join pki.\"Certificate\" sc on ms.server=sc.ao_server\n"
+      + "where\n"
+      + "  ms.username=?",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Certificate(),
-			"select\n"
-			+ "  sc.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk1,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\" pk2,\n"
-			+ "  pki.\"Certificate\" sc\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk1.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK1_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=pk2.accounting\n"
-			+ "  and pk2.id=sc.package",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Certificate(),
+      "select\n"
+      + "  sc.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk1,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  billing.\"Package\" pk2,\n"
+      + "  pki.\"Certificate\" sc\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk1.name\n"
+      + "  and (\n"
+      + TableHandler.PK1_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  and bu1.accounting=pk2.accounting\n"
+      + "  and pk2.id=sc.package",
+      source.getCurrentAdministrator()
+    );
+  }
 }

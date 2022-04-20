@@ -41,32 +41,32 @@ import java.util.Set;
  */
 public class ForeignKey_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.SCHEMA_FOREIGN_KEYS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.SCHEMA_FOREIGN_KEYS);
+  }
 
-	@Override
-	protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new ForeignKey(),
-			"select\n"
-			+ "  sfk.*\n"
-			+ "from\n"
-			+ "  \"schema\".\"AoservProtocol\" client_ap,\n"
-			+ "  \"schema\".\"ForeignKey\" sfk\n"
-			+ "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on sfk.\"sinceVersion\" = \"sinceVersion\".version\n"
-			+ "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on sfk.\"lastVersion\"  =  \"lastVersion\".version\n"
-			+ "where\n"
-			+ "  client_ap.version=?\n"
-			+ "  and client_ap.created >= \"sinceVersion\".created\n"
-			+ "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)",
-			source.getProtocolVersion().getVersion()
-		);
-	}
+  @Override
+  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new ForeignKey(),
+      "select\n"
+      + "  sfk.*\n"
+      + "from\n"
+      + "  \"schema\".\"AoservProtocol\" client_ap,\n"
+      + "  \"schema\".\"ForeignKey\" sfk\n"
+      + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on sfk.\"sinceVersion\" = \"sinceVersion\".version\n"
+      + "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on sfk.\"lastVersion\"  =  \"lastVersion\".version\n"
+      + "where\n"
+      + "  client_ap.version=?\n"
+      + "  and client_ap.created >= \"sinceVersion\".created\n"
+      + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)",
+      source.getProtocolVersion().getVersion()
+    );
+  }
 }

@@ -30,23 +30,23 @@ import com.aoapps.lang.Throwables;
  */
 public class MasterServiceException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	public MasterServiceException(String message) {
-		super(message);
-	}
+  public MasterServiceException(String message) {
+    super(message);
+  }
 
-	public MasterServiceException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public MasterServiceException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-	public MasterServiceException(Throwable cause) {
-		super(cause);
-	}
+  public MasterServiceException(Throwable cause) {
+    super(cause);
+  }
 
-	static {
-		Throwables.registerSurrogateFactory(MasterServiceException.class, (template, cause) ->
-			new MasterServiceException(template.getMessage(), cause)
-		);
-	}
+  static {
+    Throwables.registerSurrogateFactory(MasterServiceException.class, (template, cause) ->
+      new MasterServiceException(template.getMessage(), cause)
+    );
+  }
 }

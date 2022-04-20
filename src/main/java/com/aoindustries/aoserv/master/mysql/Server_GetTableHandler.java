@@ -43,72 +43,72 @@ import java.util.Set;
  */
 public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.MYSQL_SERVERS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.MYSQL_SERVERS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  ms.*,\n"
-			// Protocol conversion
-			+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
-			+ "FROM\n"
-			+ "  mysql.\"Server\" ms"
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  ms.*,\n"
+      // Protocol conversion
+      + "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+      + "FROM\n"
+      + "  mysql.\"Server\" ms"
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  ms.*,\n"
-			// Protocol conversion
-			+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
-			+ "from\n"
-			+ "             master.\"UserHost\" uh\n"
-			+ "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
-			+ "where\n"
-			+ "  uh.username=?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  ms.*,\n"
+      // Protocol conversion
+      + "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+      + "from\n"
+      + "             master.\"UserHost\" uh\n"
+      + "  INNER JOIN mysql.\"Server\"    ms ON uh.server=ms.ao_server\n"
+      + "where\n"
+      + "  uh.username=?",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new Server(),
-			"SELECT\n"
-			+ "  ms.*,\n"
-			// Protocol conversion
-			+ "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
-			+ "FROM\n"
-			+ "             account.\"User\"        un\n"
-			+ "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
-			+ "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
-			+ "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
-			+ "WHERE\n"
-			+ "  un.username=?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new Server(),
+      "SELECT\n"
+      + "  ms.*,\n"
+      // Protocol conversion
+      + "  (SELECT nb.package FROM net.\"Bind\" nb WHERE ms.bind = nb.id) AS \"packageName\"\n"
+      + "FROM\n"
+      + "             account.\"User\"        un\n"
+      + "  INNER JOIN billing.\"Package\"     pk ON un.package    = pk.name\n"
+      + "  INNER JOIN account.\"AccountHost\" bs ON pk.accounting = bs.accounting\n"
+      + "  INNER JOIN mysql.\"Server\"        ms ON bs.server     = ms.ao_server\n"
+      + "WHERE\n"
+      + "  un.username=?",
+      source.getCurrentAdministrator()
+    );
+  }
 }

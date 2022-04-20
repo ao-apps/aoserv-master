@@ -45,43 +45,45 @@ import java.util.Set;
  */
 public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.MASTER_PROCESSES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.MASTER_PROCESSES);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjectsSynced(
-			source,
-			out,
-			provideProgress,
-			Process_Manager.getSnapshot()
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjectsSynced(
+      source,
+      out,
+      provideProgress,
+      Process_Manager.getSnapshot()
+    );
+  }
 
-	private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		List<Process> processesCopy = Process_Manager.getSnapshot();
-		List<Process> filtered = new ArrayList<>();
-		Iterator<Process> iter = processesCopy.iterator();
-		while(iter.hasNext()) {
-			Process process = iter.next();
-			com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
-			if(
-				effectiveUser != null
-				&& AccountUserHandler.canAccessUser(conn, source, effectiveUser)
-			) filtered.add(process);
-		}
-		MasterServer.writeObjectsSynced(source, out, provideProgress, filtered);
-	}
+  private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    List<Process> processesCopy = Process_Manager.getSnapshot();
+    List<Process> filtered = new ArrayList<>();
+    Iterator<Process> iter = processesCopy.iterator();
+    while (iter.hasNext()) {
+      Process process = iter.next();
+      com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
+      if (
+        effectiveUser != null
+        && AccountUserHandler.canAccessUser(conn, source, effectiveUser)
+      ) {
+        filtered.add(process);
+      }
+    }
+    MasterServer.writeObjectsSynced(source, out, provideProgress, filtered);
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		getTableFiltered(conn, source, out, provideProgress, tableID);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableID);
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		getTableFiltered(conn, source, out, provideProgress, tableID);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableID);
+  }
 }

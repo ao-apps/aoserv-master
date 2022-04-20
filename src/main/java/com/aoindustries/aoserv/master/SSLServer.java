@@ -44,84 +44,84 @@ import javax.net.ssl.SSLServerSocketFactory;
  */
 public class SSLServer extends TCPServer {
 
-	private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
+  private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
 
-	/**
-	 * The protocol of this server.
-	 */
-	static final String PROTOCOL_SSL = "ssl";
+  /**
+   * The protocol of this server.
+   */
+  static final String PROTOCOL_SSL = "ssl";
 
-	/**
-	 * Creates a new, running <code>AOServServer</code>.
-	 */
-	SSLServer(String serverBind, int serverPort) {
-		super(serverBind, serverPort);
-	}
+  /**
+   * Creates a new, running <code>AOServServer</code>.
+   */
+  SSLServer(String serverBind, int serverPort) {
+    super(serverBind, serverPort);
+  }
 
-	@Override
-	public String getProtocol() {
-		return PROTOCOL_SSL;
-	}
+  @Override
+  public String getProtocol() {
+    return PROTOCOL_SSL;
+  }
 
-	/**
-	 * Determines if communication on this server is secure.
-	 */
-	@Override
-	public boolean isSecure() throws UnknownHostException {
-		return true;
-	}
+  /**
+   * Determines if communication on this server is secure.
+   */
+  @Override
+  public boolean isSecure() throws UnknownHostException {
+    return true;
+  }
 
-	@Override
-	public void run() {
-		try {
-			System.setProperty(
-				"javax.net.ssl.keyStorePassword",
-				MasterConfiguration.getSSLKeystorePassword()
-			);
-			System.setProperty(
-				"javax.net.ssl.keyStore",
-				MasterConfiguration.getSSLKeystorePath()
-			);
-		} catch(IOException err) {
-			logger.log(Level.SEVERE, null, err);
-			return;
-		}
+  @Override
+  public void run() {
+    try {
+      System.setProperty(
+        "javax.net.ssl.keyStorePassword",
+        MasterConfiguration.getSSLKeystorePassword()
+      );
+      System.setProperty(
+        "javax.net.ssl.keyStore",
+        MasterConfiguration.getSSLKeystorePath()
+      );
+    } catch (IOException err) {
+      logger.log(Level.SEVERE, null, err);
+      return;
+    }
 
-		SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
-		while (!Thread.currentThread().isInterrupted()) {
-			try {
-				InetAddress address = InetAddress.getByName(serverBind);
-				synchronized(System.out) {
-					System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
-				}
-				try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
-					while (!Thread.currentThread().isInterrupted()) {
-						Socket socket = SS.accept();
-						incConnectionCount();
-						try {
-							socket.setKeepAlive(true);
-							socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
-							//socket.setTcpNoDelay(true);
-							new SocketServerThread(this, socket).start();
-						} catch(ThreadDeath td) {
-							throw td;
-						} catch(Throwable t) {
-							logger.log(Level.SEVERE, "serverPort=" + serverPort + ", address=" + address, t);
-						}
-					}
-				}
-			} catch (ThreadDeath td) {
-				throw td;
-			} catch (Throwable t) {
-				logger.log(Level.SEVERE, null, t);
-			}
-			try {
-				Thread.sleep(15000);
-			} catch (InterruptedException err) {
-				logger.log(Level.WARNING, null, err);
-				// Restore the interrupted status
-				Thread.currentThread().interrupt();
-			}
-		}
-	}
+    SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+    while (!Thread.currentThread().isInterrupted()) {
+      try {
+        InetAddress address = InetAddress.getByName(serverBind);
+        synchronized (System.out) {
+          System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
+        }
+        try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
+          while (!Thread.currentThread().isInterrupted()) {
+            Socket socket = SS.accept();
+            incConnectionCount();
+            try {
+              socket.setKeepAlive(true);
+              socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
+              //socket.setTcpNoDelay(true);
+              new SocketServerThread(this, socket).start();
+            } catch (ThreadDeath td) {
+              throw td;
+            } catch (Throwable t) {
+              logger.log(Level.SEVERE, "serverPort=" + serverPort + ", address=" + address, t);
+            }
+          }
+        }
+      } catch (ThreadDeath td) {
+        throw td;
+      } catch (Throwable t) {
+        logger.log(Level.SEVERE, null, t);
+      }
+      try {
+        Thread.sleep(15000);
+      } catch (InterruptedException err) {
+        logger.log(Level.WARNING, null, err);
+        // Restore the interrupted status
+        Thread.currentThread().interrupt();
+      }
+    }
+  }
 }

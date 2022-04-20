@@ -46,65 +46,67 @@ import java.util.Set;
  */
 public final class SpamMessageHandler {
 
-	/** Make no instances. */
-	private SpamMessageHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private SpamMessageHandler() {
+    throw new AssertionError();
+  }
 
-	private static final String QUERY_MASTER =
-		"select * from email.\"SpamMessage\"";
+  private static final String QUERY_MASTER =
+    "select * from email.\"SpamMessage\"";
 
-	public static class GetObject implements TableHandler.GetObjectHandler {
+  public static class GetObject implements TableHandler.GetObjectHandler {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.SPAM_EMAIL_MESSAGES);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.SPAM_EMAIL_MESSAGES);
+    }
 
-		@Override
-		public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int spamMessage = in.readCompressedInt();
-			if(masterUser!=null && masterServers!=null && masterServers.length==0) {
-				MasterServer.writeObject(
-					conn,
-					source,
-					out,
-					new SpamMessage(),
-					QUERY_MASTER + " where id=?",
-					spamMessage
-				);
-			} else {
-				out.writeByte(AoservProtocol.DONE);
-			}
-		}
-	}
+    @Override
+    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      int spamMessage = in.readCompressedInt();
+      if (masterUser != null && masterServers != null && masterServers.length == 0) {
+        MasterServer.writeObject(
+          conn,
+          source,
+          out,
+          new SpamMessage(),
+          QUERY_MASTER + " where id=?",
+          spamMessage
+        );
+      } else {
+        out.writeByte(AoservProtocol.DONE);
+      }
+    }
+  }
 
-	public static class GetTable extends TableHandler.GetTableHandlerByRole {
+  public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.SPAM_EMAIL_MESSAGES);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.SPAM_EMAIL_MESSAGES);
+    }
 
-		@Override
-		protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new SpamMessage(),
-				QUERY_MASTER
-			);
-		}
+    @Override
+    protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new SpamMessage(),
+        QUERY_MASTER
+      );
+    }
 
-		@Override
-		protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-		}
+    @Override
+    protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    }
 
-		@Override
-		protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-		}
-	}
+    @Override
+    protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    }
+  }
 }

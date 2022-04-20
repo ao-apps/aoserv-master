@@ -37,74 +37,84 @@ import java.sql.SQLException;
  */
 public final class FTPHandler {
 
-	/** Make no instances. */
-	private FTPHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private FTPHandler() {
+    throw new AssertionError();
+  }
 
-	public static void addGuestUser(
-		DatabaseConnection conn,
-		RequestSource source,
-		InvalidateList invalidateList,
-		User.Name linuxUser
-	) throws IOException, SQLException {
-		LinuxAccountHandler.checkAccessUser(conn, source, "addFTPGuestUser", linuxUser);
-		if(linuxUser.equals(User.MAIL)) throw new SQLException("Not allowed to add FTP guest user for mail");
+  public static void addGuestUser(
+    DatabaseConnection conn,
+    RequestSource source,
+    InvalidateList invalidateList,
+    User.Name linuxUser
+  ) throws IOException, SQLException {
+    LinuxAccountHandler.checkAccessUser(conn, source, "addFTPGuestUser", linuxUser);
+    if (linuxUser.equals(User.MAIL)) {
+      throw new SQLException("Not allowed to add FTP guest user for mail");
+    }
 
-		if(LinuxAccountHandler.isUserDisabled(conn, linuxUser)) throw new SQLException("Unable to add GuestUser, User disabled: "+linuxUser);
+    if (LinuxAccountHandler.isUserDisabled(conn, linuxUser)) {
+      throw new SQLException("Unable to add GuestUser, User disabled: "+linuxUser);
+    }
 
-		// FTP Guest Users may only be added to user and ftponly accounts
-		String type=LinuxAccountHandler.getTypeForUser(conn, linuxUser);
-		if(
-			!UserType.USER.equals(type)
-			&& !UserType.FTPONLY.equals(type)
-		) throw new SQLException("Only Linux Accounts of type '"+UserType.USER+"' or '"+UserType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
+    // FTP Guest Users may only be added to user and ftponly accounts
+    String type=LinuxAccountHandler.getTypeForUser(conn, linuxUser);
+    if (
+      !UserType.USER.equals(type)
+      && !UserType.FTPONLY.equals(type)
+    ) {
+      throw new SQLException("Only Linux Accounts of type '"+UserType.USER+"' or '"+UserType.FTPONLY+"' may be flagged as a FTP Guest User: "+type);
+    }
 
-		conn.update("insert into ftp.\"GuestUser\" values(?)", linuxUser);
+    conn.update("insert into ftp.\"GuestUser\" values(?)", linuxUser);
 
-		// Notify all clients of the update
-		invalidateList.addTable(
-			conn,
-			Table.TableID.FTP_GUEST_USERS,
-			AccountUserHandler.getAccountForUser(conn, linuxUser),
-			LinuxAccountHandler.getServersForUser(conn, linuxUser),
-			false
-		);
-	}
+    // Notify all clients of the update
+    invalidateList.addTable(
+      conn,
+      Table.TableID.FTP_GUEST_USERS,
+      AccountUserHandler.getAccountForUser(conn, linuxUser),
+      LinuxAccountHandler.getServersForUser(conn, linuxUser),
+      false
+    );
+  }
 
-	public static void removeGuestUser(
-		DatabaseConnection conn,
-		RequestSource source,
-		InvalidateList invalidateList,
-		User.Name linuxUser
-	) throws IOException, SQLException {
-		LinuxAccountHandler.checkAccessUser(conn, source, "removeFTPGuestUser", linuxUser);
-		if(linuxUser.equals(User.MAIL)) throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
+  public static void removeGuestUser(
+    DatabaseConnection conn,
+    RequestSource source,
+    InvalidateList invalidateList,
+    User.Name linuxUser
+  ) throws IOException, SQLException {
+    LinuxAccountHandler.checkAccessUser(conn, source, "removeFTPGuestUser", linuxUser);
+    if (linuxUser.equals(User.MAIL)) {
+      throw new SQLException("Not allowed to remove GuestUser for user '"+User.MAIL+'\'');
+    }
 
-		conn.update("delete from ftp.\"GuestUser\" where username=?", linuxUser);
+    conn.update("delete from ftp.\"GuestUser\" where username=?", linuxUser);
 
-		// Notify all clients of the update
-		invalidateList.addTable(
-			conn,
-			Table.TableID.FTP_GUEST_USERS,
-			AccountUserHandler.getAccountForUser(conn, linuxUser),
-			LinuxAccountHandler.getServersForUser(conn, linuxUser),
-			false
-		);
-	}
+    // Notify all clients of the update
+    invalidateList.addTable(
+      conn,
+      Table.TableID.FTP_GUEST_USERS,
+      AccountUserHandler.getAccountForUser(conn, linuxUser),
+      LinuxAccountHandler.getServersForUser(conn, linuxUser),
+      false
+    );
+  }
 
-	public static void removePrivateServer(
-		DatabaseConnection conn,
-		InvalidateList invalidateList,
-		int bind
-	) throws IOException, SQLException {
-		conn.update("delete from ftp.\"PrivateServer\" net_bind=?", bind);
+  public static void removePrivateServer(
+    DatabaseConnection conn,
+    InvalidateList invalidateList,
+    int bind
+  ) throws IOException, SQLException {
+    conn.update("delete from ftp.\"PrivateServer\" net_bind=?", bind);
 
-		// Notify all clients of the update
-		invalidateList.addTable(
-			conn,
-			Table.TableID.PRIVATE_FTP_SERVERS,
-			NetBindHandler.getAccountForBind(conn, bind),
-			NetBindHandler.getHostForBind(conn, bind),
-			false
-		);
-	}
+    // Notify all clients of the update
+    invalidateList.addTable(
+      conn,
+      Table.TableID.PRIVATE_FTP_SERVERS,
+      NetBindHandler.getAccountForBind(conn, bind),
+      NetBindHandler.getHostForBind(conn, bind),
+      false
+    );
+  }
 }

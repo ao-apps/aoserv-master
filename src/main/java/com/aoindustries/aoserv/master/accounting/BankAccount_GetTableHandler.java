@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class BankAccount_GetTableHandler implements GetTableHandlerAccountingOnly {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.BANK_ACCOUNTS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.BANK_ACCOUNTS);
+  }
 
-	@Override
-	public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new BankAccount(),
-			"select * from accounting.\"BankAccount\""
-		);
-	}
+  @Override
+  public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new BankAccount(),
+      "select * from accounting.\"BankAccount\""
+    );
+  }
 }

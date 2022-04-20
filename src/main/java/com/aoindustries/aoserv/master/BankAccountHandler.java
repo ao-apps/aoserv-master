@@ -39,59 +39,65 @@ import java.util.List;
  */
 public final class BankAccountHandler {
 
-	/** Make no instances. */
-	private BankAccountHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private BankAccountHandler() {
+    throw new AssertionError();
+  }
 
-	// TODO: Move to an AccountingHandler or BillingHandler
-	public static void checkIsAccounting(
-		DatabaseConnection conn,
-		RequestSource source,
-		String action
-	) throws IOException, SQLException {
-		if(!isAccounting(conn, source)) throw new SQLException("Accounting not allowed, '"+action+"'");
-	}
+  // TODO: Move to an AccountingHandler or BillingHandler
+  public static void checkIsAccounting(
+    DatabaseConnection conn,
+    RequestSource source,
+    String action
+  ) throws IOException, SQLException {
+    if (!isAccounting(conn, source)) {
+      throw new SQLException("Accounting not allowed, '"+action+"'");
+    }
+  }
 
-	/**
-	 * Gets all transactions for one account.
-	 */
-	public static void getTransactionsForAccount(
-		DatabaseConnection conn,
-		RequestSource source,
-		StreamableOutput out,
-		boolean provideProgress,
-		String account
-	) throws IOException, SQLException {
-		if(isBankAccounting(conn, source)) {
-			// TODO: release conn before writing to out
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new BankTransaction(),
-				"select * from accounting.\"BankTransaction\" where account=?",
-				account
-			);
-		} else {
-			List<BankTransaction> emptyList = Collections.emptyList();
-			conn.close(); // Don't hold database connection while writing response
-			MasterServer.writeObjects(source, out, provideProgress, emptyList);
-		}
-	}
+  /**
+   * Gets all transactions for one account.
+   */
+  public static void getTransactionsForAccount(
+    DatabaseConnection conn,
+    RequestSource source,
+    StreamableOutput out,
+    boolean provideProgress,
+    String account
+  ) throws IOException, SQLException {
+    if (isBankAccounting(conn, source)) {
+      // TODO: release conn before writing to out
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new BankTransaction(),
+        "select * from accounting.\"BankTransaction\" where account=?",
+        account
+      );
+    } else {
+      List<BankTransaction> emptyList = Collections.emptyList();
+      conn.close(); // Don't hold database connection while writing response
+      MasterServer.writeObjects(source, out, provideProgress, emptyList);
+    }
+  }
 
-	public static void checkIsBankAccounting(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
-		if(!isBankAccounting(conn, source)) throw new SQLException("Bank accounting not allowed, '"+action+"'");
-	}
+  public static void checkIsBankAccounting(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+    if (!isBankAccounting(conn, source)) {
+      throw new SQLException("Bank accounting not allowed, '"+action+"'");
+    }
+  }
 
-	// TODO: Move to an AccountingHandler or BillingHandler
-	public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
-		return mu!=null && mu.canAccessAccounting();
-	}
+  // TODO: Move to an AccountingHandler or BillingHandler
+  public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    return mu != null && mu.canAccessAccounting();
+  }
 
-	public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-		User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
-		return mu!=null && mu.canAccessBankAccount();
-	}
+  public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
+    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    return mu != null && mu.canAccessBankAccount();
+  }
 }

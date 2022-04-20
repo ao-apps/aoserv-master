@@ -43,79 +43,79 @@ import java.util.Set;
  */
 public class ContextParameter_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.HTTPD_TOMCAT_PARAMETERS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.HTTPD_TOMCAT_PARAMETERS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new ContextParameter(),
-			"select * from \"web.tomcat\".\"ContextParameter\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new ContextParameter(),
+      "select * from \"web.tomcat\".\"ContextParameter\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new ContextParameter(),
-			"select\n"
-			+ "  htp.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  web.\"Site\" hs,\n"
-			+ "  \"web.tomcat\".\"Context\" htc,\n"
-			+ "  \"web.tomcat\".\"ContextParameter\" htp\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=hs.ao_server\n"
-			+ "  and hs.id=htc.tomcat_site\n"
-			+ "  and htc.id=htp.tomcat_context",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new ContextParameter(),
+      "select\n"
+      + "  htp.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms,\n"
+      + "  web.\"Site\" hs,\n"
+      + "  \"web.tomcat\".\"Context\" htc,\n"
+      + "  \"web.tomcat\".\"ContextParameter\" htp\n"
+      + "where\n"
+      + "  ms.username=?\n"
+      + "  and ms.server=hs.ao_server\n"
+      + "  and hs.id=htc.tomcat_site\n"
+      + "  and htc.id=htp.tomcat_context",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new ContextParameter(),
-			"select\n"
-			+ "  htp.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk1,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\" pk2,\n"
-			+ "  web.\"Site\" hs,\n"
-			+ "  \"web.tomcat\".\"Context\" htc,\n"
-			+ "  \"web.tomcat\".\"ContextParameter\" htp\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk1.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK1_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=pk2.accounting\n"
-			+ "  and pk2.name=hs.package\n"
-			+ "  and hs.id=htc.tomcat_site\n"
-			+ "  and htc.id=htp.tomcat_context",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new ContextParameter(),
+      "select\n"
+      + "  htp.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk1,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  billing.\"Package\" pk2,\n"
+      + "  web.\"Site\" hs,\n"
+      + "  \"web.tomcat\".\"Context\" htc,\n"
+      + "  \"web.tomcat\".\"ContextParameter\" htp\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk1.name\n"
+      + "  and (\n"
+      + TableHandler.PK1_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  and bu1.accounting=pk2.accounting\n"
+      + "  and pk2.name=hs.package\n"
+      + "  and hs.id=htc.tomcat_site\n"
+      + "  and htc.id=htp.tomcat_context",
+      source.getCurrentAdministrator()
+    );
+  }
 }

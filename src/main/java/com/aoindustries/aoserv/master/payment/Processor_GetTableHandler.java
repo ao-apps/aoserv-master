@@ -45,58 +45,58 @@ import java.util.Set;
  */
 public class Processor_GetTableHandler extends TableHandler.GetTableHandlerPermissionByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.CREDIT_CARD_PROCESSORS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.CREDIT_CARD_PROCESSORS);
+  }
 
-	@Override
-	protected Permission.Name getPermissionName() {
-		return Permission.Name.get_credit_card_processors;
-	}
+  @Override
+  protected Permission.Name getPermissionName() {
+    return Permission.Name.get_credit_card_processors;
+  }
 
-	@Override
-	protected void getTableMasterHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new Processor(),
-			"select * from payment.\"Processor\""
-		);
-	}
+  @Override
+  protected void getTableMasterHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new Processor(),
+      "select * from payment.\"Processor\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemonHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-	}
+  @Override
+  protected void getTableDaemonHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+  }
 
-	@Override
-	protected void getTableAdministratorHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new Processor(),
-			"select\n"
-			+ "  ccp.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  payment.\"Processor\" ccp\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=ccp.accounting",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministratorHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new Processor(),
+      "select\n"
+      + "  ccp.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  payment.\"Processor\" ccp\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk.name\n"
+      + "  and (\n"
+      + TableHandler.PK_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  and bu1.accounting=ccp.accounting",
+      source.getCurrentAdministrator()
+    );
+  }
 }

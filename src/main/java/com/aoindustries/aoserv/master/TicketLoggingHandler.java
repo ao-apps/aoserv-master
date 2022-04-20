@@ -45,106 +45,108 @@ import java.util.logging.LogRecord;
  */
 public class TicketLoggingHandler extends QueuedHandler {
 
-	private final String summaryPrefix;
-	private final int category;
+  private final String summaryPrefix;
+  private final int category;
 
-	/**
-	 * Public constructor required so can be specified in <code>logging.properties</code>.
-	 */
-	public TicketLoggingHandler() {
-		this("AOServ Master", Category.AOSERV_MASTER_PKEY);
-	}
+  /**
+   * Public constructor required so can be specified in <code>logging.properties</code>.
+   */
+  public TicketLoggingHandler() {
+    this("AOServ Master", Category.AOSERV_MASTER_PKEY);
+  }
 
-	public TicketLoggingHandler(String summaryPrefix, int category) {
-		super("Ticket logger for " + summaryPrefix);
-		this.summaryPrefix = summaryPrefix;
-		this.category = category;
-	}
+  public TicketLoggingHandler(String summaryPrefix, int category) {
+    super("Ticket logger for " + summaryPrefix);
+    this.summaryPrefix = summaryPrefix;
+    this.category = category;
+  }
 
-	@Override
-	protected void backgroundPublish(Formatter formatter, LogRecord rec, String fullReport) throws IOException, SQLException {
-		Account.Name rootAccounting = AccountHandler.getRootAccount();
-		Level level = rec.getLevel();
-		// Generate the summary from level, prefix classname, method
-		StringBuilder tempSB = new StringBuilder();
-		tempSB.append('[').append(level).append(']');
-		if(summaryPrefix != null && summaryPrefix.length() > 0) tempSB.append(' ').append(summaryPrefix);
-		tempSB.append(" - ").append(rec.getSourceClassName()).append(" - ").append(rec.getSourceMethodName());
-		String summary = tempSB.toString();
+  @Override
+  protected void backgroundPublish(Formatter formatter, LogRecord rec, String fullReport) throws IOException, SQLException {
+    Account.Name rootAccounting = AccountHandler.getRootAccount();
+    Level level = rec.getLevel();
+    // Generate the summary from level, prefix classname, method
+    StringBuilder tempSB = new StringBuilder();
+    tempSB.append('[').append(level).append(']');
+    if (summaryPrefix != null && summaryPrefix.length() > 0) {
+      tempSB.append(' ').append(summaryPrefix);
+    }
+    tempSB.append(" - ").append(rec.getSourceClassName()).append(" - ").append(rec.getSourceMethodName());
+    String summary = tempSB.toString();
 
-		// Start the transaction
-		try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
-			InvalidateList invalidateList = new InvalidateList();
-			// Look for an existing ticket to append
-			int existingTicket = conn.queryInt(
-				"select\n"
-				+ "  coalesce(\n"
-				+ "    (\n"
-				+ "      select\n"
-				+ "        id\n"
-				+ "      from\n"
-				+ "        ticket.\"Ticket\"\n"
-				+ "      where\n"
-				+ "        status in (?,?,?)\n"
-				+ "        and brand=?\n"
-				+ "        and accounting=?\n"
-				+ "        and language=?\n"
-				+ "        and ticket_type=?\n"
-				+ "        and summary=?\n"
-				+ "        and category=?\n"
-				+ "      order by\n"
-				+ "        open_date desc,\n"
-				+ "        id desc\n"
-				+ "      limit 1\n"
-				+ "    ), -1\n"
-				+ "  )",
-				Status.OPEN,
-				Status.HOLD,
-				Status.BOUNCED,
-				rootAccounting,
-				rootAccounting,
-				Language.EN,
-				TicketType.LOGS,
-				summary,
-				category
-			);
-			if(existingTicket != -1) {
-				TicketHandler.addTicketAnnotation(
-					conn,
-					invalidateList,
-					existingTicket,
-					null,
-					com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, rec),
-					fullReport
-				);
-			} else {
-				// The priority depends on the log level
-				String priorityName = com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.getPriorityName(level);
-				TicketHandler.addTicket(
-					conn,
-					invalidateList,
-					rootAccounting,
-					rootAccounting,
-					rootAccounting,
-					Language.EN,
-					null,
-					category,
-					TicketType.LOGS,
-					null,
-					summary,
-					fullReport,
-					null,
-					priorityName,
-					null,
-					Status.OPEN,
-					-1,
-					Collections.emptySet(),
-					"",
-					""
-				);
-				conn.commit();
-			}
-			MasterServer.invalidateTables(conn, invalidateList, null);
-		}
-	}
+    // Start the transaction
+    try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+      InvalidateList invalidateList = new InvalidateList();
+      // Look for an existing ticket to append
+      int existingTicket = conn.queryInt(
+        "select\n"
+        + "  coalesce(\n"
+        + "    (\n"
+        + "      select\n"
+        + "        id\n"
+        + "      from\n"
+        + "        ticket.\"Ticket\"\n"
+        + "      where\n"
+        + "        status in (?,?,?)\n"
+        + "        and brand=?\n"
+        + "        and accounting=?\n"
+        + "        and language=?\n"
+        + "        and ticket_type=?\n"
+        + "        and summary=?\n"
+        + "        and category=?\n"
+        + "      order by\n"
+        + "        open_date desc,\n"
+        + "        id desc\n"
+        + "      limit 1\n"
+        + "    ), -1\n"
+        + "  )",
+        Status.OPEN,
+        Status.HOLD,
+        Status.BOUNCED,
+        rootAccounting,
+        rootAccounting,
+        Language.EN,
+        TicketType.LOGS,
+        summary,
+        category
+      );
+      if (existingTicket != -1) {
+        TicketHandler.addTicketAnnotation(
+          conn,
+          invalidateList,
+          existingTicket,
+          null,
+          com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.generateActionSummary(formatter, rec),
+          fullReport
+        );
+      } else {
+        // The priority depends on the log level
+        String priorityName = com.aoindustries.aoserv.client.ticket.TicketLoggingHandler.getPriorityName(level);
+        TicketHandler.addTicket(
+          conn,
+          invalidateList,
+          rootAccounting,
+          rootAccounting,
+          rootAccounting,
+          Language.EN,
+          null,
+          category,
+          TicketType.LOGS,
+          null,
+          summary,
+          fullReport,
+          null,
+          priorityName,
+          null,
+          Status.OPEN,
+          -1,
+          Collections.emptySet(),
+          "",
+          ""
+        );
+        conn.commit();
+      }
+      MasterServer.invalidateTables(conn, invalidateList, null);
+    }
+  }
 }

@@ -44,134 +44,136 @@ import java.util.Set;
  */
 public final class BackupReportHandler {
 
-	/** Make no instances. */
-	private BackupReportHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private BackupReportHandler() {
+    throw new AssertionError();
+  }
 
-	private static final String QUERY_MASTER =
-		"select * from backup.\"BackupReport\"";
+  private static final String QUERY_MASTER =
+    "select * from backup.\"BackupReport\"";
 
-	private static final String QUERY_DAEMON =
-		"select\n"
-		+ "  br.*\n"
-		+ "from\n"
-		+ "  master.\"UserHost\" ms,\n"
-		+ "  backup.\"BackupReport\" br\n"
-		+ "where\n"
-		+ "  ms.username=?\n"
-		+ "  and ms.server=br.server";
+  private static final String QUERY_DAEMON =
+    "select\n"
+    + "  br.*\n"
+    + "from\n"
+    + "  master.\"UserHost\" ms,\n"
+    + "  backup.\"BackupReport\" br\n"
+    + "where\n"
+    + "  ms.username=?\n"
+    + "  and ms.server=br.server";
 
-	private static final String QUERY_ADMINISTRATOR =
-		"select\n"
-		+ "  br.*\n"
-		+ "from\n"
-		+ "  account.\"User\" un,\n"
-		+ "  billing.\"Package\" pk1,\n"
-		+ TableHandler.BU1_PARENTS_JOIN
-		+ "  billing.\"Package\" pk2,\n"
-		+ "  backup.\"BackupReport\" br\n"
-		+ "where\n"
-		+ "  un.username=?\n"
-		+ "  and un.package=pk1.name\n"
-		+ "  and (\n"
-		+ TableHandler.PK1_BU1_PARENTS_WHERE
-		+ "  )\n"
-		+ "  and bu1.accounting=pk2.accounting\n"
-		+ "  and pk2.id=br.package";
+  private static final String QUERY_ADMINISTRATOR =
+    "select\n"
+    + "  br.*\n"
+    + "from\n"
+    + "  account.\"User\" un,\n"
+    + "  billing.\"Package\" pk1,\n"
+    + TableHandler.BU1_PARENTS_JOIN
+    + "  billing.\"Package\" pk2,\n"
+    + "  backup.\"BackupReport\" br\n"
+    + "where\n"
+    + "  un.username=?\n"
+    + "  and un.package=pk1.name\n"
+    + "  and (\n"
+    + TableHandler.PK1_BU1_PARENTS_WHERE
+    + "  )\n"
+    + "  and bu1.accounting=pk2.accounting\n"
+    + "  and pk2.id=br.package";
 
-	public static class GetObject implements TableHandler.GetObjectHandler {
+  public static class GetObject implements TableHandler.GetObjectHandler {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.BACKUP_REPORTS);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.BACKUP_REPORTS);
+    }
 
-		@Override
-		public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int backupReport = in.readCompressedInt();
-			if(masterUser != null) {
-				assert masterServers != null;
-				if(masterServers.length == 0) {
-					MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BackupReport(),
-						QUERY_MASTER + " where id=?",
-						backupReport
-					);
-				} else {
-					MasterServer.writeObject(
-						conn,
-						source,
-						out,
-						new BackupReport(),
-						QUERY_DAEMON + "\n"
-						+ "  and br.id=?",
-						source.getCurrentAdministrator(),
-						backupReport
-					);
-				}
-			} else {
-				MasterServer.writeObject(
-					conn,
-					source,
-					out,
-					new BackupReport(),
-					QUERY_ADMINISTRATOR + "\n"
-					+ "  and br.id=?",
-					source.getCurrentAdministrator(),
-					backupReport
-				);
-			}
-		}
-	}
+    @Override
+    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      int backupReport = in.readCompressedInt();
+      if (masterUser != null) {
+        assert masterServers != null;
+        if (masterServers.length == 0) {
+          MasterServer.writeObject(
+            conn,
+            source,
+            out,
+            new BackupReport(),
+            QUERY_MASTER + " where id=?",
+            backupReport
+          );
+        } else {
+          MasterServer.writeObject(
+            conn,
+            source,
+            out,
+            new BackupReport(),
+            QUERY_DAEMON + "\n"
+            + "  and br.id=?",
+            source.getCurrentAdministrator(),
+            backupReport
+          );
+        }
+      } else {
+        MasterServer.writeObject(
+          conn,
+          source,
+          out,
+          new BackupReport(),
+          QUERY_ADMINISTRATOR + "\n"
+          + "  and br.id=?",
+          source.getCurrentAdministrator(),
+          backupReport
+        );
+      }
+    }
+  }
 
-	public static class GetTable extends TableHandler.GetTableHandlerByRole {
+  public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.BACKUP_REPORTS);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.BACKUP_REPORTS);
+    }
 
-		@Override
-		protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new BackupReport(),
-				QUERY_MASTER
-			);
-		}
+    @Override
+    protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new BackupReport(),
+        QUERY_MASTER
+      );
+    }
 
-		@Override
-		protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new BackupReport(),
-				QUERY_DAEMON,
-				source.getCurrentAdministrator()
-			);
-		}
+    @Override
+    protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new BackupReport(),
+        QUERY_DAEMON,
+        source.getCurrentAdministrator()
+      );
+    }
 
-		@Override
-		protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new BackupReport(),
-				QUERY_ADMINISTRATOR,
-				source.getCurrentAdministrator()
-			);
-		}
-	}
+    @Override
+    protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new BackupReport(),
+        QUERY_ADMINISTRATOR,
+        source.getCurrentAdministrator()
+      );
+    }
+  }
 }

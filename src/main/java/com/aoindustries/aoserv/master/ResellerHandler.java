@@ -35,22 +35,26 @@ import java.sql.SQLException;
  */
 public final class ResellerHandler {
 
-	/** Make no instances. */
-	private ResellerHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private ResellerHandler() {
+    throw new AssertionError();
+  }
 
-	/**
-	 * Gets the lowest-level reseller that is at or above the provided account.
-	 * Will skip past reseller.Reseller that are flagged as auto-escalate.
-	 */
-	public static Account.Name getResellerForAccountAutoEscalate(
-		DatabaseConnection conn,
-		Account.Name originalAccount
-	) throws IOException, SQLException {
-		Account.Name account = originalAccount;
-		while(account!=null) {
-			if(conn.queryBoolean("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", account)) return account;
-			account = AccountHandler.getParentAccount(conn, account);
-		}
-		throw new SQLException("Unable to find Reseller for Account: "+originalAccount);
-	}
+  /**
+   * Gets the lowest-level reseller that is at or above the provided account.
+   * Will skip past reseller.Reseller that are flagged as auto-escalate.
+   */
+  public static Account.Name getResellerForAccountAutoEscalate(
+    DatabaseConnection conn,
+    Account.Name originalAccount
+  ) throws IOException, SQLException {
+    Account.Name account = originalAccount;
+    while (account != null) {
+      if (conn.queryBoolean("select (select accounting from reseller.\"Reseller\" where accounting=? and not ticket_auto_escalate) is not null", account)) {
+        return account;
+      }
+      account = AccountHandler.getParentAccount(conn, account);
+    }
+    throw new SQLException("Unable to find Reseller for Account: "+originalAccount);
+  }
 }

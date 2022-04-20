@@ -43,86 +43,86 @@ import java.util.Set;
  */
 public class HttpdBind_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.HTTPD_BINDS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.HTTPD_BINDS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new HttpdBind(),
-			"select * from web.\"HttpdBind\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new HttpdBind(),
+      "select * from web.\"HttpdBind\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new HttpdBind(),
-			"select\n"
-			+ "  hb.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  net.\"Bind\" nb,\n"
-			+ "  web.\"HttpdBind\" hb\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=nb.server\n"
-			+ "  and nb.id=hb.net_bind",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new HttpdBind(),
+      "select\n"
+      + "  hb.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms,\n"
+      + "  net.\"Bind\" nb,\n"
+      + "  web.\"HttpdBind\" hb\n"
+      + "where\n"
+      + "  ms.username=?\n"
+      + "  and ms.server=nb.server\n"
+      + "  and nb.id=hb.net_bind",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new HttpdBind(),
-			"select\n"
-			+ "  hb.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk1,\n"
-			+ TableHandler.BU1_PARENTS_JOIN
-			+ "  billing.\"Package\" pk2,\n"
-			+ "  web.\"Site\" hs,\n"
-			+ "  web.\"VirtualHost\" hsb,\n"
-			+ "  web.\"HttpdBind\" hb,\n"
-			+ "  net.\"Bind\" nb\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk1.name\n"
-			+ "  and (\n"
-			+ TableHandler.PK1_BU1_PARENTS_WHERE
-			+ "  )\n"
-			+ "  and bu1.accounting=pk2.accounting\n"
-			+ "  and pk2.name=hs.package\n"
-			+ "  and hs.id=hsb.httpd_site\n"
-			+ "  and hsb.httpd_bind=hb.net_bind\n"
-			+ "  and hb.net_bind=nb.id\n"
-			+ "group by\n"
-			+ "  hb.net_bind,\n"
-			+ "  hb.httpd_server,\n"
-			+ "  nb.server,\n"
-			+ "  nb.\"ipAddress\",\n"
-			+ "  nb.port,\n"
-			+ "  nb.net_protocol",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new HttpdBind(),
+      "select\n"
+      + "  hb.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk1,\n"
+      + TableHandler.BU1_PARENTS_JOIN
+      + "  billing.\"Package\" pk2,\n"
+      + "  web.\"Site\" hs,\n"
+      + "  web.\"VirtualHost\" hsb,\n"
+      + "  web.\"HttpdBind\" hb,\n"
+      + "  net.\"Bind\" nb\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk1.name\n"
+      + "  and (\n"
+      + TableHandler.PK1_BU1_PARENTS_WHERE
+      + "  )\n"
+      + "  and bu1.accounting=pk2.accounting\n"
+      + "  and pk2.name=hs.package\n"
+      + "  and hs.id=hsb.httpd_site\n"
+      + "  and hsb.httpd_bind=hb.net_bind\n"
+      + "  and hb.net_bind=nb.id\n"
+      + "group by\n"
+      + "  hb.net_bind,\n"
+      + "  hb.httpd_server,\n"
+      + "  nb.server,\n"
+      + "  nb.\"ipAddress\",\n"
+      + "  nb.port,\n"
+      + "  nb.net_protocol",
+      source.getCurrentAdministrator()
+    );
+  }
 }

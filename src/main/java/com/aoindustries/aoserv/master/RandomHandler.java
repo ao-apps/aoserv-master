@@ -42,103 +42,114 @@ import java.sql.SQLException;
  */
 public final class RandomHandler {
 
-	/** Make no instances. */
-	private RandomHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private RandomHandler() {
+    throw new AssertionError();
+  }
 
-	private static FifoFile fifoFile;
+  private static FifoFile fifoFile;
 
-	public static FifoFile getFifoFile() throws IOException {
-		synchronized(RandomHandler.class) {
-			if(fifoFile == null) fifoFile = new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AOServConnector.MASTER_ENTROPY_POOL_SIZE);
-			return fifoFile;
-		}
-	}
+  public static FifoFile getFifoFile() throws IOException {
+    synchronized (RandomHandler.class) {
+      if (fifoFile == null) {
+        fifoFile = new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AOServConnector.MASTER_ENTROPY_POOL_SIZE);
+      }
+      return fifoFile;
+    }
+  }
 
-	private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
-		boolean isAllowed = false;
+  private static void checkAccessEntropy(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
+    boolean isAllowed = false;
 
-		com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-		User mu = MasterServer.getUser(conn, currentAdministrator);
-		if (mu != null) {
-			UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
-			if(masterServers.length == 0) isAllowed = true;
-			else {
-				for (UserHost masterServer : masterServers) {
-					if (NetHostHandler.isLinuxServer(conn, masterServer.getServerPKey())) {
-						isAllowed = true;
-						break;
-					}
-				}
-			}
-		}
-		if(!isAllowed) {
-			throw new SQLException(
-				"currentAdministrator="
-				+ currentAdministrator
-				+ " is not allowed to access the master entropy pool: action='"
-				+ action
-				+ '\''
-			);
-		}
-	}
+    com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+    User mu = MasterServer.getUser(conn, currentAdministrator);
+    if (mu != null) {
+      UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
+      if (masterServers.length == 0) {
+        isAllowed = true;
+      } else {
+        for (UserHost masterServer : masterServers) {
+          if (NetHostHandler.isLinuxServer(conn, masterServer.getServerPKey())) {
+            isAllowed = true;
+            break;
+          }
+        }
+      }
+    }
+    if (!isAllowed) {
+      throw new SQLException(
+        "currentAdministrator="
+        + currentAdministrator
+        + " is not allowed to access the master entropy pool: action='"
+        + action
+        + '\''
+      );
+    }
+  }
 
-	public static long addMasterEntropy(
-		DatabaseConnection conn,
-		RequestSource source,
-		byte[] entropy,
-		int numBytes
-	) throws IOException, SQLException {
-		checkAccessEntropy(conn, source, "addMasterEntropy");
+  public static long addMasterEntropy(
+    DatabaseConnection conn,
+    RequestSource source,
+    byte[] entropy,
+    int numBytes
+  ) throws IOException, SQLException {
+    checkAccessEntropy(conn, source, "addMasterEntropy");
 
-		FifoFile fifo = getFifoFile();
-		synchronized(fifo) {
-			FifoFileOutputStream fifoOut = fifo.getOutputStream();
-			long available = fifoOut.available();
-			int addCount = numBytes;
-			if(available < addCount) addCount = (int)available;
-			if(addCount > 0) {
-				fifoOut.write(entropy, 0, addCount);
-				fifo.flush();
-			}
-			return fifo.getOutputStream().available();
-		}
-	}
+    FifoFile fifo = getFifoFile();
+    synchronized (fifo) {
+      FifoFileOutputStream fifoOut = fifo.getOutputStream();
+      long available = fifoOut.available();
+      int addCount = numBytes;
+      if (available < addCount) {
+        addCount = (int)available;
+      }
+      if (addCount > 0) {
+        fifoOut.write(entropy, 0, addCount);
+        fifo.flush();
+      }
+      return fifo.getOutputStream().available();
+    }
+  }
 
-	public static int getMasterEntropy(
-		DatabaseConnection conn,
-		RequestSource source,
-		byte[] entropy,
-		int numBytes
-	) throws IOException, SQLException {
-		checkAccessEntropy(conn, source, "getMasterEntropy");
+  public static int getMasterEntropy(
+    DatabaseConnection conn,
+    RequestSource source,
+    byte[] entropy,
+    int numBytes
+  ) throws IOException, SQLException {
+    checkAccessEntropy(conn, source, "getMasterEntropy");
 
-		FifoFile fifo = getFifoFile();
-		synchronized(fifo) {
-			FifoFileInputStream fifoIn = fifo.getInputStream();
-			long available = fifoIn.available();
-			if(available < numBytes) numBytes = (int)available;
-			if(numBytes > 0) {
-				int pos = 0;
-				while(pos < numBytes) {
-					int ret = fifoIn.read(entropy, pos, numBytes - pos);
-					if(ret == -1) throw new EOFException("Unexpected EOF");
-					pos += ret;
-				}
-				fifo.flush();
-			}
-			return numBytes;
-		}
-	}
+    FifoFile fifo = getFifoFile();
+    synchronized (fifo) {
+      FifoFileInputStream fifoIn = fifo.getInputStream();
+      long available = fifoIn.available();
+      if (available < numBytes) {
+        numBytes = (int)available;
+      }
+      if (numBytes > 0) {
+        int pos = 0;
+        while (pos < numBytes) {
+          int ret = fifoIn.read(entropy, pos, numBytes - pos);
+          if (ret == -1) {
+            throw new EOFException("Unexpected EOF");
+          }
+          pos += ret;
+        }
+        fifo.flush();
+      }
+      return numBytes;
+    }
+  }
 
-	public static long getMasterEntropyNeeded(
-		DatabaseConnection conn,
-		RequestSource source
-	) throws IOException, SQLException {
-		checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
+  public static long getMasterEntropyNeeded(
+    DatabaseConnection conn,
+    RequestSource source
+  ) throws IOException, SQLException {
+    checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
 
-		FifoFile fifo = getFifoFile();
-		synchronized(fifo) {
-			return fifo.getOutputStream().available();
-		}
-	}
+    FifoFile fifo = getFifoFile();
+    synchronized (fifo) {
+      return fifo.getOutputStream().available();
+    }
+  }
 }

@@ -46,70 +46,72 @@ import java.util.Set;
  */
 public final class BankTransactionHandler {
 
-	/** Make no instances. */
-	private BankTransactionHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private BankTransactionHandler() {
+    throw new AssertionError();
+  }
 
-	private static final String QUERY_ACCOUNTING =
-		"select\n"
-		+ "  id,\n"
-		+ "  time,\n"
-		+ "  account,\n"
-		+ "  processor,\n"
-		+ "  administrator,\n"
-		+ "  type,\n"
-		+ "  \"expenseCategory\",\n"
-		+ "  description,\n"
-		+ "  \"checkNo\",\n"
-		+ "  amount,\n"
-		+ "  confirmed\n"
-		+ "from\n"
-		+ "  accounting.\"BankTransaction\"";
+  private static final String QUERY_ACCOUNTING =
+    "select\n"
+    + "  id,\n"
+    + "  time,\n"
+    + "  account,\n"
+    + "  processor,\n"
+    + "  administrator,\n"
+    + "  type,\n"
+    + "  \"expenseCategory\",\n"
+    + "  description,\n"
+    + "  \"checkNo\",\n"
+    + "  amount,\n"
+    + "  confirmed\n"
+    + "from\n"
+    + "  accounting.\"BankTransaction\"";
 
-	public static class GetObject implements TableHandler.GetObjectHandler {
+  public static class GetObject implements TableHandler.GetObjectHandler {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
+    }
 
-		@Override
-		public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-			int bankTransaction = in.readCompressedInt();
-			if(BankAccountHandler.isBankAccounting(conn, source)) {
-				MasterServer.writeObject(
-					conn,
-					source,
-					out,
-					new BankTransaction(),
-					QUERY_ACCOUNTING + "\n"
-					+ "where\n"
-					+ "  id=?",
-					bankTransaction
-				);
-			} else {
-				out.writeByte(AoservProtocol.DONE);
-			}
-		}
-	}
+    @Override
+    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      int bankTransaction = in.readCompressedInt();
+      if (BankAccountHandler.isBankAccounting(conn, source)) {
+        MasterServer.writeObject(
+          conn,
+          source,
+          out,
+          new BankTransaction(),
+          QUERY_ACCOUNTING + "\n"
+          + "where\n"
+          + "  id=?",
+          bankTransaction
+        );
+      } else {
+        out.writeByte(AoservProtocol.DONE);
+      }
+    }
+  }
 
-	public static class GetTable implements GetTableHandlerAccountingOnly {
+  public static class GetTable implements GetTableHandlerAccountingOnly {
 
-		@Override
-		public Set<Table.TableID> getTableIds() {
-			return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
-		}
+    @Override
+    public Set<Table.TableID> getTableIds() {
+      return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
+    }
 
-		@Override
-		public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-			MasterServer.writeObjects(
-				conn,
-				source,
-				out,
-				provideProgress,
-				CursorMode.FETCH,
-				new BankTransaction(),
-				QUERY_ACCOUNTING
-			);
-		}
-	}
+    @Override
+    public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+      MasterServer.writeObjects(
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new BankTransaction(),
+        QUERY_ACCOUNTING
+      );
+    }
+  }
 }

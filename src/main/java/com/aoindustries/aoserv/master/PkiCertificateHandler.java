@@ -37,49 +37,51 @@ import java.util.List;
  */
 public final class PkiCertificateHandler {
 
-	/** Make no instances. */
-	private PkiCertificateHandler() {throw new AssertionError();}
+  /** Make no instances. */
+  private PkiCertificateHandler() {
+    throw new AssertionError();
+  }
 
-	public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int certificate) throws IOException, SQLException {
-		User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
-		if(mu != null) {
-			if(MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
-				int linuxServer = getLinuxServerForCertificate(conn, certificate);
-				NetHostHandler.checkAccessHost(conn, source, action, linuxServer);
-			}
-		} else {
-			PackageHandler.checkAccessPackage(conn, source, action, getPackageForCertificate(conn, certificate));
-		}
-	}
+  public static void checkAccessCertificate(DatabaseConnection conn, RequestSource source, String action, int certificate) throws IOException, SQLException {
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    if (mu != null) {
+      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+        int linuxServer = getLinuxServerForCertificate(conn, certificate);
+        NetHostHandler.checkAccessHost(conn, source, action, linuxServer);
+      }
+    } else {
+      PackageHandler.checkAccessPackage(conn, source, action, getPackageForCertificate(conn, certificate));
+    }
+  }
 
-	public static Account.Name getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
-		return conn.queryObject(
-			ObjectFactories.accountNameFactory,
-			"select package from pki.\"Certificate\" where id=?",
-			certificate
-		);
-	}
+  public static Account.Name getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
+    return conn.queryObject(
+      ObjectFactories.accountNameFactory,
+      "select package from pki.\"Certificate\" where id=?",
+      certificate
+    );
+  }
 
-	public static int getLinuxServerForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
-		return conn.queryInt(
-			"select ao_server from pki.\"Certificate\" where id=?",
-			certificate
-		);
-	}
+  public static int getLinuxServerForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
+    return conn.queryInt(
+      "select ao_server from pki.\"Certificate\" where id=?",
+      certificate
+    );
+  }
 
-	public static List<Certificate.Check> check(
-		DatabaseConnection conn,
-		RequestSource source,
-		int certificate,
-		boolean allowCached
-	) throws IOException, SQLException {
-		// Check access
-		checkAccessCertificate(conn, source, "check", certificate);
-		AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-			conn,
-			getLinuxServerForCertificate(conn, certificate)
-		);
-		conn.close(); // Don't hold database connection while connecting to the daemon
-		return daemonConnector.checkSslCertificate(certificate, allowCached);
-	}
+  public static List<Certificate.Check> check(
+    DatabaseConnection conn,
+    RequestSource source,
+    int certificate,
+    boolean allowCached
+  ) throws IOException, SQLException {
+    // Check access
+    checkAccessCertificate(conn, source, "check", certificate);
+    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
+      conn,
+      getLinuxServerForCertificate(conn, certificate)
+    );
+    conn.close(); // Don't hold database connection while connecting to the daemon
+    return daemonConnector.checkSslCertificate(certificate, allowCached);
+  }
 }

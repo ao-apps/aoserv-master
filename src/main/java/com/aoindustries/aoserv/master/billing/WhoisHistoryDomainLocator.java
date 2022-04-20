@@ -42,12 +42,12 @@ import java.util.Set;
  */
 public interface WhoisHistoryDomainLocator {
 
-	/**
-	 * Gets the set of all unique business accounting codes and registrable
-	 * domains that are subject to whois history logging.
-	 *
-	 * @see  DnsService#getDNSTLDs(com.aoapps.dbc.DatabaseConnection)
-	 * @see  TopLevelDomain
-	 */
-	Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;
+  /**
+   * Gets the set of all unique business accounting codes and registrable
+   * domains that are subject to whois history logging.
+   *
+   * @see  DnsService#getDNSTLDs(com.aoapps.dbc.DatabaseConnection)
+   * @see  TopLevelDomain
+   */
+  Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException;
 }

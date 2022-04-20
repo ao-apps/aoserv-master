@@ -30,23 +30,23 @@ import com.aoapps.lang.Throwables;
  */
 public class ServiceNotStartedException extends MasterServiceException {
 
-	private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-	public ServiceNotStartedException(String message) {
-		super(message);
-	}
+  public ServiceNotStartedException(String message) {
+    super(message);
+  }
 
-	public ServiceNotStartedException(String message, Throwable cause) {
-		super(message, cause);
-	}
+  public ServiceNotStartedException(String message, Throwable cause) {
+    super(message, cause);
+  }
 
-	public ServiceNotStartedException(Throwable cause) {
-		super(cause);
-	}
+  public ServiceNotStartedException(Throwable cause) {
+    super(cause);
+  }
 
-	static {
-		Throwables.registerSurrogateFactory(ServiceNotStartedException.class, (template, cause) ->
-			new ServiceNotStartedException(template.getMessage(), cause)
-		);
-	}
+  static {
+    Throwables.registerSurrogateFactory(ServiceNotStartedException.class, (template, cause) ->
+      new ServiceNotStartedException(template.getMessage(), cause)
+    );
+  }
 }

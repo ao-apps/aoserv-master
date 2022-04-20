@@ -41,21 +41,21 @@ import java.util.Set;
  */
 public class BankTransactionType_GetTableHandler implements GetTableHandlerAccountingOnly {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.BANK_TRANSACTION_TYPES);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.BANK_TRANSACTION_TYPES);
+  }
 
-	@Override
-	public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.SELECT,
-			new BankTransactionType(),
-			"select * from accounting.\"BankTransactionType\""
-		);
-	}
+  @Override
+  public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.SELECT,
+      new BankTransactionType(),
+      "select * from accounting.\"BankTransactionType\""
+    );
+  }
 }

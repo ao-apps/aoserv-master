@@ -29,45 +29,45 @@ package com.aoindustries.aoserv.master.cluster;
 @SuppressWarnings("overrides") // We will not implement hashCode, despite having equals
 public final class VirtualDisk {
 
-	final String device;
-	final int extents;
-	final DiskType primaryDiskType;
-	final int primaryWeight;
-	final DiskType secondaryDiskType;
-	final int secondaryWeight;
+  final String device;
+  final int extents;
+  final DiskType primaryDiskType;
+  final int primaryWeight;
+  final DiskType secondaryDiskType;
+  final int secondaryWeight;
 
-	Disk selectedPrimaryDisk = null;
-	Disk selectedSecondaryDisk = null;
+  Disk selectedPrimaryDisk = null;
+  Disk selectedSecondaryDisk = null;
 
-	VirtualDisk(
-		String device,
-		int extents,
-		DiskType primaryDiskType,
-		int primaryWeight,
-		DiskType secondaryDiskType,
-		int secondaryWeight
-	) {
-		this.device = device;
-		this.extents = extents;
-		this.primaryDiskType = primaryDiskType;
-		this.primaryWeight = primaryWeight;
-		this.secondaryDiskType = secondaryDiskType;
-		this.secondaryWeight = secondaryWeight;
-	}
+  VirtualDisk(
+    String device,
+    int extents,
+    DiskType primaryDiskType,
+    int primaryWeight,
+    DiskType secondaryDiskType,
+    int secondaryWeight
+  ) {
+    this.device = device;
+    this.extents = extents;
+    this.primaryDiskType = primaryDiskType;
+    this.primaryWeight = primaryWeight;
+    this.secondaryDiskType = secondaryDiskType;
+    this.secondaryWeight = secondaryWeight;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		return (obj instanceof VirtualDisk) && equals((VirtualDisk)obj);
-	}
+  @Override
+  public boolean equals(Object obj) {
+    return (obj instanceof VirtualDisk) && equals((VirtualDisk)obj);
+  }
 
-	public boolean equals(VirtualDisk other) {
-		return
-			extents==other.extents
-			&& primaryDiskType==other.primaryDiskType
-			&& primaryWeight==other.primaryWeight
-			&& secondaryDiskType==other.secondaryDiskType
-			&& secondaryWeight==other.secondaryWeight
-			&& device.equals(other.device)
-		;
-	}
+  public boolean equals(VirtualDisk other) {
+    return
+      extents == other.extents
+      && primaryDiskType == other.primaryDiskType
+      && primaryWeight == other.primaryWeight
+      && secondaryDiskType == other.secondaryDiskType
+      && secondaryWeight == other.secondaryWeight
+      && device.equals(other.device)
+    ;
+  }
 }

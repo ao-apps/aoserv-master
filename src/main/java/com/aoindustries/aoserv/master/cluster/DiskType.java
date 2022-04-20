@@ -27,10 +27,10 @@ package com.aoindustries.aoserv.master.cluster;
  * @author  AO Industries, Inc.
  */
 public enum DiskType {
-	RAID1_7200,
-	RAID1_10000,
-	RAID5_10000,
-	RAID1_15000;
+  RAID1_7200,
+  RAID1_10000,
+  RAID5_10000,
+  RAID1_15000;
 
-	static final DiskType[] diskTypes = DiskType.values();
+  static final DiskType[] diskTypes = DiskType.values();
 }

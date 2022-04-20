@@ -43,71 +43,71 @@ import java.util.Set;
  */
 public class FileReplicationSchedule_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.FAILOVER_FILE_SCHEDULE);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.FAILOVER_FILE_SCHEDULE);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new FileReplicationSchedule(),
-			"select * from backup.\"FileReplicationSchedule\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new FileReplicationSchedule(),
+      "select * from backup.\"FileReplicationSchedule\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new FileReplicationSchedule(),
-			"select\n"
-			+ "  ffs.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms,\n"
-			+ "  backup.\"FileReplication\" ffr,\n"
-			+ "  backup.\"FileReplicationSchedule\" ffs\n"
-			+ "where\n"
-			+ "  ms.username=?\n"
-			+ "  and ms.server=ffr.server\n"
-			+ "  and ffr.id=ffs.replication",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new FileReplicationSchedule(),
+      "select\n"
+      + "  ffs.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms,\n"
+      + "  backup.\"FileReplication\" ffr,\n"
+      + "  backup.\"FileReplicationSchedule\" ffs\n"
+      + "where\n"
+      + "  ms.username=?\n"
+      + "  and ms.server=ffr.server\n"
+      + "  and ffr.id=ffs.replication",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new FileReplicationSchedule(),
-			"select\n"
-			+ "  ffs.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ "  account.\"AccountHost\" bs,\n"
-			+ "  backup.\"FileReplication\" ffr,\n"
-			+ "  backup.\"FileReplicationSchedule\" ffs\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and pk.accounting=bs.accounting\n"
-			+ "  and bs.server=ffr.server\n"
-			+ "  and ffr.id=ffs.replication",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new FileReplicationSchedule(),
+      "select\n"
+      + "  ffs.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk,\n"
+      + "  account.\"AccountHost\" bs,\n"
+      + "  backup.\"FileReplication\" ffr,\n"
+      + "  backup.\"FileReplicationSchedule\" ffs\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk.name\n"
+      + "  and pk.accounting=bs.accounting\n"
+      + "  and bs.server=ffr.server\n"
+      + "  and ffr.id=ffs.replication",
+      source.getCurrentAdministrator()
+    );
+  }
 }

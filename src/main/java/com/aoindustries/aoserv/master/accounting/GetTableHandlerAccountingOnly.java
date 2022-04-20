@@ -41,42 +41,42 @@ import java.util.Collections;
  */
 interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 
-	/**
-	 * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
-	 * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
-	 * Otherwise, writes an empty table.
-	 *
-	 * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
-	 */
-	@Override
-	default void getTable(
-		DatabaseConnection conn,
-		RequestSource source,
-		StreamableOutput out,
-		boolean provideProgress,
-		Table.TableID tableID,
-		User masterUser,
-		UserHost[] masterServers
-	) throws IOException, SQLException {
-		if(BankAccountHandler.isBankAccounting(conn, source)) {
-			getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
-		} else {
-			MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
-		}
-	}
+  /**
+   * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
+   * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
+   * Otherwise, writes an empty table.
+   *
+   * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
+   */
+  @Override
+  default void getTable(
+    DatabaseConnection conn,
+    RequestSource source,
+    StreamableOutput out,
+    boolean provideProgress,
+    Table.TableID tableID,
+    User masterUser,
+    UserHost[] masterServers
+  ) throws IOException, SQLException {
+    if (BankAccountHandler.isBankAccounting(conn, source)) {
+      getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
+    } else {
+      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    }
+  }
 
-	/**
-	 * Handles a {@link User master user} request for the given accounting table,
-	 * when has {@link User#canAccessBankAccount()}.
-	 *
-	 * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
-	 */
-	void getTableAccounting(
-		DatabaseConnection conn,
-		RequestSource source,
-		StreamableOutput out,
-		boolean provideProgress,
-		Table.TableID tableID,
-		User masterUser
-	) throws IOException, SQLException;
+  /**
+   * Handles a {@link User master user} request for the given accounting table,
+   * when has {@link User#canAccessBankAccount()}.
+   *
+   * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
+   */
+  void getTableAccounting(
+    DatabaseConnection conn,
+    RequestSource source,
+    StreamableOutput out,
+    boolean provideProgress,
+    Table.TableID tableID,
+    User masterUser
+  ) throws IOException, SQLException;
 }

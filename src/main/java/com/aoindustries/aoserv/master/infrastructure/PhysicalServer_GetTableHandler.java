@@ -43,73 +43,73 @@ import java.util.Set;
  */
 public class PhysicalServer_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
-	@Override
-	public Set<Table.TableID> getTableIds() {
-		return EnumSet.of(Table.TableID.PHYSICAL_SERVERS);
-	}
+  @Override
+  public Set<Table.TableID> getTableIds() {
+    return EnumSet.of(Table.TableID.PHYSICAL_SERVERS);
+  }
 
-	@Override
-	protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new PhysicalServer(),
-			"select * from infrastructure.\"PhysicalServer\""
-		);
-	}
+  @Override
+  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new PhysicalServer(),
+      "select * from infrastructure.\"PhysicalServer\""
+    );
+  }
 
-	@Override
-	protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new PhysicalServer(),
-			"select\n"
-			+ "  ps.*\n"
-			+ "from\n"
-			+ "  master.\"UserHost\" ms\n"
-			+ "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
-			+ "where\n"
-			+ "  ms.username=?",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new PhysicalServer(),
+      "select\n"
+      + "  ps.*\n"
+      + "from\n"
+      + "  master.\"UserHost\" ms\n"
+      + "  inner join infrastructure.\"PhysicalServer\" ps on ms.server=ps.server\n"
+      + "where\n"
+      + "  ms.username=?",
+      source.getCurrentAdministrator()
+    );
+  }
 
-	@Override
-	protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-		MasterServer.writeObjects(
-			conn,
-			source,
-			out,
-			provideProgress,
-			CursorMode.AUTO,
-			new PhysicalServer(),
-			"select distinct\n"
-			+ "  ps.*\n"
-			+ "from\n"
-			+ "  account.\"User\" un,\n"
-			+ "  billing.\"Package\" pk,\n"
-			+ "  account.\"AccountHost\" bs,\n"
-			// Allow servers it replicates to
-			//+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-			//+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
-			+ "  infrastructure.\"PhysicalServer\" ps\n"
-			+ "where\n"
-			+ "  un.username=?\n"
-			+ "  and un.package=pk.name\n"
-			+ "  and pk.accounting=bs.accounting\n"
-			+ "  and (\n"
-			+ "    bs.server=ps.server\n"
-			// Allow servers it replicates to
-			//+ "    or bp.ao_server=ps.server\n"
-			+ "  )",
-			source.getCurrentAdministrator()
-		);
-	}
+  @Override
+  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    MasterServer.writeObjects(
+      conn,
+      source,
+      out,
+      provideProgress,
+      CursorMode.AUTO,
+      new PhysicalServer(),
+      "select distinct\n"
+      + "  ps.*\n"
+      + "from\n"
+      + "  account.\"User\" un,\n"
+      + "  billing.\"Package\" pk,\n"
+      + "  account.\"AccountHost\" bs,\n"
+      // Allow servers it replicates to
+      //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+      //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+      + "  infrastructure.\"PhysicalServer\" ps\n"
+      + "where\n"
+      + "  un.username=?\n"
+      + "  and un.package=pk.name\n"
+      + "  and pk.accounting=bs.accounting\n"
+      + "  and (\n"
+      + "    bs.server=ps.server\n"
+      // Allow servers it replicates to
+      //+ "    or bp.ao_server=ps.server\n"
+      + "  )",
+      source.getCurrentAdministrator()
+    );
+  }
 }

@@ -27,9 +27,9 @@ package com.aoindustries.aoserv.master.cluster;
  * @author  AO Industries, Inc.
  */
 public enum ProcessorType {
-	P4,
-	P4_XEON,
-	CORE,
-	CORE2,
-	XEON_LV
+  P4,
+  P4_XEON,
+  CORE,
+  CORE2,
+  XEON_LV
 }
