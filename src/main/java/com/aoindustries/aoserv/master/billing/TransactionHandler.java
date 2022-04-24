@@ -54,23 +54,23 @@ public final class TransactionHandler {
   }
 
   private static final String QUERY_MASTER =
-    "select * from billing.\"Transaction\"";
+      "select * from billing.\"Transaction\"";
 
   private static final String QUERY_ADMINISTRATOR =
-    "select\n"
-    + "  tr.*\n"
-    + "from\n"
-    + "  account.\"User\" un1,\n"
-    + "  billing.\"Package\" pk1,\n"
-    + TableHandler.BU1_PARENTS_JOIN
-    + "  billing.\"Transaction\" tr\n"
-    + "where\n"
-    + "  un1.username=?\n"
-    + "  and un1.package=pk1.name\n"
-    + "  and (\n"
-    + TableHandler.PK1_BU1_PARENTS_WHERE
-    + "  )\n"
-    + "  and bu1.accounting=tr.accounting";
+      "select\n"
+          + "  tr.*\n"
+          + "from\n"
+          + "  account.\"User\" un1,\n"
+          + "  billing.\"Package\" pk1,\n"
+          + TableHandler.BU1_PARENTS_JOIN
+          + "  billing.\"Transaction\" tr\n"
+          + "where\n"
+          + "  un1.username=?\n"
+          + "  and un1.package=pk1.name\n"
+          + "  and (\n"
+          + TableHandler.PK1_BU1_PARENTS_WHERE
+          + "  )\n"
+          + "  and bu1.accounting=tr.accounting";
 
   public static class GetObject implements TableHandler.GetObjectHandler {
 
@@ -87,29 +87,29 @@ public final class TransactionHandler {
           assert masterServers != null;
           if (masterServers.length == 0) {
             MasterServer.writeObject(
-              conn,
-              source,
-              out,
-              new Transaction(),
-              QUERY_MASTER + " WHERE transid=? AND \"rate.currency\"=?",
-              transid,
-              Currency.USD.getCurrencyCode()
+                conn,
+                source,
+                out,
+                new Transaction(),
+                QUERY_MASTER + " WHERE transid=? AND \"rate.currency\"=?",
+                transid,
+                Currency.USD.getCurrencyCode()
             );
           } else {
             out.writeShort(AoservProtocol.DONE);
           }
         } else {
           MasterServer.writeObject(
-            conn,
-            source,
-            out,
-            new Transaction(),
-            QUERY_ADMINISTRATOR + "\n"
-            + "  AND tr.transid=?\n"
-            + "  AND \"rate.currency\"=?",
-            source.getCurrentAdministrator(),
-            transid,
-            Currency.USD.getCurrencyCode()
+              conn,
+              source,
+              out,
+              new Transaction(),
+              QUERY_ADMINISTRATOR + "\n"
+                  + "  AND tr.transid=?\n"
+                  + "  AND \"rate.currency\"=?",
+              source.getCurrentAdministrator(),
+              transid,
+              Currency.USD.getCurrencyCode()
           );
         }
       } else {
@@ -129,24 +129,24 @@ public final class TransactionHandler {
     protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.FETCH,
-          new Transaction(),
-          QUERY_MASTER + " WHERE \"rate.currency\"=?",
-          Currency.USD.getCurrencyCode()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.FETCH,
+            new Transaction(),
+            QUERY_MASTER + " WHERE \"rate.currency\"=?",
+            Currency.USD.getCurrencyCode()
         );
       } else {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.FETCH,
-          new Transaction(),
-          QUERY_MASTER
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.FETCH,
+            new Transaction(),
+            QUERY_MASTER
         );
       }
     }
@@ -160,27 +160,27 @@ public final class TransactionHandler {
     protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.FETCH,
-          new Transaction(),
-          QUERY_ADMINISTRATOR + "\n"
-          + "  AND \"rate.currency\"=?",
-          source.getCurrentAdministrator(),
-          Currency.USD.getCurrencyCode()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.FETCH,
+            new Transaction(),
+            QUERY_ADMINISTRATOR + "\n"
+                + "  AND \"rate.currency\"=?",
+            source.getCurrentAdministrator(),
+            Currency.USD.getCurrencyCode()
         );
       } else {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.FETCH,
-          new Transaction(),
-          QUERY_ADMINISTRATOR,
-          source.getCurrentAdministrator()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.FETCH,
+            new Transaction(),
+            QUERY_ADMINISTRATOR,
+            source.getCurrentAdministrator()
         );
       }
     }

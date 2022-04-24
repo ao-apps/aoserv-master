@@ -49,13 +49,13 @@ public class BankAccount_GetTableHandler implements GetTableHandlerAccountingOnl
   @Override
   public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new BankAccount(),
-      "select * from accounting.\"BankAccount\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new BankAccount(),
+        "select * from accounting.\"BankAccount\""
     );
   }
 }

@@ -120,29 +120,29 @@ public final class EmailHandler {
 
   public static void checkAccessListPath(DatabaseConnection conn, RequestSource source, String action, int linuxServer, PosixPath path) throws IOException, SQLException {
     if (
-      !List.isValidRegularPath(
-        path,
-        NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer)
-      )
+        !List.isValidRegularPath(
+            path,
+            NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer)
+        )
     ) {
       String pathStr = path.toString();
       // Can also be a path in a majordomo server that they may access
-      if (pathStr.startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString()+'/')) {
-        int pos=pathStr.indexOf('/', MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString().length()+1);
+      if (pathStr.startsWith(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString() + '/')) {
+        int pos = pathStr.indexOf('/', MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString().length() + 1);
         if (pos != -1) {
-          String domain=pathStr.substring(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString().length()+1, pos);
-          pathStr=pathStr.substring(pos+1);
+          String domain = pathStr.substring(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY.toString().length() + 1, pos);
+          pathStr = pathStr.substring(pos + 1);
           if (pathStr.startsWith("lists/")) {
-            String listName=pathStr.substring(6);
+            String listName = pathStr.substring(6);
             if (MajordomoList.isValidListName(listName)) {
-              int ed=getDomain(conn, linuxServer, domain);
+              int ed = getDomain(conn, linuxServer, domain);
               checkAccessMajordomoServer(conn, source, action, getMajordomoServer(conn, ed));
               return;
             }
           }
         }
       }
-      String message="email.List.path="+path+" not allowed, '"+action+"'";
+      String message = "email.List.path=" + path + " not allowed, '" + action + "'";
       throw new SQLException(message);
     }
   }
@@ -159,10 +159,10 @@ public final class EmailHandler {
   }
 
   public static void checkAccessPipeCommand(
-    DatabaseConnection conn,
-    RequestSource source,
-    String action,
-    String path
+      DatabaseConnection conn,
+      RequestSource source,
+      String action,
+      String path
   ) throws IOException, SQLException {
     throw new SQLException("Method not implemented.");
   }
@@ -172,11 +172,11 @@ public final class EmailHandler {
   }
 
   public static int addAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    String address,
-    int domain
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      String address,
+      int domain
   ) throws IOException, SQLException {
     checkAccessDomain(conn, source, "addAddress", domain);
 
@@ -184,15 +184,15 @@ public final class EmailHandler {
   }
 
   private static int addAddress0(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    String address,
-    int domain
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      String address,
+      int domain
   ) throws IOException, SQLException {
     {
       ValidationResult result = Email.validate(
-        address,
-        getNetDomainForDomain(conn, domain)
+          address,
+          getNetDomainForDomain(conn, domain)
       );
       if (!result.isValid()) {
         throw new SQLException("Invalid email address: " + result);
@@ -200,76 +200,76 @@ public final class EmailHandler {
     }
 
     int address_id = conn.updateInt(
-      "INSERT INTO email.\"Address\" (address, \"domain\") VALUES (?,?) RETURNING id",
-      address,
-      domain
+        "INSERT INTO email.\"Address\" (address, \"domain\") VALUES (?,?) RETURNING id",
+        address,
+        domain
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_ADDRESSES,
-      getAccountForAddress(conn, address_id),
-      getLinuxServerForAddress(conn, address_id),
-      false
+        conn,
+        Table.TableID.EMAIL_ADDRESSES,
+        getAccountForAddress(conn, address_id),
+        getLinuxServerForAddress(conn, address_id),
+        false
     );
     return address_id;
   }
 
   public static int addForwarding(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address,
-    Email destination
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address,
+      Email destination
   ) throws IOException, SQLException {
     String destinationStr = destination.toString();
     if (destinationStr.toLowerCase().endsWith("@comcast.net")) {
       throw new SQLException(
-        "We no longer allow forwarding to comcast accounts.  Comcast blocks mail servers\n"
-        + "that forward spam originating from other networks.  Our spam filters are\n"
-        + "associated with email inboxes, not forwarding settings.  Our forwarding\n"
-        + "configuration assumes the final recipient account will provide spam filters.\n"
-        + "Also, our spam filters rely heavily on feedback from the mail client, and\n"
-        + "this feedback is not available from forwarded email.  For this reason we\n"
-        + "will not provide filters on the forwarded email.\n"
-        + "\n"
-        + "Please create an email inbox, associate your email address with the inbox and\n"
-        + "obtain your email directly from our mail servers over POP3 or IMAP instead of\n"
-        + "forwarding to comcast.net.\n"
-        + "\n"
-        + "Sorry for any inconvenience, but Comcast's unprecedented blocking policy and\n"
-        + "our standard installation of SpamAssassin filters are not compatible.\n"
+          "We no longer allow forwarding to comcast accounts.  Comcast blocks mail servers\n"
+              + "that forward spam originating from other networks.  Our spam filters are\n"
+              + "associated with email inboxes, not forwarding settings.  Our forwarding\n"
+              + "configuration assumes the final recipient account will provide spam filters.\n"
+              + "Also, our spam filters rely heavily on feedback from the mail client, and\n"
+              + "this feedback is not available from forwarded email.  For this reason we\n"
+              + "will not provide filters on the forwarded email.\n"
+              + "\n"
+              + "Please create an email inbox, associate your email address with the inbox and\n"
+              + "obtain your email directly from our mail servers over POP3 or IMAP instead of\n"
+              + "forwarding to comcast.net.\n"
+              + "\n"
+              + "Sorry for any inconvenience, but Comcast's unprecedented blocking policy and\n"
+              + "our standard installation of SpamAssassin filters are not compatible.\n"
       );
     }
 
     checkAccessAddress(conn, source, "addForwarding", address);
 
     int forwarding = conn.updateInt(
-      "INSERT INTO email.\"Forwarding\" (email_address, destination) VALUES (?,?) RETURNING id",
-      address,
-      AOServObject.USE_SQL_DATA_WRITE ? destination : destinationStr
+        "INSERT INTO email.\"Forwarding\" (email_address, destination) VALUES (?,?) RETURNING id",
+        address,
+        AOServObject.USE_SQL_DATA_WRITE ? destination : destinationStr
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_FORWARDING,
-      getAccountForAddress(conn, address),
-      getLinuxServerForAddress(conn, address),
-      false
+        conn,
+        Table.TableID.EMAIL_FORWARDING,
+        getAccountForAddress(conn, address),
+        getLinuxServerForAddress(conn, address),
+        false
     );
 
     return forwarding;
   }
 
   public static int addList(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    PosixPath path,
-    int userServer,
-    int groupServer
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      PosixPath path,
+      int userServer,
+      int groupServer
   ) throws IOException, SQLException {
     checkAccessListPath(conn, source, "addList", LinuxAccountHandler.getServerForUserServer(conn, userServer), path);
 
@@ -282,70 +282,71 @@ public final class EmailHandler {
     LinuxAccountHandler.checkAccessGroupServer(conn, source, "addList", groupServer);
 
     return addList0(
-      conn,
-      invalidateList,
-      path,
-      userServer,
-      groupServer
+        conn,
+        invalidateList,
+        path,
+        userServer,
+        groupServer
     );
   }
+
   private static int addList0(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    PosixPath path,
-    int linuxUserServer,
-    int linuxGroupServer
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      PosixPath path,
+      int linuxUserServer,
+      int linuxGroupServer
   ) throws IOException, SQLException {
     if (LinuxAccountHandler.isUserServerDisabled(conn, linuxUserServer)) {
-      throw new SQLException("Unable to add List, UserServer disabled: "+linuxUserServer);
+      throw new SQLException("Unable to add List, UserServer disabled: " + linuxUserServer);
     }
-    Account.Name packageName=LinuxAccountHandler.getPackageForGroupServer(conn, linuxGroupServer);
+    Account.Name packageName = LinuxAccountHandler.getPackageForGroupServer(conn, linuxGroupServer);
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Unable to add List, Package disabled: "+packageName);
+      throw new SQLException("Unable to add List, Package disabled: " + packageName);
     }
 
     // The server for both account and group must be the same
     int userServer_linuxServer = LinuxAccountHandler.getServerForUserServer(conn, linuxUserServer);
     int groupServer_linuxServer = LinuxAccountHandler.getServerForGroupServer(conn, linuxGroupServer);
     if (userServer_linuxServer != groupServer_linuxServer) {
-      throw new SQLException("(linux.UserServer.id="+linuxUserServer+").ao_server != (linux.GroupServer.id="+linuxGroupServer+").ao_server");
+      throw new SQLException("(linux.UserServer.id=" + linuxUserServer + ").ao_server != (linux.GroupServer.id=" + linuxGroupServer + ").ao_server");
     }
     // Must not already have this path on this server
     if (
-      conn.queryBoolean(
-        "select\n"
-        + "  (\n"
-        + "    select\n"
-        + "      el.id\n"
-        + "    from\n"
-        + "      email.\"List\" el,\n"
-        + "      linux.\"GroupServer\" lsg\n"
-        + "    where\n"
-        + "      el.path=?\n"
-        + "      and el.linux_server_group=lsg.id\n"
-        + "      and lsg.ao_server=?\n"
-        + "    limit 1\n"
-        + "  ) is not null",
-        path,
-        groupServer_linuxServer
-      )
+        conn.queryBoolean(
+            "select\n"
+                + "  (\n"
+                + "    select\n"
+                + "      el.id\n"
+                + "    from\n"
+                + "      email.\"List\" el,\n"
+                + "      linux.\"GroupServer\" lsg\n"
+                + "    where\n"
+                + "      el.path=?\n"
+                + "      and el.linux_server_group=lsg.id\n"
+                + "      and lsg.ao_server=?\n"
+                + "    limit 1\n"
+                + "  ) is not null",
+            path,
+            groupServer_linuxServer
+        )
     ) {
-      throw new SQLException("List path already used: "+path+" on "+groupServer_linuxServer);
+      throw new SQLException("List path already used: " + path + " on " + groupServer_linuxServer);
     }
 
     int list = conn.updateInt(
-      "INSERT INTO email.\"List\" (\n"
-      + "  \"path\",\n"
-      + "  linux_server_account,\n"
-      + "  linux_server_group\n"
-      + "values(\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?\n"
-      + ") RETURNING id",
-      path,
-      linuxUserServer,
-      linuxGroupServer
+        "INSERT INTO email.\"List\" (\n"
+            + "  \"path\",\n"
+            + "  linux_server_account,\n"
+            + "  linux_server_group\n"
+            + "values(\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?\n"
+            + ") RETURNING id",
+        path,
+        linuxUserServer,
+        linuxGroupServer
     );
 
     // Create the empty list file
@@ -359,59 +360,59 @@ public final class EmailHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-      Table.TableID.EMAIL_LISTS,
-      InvalidateList.allAccounts,
-      userServer_linuxServer,
-      false
+        Table.TableID.EMAIL_LISTS,
+        InvalidateList.allAccounts,
+        userServer_linuxServer,
+        false
     );
 
     return list;
   }
 
   public static int addListAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address,
-    int list
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address,
+      int list
   ) throws IOException, SQLException {
     checkAccessAddress(conn, source, "addListAddress", address);
     checkAccessList(conn, source, "addListAddress", list);
 
     return addListAddress0(
-      conn,
-      invalidateList,
-      address,
-      list
+        conn,
+        invalidateList,
+        address,
+        list
     );
   }
 
   private static int addListAddress0(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int address,
-    int list
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int address,
+      int list
   ) throws IOException, SQLException {
     // The email_domain and the email_list must be on the same server
     int domainLinuxServer = getLinuxServerForAddress(conn, address);
     int list_linuxServer = getLinuxServerForList(conn, list);
     if (domainLinuxServer != list_linuxServer) {
-      throw new SQLException("List server ("+list_linuxServer+") != Email address server ("+domainLinuxServer+')');
+      throw new SQLException("List server (" + list_linuxServer + ") != Email address server (" + domainLinuxServer + ')');
     }
 
     int listAddress = conn.updateInt(
-      "INSERT INTO email.\"ListAddress\" (email_address, email_list) VALUES (?,?) RETURNING id",
-      address,
-      list
+        "INSERT INTO email.\"ListAddress\" (email_address, email_list) VALUES (?,?) RETURNING id",
+        address,
+        list
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_LIST_ADDRESSES,
-      getAccountForAddress(conn, address),
-      getLinuxServerForAddress(conn, address),
-      false
+        conn,
+        Table.TableID.EMAIL_LIST_ADDRESSES,
+        getAccountForAddress(conn, address),
+        getLinuxServerForAddress(conn, address),
+        false
     );
 
     return listAddress;
@@ -421,12 +422,12 @@ public final class EmailHandler {
    * Adds an email pipe.
    */
   public static int addPipe(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int linuxServer,
-    String command,
-    Account.Name packageName
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int linuxServer,
+      String command,
+      Account.Name packageName
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "addPipe", linuxServer);
     checkAccessPipeCommand(conn, source, "addPipe", command);
@@ -434,88 +435,88 @@ public final class EmailHandler {
     PackageHandler.checkPackageAccessHost(conn, source, "addPipe", packageName, linuxServer);
 
     return addPipe0(
-      conn,
-      invalidateList,
-      linuxServer,
-      command,
-      packageName
+        conn,
+        invalidateList,
+        linuxServer,
+        command,
+        packageName
     );
   }
 
   private static int addPipe0(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int linuxServer,
-    String command,
-    Account.Name packageName
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int linuxServer,
+      String command,
+      Account.Name packageName
   ) throws IOException, SQLException {
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Unable to add Pipe, Package disabled: "+packageName);
+      throw new SQLException("Unable to add Pipe, Package disabled: " + packageName);
     }
 
     int pipe = conn.updateInt("INSERT INTO email.\"Pipe\" VALUES (default,?,?,?,null) RETURNING id", linuxServer, command, packageName);
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_PIPES,
-      PackageHandler.getAccountForPackage(conn, packageName),
-      linuxServer,
-      false
+        conn,
+        Table.TableID.EMAIL_PIPES,
+        PackageHandler.getAccountForPackage(conn, packageName),
+        linuxServer,
+        false
     );
     return pipe;
   }
 
   public static int addPipeAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address,
-    int pipe
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address,
+      int pipe
   ) throws IOException, SQLException {
     checkAccessAddress(conn, source, "addPipeAddress", address);
     checkAccessPipe(conn, source, "addPipeAddress", pipe);
 
     return addPipeAddress0(
-      conn,
-      invalidateList,
-      address,
-      pipe
+        conn,
+        invalidateList,
+        address,
+        pipe
     );
   }
 
   private static int addPipeAddress0(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int address,
-    int pipe
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int address,
+      int pipe
   ) throws IOException, SQLException {
     int pipeAddress = conn.updateInt("INSERT INTO email.\"PipeAddress\" VALUES (default,?,?) RETURNING id", address, pipe);
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_PIPE_ADDRESSES,
-      getAccountForAddress(conn, address),
-      getLinuxServerForAddress(conn, address),
-      false
+        conn,
+        Table.TableID.EMAIL_PIPE_ADDRESSES,
+        getAccountForAddress(conn, address),
+        getLinuxServerForAddress(conn, address),
+        false
     );
 
     return pipeAddress;
   }
 
   public static int addInboxAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address,
-    int userServer
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address,
+      int userServer
   ) throws IOException, SQLException {
     checkAccessAddress(conn, source, "addInboxAddress", address);
     LinuxAccountHandler.checkAccessUserServer(conn, source, "addInboxAddress", userServer);
     com.aoindustries.aoserv.client.linux.User.Name user = LinuxAccountHandler.getUserForUserServer(conn, userServer);
     if (user.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
-      throw new SQLException("Not allowed to add email addresses to User named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+      throw new SQLException("Not allowed to add email addresses to User named '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
     }
     // TODO: Make sure they are on the same server
 
@@ -523,22 +524,22 @@ public final class EmailHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.LINUX_ACC_ADDRESSES,
-      getAccountForAddress(conn, address),
-      getLinuxServerForAddress(conn, address),
-      false
+        conn,
+        Table.TableID.LINUX_ACC_ADDRESSES,
+        getAccountForAddress(conn, address),
+        getLinuxServerForAddress(conn, address),
+        false
     );
     return inboxAddress;
   }
 
   public static int addDomain(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    DomainName netDomain,
-    int linuxServer,
-    Account.Name packageName
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      DomainName netDomain,
+      int linuxServer,
+      Account.Name packageName
   ) throws IOException, SQLException {
     MasterServer.checkAccessHostname(conn, source, "addDomain", netDomain.toString());
     NetHostHandler.checkAccessHost(conn, source, "addDomain", linuxServer);
@@ -549,11 +550,11 @@ public final class EmailHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_DOMAINS,
-      PackageHandler.getAccountForPackage(conn, packageName),
-      linuxServer,
-      false
+        conn,
+        Table.TableID.EMAIL_DOMAINS,
+        PackageHandler.getAccountForPackage(conn, packageName),
+        linuxServer,
+        false
     );
     return domain;
   }
@@ -562,17 +563,17 @@ public final class EmailHandler {
    * Adds a email SMTP relay.
    */
   public static int addSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Account.Name packageName,
-    int linuxServer,
-    HostAddress host,
-    String type,
-    long duration
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Account.Name packageName,
+      int linuxServer,
+      HostAddress host,
+      String type,
+      long duration
   ) throws IOException, SQLException {
     // Only master users can add relays
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
       throw new SQLException("Only master users may add SMTP relays.");
     }
@@ -587,172 +588,172 @@ public final class EmailHandler {
       PackageHandler.checkPackageAccessHost(conn, source, "addSmtpRelay", packageName, linuxServer);
     }
     if (duration != -1 && duration <= 0) {
-      throw new SQLException("Duration must be positive: "+duration);
+      throw new SQLException("Duration must be positive: " + duration);
     }
 
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Unable to add SmtpRelay, Package disabled: "+packageName);
+      throw new SQLException("Unable to add SmtpRelay, Package disabled: " + packageName);
     }
 
     int smtpRelay;
     if (linuxServer == -1) {
       smtpRelay = conn.updateInt(
-        "INSERT INTO email.\"SmtpRelay\" values(default,?,null,?,?,now(),now(),0,?,null) RETURNING id",
-        packageName,
-        host,
-        type,
-        duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
+          "INSERT INTO email.\"SmtpRelay\" values(default,?,null,?,?,now(),now(),0,?,null) RETURNING id",
+          packageName,
+          host,
+          type,
+          duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
       );
     } else {
       smtpRelay = conn.updateInt(
-        "INSERT INTO email.\"SmtpRelay\" VALUES (default,?,?,?,?,now(),now(),0,?,null) RETURNING id",
-        packageName,
-        linuxServer,
-        host,
-        type,
-        duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
+          "INSERT INTO email.\"SmtpRelay\" VALUES (default,?,?,?,?,now(),now(),0,?,null) RETURNING id",
+          packageName,
+          linuxServer,
+          host,
+          type,
+          duration == -1 ? DatabaseAccess.Null.TIMESTAMP : new Timestamp(System.currentTimeMillis() + duration) // TODO: Timestamp nanosecond precision
       );
     }
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_SMTP_RELAYS,
-      PackageHandler.getAccountForPackage(conn, packageName),
-      linuxServer,
-      false
+        conn,
+        Table.TableID.EMAIL_SMTP_RELAYS,
+        PackageHandler.getAccountForPackage(conn, packageName),
+        linuxServer,
+        false
     );
     return smtpRelay;
   }
 
   public static int addSpamMessage(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int smtpRelay,
-    String message
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int smtpRelay,
+      String message
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser=MasterServer.getUser(conn, currentAdministrator);
-    UserHost[] masterServers=masterUser == null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
     if (masterUser == null || masterServers.length != 0) {
       throw new SQLException("Only master users may add spam email messages.");
     }
 
     int spamMessage = conn.updateInt(
-      "INSERT INTO email.\"SpamMessage\" VALUES(default,?,now(),?) RETURNING id",
-      smtpRelay,
-      message
+        "INSERT INTO email.\"SpamMessage\" VALUES(default,?,now(),?) RETURNING id",
+        smtpRelay,
+        message
     );
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-      Table.TableID.SPAM_EMAIL_MESSAGES,
-      InvalidateList.allAccounts,
-      InvalidateList.allHosts,
-      false
+        Table.TableID.SPAM_EMAIL_MESSAGES,
+        InvalidateList.allAccounts,
+        InvalidateList.allHosts,
+        false
     );
 
     return spamMessage;
   }
 
   public static int addMajordomoList(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int majordomoServer,
-    String listName
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int majordomoServer,
+      String listName
   ) throws IOException, SQLException {
     if (!MajordomoList.isValidListName(listName)) {
-      throw new SQLException("Invalide Majordomo list name: "+listName);
+      throw new SQLException("Invalide Majordomo list name: " + listName);
     }
 
     checkAccessMajordomoServer(conn, source, "addMajordomoList", majordomoServer);
 
-    DomainName domainName=getNetDomainForDomain(conn, majordomoServer);
+    DomainName domainName = getNetDomainForDomain(conn, majordomoServer);
     PosixPath msPath;
     PosixPath listPath;
     PosixPath infoPath;
     PosixPath introPath;
     try {
-      msPath = PosixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY+"/"+domainName);
-      listPath = PosixPath.valueOf(msPath+"/lists/"+listName);
-      infoPath = PosixPath.valueOf(listPath+".info");
-      introPath = PosixPath.valueOf(listPath+".intro");
+      msPath = PosixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY + "/" + domainName);
+      listPath = PosixPath.valueOf(msPath + "/lists/" + listName);
+      infoPath = PosixPath.valueOf(listPath + ".info");
+      introPath = PosixPath.valueOf(listPath + ".intro");
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
     int linuxServer = getLinuxServerForDomain(conn, majordomoServer);
 
     // Disabled checks
-    Account.Name packageName=getPackageForDomain(conn, majordomoServer);
+    Account.Name packageName = getPackageForDomain(conn, majordomoServer);
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Unable to add Majordomo list, Package for Majordomo server #"+majordomoServer+" is disabled: "+packageName);
+      throw new SQLException("Unable to add Majordomo list, Package for Majordomo server #" + majordomoServer + " is disabled: " + packageName);
     }
 
     // Find the email addresses
-    int ownerListnameAddress=getOrAddAddress(conn, invalidateList, "owner-"+listName, majordomoServer);
-    int listnameOwnerAddress=getOrAddAddress(conn, invalidateList, listName+"-owner", majordomoServer);
-    int listnameApprovalAddress=getOrAddAddress(conn, invalidateList, listName+"-approval", majordomoServer);
+    int ownerListnameAddress = getOrAddAddress(conn, invalidateList, "owner-" + listName, majordomoServer);
+    int listnameOwnerAddress = getOrAddAddress(conn, invalidateList, listName + "-owner", majordomoServer);
+    int listnameApprovalAddress = getOrAddAddress(conn, invalidateList, listName + "-approval", majordomoServer);
 
     // Add the email list
-    int lsa=getLinuxUserServerForMajordomoServer(conn, majordomoServer);
-    int lsg=getLinuxGroupServerForMajordomoServer(conn, majordomoServer);
+    int lsa = getLinuxUserServerForMajordomoServer(conn, majordomoServer);
+    int lsg = getLinuxGroupServerForMajordomoServer(conn, majordomoServer);
     int list = addList0(
-      conn,
-      invalidateList,
-      listPath,
-      lsa,
-      lsg
+        conn,
+        invalidateList,
+        listPath,
+        lsa,
+        lsg
     );
 
     // Add the listname email pipe and address
-    int listnamePipe=addPipe0(
-      conn,
-      invalidateList,
-      linuxServer,
-      msPath+"/wrapper resend -l "+listName+' '+listName+"-list@"+domainName,
-      packageName
+    int listnamePipe = addPipe0(
+        conn,
+        invalidateList,
+        linuxServer,
+        msPath + "/wrapper resend -l " + listName + ' ' + listName + "-list@" + domainName,
+        packageName
     );
-    int listnameAddress=getOrAddAddress(conn, invalidateList, listName, majordomoServer);
-    int listnamePipeAddress=addPipeAddress0(conn, invalidateList, listnameAddress, listnamePipe);
+    int listnameAddress = getOrAddAddress(conn, invalidateList, listName, majordomoServer);
+    int listnamePipeAddress = addPipeAddress0(conn, invalidateList, listnameAddress, listnamePipe);
 
     // Add the listname-list email list address
-    int listnameListAddress=getOrAddAddress(conn, invalidateList, listName+"-list", majordomoServer);
-    int listnameListListAddress=addListAddress0(conn, invalidateList, listnameListAddress, list);
+    int listnameListAddress = getOrAddAddress(conn, invalidateList, listName + "-list", majordomoServer);
+    int listnameListListAddress = addListAddress0(conn, invalidateList, listnameListAddress, list);
 
     // Add the listname-request email pipe and address
-    int listnameRequestPipe=addPipe0(
-      conn,
-      invalidateList,
-      linuxServer,
-      msPath+"/wrapper majordomo -l "+listName,
-      packageName
+    int listnameRequestPipe = addPipe0(
+        conn,
+        invalidateList,
+        linuxServer,
+        msPath + "/wrapper majordomo -l " + listName,
+        packageName
     );
-    int listnameRequestAddress=getOrAddAddress(conn, invalidateList, listName+"-request", majordomoServer);
-    int listnameRequestPipeAddress=addPipeAddress0(conn, invalidateList, listnameRequestAddress, listnameRequestPipe);
+    int listnameRequestAddress = getOrAddAddress(conn, invalidateList, listName + "-request", majordomoServer);
+    int listnameRequestPipeAddress = addPipeAddress0(conn, invalidateList, listnameRequestAddress, listnameRequestPipe);
 
     // Add the majordomo_list
     conn.update(
-      "insert into email.\"MajordomoList\" values(?,?,?,?,?,?,?,?,?)",
-      list,
-      majordomoServer,
-      listName,
-      listnamePipeAddress,
-      listnameListListAddress,
-      ownerListnameAddress,
-      listnameOwnerAddress,
-      listnameApprovalAddress,
-      listnameRequestPipeAddress
+        "insert into email.\"MajordomoList\" values(?,?,?,?,?,?,?,?,?)",
+        list,
+        majordomoServer,
+        listName,
+        listnamePipeAddress,
+        listnameListListAddress,
+        ownerListnameAddress,
+        listnameOwnerAddress,
+        listnameApprovalAddress,
+        listnameRequestPipeAddress
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.MAJORDOMO_LISTS,
-      PackageHandler.getAccountForPackage(conn, packageName),
-      linuxServer,
-      false
+        conn,
+        Table.TableID.MAJORDOMO_LISTS,
+        PackageHandler.getAccountForPackage(conn, packageName),
+        linuxServer,
+        false
     );
 
     // Create the empty info and intro files
@@ -770,295 +771,295 @@ public final class EmailHandler {
   }
 
   public static void addMajordomoServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int domain,
-    int userServer,
-    int groupServer,
-    String version
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int domain,
+      int userServer,
+      int groupServer,
+      String version
   ) throws IOException, SQLException {
     // Security checks
     checkAccessDomain(conn, source, "addMajordomoServer", domain);
     LinuxAccountHandler.checkAccessUserServer(conn, source, "addMajordomoServer", userServer);
-    com.aoindustries.aoserv.client.linux.User.Name lsaUsername=LinuxAccountHandler.getUserForUserServer(conn, userServer);
+    com.aoindustries.aoserv.client.linux.User.Name lsaUsername = LinuxAccountHandler.getUserForUserServer(conn, userServer);
     if (lsaUsername.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
-      throw new SQLException("Unable to add MajordomoServer with UserServer of '"+lsaUsername+'\'');
+      throw new SQLException("Unable to add MajordomoServer with UserServer of '" + lsaUsername + '\'');
     }
-    String lsaType=LinuxAccountHandler.getTypeForUserServer(conn, userServer);
+    String lsaType = LinuxAccountHandler.getTypeForUserServer(conn, userServer);
     if (
-      !lsaType.equals(UserType.APPLICATION)
-      && !lsaType.equals(UserType.USER)
+        !lsaType.equals(UserType.APPLICATION)
+            && !lsaType.equals(UserType.USER)
     ) {
-      throw new SQLException("May only add Majordomo servers using Linux accounts of type '"+UserType.APPLICATION+"' or '"+UserType.USER+"', trying to use '"+lsaType+'\'');
+      throw new SQLException("May only add Majordomo servers using Linux accounts of type '" + UserType.APPLICATION + "' or '" + UserType.USER + "', trying to use '" + lsaType + '\'');
     }
     LinuxAccountHandler.checkAccessGroupServer(conn, source, "addMajordomoServer", groupServer);
-    Group.Name lsgName=LinuxAccountHandler.getGroupForGroupServer(conn, groupServer);
+    Group.Name lsgName = LinuxAccountHandler.getGroupForGroupServer(conn, groupServer);
     if (
-      lsgName.equals(Group.FTPONLY)
-      || lsgName.equals(Group.MAIL)
-      || lsgName.equals(Group.MAILONLY)
+        lsgName.equals(Group.FTPONLY)
+            || lsgName.equals(Group.MAIL)
+            || lsgName.equals(Group.MAILONLY)
     ) {
-      throw new SQLException("Unable to add MajordomoServer with GroupServer of '"+lsgName+'\'');
+      throw new SQLException("Unable to add MajordomoServer with GroupServer of '" + lsgName + '\'');
     }
-    String lsgType=LinuxAccountHandler.getTypeForGroupServer(conn, groupServer);
+    String lsgType = LinuxAccountHandler.getTypeForGroupServer(conn, groupServer);
     if (
-      !lsgType.equals(GroupType.APPLICATION)
-      && !lsgType.equals(GroupType.USER)
+        !lsgType.equals(GroupType.APPLICATION)
+            && !lsgType.equals(GroupType.USER)
     ) {
-      throw new SQLException("May only add Majordomo servers using Linux groups of type '"+GroupType.APPLICATION+"' or '"+GroupType.USER+"', trying to use '"+lsgType+'\'');
+      throw new SQLException("May only add Majordomo servers using Linux groups of type '" + GroupType.APPLICATION + "' or '" + GroupType.USER + "', trying to use '" + lsgType + '\'');
     }
 
     // Data integrity checks
     int domain_linuxServer = getLinuxServerForDomain(conn, domain);
     int userServer_linuxServer = LinuxAccountHandler.getServerForUserServer(conn, userServer);
     if (domain_linuxServer != userServer_linuxServer) {
-      throw new SQLException("((email.Domain.id="+domain+").ao_server='"+domain_linuxServer+"') != ((linux.UserServer.id="+userServer+").ao_server='"+userServer_linuxServer+"')");
+      throw new SQLException("((email.Domain.id=" + domain + ").ao_server='" + domain_linuxServer + "') != ((linux.UserServer.id=" + userServer + ").ao_server='" + userServer_linuxServer + "')");
     }
     int groupServer_linuxServer = LinuxAccountHandler.getServerForGroupServer(conn, groupServer);
     if (domain_linuxServer != groupServer_linuxServer) {
-      throw new SQLException("((email.Domain.id="+domain+").ao_server='"+domain_linuxServer+"') != ((linux.GroupServer.id="+groupServer+").ao_server='"+groupServer_linuxServer+"')");
+      throw new SQLException("((email.Domain.id=" + domain + ").ao_server='" + domain_linuxServer + "') != ((linux.GroupServer.id=" + groupServer + ").ao_server='" + groupServer_linuxServer + "')");
     }
 
     // Disabled checks
-    Account.Name packageName=getPackageForDomain(conn, domain);
+    Account.Name packageName = getPackageForDomain(conn, domain);
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Unable to add Majordomo server: Package for domain #"+domain+" is disabled: "+packageName);
+      throw new SQLException("Unable to add Majordomo server: Package for domain #" + domain + " is disabled: " + packageName);
     }
     if (LinuxAccountHandler.isUserServerDisabled(conn, userServer)) {
-      throw new SQLException("Unable to add Majordomo server: UserServer disabled: "+userServer);
+      throw new SQLException("Unable to add Majordomo server: UserServer disabled: " + userServer);
     }
-    Account.Name lgPackageName=LinuxAccountHandler.getPackageForGroupServer(conn, groupServer);
+    Account.Name lgPackageName = LinuxAccountHandler.getPackageForGroupServer(conn, groupServer);
     if (PackageHandler.isPackageDisabled(conn, lgPackageName)) {
-      throw new SQLException("Unable to add Majordomo server: Package for GroupServer #"+groupServer+" is disabled: "+lgPackageName);
+      throw new SQLException("Unable to add Majordomo server: Package for GroupServer #" + groupServer + " is disabled: " + lgPackageName);
     }
 
     // Create the majordomo email pipe
-    DomainName domainName=getNetDomainForDomain(conn, domain);
+    DomainName domainName = getNetDomainForDomain(conn, domain);
     PosixPath majordomoServerPath;
     try {
       majordomoServerPath = PosixPath.valueOf(MajordomoServer.MAJORDOMO_SERVER_DIRECTORY + "/" + domainName);
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
-    int majordomoPipe=addPipe0(conn, invalidateList, domain_linuxServer, majordomoServerPath+"/wrapper majordomo", packageName);
-    int majordomoAddress=getOrAddAddress(conn, invalidateList, MajordomoServer.MAJORDOMO_ADDRESS, domain);
-    int majordomoPipeAddress=addPipeAddress0(conn, invalidateList, majordomoAddress, majordomoPipe);
+    int majordomoPipe = addPipe0(conn, invalidateList, domain_linuxServer, majordomoServerPath + "/wrapper majordomo", packageName);
+    int majordomoAddress = getOrAddAddress(conn, invalidateList, MajordomoServer.MAJORDOMO_ADDRESS, domain);
+    int majordomoPipeAddress = addPipeAddress0(conn, invalidateList, majordomoAddress, majordomoPipe);
 
-    int ownerMajordomoAddress=getOrAddAddress(conn, invalidateList, MajordomoServer.OWNER_MAJORDOMO_ADDRESS, domain);
-    int majordomoOwnerAddress=getOrAddAddress(conn, invalidateList, MajordomoServer.MAJORDOMO_OWNER_ADDRESS, domain);
+    int ownerMajordomoAddress = getOrAddAddress(conn, invalidateList, MajordomoServer.OWNER_MAJORDOMO_ADDRESS, domain);
+    int majordomoOwnerAddress = getOrAddAddress(conn, invalidateList, MajordomoServer.MAJORDOMO_OWNER_ADDRESS, domain);
 
     conn.update(
-      "insert into\n"
-      + "  email.\"MajordomoServer\"\n"
-      + "values(\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?\n"
-      + ")",
-      domain,
-      userServer,
-      groupServer,
-      version,
-      majordomoPipeAddress,
-      ownerMajordomoAddress,
-      majordomoOwnerAddress
+        "insert into\n"
+            + "  email.\"MajordomoServer\"\n"
+            + "values(\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?\n"
+            + ")",
+        domain,
+        userServer,
+        groupServer,
+        version,
+        majordomoPipeAddress,
+        ownerMajordomoAddress,
+        majordomoOwnerAddress
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.MAJORDOMO_SERVERS,
-      PackageHandler.getAccountForPackage(conn, packageName),
-      domain_linuxServer,
-      false
+        conn,
+        Table.TableID.MAJORDOMO_SERVERS,
+        PackageHandler.getAccountForPackage(conn, packageName),
+        domain_linuxServer,
+        false
     );
   }
 
   public static void disableList(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int disableLog,
-    int list
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int disableLog,
+      int list
   ) throws IOException, SQLException {
     AccountHandler.checkAccessDisableLog(conn, source, "disableList", disableLog, false);
     checkAccessList(conn, source, "disableList", list);
     if (isListDisabled(conn, list)) {
-      throw new SQLException("List is already disabled: "+list);
+      throw new SQLException("List is already disabled: " + list);
     }
 
     conn.update(
-      "update email.\"List\" set disable_log=? where id=?",
-      disableLog,
-      list
+        "update email.\"List\" set disable_log=? where id=?",
+        disableLog,
+        list
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_LISTS,
-      getAccountForList(conn, list),
-      getLinuxServerForList(conn, list),
-      false
+        conn,
+        Table.TableID.EMAIL_LISTS,
+        getAccountForList(conn, list),
+        getLinuxServerForList(conn, list),
+        false
     );
   }
 
   public static void disablePipe(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int disableLog,
-    int pipe
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int disableLog,
+      int pipe
   ) throws IOException, SQLException {
     AccountHandler.checkAccessDisableLog(conn, source, "disablePipe", disableLog, false);
     checkAccessPipe(conn, source, "disablePipe", pipe);
     if (isPipeDisabled(conn, pipe)) {
-      throw new SQLException("Pipe is already disabled: "+pipe);
+      throw new SQLException("Pipe is already disabled: " + pipe);
     }
 
     conn.update(
-      "update email.\"Pipe\" set disable_log=? where id=?",
-      disableLog,
-      pipe
+        "update email.\"Pipe\" set disable_log=? where id=?",
+        disableLog,
+        pipe
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_PIPES,
-      getAccountForPipe(conn, pipe),
-      getLinuxServerForPipe(conn, pipe),
-      false
+        conn,
+        Table.TableID.EMAIL_PIPES,
+        getAccountForPipe(conn, pipe),
+        getLinuxServerForPipe(conn, pipe),
+        false
     );
   }
 
   public static void disableSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int disableLog,
-    int smtpRelay
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int disableLog,
+      int smtpRelay
   ) throws IOException, SQLException {
     AccountHandler.checkAccessDisableLog(conn, source, "disableSmtpRelay", disableLog, false);
     checkAccessSmtpRelay(conn, source, "disableSmtpRelay", smtpRelay);
     if (isSmtpRelayDisabled(conn, smtpRelay)) {
-      throw new SQLException("SmtpRelay is already disabled: "+smtpRelay);
+      throw new SQLException("SmtpRelay is already disabled: " + smtpRelay);
     }
 
     conn.update(
-      "update email.\"SmtpRelay\" set disable_log=? where id=?",
-      disableLog,
-      smtpRelay
+        "update email.\"SmtpRelay\" set disable_log=? where id=?",
+        disableLog,
+        smtpRelay
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_SMTP_RELAYS,
-      getAccountForSmtpRelay(conn, smtpRelay),
-      getLinuxServerForSmtpRelay(conn, smtpRelay),
-      false
+        conn,
+        Table.TableID.EMAIL_SMTP_RELAYS,
+        getAccountForSmtpRelay(conn, smtpRelay),
+        getLinuxServerForSmtpRelay(conn, smtpRelay),
+        false
     );
   }
 
   public static void enableList(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int list
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int list
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "enableList", list);
-    int disableLog=getDisableLogForList(conn, list);
+    int disableLog = getDisableLogForList(conn, list);
     if (disableLog == -1) {
-      throw new SQLException("List is already enabled: "+list);
+      throw new SQLException("List is already enabled: " + list);
     }
     AccountHandler.checkAccessDisableLog(conn, source, "enableList", disableLog, true);
-    Account.Name pk=getPackageForList(conn, list);
+    Account.Name pk = getPackageForList(conn, list);
     if (PackageHandler.isPackageDisabled(conn, pk)) {
-      throw new SQLException("Unable to enable List #"+list+", Package not enabled: "+pk);
+      throw new SQLException("Unable to enable List #" + list + ", Package not enabled: " + pk);
     }
 
     conn.update(
-      "update email.\"List\" set disable_log=null where id=?",
-      list
+        "update email.\"List\" set disable_log=null where id=?",
+        list
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_LISTS,
-      PackageHandler.getAccountForPackage(conn, pk),
-      getLinuxServerForList(conn, list),
-      false
+        conn,
+        Table.TableID.EMAIL_LISTS,
+        PackageHandler.getAccountForPackage(conn, pk),
+        getLinuxServerForList(conn, list),
+        false
     );
   }
 
   public static void enablePipe(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int pipe
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int pipe
   ) throws IOException, SQLException {
     checkAccessPipe(conn, source, "enablePipe", pipe);
-    int disableLog=getDisableLogForPipe(conn, pipe);
+    int disableLog = getDisableLogForPipe(conn, pipe);
     if (disableLog == -1) {
-      throw new SQLException("Pipe is already enabled: "+pipe);
+      throw new SQLException("Pipe is already enabled: " + pipe);
     }
     AccountHandler.checkAccessDisableLog(conn, source, "enablePipe", disableLog, true);
-    Account.Name pk=getPackageForPipe(conn, pipe);
+    Account.Name pk = getPackageForPipe(conn, pipe);
     if (PackageHandler.isPackageDisabled(conn, pk)) {
-      throw new SQLException("Unable to enable Pipe #"+pipe+", Package not enabled: "+pk);
+      throw new SQLException("Unable to enable Pipe #" + pipe + ", Package not enabled: " + pk);
     }
 
     conn.update(
-      "update email.\"Pipe\" set disable_log=null where id=?",
-      pipe
+        "update email.\"Pipe\" set disable_log=null where id=?",
+        pipe
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_PIPES,
-      PackageHandler.getAccountForPackage(conn, pk),
-      getLinuxServerForPipe(conn, pipe),
-      false
+        conn,
+        Table.TableID.EMAIL_PIPES,
+        PackageHandler.getAccountForPackage(conn, pk),
+        getLinuxServerForPipe(conn, pipe),
+        false
     );
   }
 
   public static void enableSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int smtpRelay
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int smtpRelay
   ) throws IOException, SQLException {
     checkAccessSmtpRelay(conn, source, "enableSmtpRelay", smtpRelay);
-    int disableLog=getDisableLogForSmtpRelay(conn, smtpRelay);
+    int disableLog = getDisableLogForSmtpRelay(conn, smtpRelay);
     if (disableLog == -1) {
-      throw new SQLException("SmtpRelay is already enabled: "+smtpRelay);
+      throw new SQLException("SmtpRelay is already enabled: " + smtpRelay);
     }
     AccountHandler.checkAccessDisableLog(conn, source, "enableSmtpRelay", disableLog, true);
-    Account.Name pk=getPackageForSmtpRelay(conn, smtpRelay);
+    Account.Name pk = getPackageForSmtpRelay(conn, smtpRelay);
     if (PackageHandler.isPackageDisabled(conn, pk)) {
-      throw new SQLException("Unable to enable SmtpRelay #"+smtpRelay+", Package not enabled: "+pk);
+      throw new SQLException("Unable to enable SmtpRelay #" + smtpRelay + ", Package not enabled: " + pk);
     }
 
     conn.update(
-      "update email.\"SmtpRelay\" set disable_log=null where id=?",
-      smtpRelay
+        "update email.\"SmtpRelay\" set disable_log=null where id=?",
+        smtpRelay
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.EMAIL_SMTP_RELAYS,
-      PackageHandler.getAccountForPackage(conn, pk),
-      getLinuxServerForSmtpRelay(conn, smtpRelay),
-      false
+        conn,
+        Table.TableID.EMAIL_SMTP_RELAYS,
+        PackageHandler.getAccountForPackage(conn, pk),
+        getLinuxServerForSmtpRelay(conn, smtpRelay),
+        false
     );
   }
 
@@ -1075,59 +1076,59 @@ public final class EmailHandler {
   }
 
   public static String getListFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int list
+      DatabaseConnection conn,
+      RequestSource source,
+      int list
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "getListFile", list);
 
     PosixPath path = getPathForList(conn, list);
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-      conn,
-      getLinuxServerForList(conn, list)
+        conn,
+        getLinuxServerForList(conn, list)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getEmailListFile(path);
   }
 
   public static IntList getListsForLinuxUserServer(
-    DatabaseConnection conn,
-    int linuxUserServer
+      DatabaseConnection conn,
+      int linuxUserServer
   ) throws IOException, SQLException {
     return conn.queryIntList("select id from email.\"List\" where linux_server_account=?", linuxUserServer);
   }
 
   public static IntList getListsForPackage(
-    DatabaseConnection conn,
-    Account.Name packageName
+      DatabaseConnection conn,
+      Account.Name packageName
   ) throws IOException, SQLException {
     return conn.queryIntList(
-      "select\n"
-      + "  el.id\n"
-      + "from\n"
-      + "  linux.\"Group\" lg,\n"
-      + "  linux.\"GroupServer\" lsg,\n"
-      + "  email.\"List\" el\n"
-      + "where\n"
-      + "  lg.package=?\n"
-      + "  and lg.name=lsg.name\n"
-      + "  and lsg.id=el.linux_server_group",
-      packageName
+        "select\n"
+            + "  el.id\n"
+            + "from\n"
+            + "  linux.\"Group\" lg,\n"
+            + "  linux.\"GroupServer\" lsg,\n"
+            + "  email.\"List\" el\n"
+            + "where\n"
+            + "  lg.package=?\n"
+            + "  and lg.name=lsg.name\n"
+            + "  and lsg.id=el.linux_server_group",
+        packageName
     );
   }
 
   public static IntList getPipesForPackage(
-    DatabaseConnection conn,
-    Account.Name name
+      DatabaseConnection conn,
+      Account.Name name
   ) throws IOException, SQLException {
     return conn.queryIntList("select id from email.\"Pipe\" where package=?", name);
   }
 
   public static long[] getImapFolderSizes(
-    DatabaseConnection conn,
-    RequestSource source,
-    int userServer,
-    String[] folderNames
+      DatabaseConnection conn,
+      RequestSource source,
+      int userServer,
+      String[] folderNames
   ) throws IOException, SQLException {
     LinuxAccountHandler.checkAccessUserServer(conn, source, "getImapFolderSizes", userServer);
     int linuxServer = LinuxAccountHandler.getServerForUserServer(conn, userServer);
@@ -1138,19 +1139,19 @@ public final class EmailHandler {
         conn.close(); // Don't hold database connection while connecting to the daemon
         return daemonConnector.getImapFolderSizes(user, folderNames);
       } catch (IOException err) {
-        logger.log(Level.SEVERE, "userServer="+userServer+", linuxServer="+linuxServer+", username="+user+", folderNames="+Arrays.asList(folderNames), err);
+        logger.log(Level.SEVERE, "userServer=" + userServer + ", linuxServer=" + linuxServer + ", username=" + user + ", folderNames=" + Arrays.asList(folderNames), err);
         DaemonHandler.flagDaemonAsDown(linuxServer);
       }
     }
-    long[] sizes=new long[folderNames.length];
+    long[] sizes = new long[folderNames.length];
     Arrays.fill(sizes, -1);
     return sizes;
   }
 
   public static InboxAttributes getInboxAttributes(
-    DatabaseConnection conn,
-    RequestSource source,
-    int userServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int userServer
   ) throws IOException, SQLException {
     LinuxAccountHandler.checkAccessUserServer(conn, source, "getInboxAttributes", userServer);
     int linuxServer = LinuxAccountHandler.getServerForUserServer(conn, userServer);
@@ -1161,7 +1162,7 @@ public final class EmailHandler {
         conn.close(); // Don't hold database connection while connecting to the daemon
         return daemonConnector.getInboxAttributes(user);
       } catch (IOException err) {
-        logger.log(Level.SEVERE, "linux_server_account="+userServer+", linuxServer="+linuxServer+", username="+user, err);
+        logger.log(Level.SEVERE, "linux_server_account=" + userServer + ", linuxServer=" + linuxServer + ", username=" + user, err);
         DaemonHandler.flagDaemonAsDown(linuxServer);
       }
     }
@@ -1169,115 +1170,115 @@ public final class EmailHandler {
   }
 
   public static IntList getSmtpRelaysForPackage(
-    DatabaseConnection conn,
-    Account.Name name
+      DatabaseConnection conn,
+      Account.Name name
   ) throws IOException, SQLException {
     return conn.queryIntList("select id from email.\"SmtpRelay\" where package=?", name);
   }
 
   public static int getDomain(
-    DatabaseConnection conn,
-    int linuxServer,
-    String path
+      DatabaseConnection conn,
+      int linuxServer,
+      String path
   ) throws IOException, SQLException {
     return conn.queryInt(
-      "select\n"
-      + "  el.id\n"
-      + "from\n"
-      + "  email.\"List\" el,\n"
-      + "  linux.\"GroupServer\" lsg\n"
-      + "where\n"
-      + "  el.path=path\n"
-      + "  and el.linux_server_group=lsg.id\n"
-      + "  and lsg.ao_server=?",
-      path,
-      linuxServer
+        "select\n"
+            + "  el.id\n"
+            + "from\n"
+            + "  email.\"List\" el,\n"
+            + "  linux.\"GroupServer\" lsg\n"
+            + "where\n"
+            + "  el.path=path\n"
+            + "  and el.linux_server_group=lsg.id\n"
+            + "  and lsg.ao_server=?",
+        path,
+        linuxServer
     );
   }
 
   public static int getDomainForAddress(
-    DatabaseConnection conn,
-    int address
+      DatabaseConnection conn,
+      int address
   ) throws IOException, SQLException {
     return conn.queryInt("select domain from email.\"Address\" where id=?", address);
   }
 
   public static String getMajordomoInfoFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int majordomoList
+      DatabaseConnection conn,
+      RequestSource source,
+      int majordomoList
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "getMajordomoInfoFile", majordomoList);
     PosixPath infoPath;
     try {
-      infoPath = PosixPath.valueOf(getPathForList(conn, majordomoList)+".info");
+      infoPath = PosixPath.valueOf(getPathForList(conn, majordomoList) + ".info");
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-      conn,
-      getLinuxServerForList(conn, majordomoList)
+        conn,
+        getLinuxServerForList(conn, majordomoList)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getEmailListFile(infoPath);
   }
 
   public static String getMajordomoIntroFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int majordomoList
+      DatabaseConnection conn,
+      RequestSource source,
+      int majordomoList
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "getMajordomoIntroFile", majordomoList);
     PosixPath introPath;
     try {
-      introPath = PosixPath.valueOf(getPathForList(conn, majordomoList)+".intro");
+      introPath = PosixPath.valueOf(getPathForList(conn, majordomoList) + ".intro");
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-      conn,
-      getLinuxServerForList(conn, majordomoList)
+        conn,
+        getLinuxServerForList(conn, majordomoList)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getEmailListFile(introPath);
   }
 
   public static int getMajordomoServer(
-    DatabaseConnection conn,
-    int domain
+      DatabaseConnection conn,
+      int domain
   ) throws IOException, SQLException {
     return conn.queryInt(
-      "select\n"
-      + "  id\n"
-      + "from\n"
-      + "  email.\"MajordomoServer\"\n"
-      + "where\n"
-      + "  domain=?",
-      domain
+        "select\n"
+            + "  id\n"
+            + "from\n"
+            + "  email.\"MajordomoServer\"\n"
+            + "where\n"
+            + "  domain=?",
+        domain
     );
   }
 
   public static void getSpamMessagesForSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    int esr
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      int esr
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser=MasterServer.getUser(conn, currentAdministrator);
-    UserHost[] masterServers=masterUser == null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
     if (masterUser != null && masterServers.length == 0) {
       // TODO: release conn before writing to out
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new SpamMessage(),
-        "select * from email.\"SpamMessage\" where email_relay=?",
-        esr
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new SpamMessage(),
+          "select * from email.\"SpamMessage\" where email_relay=?",
+          esr
       );
     } else {
       throw new SQLException("Only master users may access email.SpamMessage.");
@@ -1343,37 +1344,37 @@ public final class EmailHandler {
    * Refreshes a email SMTP relay.
    */
   public static void refreshSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int smtpRelay,
-    long minDuration
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int smtpRelay,
+      long minDuration
   ) throws IOException, SQLException {
     checkAccessSmtpRelay(conn, source, "refreshSmtpRelay", smtpRelay);
 
     if (isSmtpRelayDisabled(conn, smtpRelay)) {
-      throw new SQLException("Unable to refresh SmtpRelay, SmtpRelay disabled: "+smtpRelay);
+      throw new SQLException("Unable to refresh SmtpRelay, SmtpRelay disabled: " + smtpRelay);
     }
 
-    Account.Name packageName=getPackageForSmtpRelay(conn, smtpRelay);
+    Account.Name packageName = getPackageForSmtpRelay(conn, smtpRelay);
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     int linuxServer = getLinuxServerForSmtpRelay(conn, smtpRelay);
-    Timestamp expiration=conn.queryTimestamp("select expiration from email.\"SmtpRelay\" where id=?", smtpRelay);
-    long exp=expiration == null?-1:expiration.getTime();
-    long min=minDuration == -1?-1:(System.currentTimeMillis()+minDuration); // TODO: Timestamp nanosecond precision
+    Timestamp expiration = conn.queryTimestamp("select expiration from email.\"SmtpRelay\" where id=?", smtpRelay);
+    long exp = expiration == null ? -1 : expiration.getTime();
+    long min = minDuration == -1 ? -1 : (System.currentTimeMillis() + minDuration); // TODO: Timestamp nanosecond precision
     conn.update(
-      "update email.\"SmtpRelay\" set last_refreshed=now(), refresh_count=refresh_count+1, expiration=? where id=?",
-      exp == -1 || min == -1
-      ? null
-      : new Timestamp(Math.max(exp, min)),
-      smtpRelay
+        "update email.\"SmtpRelay\" set last_refreshed=now(), refresh_count=refresh_count+1, expiration=? where id=?",
+        exp == -1 || min == -1
+            ? null
+            : new Timestamp(Math.max(exp, min)),
+        smtpRelay
     );
 
     // Delete any old entries
     conn.update(
-      "delete from email.\"SmtpRelay\" where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>"+SmtpRelay.HISTORY_DAYS,
-      packageName,
-      linuxServer
+        "delete from email.\"SmtpRelay\" where package=? and (ao_server is null or ao_server=?) and expiration is not null and now()::date-expiration::date>" + SmtpRelay.HISTORY_DAYS,
+        packageName,
+        linuxServer
     );
 
     // Notify all clients of the update
@@ -1381,10 +1382,10 @@ public final class EmailHandler {
   }
 
   public static void removeBlackholeAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address
   ) throws IOException, SQLException {
     checkAccessAddress(conn, source, "removeBlackholeAddress", address);
 
@@ -1397,19 +1398,19 @@ public final class EmailHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.BLACKHOLE_EMAIL_ADDRESSES,
-      account,
-      linuxServer,
-      false
+        conn,
+        Table.TableID.BLACKHOLE_EMAIL_ADDRESSES,
+        account,
+        linuxServer,
+        false
     );
   }
 
   public static void removeAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int address
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int address
   ) throws IOException, SQLException {
     checkAccessAddress(conn, source, "removeAddress", address);
 
@@ -1418,16 +1419,16 @@ public final class EmailHandler {
     int linuxServer = getLinuxServerForAddress(conn, address);
 
     // Delete the objects that depend on this one first
-    boolean isBlackhole=conn.queryBoolean("select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null", address);
+    boolean isBlackhole = conn.queryBoolean("select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null", address);
     if (isBlackhole) {
       conn.update("delete from email.\"BlackholeAddress\" where email_address=?", address);
     }
 
-    IntList ids=conn.queryIntList("select id from email.\"InboxAddress\" where email_address=?", address);
-    boolean isLinuxAccAddress=ids.size()>0;
+    IntList ids = conn.queryIntList("select id from email.\"InboxAddress\" where email_address=?", address);
+    boolean isLinuxAccAddress = ids.size() > 0;
     if (isLinuxAccAddress) {
-      for (int d=0;d<ids.size();d++) {
-        int laaPkey=ids.getInt(d);
+      for (int d = 0; d < ids.size(); d++) {
+        int laaPkey = ids.getInt(d);
         conn.update("update linux.\"UserServer\" set autoresponder_from=null where autoresponder_from=?", laaPkey);
         conn.update("delete from email.\"InboxAddress\" where id=?", laaPkey);
       }
@@ -1460,10 +1461,10 @@ public final class EmailHandler {
   }
 
   public static void removeForwarding(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int forwarding
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int forwarding
   ) throws IOException, SQLException {
     int address = conn.queryInt("select email_address from email.\"Forwarding\" where id=?", forwarding);
     checkAccessAddress(conn, source, "removeForwarding", address);
@@ -1480,10 +1481,10 @@ public final class EmailHandler {
   }
 
   public static void removeListAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int listAddress
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int listAddress
   ) throws IOException, SQLException {
     int address = conn.queryInt("select email_address from email.\"ListAddress\" where id=?", listAddress);
     checkAccessAddress(conn, source, "removeListAddress", address);
@@ -1500,10 +1501,10 @@ public final class EmailHandler {
   }
 
   public static void removeList(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int list
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int list
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "removeList", list);
 
@@ -1511,38 +1512,38 @@ public final class EmailHandler {
   }
 
   public static void removeList(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int list
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int list
   ) throws IOException, SQLException {
     // Get the values for later use
     Account.Name account = getAccountForList(conn, list);
     int linuxServer = getLinuxServerForList(conn, list);
     PosixPath path = conn.queryObject(
-      ObjectFactories.posixPathFactory,
-      "select path from email.\"List\" where id=?",
-      list
+        ObjectFactories.posixPathFactory,
+        "select path from email.\"List\" where id=?",
+        list
     );
     // Delete the majordomo_list that is attached to this email list
     if (isMajordomoList(conn, list)) {
       // Get the listname_pipe_add and details
-      int listnameEPA=conn.queryInt("select listname_pipe_add from email.\"MajordomoList\" where email_list=?", list);
-      int listnameEA=conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", listnameEPA);
-      int listnameEP=conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", listnameEPA);
+      int listnameEPA = conn.queryInt("select listname_pipe_add from email.\"MajordomoList\" where email_list=?", list);
+      int listnameEA = conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", listnameEPA);
+      int listnameEP = conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", listnameEPA);
 
       // Get the listname_list_add and details
-      int listnameListELA=conn.queryInt("select listname_list_add from email.\"MajordomoList\" where email_list=?", list);
-      int listnameListEA=conn.queryInt("select email_address from email.\"ListAddress\" where id=?", listnameListELA);
+      int listnameListELA = conn.queryInt("select listname_list_add from email.\"MajordomoList\" where email_list=?", list);
+      int listnameListEA = conn.queryInt("select email_address from email.\"ListAddress\" where id=?", listnameListELA);
 
       // Get the listname_request_pipe_add and details
-      int listnameRequestEPA=conn.queryInt("select listname_request_pipe_add from email.\"MajordomoList\" where email_list=?", list);
-      int listnameRequestEA=conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", listnameRequestEPA);
-      int listnameRequestEP=conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", listnameRequestEPA);
+      int listnameRequestEPA = conn.queryInt("select listname_request_pipe_add from email.\"MajordomoList\" where email_list=?", list);
+      int listnameRequestEA = conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", listnameRequestEPA);
+      int listnameRequestEP = conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", listnameRequestEPA);
 
       // Other direct email addresses
-      int ownerListnameEA=conn.queryInt("select owner_listname_add from email.\"MajordomoList\" where email_list=?", list);
-      int listnameOwnerEA=conn.queryInt("select listname_owner_add from email.\"MajordomoList\" where email_list=?", list);
-      int listnameApprovalEA=conn.queryInt("select listname_approval_add from email.\"MajordomoList\" where email_list=?", list);
+      int ownerListnameEA = conn.queryInt("select owner_listname_add from email.\"MajordomoList\" where email_list=?", list);
+      int listnameOwnerEA = conn.queryInt("select listname_owner_add from email.\"MajordomoList\" where email_list=?", list);
+      int listnameApprovalEA = conn.queryInt("select listname_approval_add from email.\"MajordomoList\" where email_list=?", list);
 
       conn.update("delete from email.\"MajordomoList\" where email_list=?", list);
       invalidateList.addTable(conn, Table.TableID.MAJORDOMO_LISTS, account, linuxServer, false);
@@ -1591,11 +1592,11 @@ public final class EmailHandler {
     }
 
     // Delete the objects that depend on this one first
-    IntList addresses=conn.queryIntList("select email_address from email.\"ListAddress\" where email_list=?", list);
-    int size=addresses.size();
-    boolean addressesModified=size>0;
-    for (int c=0;c<size;c++) {
-      int address=addresses.getInt(c);
+    IntList addresses = conn.queryIntList("select email_address from email.\"ListAddress\" where email_list=?", list);
+    int size = addresses.size();
+    boolean addressesModified = size > 0;
+    for (int c = 0; c < size; c++) {
+      int address = addresses.getInt(c);
       conn.update("delete from email.\"ListAddress\" where email_address=? and email_list=?", address, list);
       if (!isAddressUsed(conn, address)) {
         conn.update("delete from email.\"Address\" where id=?", address);
@@ -1620,12 +1621,12 @@ public final class EmailHandler {
   }
 
   public static void removeInboxAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int inboxAddress
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int inboxAddress
   ) throws IOException, SQLException {
-    int ea=conn.queryInt("select email_address from email.\"InboxAddress\" where id=?", inboxAddress);
+    int ea = conn.queryInt("select email_address from email.\"InboxAddress\" where id=?", inboxAddress);
     checkAccessAddress(conn, source, "removeInboxAddress", ea);
 
     // Get stuff for use after the try block
@@ -1641,10 +1642,10 @@ public final class EmailHandler {
   }
 
   public static void removePipe(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int pipe
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int pipe
   ) throws IOException, SQLException {
     checkAccessPipe(conn, source, "removePipe", pipe);
 
@@ -1652,20 +1653,20 @@ public final class EmailHandler {
   }
 
   public static void removePipe(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int pipe
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int pipe
   ) throws IOException, SQLException {
     // Get the values for later use
     Account.Name account = getAccountForPipe(conn, pipe);
     int linuxServer = getLinuxServerForPipe(conn, pipe);
 
     // Delete the objects that depend on this one first
-    IntList addresses=conn.queryIntList("select email_address from email.\"PipeAddress\" where email_pipe=?", pipe);
-    int size=addresses.size();
-    boolean addressesModified=size>0;
-    for (int c=0;c<size;c++) {
-      int address=addresses.getInt(c);
+    IntList addresses = conn.queryIntList("select email_address from email.\"PipeAddress\" where email_pipe=?", pipe);
+    int size = addresses.size();
+    boolean addressesModified = size > 0;
+    for (int c = 0; c < size; c++) {
+      int address = addresses.getInt(c);
       conn.update("delete from email.\"PipeAddress\" where email_address=? and email_pipe=?", address, pipe);
       if (!isAddressUsed(conn, address)) {
         conn.update("delete from email.\"Address\" where id=?", address);
@@ -1684,10 +1685,10 @@ public final class EmailHandler {
   }
 
   public static void removePipeAddress(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int pipeAddress
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int pipeAddress
   ) throws IOException, SQLException {
     int address = conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", pipeAddress);
     checkAccessAddress(conn, source, "removePipeAddress", address);
@@ -1704,10 +1705,10 @@ public final class EmailHandler {
   }
 
   public static void removeDomain(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int domain
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int domain
   ) throws IOException, SQLException {
     checkAccessDomain(conn, source, "removeDomain", domain);
 
@@ -1715,84 +1716,84 @@ public final class EmailHandler {
   }
 
   public static void removeDomain(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int domain
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int domain
   ) throws IOException, SQLException {
     boolean
-      beaMod=false,
-      laaMod=false,
-      efMod=false,
-      elaMod=false,
-      epaMod=false
+        beaMod = false,
+        laaMod = false,
+        efMod = false,
+        elaMod = false,
+        epaMod = false
     ;
     Account.Name account = getAccountForDomain(conn, domain);
     int linuxServer = getLinuxServerForDomain(conn, domain);
 
     // Remove any majordomo server
-    int ms=conn.queryInt("select coalesce((select domain from email.\"MajordomoServer\" where domain=?), -1)", domain);
+    int ms = conn.queryInt("select coalesce((select domain from email.\"MajordomoServer\" where domain=?), -1)", domain);
     if (ms != -1) {
       removeMajordomoServer(conn, invalidateList, domain);
     }
 
     // Get the list of all email addresses in the domain
-    IntList addresses=conn.queryIntList("select id from email.\"Address\" where domain=?", domain);
+    IntList addresses = conn.queryIntList("select id from email.\"Address\" where domain=?", domain);
 
-    int len=addresses.size();
-    boolean eaMod=len>0;
-    for (int c=0;c<len;c++) {
-      int address=addresses.getInt(c);
+    int len = addresses.size();
+    boolean eaMod = len > 0;
+    for (int c = 0; c < len; c++) {
+      int address = addresses.getInt(c);
 
       if (
-        conn.queryBoolean(
-          "select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null",
-          address
-        )
+          conn.queryBoolean(
+              "select (select email_address from email.\"BlackholeAddress\" where email_address=?) is not null",
+              address
+          )
       ) {
         conn.update("delete from email.\"BlackholeAddress\" where email_address=?", address);
-        beaMod=true;
+        beaMod = true;
       }
 
       // Delete any email.InboxAddress used by this email address
-      IntList ids=conn.queryIntList("select id from email.\"InboxAddress\" where email_address=?", address);
-      if (ids.size()>0) {
-        for (int d=0;d<ids.size();d++) {
-          int laaPkey=ids.getInt(d);
+      IntList ids = conn.queryIntList("select id from email.\"InboxAddress\" where email_address=?", address);
+      if (ids.size() > 0) {
+        for (int d = 0; d < ids.size(); d++) {
+          int laaPkey = ids.getInt(d);
           conn.update("update linux.\"UserServer\" set autoresponder_from=null where autoresponder_from=?", laaPkey);
           conn.update("delete from email.\"InboxAddress\" where id=?", laaPkey);
         }
-        laaMod=true;
+        laaMod = true;
       }
 
       if (
-        conn.queryBoolean(
-          "select (select id from email.\"Forwarding\" where email_address=? limit 1) is not null",
-          address
-        )
+          conn.queryBoolean(
+              "select (select id from email.\"Forwarding\" where email_address=? limit 1) is not null",
+              address
+          )
       ) {
         conn.update("delete from email.\"Forwarding\" where email_address=?", address);
-        efMod=true;
+        efMod = true;
       }
 
 
       if (
-        conn.queryBoolean(
-          "select (select id from email.\"ListAddress\" where email_address=? limit 1) is not null",
-          address
-        )
+          conn.queryBoolean(
+              "select (select id from email.\"ListAddress\" where email_address=? limit 1) is not null",
+              address
+          )
       ) {
         conn.update("delete from email.\"ListAddress\" where email_address=?", address);
-        elaMod=true;
+        elaMod = true;
       }
 
       if (
-        conn.queryBoolean(
-          "select (select id from email.\"PipeAddress\" where email_address=? limit 1) is not null",
-          address
-        )
+          conn.queryBoolean(
+              "select (select id from email.\"PipeAddress\" where email_address=? limit 1) is not null",
+              address
+          )
       ) {
         conn.update("delete from email.\"PipeAddress\" where email_address=?", address);
-        epaMod=true;
+        epaMod = true;
       }
 
       // Delete from the database
@@ -1828,10 +1829,10 @@ public final class EmailHandler {
    * Removes a email SMTP relay.
    */
   public static void removeSmtpRelay(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int smtpRelay
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int smtpRelay
   ) throws IOException, SQLException {
     checkAccessSmtpRelay(conn, source, "removeSmtpRelay", smtpRelay);
 
@@ -1842,16 +1843,16 @@ public final class EmailHandler {
    * Removes a email SMTP relay.
    */
   public static void removeSmtpRelay(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int smtpRelay
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int smtpRelay
   ) throws IOException, SQLException {
     Account.Name account = getAccountForSmtpRelay(conn, smtpRelay);
     int linuxServer = getLinuxServerForSmtpRelay(conn, smtpRelay);
 
     conn.update(
-      "delete from email.\"SmtpRelay\" where id=?",
-      smtpRelay
+        "delete from email.\"SmtpRelay\" where id=?",
+        smtpRelay
     );
 
     // Notify all clients of the update
@@ -1859,10 +1860,10 @@ public final class EmailHandler {
   }
 
   public static void removeMajordomoServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int majordomoServer
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int majordomoServer
   ) throws IOException, SQLException {
     checkAccessMajordomoServer(conn, source, "removeMajordomoServer", majordomoServer);
 
@@ -1870,29 +1871,29 @@ public final class EmailHandler {
   }
 
   public static void removeMajordomoServer(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int majordomoServer
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int majordomoServer
   ) throws IOException, SQLException {
     Account.Name account = getAccountForDomain(conn, majordomoServer);
     int linuxServer = getLinuxServerForDomain(conn, majordomoServer);
 
     // Remove any majordomo lists
-    IntList mls=conn.queryIntList("select email_list from email.\"MajordomoList\" where majordomo_server=?", majordomoServer);
-    if (mls.size()>0) {
-      for (int c=0;c<mls.size();c++) {
+    IntList mls = conn.queryIntList("select email_list from email.\"MajordomoList\" where majordomo_server=?", majordomoServer);
+    if (mls.size() > 0) {
+      for (int c = 0; c < mls.size(); c++) {
         removeList(conn, invalidateList, mls.getInt(c));
       }
     }
 
     // Get the majordomo_pipe_address and details
-    int epa=conn.queryInt("select majordomo_pipe_address from email.\"MajordomoServer\" where domain=?", majordomoServer);
-    int ea=conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", epa);
-    int ep=conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", epa);
+    int epa = conn.queryInt("select majordomo_pipe_address from email.\"MajordomoServer\" where domain=?", majordomoServer);
+    int ea = conn.queryInt("select email_address from email.\"PipeAddress\" where id=?", epa);
+    int ep = conn.queryInt("select email_pipe from email.\"PipeAddress\" where id=?", epa);
 
     // Get the other email addresses referenced
-    int omEA=conn.queryInt("select owner_majordomo_add from email.\"MajordomoServer\" where domain=?", majordomoServer);
-    int moEA=conn.queryInt("select majordomo_owner_add from email.\"MajordomoServer\" where domain=?", majordomoServer);
+    int omEA = conn.queryInt("select owner_majordomo_add from email.\"MajordomoServer\" where domain=?", majordomoServer);
+    int moEA = conn.queryInt("select majordomo_owner_add from email.\"MajordomoServer\" where domain=?", majordomoServer);
 
     // Remove the domain from the database
     conn.update("delete from email.\"MajordomoServer\" where domain=?", majordomoServer);
@@ -1920,20 +1921,20 @@ public final class EmailHandler {
   }
 
   public static void setListFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int list,
-    String addresses
+      DatabaseConnection conn,
+      RequestSource source,
+      int list,
+      String addresses
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "setListFile", list);
 
     PosixPath path = getPathForList(conn, list);
     int uid = LinuxAccountHandler.getUidForUserServer(conn, getLinuxUserServerForList(conn, list));
     int gid = LinuxAccountHandler.getGidForGroupServer(conn, getLinuxGroupServerForList(conn, list));
-    int mode = isMajordomoList(conn, list)?0644:0640;
+    int mode = isMajordomoList(conn, list) ? 0644 : 0640;
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-      conn,
-      getLinuxServerForList(conn, list)
+        conn,
+        getLinuxServerForList(conn, list)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.setEmailListFile(path, addresses, uid, gid, mode);
@@ -1941,64 +1942,64 @@ public final class EmailHandler {
 
   public static Account.Name getAccountForAddress(DatabaseConnection conn, int address) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select pk.accounting from email.\"Address\" ea, email.\"Domain\" sd, billing.\"Package\" pk where ea.domain=sd.id and sd.package=pk.name and ea.id=?",
-      address
+        ObjectFactories.accountNameFactory,
+        "select pk.accounting from email.\"Address\" ea, email.\"Domain\" sd, billing.\"Package\" pk where ea.domain=sd.id and sd.package=pk.name and ea.id=?",
+        address
     );
   }
 
   public static Account.Name getAccountForList(DatabaseConnection conn, int list) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select pk.accounting from email.\"List\" el, linux.\"GroupServer\" lsg, linux.\"Group\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.id and lsg.name=lg.name and lg.package=pk.name and el.id=?",
-      list
+        ObjectFactories.accountNameFactory,
+        "select pk.accounting from email.\"List\" el, linux.\"GroupServer\" lsg, linux.\"Group\" lg, billing.\"Package\" pk where el.linux_server_group=lsg.id and lsg.name=lg.name and lg.package=pk.name and el.id=?",
+        list
     );
   }
 
   public static Account.Name getAccountForPipe(DatabaseConnection conn, int pipe) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select pk.accounting from email.\"Pipe\" ep, billing.\"Package\" pk where ep.package=pk.name and ep.id=?",
-      pipe
+        ObjectFactories.accountNameFactory,
+        "select pk.accounting from email.\"Pipe\" ep, billing.\"Package\" pk where ep.package=pk.name and ep.id=?",
+        pipe
     );
   }
 
   public static Account.Name getAccountForDomain(DatabaseConnection conn, int domain) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select pk.accounting from email.\"Domain\" sd, billing.\"Package\" pk where sd.package=pk.name and sd.id=?",
-      domain
+        ObjectFactories.accountNameFactory,
+        "select pk.accounting from email.\"Domain\" sd, billing.\"Package\" pk where sd.package=pk.name and sd.id=?",
+        domain
     );
   }
 
   public static DomainName getNetDomainForDomain(DatabaseConnection conn, int domain) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.domainNameFactory,
-      "select domain from email.\"Domain\" where id=?",
-      domain
+        ObjectFactories.domainNameFactory,
+        "select domain from email.\"Domain\" where id=?",
+        domain
     );
   }
 
   public static Account.Name getAccountForSmtpRelay(DatabaseConnection conn, int smtpRelay) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select pk.accounting from email.\"SmtpRelay\" esr, billing.\"Package\" pk where esr.package=pk.name and esr.id=?",
-      smtpRelay
+        ObjectFactories.accountNameFactory,
+        "select pk.accounting from email.\"SmtpRelay\" esr, billing.\"Package\" pk where esr.package=pk.name and esr.id=?",
+        smtpRelay
     );
   }
 
   public static int getAddress(DatabaseConnection conn, String address, int domain) throws IOException, SQLException {
     return conn.queryInt(
-      "select coalesce((select id from email.\"Address\" where address=? and domain=?), -1)",
-      address,
-      domain
+        "select coalesce((select id from email.\"Address\" where address=? and domain=?), -1)",
+        address,
+        domain
     );
   }
 
   public static int getOrAddAddress(DatabaseConnection conn, InvalidateList invalidateList, String address, int domain) throws IOException, SQLException {
     int address_id = getAddress(conn, address, domain);
     if (address_id == -1) {
-      address_id=addAddress0(conn, invalidateList, address, domain);
+      address_id = addAddress0(conn, invalidateList, address, domain);
     }
     return address_id;
   }
@@ -2013,50 +2014,50 @@ public final class EmailHandler {
 
   public static Account.Name getPackageForDomain(DatabaseConnection conn, int domain) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select package from email.\"Domain\" where id=?",
-      domain
+        ObjectFactories.accountNameFactory,
+        "select package from email.\"Domain\" where id=?",
+        domain
     );
   }
 
   public static Account.Name getPackageForList(DatabaseConnection conn, int list) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select\n"
-      + "  lg.package\n"
-      + "from\n"
-      + "  email.\"List\" el,\n"
-      + "  linux.\"GroupServer\" lsg,\n"
-      + "  linux.\"Group\" lg\n"
-      + "where\n"
-      + "  el.id=?\n"
-      + "  and el.linux_server_group=lsg.id\n"
-      + "  and lsg.name=lg.name",
-      list
+        ObjectFactories.accountNameFactory,
+        "select\n"
+            + "  lg.package\n"
+            + "from\n"
+            + "  email.\"List\" el,\n"
+            + "  linux.\"GroupServer\" lsg,\n"
+            + "  linux.\"Group\" lg\n"
+            + "where\n"
+            + "  el.id=?\n"
+            + "  and el.linux_server_group=lsg.id\n"
+            + "  and lsg.name=lg.name",
+        list
     );
   }
 
   public static Account.Name getPackageForPipe(DatabaseConnection conn, int pipe) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select package from email.\"Pipe\" where id=?",
-      pipe
+        ObjectFactories.accountNameFactory,
+        "select package from email.\"Pipe\" where id=?",
+        pipe
     );
   }
 
   public static Account.Name getPackageForSmtpRelay(DatabaseConnection conn, int smtpRelay) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select package from email.\"SmtpRelay\" where id=?",
-      smtpRelay
+        ObjectFactories.accountNameFactory,
+        "select package from email.\"SmtpRelay\" where id=?",
+        smtpRelay
     );
   }
 
   public static PosixPath getPathForList(DatabaseConnection conn, int list) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.posixPathFactory,
-      "select path from email.\"List\" where id=?",
-      list
+        ObjectFactories.posixPathFactory,
+        "select path from email.\"List\" where id=?",
+        list
     );
   }
 
@@ -2066,15 +2067,15 @@ public final class EmailHandler {
 
   public static int getLinuxServerForList(DatabaseConnection conn, int list) throws IOException, SQLException {
     return conn.queryInt(
-      "select\n"
-      + "  lsg.ao_server\n"
-      + "from\n"
-      + "  email.\"List\" el,\n"
-      + "  linux.\"GroupServer\" lsg\n"
-      + "where\n"
-      + "  el.id=?\n"
-      + "  and el.linux_server_group=lsg.id",
-      list
+        "select\n"
+            + "  lsg.ao_server\n"
+            + "from\n"
+            + "  email.\"List\" el,\n"
+            + "  linux.\"GroupServer\" lsg\n"
+            + "where\n"
+            + "  el.id=?\n"
+            + "  and el.linux_server_group=lsg.id",
+        list
     );
   }
 
@@ -2088,62 +2089,62 @@ public final class EmailHandler {
 
   public static boolean isAddressUsed(DatabaseConnection conn, int address) throws IOException, SQLException {
     return
-      conn.queryBoolean("select (select email_address from email.\"BlackholeAddress\" where email_address=? limit 1) is not null", address)
-      || conn.queryBoolean("select (select id from email.\"Forwarding\" where email_address=? limit 1) is not null", address)
-      || conn.queryBoolean("select (select id from email.\"ListAddress\" where email_address=? limit 1) is not null", address)
-      || conn.queryBoolean("select (select id from email.\"PipeAddress\" where email_address=? limit 1) is not null", address)
-      || conn.queryBoolean("select (select id from email.\"InboxAddress\" where email_address=? limit 1) is not null", address)
-      || conn.queryBoolean(
-        "select\n"
-        + "  (\n"
-        + "    select\n"
-        + "      ml.email_list\n"
-        + "    from\n"
-        + "      email.\"MajordomoList\" ml,\n"
-        + "      email.\"PipeAddress\" epa1,\n"
-        + "      email.\"ListAddress\" ela,\n"
-        + "      email.\"PipeAddress\" epa2\n"
-        + "    where\n"
-        + "      ml.listname_pipe_add=epa1.id\n"
-        + "      and ml.listname_list_add=ela.id\n"
-        + "      and ml.listname_request_pipe_add=epa2.id\n"
-        + "      and (\n"
-        + "        epa1.email_address=?\n"
-        + "        or ela.email_address=?\n"
-        + "        or ml.owner_listname_add=?\n"
-        + "        or ml.listname_owner_add=?\n"
-        + "        or ml.listname_approval_add=?\n"
-        + "        or epa2.email_address=?\n"
-        + "      )\n"
-        + "    limit 1\n"
-        + "  ) is not null",
-        address,
-        address,
-        address,
-        address,
-        address,
-        address
-      ) || conn.queryBoolean(
-        "select\n"
-        + "  (\n"
-        + "    select\n"
-        + "      ms.domain\n"
-        + "    from\n"
-        + "      email.\"MajordomoServer\" ms,\n"
-        + "      email.\"PipeAddress\" epa\n"
-        + "    where\n"
-        + "      ms.majordomo_pipe_address=epa.id\n"
-        + "      and (\n"
-        + "        epa.email_address=?\n"
-        + "        or ms.owner_majordomo_add=?\n"
-        + "        or ms.majordomo_owner_add=?\n"
-        + "      )\n"
-        + "    limit 1\n"
-        + "  ) is not null",
-        address,
-        address,
-        address
-      )
+        conn.queryBoolean("select (select email_address from email.\"BlackholeAddress\" where email_address=? limit 1) is not null", address)
+            || conn.queryBoolean("select (select id from email.\"Forwarding\" where email_address=? limit 1) is not null", address)
+            || conn.queryBoolean("select (select id from email.\"ListAddress\" where email_address=? limit 1) is not null", address)
+            || conn.queryBoolean("select (select id from email.\"PipeAddress\" where email_address=? limit 1) is not null", address)
+            || conn.queryBoolean("select (select id from email.\"InboxAddress\" where email_address=? limit 1) is not null", address)
+            || conn.queryBoolean(
+            "select\n"
+                + "  (\n"
+                + "    select\n"
+                + "      ml.email_list\n"
+                + "    from\n"
+                + "      email.\"MajordomoList\" ml,\n"
+                + "      email.\"PipeAddress\" epa1,\n"
+                + "      email.\"ListAddress\" ela,\n"
+                + "      email.\"PipeAddress\" epa2\n"
+                + "    where\n"
+                + "      ml.listname_pipe_add=epa1.id\n"
+                + "      and ml.listname_list_add=ela.id\n"
+                + "      and ml.listname_request_pipe_add=epa2.id\n"
+                + "      and (\n"
+                + "        epa1.email_address=?\n"
+                + "        or ela.email_address=?\n"
+                + "        or ml.owner_listname_add=?\n"
+                + "        or ml.listname_owner_add=?\n"
+                + "        or ml.listname_approval_add=?\n"
+                + "        or epa2.email_address=?\n"
+                + "      )\n"
+                + "    limit 1\n"
+                + "  ) is not null",
+            address,
+            address,
+            address,
+            address,
+            address,
+            address
+        ) || conn.queryBoolean(
+            "select\n"
+                + "  (\n"
+                + "    select\n"
+                + "      ms.domain\n"
+                + "    from\n"
+                + "      email.\"MajordomoServer\" ms,\n"
+                + "      email.\"PipeAddress\" epa\n"
+                + "    where\n"
+                + "      ms.majordomo_pipe_address=epa.id\n"
+                + "      and (\n"
+                + "        epa.email_address=?\n"
+                + "        or ms.owner_majordomo_add=?\n"
+                + "        or ms.majordomo_owner_add=?\n"
+                + "      )\n"
+                + "    limit 1\n"
+                + "  ) is not null",
+            address,
+            address,
+            address
+        )
     ;
   }
 
@@ -2163,9 +2164,9 @@ public final class EmailHandler {
     NetHostHandler.checkAccessHost(conn, source, "isEmailDomainAvailable", linuxServer);
 
     return conn.queryBoolean(
-      "select (select id from email.\"Domain\" where ao_server=? and domain=?) is null",
-      linuxServer,
-      netDomain
+        "select (select id from email.\"Domain\" where ao_server=? and domain=?) is null",
+        linuxServer,
+        netDomain
     );
   }
 
@@ -2174,44 +2175,44 @@ public final class EmailHandler {
   }
 
   public static void setMajordomoInfoFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int majordomoList,
-    String file
+      DatabaseConnection conn,
+      RequestSource source,
+      int majordomoList,
+      String file
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "setMajordomoInfoFile", majordomoList);
     PosixPath infoPath;
     try {
-      infoPath = PosixPath.valueOf(getPathForList(conn, majordomoList)+".info");
+      infoPath = PosixPath.valueOf(getPathForList(conn, majordomoList) + ".info");
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
     int uid = LinuxAccountHandler.getUidForUserServer(conn, getLinuxUserServerForList(conn, majordomoList));
     int gid = LinuxAccountHandler.getGidForGroupServer(conn, getLinuxGroupServerForList(conn, majordomoList));
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
-      getLinuxServerForList(conn, majordomoList)
+        getLinuxServerForList(conn, majordomoList)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.setEmailListFile(infoPath, file, uid, gid, 0664);
   }
 
   public static void setMajordomoIntroFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int majordomoList,
-    String file
+      DatabaseConnection conn,
+      RequestSource source,
+      int majordomoList,
+      String file
   ) throws IOException, SQLException {
     checkAccessList(conn, source, "setMajordomoIntroFile", majordomoList);
     PosixPath introPath;
     try {
-      introPath = PosixPath.valueOf(getPathForList(conn, majordomoList)+".intro");
+      introPath = PosixPath.valueOf(getPathForList(conn, majordomoList) + ".intro");
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
     int uid = LinuxAccountHandler.getUidForUserServer(conn, getLinuxUserServerForList(conn, majordomoList));
     int gid = LinuxAccountHandler.getGidForGroupServer(conn, getLinuxGroupServerForList(conn, majordomoList));
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
-      getLinuxServerForList(conn, majordomoList)
+        getLinuxServerForList(conn, majordomoList)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.setEmailListFile(introPath, file, uid, gid, 0664);

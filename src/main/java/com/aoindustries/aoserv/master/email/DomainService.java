@@ -70,67 +70,68 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
       @Override
       protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new Domain(),
-          "select * from email.\"Domain\""
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new Domain(),
+            "select * from email.\"Domain\""
         );
       }
 
       @Override
       protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new Domain(),
-          "select\n"
-          + "  ed.*\n"
-          + "from\n"
-          + "  master.\"UserHost\" ms,\n"
-          + "  email.\"Domain\" ed\n"
-          + "where\n"
-          + "  ms.username=?\n"
-          + "  and ms.server=ed.ao_server",
-          source.getCurrentAdministrator()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new Domain(),
+            "select\n"
+                + "  ed.*\n"
+                + "from\n"
+                + "  master.\"UserHost\" ms,\n"
+                + "  email.\"Domain\" ed\n"
+                + "where\n"
+                + "  ms.username=?\n"
+                + "  and ms.server=ed.ao_server",
+            source.getCurrentAdministrator()
         );
       }
 
       @Override
       protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new Domain(),
-          "select\n"
-          + "  ed.*\n"
-          + "from\n"
-          + "  account.\"User\" un,\n"
-          + "  billing.\"Package\" pk1,\n"
-          + TableHandler.BU1_PARENTS_JOIN
-          + "  billing.\"Package\" pk2,\n"
-          + "  email.\"Domain\" ed\n"
-          + "where\n"
-          + "  un.username=?\n"
-          + "  and un.package=pk1.name\n"
-          + "  and (\n"
-          + TableHandler.PK1_BU1_PARENTS_WHERE
-          + "  )\n"
-          + "  and bu1.accounting=pk2.accounting\n"
-          + "  and pk2.name=ed.package",
-          source.getCurrentAdministrator()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new Domain(),
+            "select\n"
+                + "  ed.*\n"
+                + "from\n"
+                + "  account.\"User\" un,\n"
+                + "  billing.\"Package\" pk1,\n"
+                + TableHandler.BU1_PARENTS_JOIN
+                + "  billing.\"Package\" pk2,\n"
+                + "  email.\"Domain\" ed\n"
+                + "where\n"
+                + "  un.username=?\n"
+                + "  and un.package=pk1.name\n"
+                + "  and (\n"
+                + TableHandler.PK1_BU1_PARENTS_WHERE
+                + "  )\n"
+                + "  and bu1.accounting=pk2.accounting\n"
+                + "  and pk2.name=ed.package",
+            source.getCurrentAdministrator()
         );
       }
     };
   }
+
   // </editor-fold>
 
   // <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
@@ -138,36 +139,36 @@ public class DomainService implements MasterService, WhoisHistoryDomainLocator {
   public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
     List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
     return conn.queryCall(
-      results -> {
-        try {
-          Map<DomainName, Set<Account.Name>> map = new HashMap<>();
-          while (results.next()) {
-            DomainName domain = DomainName.valueOf(results.getString(1));
-            Account.Name account = Account.Name.valueOf(results.getString(2));
-            DomainName registrableDomain;
-            try {
-              registrableDomain = ZoneTable.getHostTLD(domain, tlds);
-            } catch (IllegalArgumentException err) {
-              logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
-              registrableDomain = domain;
+        results -> {
+          try {
+            Map<DomainName, Set<Account.Name>> map = new HashMap<>();
+            while (results.next()) {
+              DomainName domain = DomainName.valueOf(results.getString(1));
+              Account.Name account = Account.Name.valueOf(results.getString(2));
+              DomainName registrableDomain;
+              try {
+                registrableDomain = ZoneTable.getHostTLD(domain, tlds);
+              } catch (IllegalArgumentException err) {
+                logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
+                registrableDomain = domain;
+              }
+              Set<Account.Name> accounts = map.get(registrableDomain);
+              if (accounts == null) {
+                map.put(registrableDomain, accounts = new LinkedHashSet<>());
+              }
+              accounts.add(account);
             }
-            Set<Account.Name> accounts = map.get(registrableDomain);
-            if (accounts == null) {
-              map.put(registrableDomain, accounts = new LinkedHashSet<>());
-            }
-            accounts.add(account);
+            return map;
+          } catch (ValidationException e) {
+            throw new SQLException(e);
           }
-          return map;
-        } catch (ValidationException e) {
-          throw new SQLException(e);
-        }
-      },
-      "SELECT DISTINCT\n"
-      + "  ed.\"domain\",\n"
-      + "  pk.accounting\n"
-      + "FROM\n"
-      + "  email.\"Domain\" ed\n"
-      + "  INNER JOIN billing.\"Package\" pk ON ed.package = pk.\"name\""
+        },
+        "SELECT DISTINCT\n"
+            + "  ed.\"domain\",\n"
+            + "  pk.accounting\n"
+            + "FROM\n"
+            + "  email.\"Domain\" ed\n"
+            + "  INNER JOIN billing.\"Package\" pk ON ed.package = pk.\"name\""
     );
   }
   // </editor-fold>

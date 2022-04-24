@@ -51,9 +51,9 @@ public final class NetReputationSetHandler {
 
   public static Account.Name getAccountForIpReputationSet(DatabaseConnection conn, int ipReputationSet) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select accounting from \"net.reputation\".\"Set\" where id=?",
-      ipReputationSet
+        ObjectFactories.accountNameFactory,
+        "select accounting from \"net.reputation\".\"Set\" where id=?",
+        ipReputationSet
     );
   }
 
@@ -62,21 +62,21 @@ public final class NetReputationSetHandler {
     if (mu != null) {
       if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         // Must be an admin or router to submit reputation
-        String message=
-          "currentAdministrator="
-          +source.getCurrentAdministrator()
-          +" is not allowed to access ip reputation set: action='"
-          +action
-          +", id="
-          +ipReputationSet
+        String message =
+            "currentAdministrator="
+                + source.getCurrentAdministrator()
+                + " is not allowed to access ip reputation set: action='"
+                + action
+                + ", id="
+                + ipReputationSet
         ;
         throw new SQLException(message);
       }
     } else {
       AccountHandler.checkAccessAccount(conn,
-        source,
-        action,
-        getAccountForIpReputationSet(conn, ipReputationSet)
+          source,
+          action,
+          getAccountForIpReputationSet(conn, ipReputationSet)
       );
     }
   }
@@ -85,11 +85,11 @@ public final class NetReputationSetHandler {
    * Adds IP reputation with security checks.
    */
   public static void addIpReputation(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int ipReputationSet,
-    Set.AddReputation[] addReputations
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int ipReputationSet,
+      Set.AddReputation[] addReputations
   ) throws IOException, SQLException {
     checkAccessIpReputationSet(conn, source, "addIpReputation", ipReputationSet);
 
@@ -101,8 +101,8 @@ public final class NetReputationSetHandler {
    */
   private static int getNetwork(int host, short networkPrefix) {
     return
-      host
-      & (0xffffffff << (32-networkPrefix))
+        host
+            & (0xffffffff << (32 - networkPrefix))
     ;
   }
 
@@ -110,14 +110,14 @@ public final class NetReputationSetHandler {
    * Locks all IP reputation tables for updates.  Locks in the same order to avoid any potential deadlock.
    */
   private static void lockForUpdate(
-    DatabaseConnection conn
+      DatabaseConnection conn
   ) throws SQLException {
     conn.update(
-      "LOCK TABLE\n"
-      + "  \"net.reputation\".\"Set\",\n"
-      + "  \"net.reputation\".\"Host\",\n"
-      + "  \"net.reputation\".\"Network\"\n"
-      + "IN EXCLUSIVE MODE");
+        "LOCK TABLE\n"
+            + "  \"net.reputation\".\"Set\",\n"
+            + "  \"net.reputation\".\"Host\",\n"
+            + "  \"net.reputation\".\"Network\"\n"
+            + "IN EXCLUSIVE MODE");
   }
 
   /* TODO: Do in batches
@@ -201,9 +201,9 @@ public final class NetReputationSetHandler {
 
   private static short constrainReputation(int newReputation, Set.ConfidenceType confidence, short maxUncertainReputation, short maxDefiniteReputation) {
     if (confidence == Set.ConfidenceType.UNCERTAIN) {
-      return newReputation>maxUncertainReputation ? maxUncertainReputation : (short)newReputation;
+      return newReputation > maxUncertainReputation ? maxUncertainReputation : (short) newReputation;
     } else if (confidence == Set.ConfidenceType.DEFINITE) {
-      return newReputation>maxDefiniteReputation ? maxDefiniteReputation : (short)newReputation;
+      return newReputation > maxDefiniteReputation ? maxDefiniteReputation : (short) newReputation;
     } else {
       throw new AssertionError("Unexpected value for confidence: " + confidence);
     }
@@ -213,18 +213,18 @@ public final class NetReputationSetHandler {
    * Adds IP reputation with no security checks.
    */
   public static void addIpReputation(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int ipReputationSet,
-    Set.AddReputation[] addReputations
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int ipReputationSet,
+      Set.AddReputation[] addReputations
   ) throws IOException, SQLException {
     // Can't add reputation to a disabled business
     Account.Name account = getAccountForIpReputationSet(conn, ipReputationSet);
     if (AccountHandler.isAccountDisabled(conn, account)) {
-      throw new SQLException("Unable to add IP reputation, business disabled: "+account);
+      throw new SQLException("Unable to add IP reputation, business disabled: " + account);
     }
 
-    if (addReputations.length>0) {
+    if (addReputations.length > 0) {
       // Get the settings
       final short maxUncertainReputation = conn.queryShort("SELECT max_uncertain_reputation FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
       final short maxDefiniteReputation  = conn.queryShort("SELECT max_definite_reputation  FROM \"net.reputation\".\"Set\" WHERE id=?", ipReputationSet);
@@ -250,15 +250,15 @@ public final class NetReputationSetHandler {
         Set.ReputationType reputationType = addRep.getReputationType();
         short score = addRep.getScore();
         Host dbHost = conn.queryObject(
-          Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
-          result -> {
-            Host obj = new Host();
-            obj.init(result);
-            return obj;
-          },
-          "select * from \"net.reputation\".\"Host\" where \"set\"=? and host=?",
-          ipReputationSet,
-          host
+            Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+            result -> {
+              Host obj = new Host();
+              obj.init(result);
+              return obj;
+            },
+            "select * from \"net.reputation\".\"Host\" where \"set\"=? and host=?",
+            ipReputationSet,
+            host
         );
         int positiveChange = 0;
         if (dbHost == null) {
@@ -279,11 +279,11 @@ public final class NetReputationSetHandler {
           }
           if (goodReputation != 0 || badReputation != 0) {
             int rowCount = conn.update(
-              "INSERT INTO \"net.reputation\".\"Host\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
-              ipReputationSet,
-              host,
-              goodReputation,
-              badReputation
+                "INSERT INTO \"net.reputation\".\"Host\" (\"set\", host, good_reputation, bad_reputation) VALUES (?,?,?,?)",
+                ipReputationSet,
+                host,
+                goodReputation,
+                badReputation
             );
             if (rowCount != 1) {
               throw new SQLException("Wrong number of rows updated: " + rowCount);
@@ -294,17 +294,17 @@ public final class NetReputationSetHandler {
           if (reputationType == Set.ReputationType.GOOD) {
             short oldGoodReputation = dbHost.getGoodReputation();
             short newGoodReputation = constrainReputation(
-              (int)oldGoodReputation + (int)score,
-              confidence,
-              maxUncertainReputation,
-              maxDefiniteReputation
+                (int) oldGoodReputation + (int) score,
+                confidence,
+                maxUncertainReputation,
+                maxDefiniteReputation
             );
             if (newGoodReputation != oldGoodReputation) {
               int rowCount = conn.update(
-                "UPDATE \"net.reputation\".\"Host\" SET good_reputation=? WHERE \"set\"=? AND host=?",
-                newGoodReputation,
-                ipReputationSet,
-                host
+                  "UPDATE \"net.reputation\".\"Host\" SET good_reputation=? WHERE \"set\"=? AND host=?",
+                  newGoodReputation,
+                  ipReputationSet,
+                  host
               );
               if (rowCount != 1) {
                 throw new SQLException("Wrong number of rows updated: " + rowCount);
@@ -316,17 +316,17 @@ public final class NetReputationSetHandler {
           } else if (reputationType == Set.ReputationType.BAD) {
             short oldBadReputation = dbHost.getBadReputation();
             short newBadReputation = constrainReputation(
-              (int)oldBadReputation + (int)score,
-              confidence,
-              maxUncertainReputation,
-              maxDefiniteReputation
+                (int) oldBadReputation + (int) score,
+                confidence,
+                maxUncertainReputation,
+                maxDefiniteReputation
             );
             if (newBadReputation != oldBadReputation) {
               int rowCount = conn.update(
-                "UPDATE \"net.reputation\".\"Host\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
-                newBadReputation,
-                ipReputationSet,
-                host
+                  "UPDATE \"net.reputation\".\"Host\" SET bad_reputation=? WHERE \"set\"=? AND host=?",
+                  newBadReputation,
+                  ipReputationSet,
+                  host
               );
               if (rowCount != 1) {
                 throw new SQLException("Wrong number of rows updated: " + rowCount);
@@ -337,31 +337,31 @@ public final class NetReputationSetHandler {
             throw new AssertionError("Unexpected value for reputationType: " + reputationType);
           }
         }
-        if (positiveChange>0) {
+        if (positiveChange > 0) {
           // Update network when positive change applied
           int network = getNetwork(host, networkPrefix);
           Network dbNetwork = conn.queryObject(
-            Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
-            result -> {
-              Network obj = new Network();
-              obj.init(result);
-              return obj;
-            },
-            "select * from \"net.reputation\".\"Network\" where \"set\"=? and network=?",
-            ipReputationSet,
-            network
+              Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+              result -> {
+                Network obj = new Network();
+                obj.init(result);
+                return obj;
+              },
+              "select * from \"net.reputation\".\"Network\" where \"set\"=? and network=?",
+              ipReputationSet,
+              network
           );
           if (dbNetwork == null) {
             // Add new
             int networkCounter = positiveChange;
-            if (networkCounter>maxNetworkCounter) {
+            if (networkCounter > maxNetworkCounter) {
               networkCounter = maxNetworkCounter;
             }
             int rowCount = conn.update(
-              "INSERT INTO \"net.reputation\".\"Network\" (\"set\", network, counter) VALUES (?,?,?)",
-              ipReputationSet,
-              network,
-              networkCounter
+                "INSERT INTO \"net.reputation\".\"Network\" (\"set\", network, counter) VALUES (?,?,?)",
+                ipReputationSet,
+                network,
+                networkCounter
             );
             if (rowCount != 1) {
               throw new SQLException("Wrong number of rows updated: " + rowCount);
@@ -370,14 +370,14 @@ public final class NetReputationSetHandler {
           } else {
             // Update existing
             int oldCounter = dbNetwork.getCounter();
-            long newCounterLong = (long)oldCounter + (long)positiveChange;
-            int newCounter = newCounterLong <= maxNetworkCounter ? (int)newCounterLong : maxNetworkCounter;
+            long newCounterLong = (long) oldCounter + (long) positiveChange;
+            int newCounter = newCounterLong <= maxNetworkCounter ? (int) newCounterLong : maxNetworkCounter;
             if (newCounter != oldCounter) {
               int rowCount = conn.update(
-                "UPDATE \"net.reputation\".\"Network\" SET counter=? WHERE \"set\"=? AND network=?",
-                newCounter,
-                ipReputationSet,
-                network
+                  "UPDATE \"net.reputation\".\"Network\" SET counter=? WHERE \"set\"=? AND network=?",
+                  newCounter,
+                  ipReputationSet,
+                  network
               );
               if (rowCount != 1) {
                 throw new SQLException("Wrong number of rows updated: " + rowCount);
@@ -428,20 +428,20 @@ public final class NetReputationSetHandler {
       // Notify all clients of the update
       if (hostsUpdated) {
         invalidateList.addTable(
-          conn,
-          Table.TableID.IP_REPUTATION_SET_HOSTS,
-          account,
-          AccountHandler.getHostsForAccount(conn, account),
-          false
+            conn,
+            Table.TableID.IP_REPUTATION_SET_HOSTS,
+            account,
+            AccountHandler.getHostsForAccount(conn, account),
+            false
         );
       }
       if (networksUpdated) {
         invalidateList.addTable(
-          conn,
-          Table.TableID.IP_REPUTATION_SET_NETWORKS,
-          account,
-          AccountHandler.getHostsForAccount(conn, account),
-          false
+            conn,
+            Table.TableID.IP_REPUTATION_SET_NETWORKS,
+            account,
+            AccountHandler.getHostsForAccount(conn, account),
+            false
         );
       }
       // Also notify routers
@@ -453,18 +453,18 @@ public final class NetReputationSetHandler {
           for (UserHost ms : MasterServer.getUserHosts(conn, user)) {
             if (hostsUpdated) {
               invalidateList.addTable(conn,
-                Table.TableID.IP_REPUTATION_SET_HOSTS,
-                InvalidateList.allAccounts,
-                ms.getServerPKey(),
-                false
+                  Table.TableID.IP_REPUTATION_SET_HOSTS,
+                  InvalidateList.allAccounts,
+                  ms.getServerPKey(),
+                  false
               );
             }
             if (networksUpdated) {
               invalidateList.addTable(conn,
-                Table.TableID.IP_REPUTATION_SET_NETWORKS,
-                InvalidateList.allAccounts,
-                ms.getServerPKey(),
-                false
+                  Table.TableID.IP_REPUTATION_SET_NETWORKS,
+                  InvalidateList.allAccounts,
+                  ms.getServerPKey(),
+                  false
               );
             }
           }

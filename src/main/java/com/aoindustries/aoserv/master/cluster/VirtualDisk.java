@@ -40,12 +40,12 @@ public final class VirtualDisk {
   Disk selectedSecondaryDisk = null;
 
   VirtualDisk(
-    String device,
-    int extents,
-    DiskType primaryDiskType,
-    int primaryWeight,
-    DiskType secondaryDiskType,
-    int secondaryWeight
+      String device,
+      int extents,
+      DiskType primaryDiskType,
+      int primaryWeight,
+      DiskType secondaryDiskType,
+      int secondaryWeight
   ) {
     this.device = device;
     this.extents = extents;
@@ -57,17 +57,17 @@ public final class VirtualDisk {
 
   @Override
   public boolean equals(Object obj) {
-    return (obj instanceof VirtualDisk) && equals((VirtualDisk)obj);
+    return (obj instanceof VirtualDisk) && equals((VirtualDisk) obj);
   }
 
   public boolean equals(VirtualDisk other) {
     return
-      extents == other.extents
-      && primaryDiskType == other.primaryDiskType
-      && primaryWeight == other.primaryWeight
-      && secondaryDiskType == other.secondaryDiskType
-      && secondaryWeight == other.secondaryWeight
-      && device.equals(other.device)
+        extents == other.extents
+            && primaryDiskType == other.primaryDiskType
+            && primaryWeight == other.primaryWeight
+            && secondaryDiskType == other.secondaryDiskType
+            && secondaryWeight == other.secondaryWeight
+            && device.equals(other.device)
     ;
   }
 }

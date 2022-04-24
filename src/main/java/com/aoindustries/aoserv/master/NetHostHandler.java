@@ -198,13 +198,13 @@ public final class NetHostHandler {
 
   public static void checkAccessHost(DatabaseConnection conn, RequestSource source, String action, int host) throws IOException, SQLException {
     if (!canAccessHost(conn, source, host)) {
-      String message=
-        "currentAdministrator="
-        +source.getCurrentAdministrator()
-        +" is not allowed to access server: action='"
-        +action
-        +", server.id="
-        +host
+      String message =
+          "currentAdministrator="
+              + source.getCurrentAdministrator()
+              + " is not allowed to access server: action='"
+              + action
+              + ", server.id="
+              + host
       ;
       throw new SQLException(message);
     }
@@ -226,38 +226,38 @@ public final class NetHostHandler {
     synchronized (NetHostHandler.class) {
       com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
       if (userHosts == null) {
-        userHosts=new HashMap<>();
+        userHosts = new HashMap<>();
       }
       List<Integer> sv = userHosts.get(currentAdministrator);
       if (sv == null) {
         sv = new SortedIntArrayList();
-          User mu = MasterServer.getUser(db, currentAdministrator);
-          if (mu != null) {
-            UserHost[] masterServers = MasterServer.getUserHosts(db, currentAdministrator);
-            if (masterServers.length != 0) {
-              for (UserHost masterServer : masterServers) {
-                sv.add(masterServer.getServerPKey());
-              }
-            } else {
-              sv.addAll(db.queryIntList("select id from net.\"Host\""));
+        User mu = MasterServer.getUser(db, currentAdministrator);
+        if (mu != null) {
+          UserHost[] masterServers = MasterServer.getUserHosts(db, currentAdministrator);
+          if (masterServers.length != 0) {
+            for (UserHost masterServer : masterServers) {
+              sv.add(masterServer.getServerPKey());
             }
           } else {
-            sv.addAll(
-              db.queryIntList(
-                "select\n"
-                + "  bs.server\n"
-                + "from\n"
-                + "  account.\"User\" un,\n"
-                + "  billing.\"Package\" pk,\n"
-                + "  account.\"AccountHost\" bs\n"
-                + "where\n"
-                + "  un.username=?\n"
-                + "  and un.package=pk.name\n"
-                + "  and pk.accounting=bs.accounting",
-                currentAdministrator
-              )
-            );
+            sv.addAll(db.queryIntList("select id from net.\"Host\""));
           }
+        } else {
+          sv.addAll(
+              db.queryIntList(
+                  "select\n"
+                      + "  bs.server\n"
+                      + "from\n"
+                      + "  account.\"User\" un,\n"
+                      + "  billing.\"Package\" pk,\n"
+                      + "  account.\"AccountHost\" bs\n"
+                      + "where\n"
+                      + "  un.username=?\n"
+                      + "  and un.package=pk.name\n"
+                      + "  and pk.accounting=bs.accounting",
+                  currentAdministrator
+              )
+          );
+        }
         userHosts.put(currentAdministrator, sv);
       }
       return sv;
@@ -266,32 +266,33 @@ public final class NetHostHandler {
 
   public static List<Account.Name> getAccountsForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
     return conn.queryList(
-      ObjectFactories.accountNameFactory,
-      "select accounting from account.\"AccountHost\" where server=?",
-      host
+        ObjectFactories.accountNameFactory,
+        "select accounting from account.\"AccountHost\" where server=?",
+        host
     );
   }
 
   // TODO: Move to LinuxServerHandler
-  private static final Map<Integer, Integer> failoverServers=new HashMap<>();
+  private static final Map<Integer, Integer> failoverServers = new HashMap<>();
+
   public static int getFailoverServer(DatabaseAccess db, int linuxServer) throws IOException, SQLException {
     synchronized (failoverServers) {
       if (failoverServers.containsKey(linuxServer)) {
         return failoverServers.get(linuxServer);
       }
       int failoverServer = db.queryInt(
-        "select\n"
-        + "  coalesce(\n"
-        + "    (\n"
-        + "      select\n"
-        + "        failover_server\n"
-        + "      from\n"
-        + "        linux.\"Server\"\n"
-        + "      where\n"
-        + "        server=?\n"
-        + "    ), -1\n"
-        + "  )",
-        linuxServer
+          "select\n"
+              + "  coalesce(\n"
+              + "    (\n"
+              + "      select\n"
+              + "        failover_server\n"
+              + "      from\n"
+              + "        linux.\"Server\"\n"
+              + "      where\n"
+              + "        server=?\n"
+              + "    ), -1\n"
+              + "  )",
+          linuxServer
       );
       failoverServers.put(linuxServer, failoverServer);
       return failoverServer;
@@ -299,6 +300,7 @@ public final class NetHostHandler {
   }
 
   private static final Map<Integer, String> farmForHosts = new HashMap<>();
+
   public static String getFarmForHost(DatabaseConnection conn, int host) throws IOException, SQLException {
     Integer i = host;
     synchronized (farmForHosts) {
@@ -313,15 +315,16 @@ public final class NetHostHandler {
 
   // TODO: Move to LinuxServerHandler
   private static final Map<Integer, DomainName> hostnamesForLinuxServers = new HashMap<>();
+
   public static DomainName getHostnameForLinuxServer(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     Integer mapKey = linuxServer;
     synchronized (hostnamesForLinuxServers) {
       DomainName hostname = hostnamesForLinuxServers.get(mapKey);
       if (hostname == null) {
         hostname = database.queryObject(
-          ObjectFactories.domainNameFactory,
-          "select hostname from linux.\"Server\" where server=?",
-          linuxServer
+            ObjectFactories.domainNameFactory,
+            "select hostname from linux.\"Server\" where server=?",
+            linuxServer
         );
         hostnamesForLinuxServers.put(mapKey, hostname.intern());
       }
@@ -338,6 +341,7 @@ public final class NetHostHandler {
 
   // TODO: Move to LinuxServerHandler
   private static final Map<DomainName, Integer> hostsForLinuxServerHostnames = new HashMap<>();
+
   public static int getHostForLinuxServerHostname(DatabaseAccess db, DomainName hostname) throws IOException, SQLException {
     synchronized (hostsForLinuxServerHostnames) {
       Integer i = hostsForLinuxServerHostnames.get(hostname);
@@ -366,15 +370,16 @@ public final class NetHostHandler {
    */
   public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
     return database.queryIntList(
-      "select se.id from net.\"Host\" se inner join infrastructure.\"PhysicalServer\" ps on se.id=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
-      OperatingSystemVersion.CENTOS_5_DOM0_I686,
-      OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
-      OperatingSystemVersion.CENTOS_7_DOM0_X86_64
+        "select se.id from net.\"Host\" se inner join infrastructure.\"PhysicalServer\" ps on se.id=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
+        OperatingSystemVersion.CENTOS_5_DOM0_I686,
+        OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
+        OperatingSystemVersion.CENTOS_7_DOM0_X86_64
     );
   }
 
   // TODO: Move to LinuxServerHandler
   private static final Map<Integer, Boolean> linuxServers = new HashMap<>();
+
   public static boolean isLinuxServer(DatabaseConnection conn, int host) throws IOException, SQLException {
     Integer i = host;
     synchronized (linuxServers) {
@@ -382,8 +387,8 @@ public final class NetHostHandler {
         return linuxServers.get(i);
       }
       boolean isLinuxServer = conn.queryBoolean(
-        "select (select server from linux.\"Server\" where server=?) is not null",
-        host
+          "select (select server from linux.\"Server\" where server=?) is not null",
+          host
       );
       linuxServers.put(i, isLinuxServer);
       return isLinuxServer;
@@ -397,11 +402,11 @@ public final class NetHostHandler {
       }
     } else if (tableID == Table.TableID.BUSINESS_SERVERS) {
       synchronized (NetHostHandler.class) {
-        userHosts=null;
+        userHosts = null;
       }
     } else if (tableID == Table.TableID.MASTER_SERVERS) {
       synchronized (NetHostHandler.class) {
-        userHosts=null;
+        userHosts = null;
       }
     } else if (tableID == Table.TableID.SERVERS) {
       synchronized (failoverServers) {
@@ -447,7 +452,7 @@ public final class NetHostHandler {
       Long idLong = id;
       lastIDs.put(s, idLong);
 
-      Map<Long, RequestSource> ids=invalidateSyncEntries.get(s);
+      Map<Long, RequestSource> ids = invalidateSyncEntries.get(s);
       if (ids == null) {
         invalidateSyncEntries.put(s, ids = new HashMap<>());
       }
@@ -479,31 +484,31 @@ public final class NetHostHandler {
           // Wait until the most recent ID and all previous IDs have been completed, but do
           // not wait for more than 60 seconds total to prevent locked-up daemons from
           // locking up everything.
-          long startTime=System.currentTimeMillis();
+          long startTime = System.currentTimeMillis();
           while (!Thread.currentThread().isInterrupted()) {
-            long maxWait=startTime+60000-System.currentTimeMillis();
-            if (maxWait>0 && maxWait <= 60000) {
-              LongList closedIDs=null;
+            long maxWait = startTime + 60000 - System.currentTimeMillis();
+            if (maxWait > 0 && maxWait <= 60000) {
+              LongList closedIDs = null;
               Iterator<Long> iter = ids.keySet().iterator();
               boolean foundOlder = false;
               while (iter.hasNext()) {
                 Long idLong = iter.next();
-                RequestSource source=ids.get(idLong);
+                RequestSource source = ids.get(idLong);
                 if (source.isClosed()) {
                   if (closedIDs == null) {
-                    closedIDs=new LongArrayList();
+                    closedIDs = new LongArrayList();
                   }
                   closedIDs.add(idLong);
                 } else {
-                  long id=idLong;
+                  long id = idLong;
                   if (id <= lastID) {
-                    foundOlder=true;
+                    foundOlder = true;
                     break;
                   }
                 }
               }
               if (closedIDs != null) {
-                int size=closedIDs.size();
+                int size = closedIDs.size();
                 for (int c = 0; c < size; c++) {
                   ids.remove(closedIDs.get(c));
                 }

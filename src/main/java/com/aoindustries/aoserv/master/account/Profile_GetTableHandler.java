@@ -45,9 +45,9 @@ import java.util.Set;
 public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   private static final String COLUMNS =
-    "  ap.*,\n"
-    + "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
-    + "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
+      "  ap.*,\n"
+          + "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
+          + "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
 
   @Override
   public Set<Table.TableID> getTableIds() {
@@ -57,16 +57,16 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Profile(),
-      "SELECT\n"
-      + COLUMNS + "\n"
-      + "FROM\n"
-      + "  account.\"Profile\" ap"
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Profile(),
+        "SELECT\n"
+            + COLUMNS + "\n"
+            + "FROM\n"
+            + "  account.\"Profile\" ap"
     );
   }
 
@@ -75,50 +75,50 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Profile(),
-      "SELECT DISTINCT\n"
-      + COLUMNS + "\n"
-      + "FROM\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  account.\"Profile\" ap\n"
-      + "WHERE\n"
-      + "  ms.username = ?\n"
-      + "  AND ms.server = bs.server\n"
-      + "  AND bs.accounting = ap.accounting",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Profile(),
+        "SELECT DISTINCT\n"
+            + COLUMNS + "\n"
+            + "FROM\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  account.\"Profile\" ap\n"
+            + "WHERE\n"
+            + "  ms.username = ?\n"
+            + "  AND ms.server = bs.server\n"
+            + "  AND bs.accounting = ap.accounting",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Profile(),
-      "SELECT\n"
-      + COLUMNS + "\n"
-      + "FROM\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  account.\"Profile\" ap\n"
-      + "WHERE\n"
-      + "  un.username = ?\n"
-      + "  AND un.package = pk.\"name\"\n"
-      + "  AND (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  AND bu1.accounting = ap.accounting",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Profile(),
+        "SELECT\n"
+            + COLUMNS + "\n"
+            + "FROM\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  account.\"Profile\" ap\n"
+            + "WHERE\n"
+            + "  un.username = ?\n"
+            + "  AND un.package = pk.\"name\"\n"
+            + "  AND (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  AND bu1.accounting = ap.accounting",
+        source.getCurrentAdministrator()
     );
   }
 }

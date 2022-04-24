@@ -50,71 +50,71 @@ public class User_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new com.aoindustries.aoserv.client.mysql.User(),
-      "select * from mysql.\"User\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new com.aoindustries.aoserv.client.mysql.User(),
+        "select * from mysql.\"User\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new com.aoindustries.aoserv.client.mysql.User(),
-      "select distinct\n"
-      + "  mu.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"User\" un,\n"
-      + "  mysql.\"User\" mu\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=bs.server\n"
-      + "  and bs.accounting=pk.accounting\n"
-      + "  and pk.name=un.package\n"
-      + "  and un.username=mu.username",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new com.aoindustries.aoserv.client.mysql.User(),
+        "select distinct\n"
+            + "  mu.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"User\" un,\n"
+            + "  mysql.\"User\" mu\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=bs.server\n"
+            + "  and bs.accounting=pk.accounting\n"
+            + "  and pk.name=un.package\n"
+            + "  and un.username=mu.username",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new com.aoindustries.aoserv.client.mysql.User(),
-      "select\n"
-      + "  mu.*\n"
-      + "from\n"
-      + "  account.\"User\" un1,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  account.\"User\" un2,\n"
-      + "  mysql.\"User\" mu\n"
-      + "where\n"
-      + "  un1.username=?\n"
-      + "  and un1.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=un2.package\n"
-      + "  and un2.username=mu.username",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new com.aoindustries.aoserv.client.mysql.User(),
+        "select\n"
+            + "  mu.*\n"
+            + "from\n"
+            + "  account.\"User\" un1,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  account.\"User\" un2,\n"
+            + "  mysql.\"User\" mu\n"
+            + "where\n"
+            + "  un1.username=?\n"
+            + "  and un1.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=un2.package\n"
+            + "  and un2.username=mu.username",
+        source.getCurrentAdministrator()
     );
   }
 }

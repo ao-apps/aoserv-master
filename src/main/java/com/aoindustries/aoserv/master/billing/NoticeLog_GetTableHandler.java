@@ -55,45 +55,45 @@ public class NoticeLog_GetTableHandler extends TableHandler.GetTableHandlerByRol
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new NoticeLog(),
-        "SELECT\n"
-        + "  nl.*,\n"
-        // Protocol compatibility
-        + "  COALESCE(\n"
-        + "    (\n"
-        + "      SELECT\n"
-        + "        \"balance.value\"\n"
-        + "      FROM\n"
-        + "        billing.\"NoticeLog.balance\" nlb\n"
-        + "      WHERE\n"
-        + "        nl.id = nlb.\"noticeLog\"\n"
-        + "        AND nlb.\"balance.currency\" = ?\n"
-        + "    ),\n"
-        + "    '0.00'::numeric(9,2)\n"
-        + "  ) AS balance\n"
-        + "FROM\n"
-        + "  billing.\"NoticeLog\" nl",
-        Currency.USD.getCurrencyCode()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new NoticeLog(),
+          "SELECT\n"
+              + "  nl.*,\n"
+              // Protocol compatibility
+              + "  COALESCE(\n"
+              + "    (\n"
+              + "      SELECT\n"
+              + "        \"balance.value\"\n"
+              + "      FROM\n"
+              + "        billing.\"NoticeLog.balance\" nlb\n"
+              + "      WHERE\n"
+              + "        nl.id = nlb.\"noticeLog\"\n"
+              + "        AND nlb.\"balance.currency\" = ?\n"
+              + "    ),\n"
+              + "    '0.00'::numeric(9,2)\n"
+              + "  ) AS balance\n"
+              + "FROM\n"
+              + "  billing.\"NoticeLog\" nl",
+          Currency.USD.getCurrencyCode()
       );
     } else {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new NoticeLog(),
-        "SELECT\n"
-        + "  *,\n"
-        // Protocol compatibility
-        + "  '0.00'::numeric(9,2) AS balance\n"
-        + "FROM\n"
-        + "  billing.\"NoticeLog\""
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new NoticeLog(),
+          "SELECT\n"
+              + "  *,\n"
+              // Protocol compatibility
+              + "  '0.00'::numeric(9,2) AS balance\n"
+              + "FROM\n"
+              + "  billing.\"NoticeLog\""
       );
     }
   }
@@ -107,67 +107,67 @@ public class NoticeLog_GetTableHandler extends TableHandler.GetTableHandlerByRol
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new NoticeLog(),
-        "SELECT\n"
-        + "  nl.*,\n"
-        // Protocol compatibility
-        + "  COALESCE(\n"
-        + "    (\n"
-        + "      SELECT\n"
-        + "        \"balance.value\"\n"
-        + "      FROM\n"
-        + "        billing.\"NoticeLog.balance\" nlb\n"
-        + "      WHERE\n"
-        + "        nl.id = nlb.\"noticeLog\"\n"
-        + "        AND nlb.\"balance.currency\" = ?\n"
-        + "    ),\n"
-        + "    '0.00'::numeric(9,2)\n"
-        + "  ) AS balance\n"
-        + "FROM\n"
-        + "  account.\"User\" un,\n"
-        + "  billing.\"Package\" pk,\n"
-        + TableHandler.BU1_PARENTS_JOIN
-        + "  billing.\"NoticeLog\" nl\n"
-        + "WHERE\n"
-        + "  un.username = ?\n"
-        + "  AND un.package = pk.name\n"
-        + "  AND (\n"
-        + TableHandler.PK_BU1_PARENTS_WHERE
-        + "  )\n"
-        + "  AND bu1.accounting = nl.accounting",
-        Currency.USD.getCurrencyCode(),
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new NoticeLog(),
+          "SELECT\n"
+              + "  nl.*,\n"
+              // Protocol compatibility
+              + "  COALESCE(\n"
+              + "    (\n"
+              + "      SELECT\n"
+              + "        \"balance.value\"\n"
+              + "      FROM\n"
+              + "        billing.\"NoticeLog.balance\" nlb\n"
+              + "      WHERE\n"
+              + "        nl.id = nlb.\"noticeLog\"\n"
+              + "        AND nlb.\"balance.currency\" = ?\n"
+              + "    ),\n"
+              + "    '0.00'::numeric(9,2)\n"
+              + "  ) AS balance\n"
+              + "FROM\n"
+              + "  account.\"User\" un,\n"
+              + "  billing.\"Package\" pk,\n"
+              + TableHandler.BU1_PARENTS_JOIN
+              + "  billing.\"NoticeLog\" nl\n"
+              + "WHERE\n"
+              + "  un.username = ?\n"
+              + "  AND un.package = pk.name\n"
+              + "  AND (\n"
+              + TableHandler.PK_BU1_PARENTS_WHERE
+              + "  )\n"
+              + "  AND bu1.accounting = nl.accounting",
+          Currency.USD.getCurrencyCode(),
+          source.getCurrentAdministrator()
       );
     } else {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new NoticeLog(),
-        "SELECT\n"
-        + "  nl.*,\n"
-        // Protocol compatibility
-        + "  '0.00'::numeric(9,2) AS balance\n"
-        + "FROM\n"
-        + "  account.\"User\" un,\n"
-        + "  billing.\"Package\" pk,\n"
-        + TableHandler.BU1_PARENTS_JOIN
-        + "  billing.\"NoticeLog\" nl\n"
-        + "WHERE\n"
-        + "  un.username = ?\n"
-        + "  AND un.package = pk.name\n"
-        + "  AND (\n"
-        + TableHandler.PK_BU1_PARENTS_WHERE
-        + "  )\n"
-        + "  AND bu1.accounting = nl.accounting",
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new NoticeLog(),
+          "SELECT\n"
+              + "  nl.*,\n"
+              // Protocol compatibility
+              + "  '0.00'::numeric(9,2) AS balance\n"
+              + "FROM\n"
+              + "  account.\"User\" un,\n"
+              + "  billing.\"Package\" pk,\n"
+              + TableHandler.BU1_PARENTS_JOIN
+              + "  billing.\"NoticeLog\" nl\n"
+              + "WHERE\n"
+              + "  un.username = ?\n"
+              + "  AND un.package = pk.name\n"
+              + "  AND (\n"
+              + TableHandler.PK_BU1_PARENTS_WHERE
+              + "  )\n"
+              + "  AND bu1.accounting = nl.accounting",
+          source.getCurrentAdministrator()
       );
     }
   }

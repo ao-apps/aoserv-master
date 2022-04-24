@@ -51,67 +51,67 @@ public class Database_GetTableHandler extends TableHandler.GetTableHandlerByRole
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Database(),
-      "select * from postgresql.\"Database\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Database(),
+        "select * from postgresql.\"Database\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Database(),
-      "SELECT\n"
-      + "  pd.*\n"
-      + "FROM\n"
-      + "             master.\"UserHost\"     ms\n"
-      + "  INNER JOIN postgresql.\"Server\"   ps ON ms.server = ps.ao_server\n"
-      + "  INNER JOIN postgresql.\"Database\" pd ON ps.bind   = pd.postgres_server\n"
-      + "WHERE\n"
-      + "  ms.username = ?",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Database(),
+        "SELECT\n"
+            + "  pd.*\n"
+            + "FROM\n"
+            + "             master.\"UserHost\"     ms\n"
+            + "  INNER JOIN postgresql.\"Server\"   ps ON ms.server = ps.ao_server\n"
+            + "  INNER JOIN postgresql.\"Database\" pd ON ps.bind   = pd.postgres_server\n"
+            + "WHERE\n"
+            + "  ms.username = ?",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Database(),
-      "select\n"
-      + "  pd.*\n"
-      + "from\n"
-      + "  account.\"User\" un1,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  account.\"User\" un2,\n"
-      + "  postgresql.\"UserServer\" psu,\n"
-      + "  postgresql.\"Database\" pd\n"
-      + "where\n"
-      + "  un1.username=?\n"
-      + "  and un1.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=un2.package\n"
-      + "  and un2.username=psu.username\n"
-      + "  and psu.id=pd.datdba",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Database(),
+        "select\n"
+            + "  pd.*\n"
+            + "from\n"
+            + "  account.\"User\" un1,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  account.\"User\" un2,\n"
+            + "  postgresql.\"UserServer\" psu,\n"
+            + "  postgresql.\"Database\" pd\n"
+            + "where\n"
+            + "  un1.username=?\n"
+            + "  and un1.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=un2.package\n"
+            + "  and un2.username=psu.username\n"
+            + "  and psu.id=pd.datdba",
+        source.getCurrentAdministrator()
     );
   }
 }

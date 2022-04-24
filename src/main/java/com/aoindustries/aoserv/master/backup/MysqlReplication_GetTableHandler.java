@@ -51,79 +51,79 @@ public class MysqlReplication_GetTableHandler extends TableHandler.GetTableHandl
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new MysqlReplication(),
-      "select * from backup.\"MysqlReplication\""
-    ); 
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new MysqlReplication(),
+        "select * from backup.\"MysqlReplication\""
+    );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new MysqlReplication(),
-      "select\n"
-      + "  fmr.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  backup.\"FileReplication\" ffr,\n"
-      + "  backup.\"MysqlReplication\" fmr\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and (\n"
-      + "    (\n"
-      // ao_server-based
-      + "      ms.server=fmr.ao_server\n"
-      + "    ) or (\n"
-      // replication-based
-      + "      ms.server=ffr.server\n"
-      + "      and ffr.id=fmr.replication\n"
-      + "    )\n"
-      + "  )",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new MysqlReplication(),
+        "select\n"
+            + "  fmr.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  backup.\"FileReplication\" ffr,\n"
+            + "  backup.\"MysqlReplication\" fmr\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and (\n"
+            + "    (\n"
+            // ao_server-based
+            + "      ms.server=fmr.ao_server\n"
+            + "    ) or (\n"
+            // replication-based
+            + "      ms.server=ffr.server\n"
+            + "      and ffr.id=fmr.replication\n"
+            + "    )\n"
+            + "  )",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new MysqlReplication(),
-      "select distinct\n"
-      + "  fmr.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  backup.\"FileReplication\" ffr,\n"
-      + "  backup.\"MysqlReplication\" fmr\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting\n"
-      + "  and (\n"
-      + "    (\n"
-      // ao_server-based
-      + "      bs.server=fmr.ao_server\n"
-      + "    ) or (\n"
-      // replication-based
-      + "      bs.server=ffr.server\n"
-      + "      and ffr.id=fmr.replication\n"
-      + "    )\n"
-      + "  )",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new MysqlReplication(),
+        "select distinct\n"
+            + "  fmr.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  backup.\"FileReplication\" ffr,\n"
+            + "  backup.\"MysqlReplication\" fmr\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting\n"
+            + "  and (\n"
+            + "    (\n"
+            // ao_server-based
+            + "      bs.server=fmr.ao_server\n"
+            + "    ) or (\n"
+            // replication-based
+            + "      bs.server=ffr.server\n"
+            + "      and ffr.id=fmr.replication\n"
+            + "    )\n"
+            + "  )",
+        source.getCurrentAdministrator()
     );
   }
 }

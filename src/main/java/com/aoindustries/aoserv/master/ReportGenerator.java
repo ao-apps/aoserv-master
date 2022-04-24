@@ -70,7 +70,7 @@ public final class ReportGenerator implements CronJob {
     long diskSize;
   }
 
-  private static boolean started=false;
+  private static boolean started = false;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {
@@ -78,7 +78,7 @@ public final class ReportGenerator implements CronJob {
       if (!started) {
         System.out.print("Starting " + ReportGenerator.class.getSimpleName() + ": ");
         CronDaemon.addCronJob(new ReportGenerator(), logger);
-        started=true;
+        started = true;
         System.out.println("Done");
       }
     }
@@ -92,8 +92,8 @@ public final class ReportGenerator implements CronJob {
    * Runs at {@link BackupReport#BACKUP_REPORT_HOUR}:{@link BackupReport#BACKUP_REPORT_MINUTE} am daily.
    */
   private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
-    minute == BackupReport.BACKUP_REPORT_MINUTE
-    && hour == BackupReport.BACKUP_REPORT_HOUR;
+      minute == BackupReport.BACKUP_REPORT_MINUTE
+          && hour == BackupReport.BACKUP_REPORT_HOUR;
 
   @Override
   public Schedule getSchedule() {
@@ -102,23 +102,23 @@ public final class ReportGenerator implements CronJob {
 
   @Override
   public int getThreadPriority() {
-    return Thread.NORM_PRIORITY-2;
+    return Thread.NORM_PRIORITY - 2;
   }
 
   @Override
   public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
     try {
       try (
-        ProcessTimer timer=new ProcessTimer(
-          logger,
-          ReportGenerator.class.getName(),
-          "runCronJob",
-          "Backup Report Generator",
-          "Generating contents for backup.BackupReport",
-          BACKUP_REPORT_MAX_TIME,
-          TIMER_REMINDER_INTERVAL
-        )
-      ) {
+        ProcessTimer timer = new ProcessTimer(
+              logger,
+              ReportGenerator.class.getName(),
+              "runCronJob",
+              "Backup Report Generator",
+              "Generating contents for backup.BackupReport",
+              BACKUP_REPORT_MAX_TIME,
+              TIMER_REMINDER_INTERVAL
+          )
+          ) {
         MasterServer.executorService.submit(timer);
 
         // Start the transaction
@@ -126,20 +126,20 @@ public final class ReportGenerator implements CronJob {
           InvalidateList invalidateList = new InvalidateList();
           // Do not make the run twice in one day
           if (
-            conn.queryBoolean(
-              "select\n"
-              + "  not exists (\n"
-              + "    select\n"
-              + "      *\n"
-              + "    from\n"
-              + "      backup.\"BackupReport\"\n"
-              + "    where\n"
-              + "      CURRENT_DATE = date\n"
-              + "  )"
-            )
+              conn.queryBoolean(
+                  "select\n"
+                      + "  not exists (\n"
+                      + "    select\n"
+                      + "      *\n"
+                      + "    from\n"
+                      + "      backup.\"BackupReport\"\n"
+                      + "    where\n"
+                      + "      CURRENT_DATE = date\n"
+                      + "  )"
+              )
           ) {
             // HashMap keyed on host, containing HashMaps keyed on package, containing TempBackupReport objects
-            Map<Integer, Map<Integer, TempBackupReport>> stats=new HashMap<>();
+            Map<Integer, Map<Integer, TempBackupReport>> stats = new HashMap<>();
 
             /* TODO: Implement as calls to the aoserv daemons to get the quota reports
             String currentSQL = null;
@@ -263,9 +263,9 @@ public final class ReportGenerator implements CronJob {
                 Iterator<Integer> hostKeys = stats.keySet().iterator();
                 while (hostKeys.hasNext()) {
                   Map<Integer, TempBackupReport> packages = stats.get(hostKeys.next());
-                  Iterator<Integer> packageKeys=packages.keySet().iterator();
+                  Iterator<Integer> packageKeys = packages.keySet().iterator();
                   while (packageKeys.hasNext()) {
-                    TempBackupReport tbr=packages.get(packageKeys.next());
+                    TempBackupReport tbr = packages.get(packageKeys.next());
                     pstmt.setInt(1, tbr.host);
                     pstmt.setInt(2, tbr.packageNum);
                     pstmt.setInt(3, tbr.fileCount);

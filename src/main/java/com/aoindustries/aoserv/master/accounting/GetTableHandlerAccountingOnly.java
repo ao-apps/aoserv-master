@@ -50,13 +50,13 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
    */
   @Override
   default void getTable(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    Table.TableID tableID,
-    User masterUser,
-    UserHost[] masterServers
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableID tableID,
+      User masterUser,
+      UserHost[] masterServers
   ) throws IOException, SQLException {
     if (BankAccountHandler.isBankAccounting(conn, source)) {
       getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
@@ -72,11 +72,11 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
    * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
    */
   void getTableAccounting(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    Table.TableID tableID,
-    User masterUser
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableID tableID,
+      User masterUser
   ) throws IOException, SQLException;
 }

@@ -52,38 +52,38 @@ public class PackageDefinitionLimit_GetTableHandler extends TableHandler.GetTabl
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new PackageDefinitionLimit(),
-      "select * from billing.\"PackageDefinitionLimit\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new PackageDefinitionLimit(),
+        "select * from billing.\"PackageDefinitionLimit\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new PackageDefinitionLimit(),
-      "select distinct\n"
-      + "  pdl.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  billing.\"PackageDefinitionLimit\" pdl\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=bs.server\n"
-      + "  and bs.accounting=pk.accounting\n"
-      + "  and pk.package_definition=pdl.package_definition",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new PackageDefinitionLimit(),
+        "select distinct\n"
+            + "  pdl.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  billing.\"PackageDefinitionLimit\" pdl\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=bs.server\n"
+            + "  and bs.accounting=pk.accounting\n"
+            + "  and pk.package_definition=pdl.package_definition",
+        source.getCurrentAdministrator()
     );
   }
 
@@ -91,70 +91,70 @@ public class PackageDefinitionLimit_GetTableHandler extends TableHandler.GetTabl
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     if (AccountHandler.canSeePrices(conn, source)) {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new PackageDefinitionLimit(),
-        "select distinct\n"
-        + "  pdl.*\n"
-        + "from\n"
-        + "  account.\"User\" un,\n"
-        + "  billing.\"Package\" pk1,\n"
-        + TableHandler.BU1_PARENTS_JOIN
-        + "  billing.\"Package\" pk2,\n"
-        + "  billing.\"PackageDefinition\" pd,\n"
-        + "  billing.\"PackageDefinitionLimit\" pdl\n"
-        + "where\n"
-        + "  un.username=?\n"
-        + "  and un.package=pk1.name\n"
-        + "  and (\n"
-        + TableHandler.PK1_BU1_PARENTS_WHERE
-        + "  )\n"
-        + "  and bu1.accounting=pk2.accounting\n"
-        + "  and (\n"
-        + "    pk2.package_definition=pd.id\n"
-        + "    or bu1.accounting=pd.accounting\n"
-        + "  ) and pd.id=pdl.package_definition",
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new PackageDefinitionLimit(),
+          "select distinct\n"
+              + "  pdl.*\n"
+              + "from\n"
+              + "  account.\"User\" un,\n"
+              + "  billing.\"Package\" pk1,\n"
+              + TableHandler.BU1_PARENTS_JOIN
+              + "  billing.\"Package\" pk2,\n"
+              + "  billing.\"PackageDefinition\" pd,\n"
+              + "  billing.\"PackageDefinitionLimit\" pdl\n"
+              + "where\n"
+              + "  un.username=?\n"
+              + "  and un.package=pk1.name\n"
+              + "  and (\n"
+              + TableHandler.PK1_BU1_PARENTS_WHERE
+              + "  )\n"
+              + "  and bu1.accounting=pk2.accounting\n"
+              + "  and (\n"
+              + "    pk2.package_definition=pd.id\n"
+              + "    or bu1.accounting=pd.accounting\n"
+              + "  ) and pd.id=pdl.package_definition",
+          source.getCurrentAdministrator()
       );
     } else {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new PackageDefinitionLimit(),
-        "select distinct\n"
-        + "  pdl.id,\n"
-        + "  pdl.package_definition,\n"
-        + "  pdl.resource,\n"
-        + "  pdl.soft_limit,\n"
-        + "  pdl.hard_limit,\n"
-        + "  null as \"additionalRate.currency\",\n"
-        + "  null as \"additionalRate.value\",\n"
-        + "  null as additional_transaction_type\n"
-        + "from\n"
-        + "  account.\"User\" un,\n"
-        + "  billing.\"Package\" pk1,\n"
-        + TableHandler.BU1_PARENTS_JOIN
-        + "  billing.\"Package\" pk2,\n"
-        + "  billing.\"PackageDefinition\" pd,\n"
-        + "  billing.\"PackageDefinitionLimit\" pdl\n"
-        + "where\n"
-        + "  un.username=?\n"
-        + "  and un.package=pk1.name\n"
-        + "  and (\n"
-        + TableHandler.PK1_BU1_PARENTS_WHERE
-        + "  )\n"
-        + "  and bu1.accounting=pk2.accounting\n"
-        + "  and (\n"
-        + "    pk2.package_definition=pd.id\n"
-        + "    or bu1.accounting=pd.accounting\n"
-        + "  ) and pd.id=pdl.package_definition",
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new PackageDefinitionLimit(),
+          "select distinct\n"
+              + "  pdl.id,\n"
+              + "  pdl.package_definition,\n"
+              + "  pdl.resource,\n"
+              + "  pdl.soft_limit,\n"
+              + "  pdl.hard_limit,\n"
+              + "  null as \"additionalRate.currency\",\n"
+              + "  null as \"additionalRate.value\",\n"
+              + "  null as additional_transaction_type\n"
+              + "from\n"
+              + "  account.\"User\" un,\n"
+              + "  billing.\"Package\" pk1,\n"
+              + TableHandler.BU1_PARENTS_JOIN
+              + "  billing.\"Package\" pk2,\n"
+              + "  billing.\"PackageDefinition\" pd,\n"
+              + "  billing.\"PackageDefinitionLimit\" pdl\n"
+              + "where\n"
+              + "  un.username=?\n"
+              + "  and un.package=pk1.name\n"
+              + "  and (\n"
+              + TableHandler.PK1_BU1_PARENTS_WHERE
+              + "  )\n"
+              + "  and bu1.accounting=pk2.accounting\n"
+              + "  and (\n"
+              + "    pk2.package_definition=pd.id\n"
+              + "    or bu1.accounting=pd.accounting\n"
+              + "  ) and pd.id=pdl.package_definition",
+          source.getCurrentAdministrator()
       );
     }
   }

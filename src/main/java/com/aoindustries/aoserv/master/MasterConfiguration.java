@@ -98,14 +98,14 @@ public final class MasterConfiguration {
   }
 
   public static List<String> getBinds(String protocol) throws IOException {
-    return Strings.splitCommaSpace(getProperty("aoserv.master."+protocol+".bind"));
+    return Strings.splitCommaSpace(getProperty("aoserv.master." + protocol + ".bind"));
   }
 
   public static List<Integer> getPorts(String protocol) throws IOException {
-    String ports = getProperty("aoserv.master."+protocol+".ports");
+    String ports = getProperty("aoserv.master." + protocol + ".ports");
     List<String> strings = Strings.splitCommaSpace(ports);
     List<Integer> ints = new ArrayList<>(strings.size());
-    for (int c=0, len=strings.size();c<len;c++) {
+    for (int c = 0, len = strings.size(); c < len; c++) {
       ints.add(Integer.parseInt(strings.get(c)));
     }
     return ints;
@@ -171,6 +171,7 @@ public final class MasterConfiguration {
   }
 
   private static final ConcurrentMap<Integer, UnprotectedKey> daemonKeys = new ConcurrentHashMap<>();
+
   public static UnprotectedKey getDaemonKey(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     UnprotectedKey daemonKey = daemonKeys.get(linuxServer);
     if (daemonKey == null) {
@@ -193,7 +194,7 @@ public final class MasterConfiguration {
   }
 
   public static String getTicketSource(String protocol, int index, String field) throws IOException {
-    return getProperty("aoserv.master.ticket.source."+protocol+"."+index+"."+field);
+    return getProperty("aoserv.master.ticket.source." + protocol + "." + index + "." + field);
   }
 
   public static String getTicketURL() throws IOException {

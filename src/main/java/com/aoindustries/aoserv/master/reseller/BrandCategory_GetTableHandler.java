@@ -52,13 +52,13 @@ public class BrandCategory_GetTableHandler extends TableHandler.GetTableHandlerB
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new BrandCategory(),
-      "select * from reseller.\"BrandCategory\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new BrandCategory(),
+        "select * from reseller.\"BrandCategory\""
     );
   }
 
@@ -70,26 +70,26 @@ public class BrandCategory_GetTableHandler extends TableHandler.GetTableHandlerB
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new BrandCategory(),
-      "select\n"
-      + "  tbc.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  reseller.\"BrandCategory\" tbc\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  ) and bu1.accounting=tbc.brand",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new BrandCategory(),
+        "select\n"
+            + "  tbc.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  reseller.\"BrandCategory\" tbc\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  ) and bu1.accounting=tbc.brand",
+        source.getCurrentAdministrator()
     );
   }
 }

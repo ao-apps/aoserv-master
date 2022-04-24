@@ -70,75 +70,76 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
       @Override
       protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new VirtualHostName(),
-          "select * from web.\"VirtualHostName\""
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new VirtualHostName(),
+            "select * from web.\"VirtualHostName\""
         );
       }
 
       @Override
       protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new VirtualHostName(),
-          "select\n"
-          + "  hsu.*\n"
-          + "from\n"
-          + "  master.\"UserHost\" ms,\n"
-          + "  web.\"Site\" hs,\n"
-          + "  web.\"VirtualHost\" hsb,\n"
-          + "  web.\"VirtualHostName\" hsu\n"
-          + "where\n"
-          + "  ms.username=?\n"
-          + "  and ms.server=hs.ao_server\n"
-          + "  and hs.id=hsb.httpd_site\n"
-          + "  and hsb.id=hsu.httpd_site_bind",
-          source.getCurrentAdministrator()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new VirtualHostName(),
+            "select\n"
+                + "  hsu.*\n"
+                + "from\n"
+                + "  master.\"UserHost\" ms,\n"
+                + "  web.\"Site\" hs,\n"
+                + "  web.\"VirtualHost\" hsb,\n"
+                + "  web.\"VirtualHostName\" hsu\n"
+                + "where\n"
+                + "  ms.username=?\n"
+                + "  and ms.server=hs.ao_server\n"
+                + "  and hs.id=hsb.httpd_site\n"
+                + "  and hsb.id=hsu.httpd_site_bind",
+            source.getCurrentAdministrator()
         );
       }
 
       @Override
       protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
         MasterServer.writeObjects(
-          conn,
-          source,
-          out,
-          provideProgress,
-          CursorMode.AUTO,
-          new VirtualHostName(),
-          "select\n"
-          + "  hsu.*\n"
-          + "from\n"
-          + "  account.\"User\" un,\n"
-          + "  billing.\"Package\" pk1,\n"
-          + TableHandler.BU1_PARENTS_JOIN
-          + "  billing.\"Package\" pk2,\n"
-          + "  web.\"Site\" hs,\n"
-          + "  web.\"VirtualHost\" hsb,\n"
-          + "  web.\"VirtualHostName\" hsu\n"
-          + "where\n"
-          + "  un.username=?\n"
-          + "  and un.package=pk1.name\n"
-          + "  and (\n"
-          + TableHandler.PK1_BU1_PARENTS_WHERE
-          + "  )\n"
-          + "  and bu1.accounting=pk2.accounting\n"
-          + "  and pk2.name=hs.package\n"
-          + "  and hs.id=hsb.httpd_site\n"
-          + "  and hsb.id=hsu.httpd_site_bind",
-          source.getCurrentAdministrator()
+            conn,
+            source,
+            out,
+            provideProgress,
+            CursorMode.AUTO,
+            new VirtualHostName(),
+            "select\n"
+                + "  hsu.*\n"
+                + "from\n"
+                + "  account.\"User\" un,\n"
+                + "  billing.\"Package\" pk1,\n"
+                + TableHandler.BU1_PARENTS_JOIN
+                + "  billing.\"Package\" pk2,\n"
+                + "  web.\"Site\" hs,\n"
+                + "  web.\"VirtualHost\" hsb,\n"
+                + "  web.\"VirtualHostName\" hsu\n"
+                + "where\n"
+                + "  un.username=?\n"
+                + "  and un.package=pk1.name\n"
+                + "  and (\n"
+                + TableHandler.PK1_BU1_PARENTS_WHERE
+                + "  )\n"
+                + "  and bu1.accounting=pk2.accounting\n"
+                + "  and pk2.name=hs.package\n"
+                + "  and hs.id=hsb.httpd_site\n"
+                + "  and hsb.id=hsu.httpd_site_bind",
+            source.getCurrentAdministrator()
         );
       }
     };
   }
+
   // </editor-fold>
 
   // <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
@@ -146,44 +147,44 @@ public class VirtualHostNameService implements MasterService, WhoisHistoryDomain
   public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
     List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
     return conn.queryCall(
-      results -> {
-        try {
-          Map<DomainName, Set<Account.Name>> map = new HashMap<>();
-          while (results.next()) {
-            DomainName hostname = DomainName.valueOf(results.getString(1));
-            Account.Name account = Account.Name.valueOf(results.getString(2));
-            DomainName registrableDomain;
-            try {
-              registrableDomain = ZoneTable.getHostTLD(hostname, tlds);
-            } catch (IllegalArgumentException err) {
-              logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
-              registrableDomain = hostname;
+        results -> {
+          try {
+            Map<DomainName, Set<Account.Name>> map = new HashMap<>();
+            while (results.next()) {
+              DomainName hostname = DomainName.valueOf(results.getString(1));
+              Account.Name account = Account.Name.valueOf(results.getString(2));
+              DomainName registrableDomain;
+              try {
+                registrableDomain = ZoneTable.getHostTLD(hostname, tlds);
+              } catch (IllegalArgumentException err) {
+                logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
+                registrableDomain = hostname;
+              }
+              Set<Account.Name> accounts = map.get(registrableDomain);
+              if (accounts == null) {
+                map.put(registrableDomain, accounts = new LinkedHashSet<>());
+              }
+              accounts.add(account);
             }
-            Set<Account.Name> accounts = map.get(registrableDomain);
-            if (accounts == null) {
-              map.put(registrableDomain, accounts = new LinkedHashSet<>());
-            }
-            accounts.add(account);
+            return map;
+          } catch (ValidationException e) {
+            throw new SQLException(e);
           }
-          return map;
-        } catch (ValidationException e) {
-          throw new SQLException(e);
-        }
-      },
-      "SELECT DISTINCT\n"
-      + "  hsu.hostname,\n"
-      + "  pk.accounting AS accounting\n"
-      + "FROM\n"
-      + "             web.\"VirtualHostName\" hsu\n"
-      + "  INNER JOIN web.\"VirtualHost\"     hsb ON hsu.httpd_site_bind = hsb.id\n"
-      + "  INNER JOIN web.\"Site\"            hs  ON hsb.httpd_site      =  hs.id\n"
-      + "  INNER JOIN billing.\"Package\"     pk  ON  hs.package         =  pk.\"name\"\n"
-      + "  INNER JOIN linux.\"Server\"        ao  ON  hs.ao_server       =  ao.server\n"
-      + "WHERE\n"
-      // Is not "localhost"
-      + "  hsu.hostname != 'localhost'\n"
-      // Is not the test URL
-      + "  AND hsu.hostname != (hs.\"name\" || '.' || ao.hostname)"
+        },
+        "SELECT DISTINCT\n"
+            + "  hsu.hostname,\n"
+            + "  pk.accounting AS accounting\n"
+            + "FROM\n"
+            + "             web.\"VirtualHostName\" hsu\n"
+            + "  INNER JOIN web.\"VirtualHost\"     hsb ON hsu.httpd_site_bind = hsb.id\n"
+            + "  INNER JOIN web.\"Site\"            hs  ON hsb.httpd_site      =  hs.id\n"
+            + "  INNER JOIN billing.\"Package\"     pk  ON  hs.package         =  pk.\"name\"\n"
+            + "  INNER JOIN linux.\"Server\"        ao  ON  hs.ao_server       =  ao.server\n"
+            + "WHERE\n"
+            // Is not "localhost"
+            + "  hsu.hostname != 'localhost'\n"
+            // Is not the test URL
+            + "  AND hsu.hostname != (hs.\"name\" || '.' || ao.hostname)"
     );
   }
   // </editor-fold>

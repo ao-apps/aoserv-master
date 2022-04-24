@@ -58,11 +58,11 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
 
   @SuppressWarnings("deprecation")
   public Process(
-    SmallIdentifier id,
-    InetAddress host,
-    String protocol,
-    boolean is_secure,
-    Timestamp connect_time
+      SmallIdentifier id,
+      InetAddress host,
+      String protocol,
+      boolean is_secure,
+      Timestamp connect_time
   ) {
     this.id = id;
     this.host = host;
@@ -111,7 +111,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
     for (Object com : command) {
       // Expand any array parameter
       if (com instanceof Object[]) {
-        for (Object com2 : (Object[])com) {
+        for (Object com2 : (Object[]) com) {
           params.add(Objects.toString(com2, null));
         }
       } else {

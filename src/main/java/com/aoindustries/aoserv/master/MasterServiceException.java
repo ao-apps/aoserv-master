@@ -46,7 +46,7 @@ public class MasterServiceException extends RuntimeException {
 
   static {
     Throwables.registerSurrogateFactory(MasterServiceException.class, (template, cause) ->
-      new MasterServiceException(template.getMessage(), cause)
+        new MasterServiceException(template.getMessage(), cause)
     );
   }
 }

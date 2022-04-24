@@ -46,12 +46,12 @@ public final class BankAccountHandler {
 
   // TODO: Move to an AccountingHandler or BillingHandler
   public static void checkIsAccounting(
-    DatabaseConnection conn,
-    RequestSource source,
-    String action
+      DatabaseConnection conn,
+      RequestSource source,
+      String action
   ) throws IOException, SQLException {
     if (!isAccounting(conn, source)) {
-      throw new SQLException("Accounting not allowed, '"+action+"'");
+      throw new SQLException("Accounting not allowed, '" + action + "'");
     }
   }
 
@@ -59,23 +59,23 @@ public final class BankAccountHandler {
    * Gets all transactions for one account.
    */
   public static void getTransactionsForAccount(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    String account
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      String account
   ) throws IOException, SQLException {
     if (isBankAccounting(conn, source)) {
       // TODO: release conn before writing to out
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new BankTransaction(),
-        "select * from accounting.\"BankTransaction\" where account=?",
-        account
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new BankTransaction(),
+          "select * from accounting.\"BankTransaction\" where account=?",
+          account
       );
     } else {
       List<BankTransaction> emptyList = Collections.emptyList();
@@ -86,18 +86,18 @@ public final class BankAccountHandler {
 
   public static void checkIsBankAccounting(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
     if (!isBankAccounting(conn, source)) {
-      throw new SQLException("Bank accounting not allowed, '"+action+"'");
+      throw new SQLException("Bank accounting not allowed, '" + action + "'");
     }
   }
 
   // TODO: Move to an AccountingHandler or BillingHandler
   public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.canAccessAccounting();
   }
 
   public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.canAccessBankAccount();
   }
 }

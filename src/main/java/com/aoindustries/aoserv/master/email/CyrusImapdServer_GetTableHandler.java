@@ -51,55 +51,55 @@ public class CyrusImapdServer_GetTableHandler extends TableHandler.GetTableHandl
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new CyrusImapdServer(),
-      "select * from email.\"CyrusImapdServer\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new CyrusImapdServer(),
+        "select * from email.\"CyrusImapdServer\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new CyrusImapdServer(),
-      "select\n"
-      + "  cis.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms\n"
-      + "  inner join email.\"CyrusImapdServer\" cis on ms.server=cis.ao_server\n"
-      + "where\n"
-      + "  ms.username=?",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new CyrusImapdServer(),
+        "select\n"
+            + "  cis.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms\n"
+            + "  inner join email.\"CyrusImapdServer\" cis on ms.server=cis.ao_server\n"
+            + "where\n"
+            + "  ms.username=?",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new CyrusImapdServer(),
-      "select\n"
-      + "  cis.*\n"
-      + "from\n"
-      + "             account.\"User\"           un\n"
-      + "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
-      + "  inner join account.\"AccountHost\"    bs  on pk.accounting = bs.accounting\n"
-      + "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
-      + "where\n"
-      + "  un.username=?",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new CyrusImapdServer(),
+        "select\n"
+            + "  cis.*\n"
+            + "from\n"
+            + "             account.\"User\"           un\n"
+            + "  inner join billing.\"Package\"        pk  on un.package    = pk.name\n"
+            + "  inner join account.\"AccountHost\"    bs  on pk.accounting = bs.accounting\n"
+            + "  inner join email.\"CyrusImapdServer\" cis on bs.server     = cis.ao_server\n"
+            + "where\n"
+            + "  un.username=?",
+        source.getCurrentAdministrator()
     );
   }
 }

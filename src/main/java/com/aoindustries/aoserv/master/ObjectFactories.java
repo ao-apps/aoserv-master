@@ -173,8 +173,8 @@ public final class ObjectFactories {
   public static final ObjectFactory<Port> portFactory = result -> {
     try {
       return Port.valueOf(
-        result.getInt("port"),
-        Protocol.valueOf(result.getString("net_protocol").toUpperCase(Locale.ROOT))
+          result.getInt("port"),
+          Protocol.valueOf(result.getString("net_protocol").toUpperCase(Locale.ROOT))
       );
     } catch (IllegalArgumentException | ValidationException e) {
       throw new SQLException(e.getLocalizedMessage(), e);

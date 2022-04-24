@@ -53,26 +53,26 @@ public final class PackageHandler {
     throw new AssertionError();
   }
 
-  private static final Map<Account.Name, Boolean> disabledPackages=new HashMap<>();
+  private static final Map<Account.Name, Boolean> disabledPackages = new HashMap<>();
 
   public static boolean canPackageAccessHost(DatabaseConnection conn, RequestSource source, Account.Name packageName, int host) throws IOException, SQLException {
     return conn.queryBoolean(
-      "select\n"
-      + "  (\n"
-      + "    select\n"
-      + "      pk.id\n"
-      + "    from\n"
-      + "      billing.\"Package\" pk,\n"
-      + "      account.\"AccountHost\" bs\n"
-      + "    where\n"
-      + "      pk.name=?\n"
-      + "      and pk.accounting=bs.accounting\n"
-      + "      and bs.server=?\n"
-      + "    limit 1\n"
-      + "  )\n"
-      + "  is not null\n",
-      packageName,
-      host
+        "select\n"
+            + "  (\n"
+            + "    select\n"
+            + "      pk.id\n"
+            + "    from\n"
+            + "      billing.\"Package\" pk,\n"
+            + "      account.\"AccountHost\" bs\n"
+            + "    where\n"
+            + "      pk.name=?\n"
+            + "      and pk.accounting=bs.accounting\n"
+            + "      and bs.server=?\n"
+            + "    limit 1\n"
+            + "  )\n"
+            + "  is not null\n",
+        packageName,
+        host
     );
   }
 
@@ -90,13 +90,13 @@ public final class PackageHandler {
 
   public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, Account.Name packageName) throws IOException, SQLException {
     if (!canAccessPackage(conn, source, packageName)) {
-      String message=
-        "currentAdministrator="
-        +source.getCurrentAdministrator()
-        +" is not allowed to access package: action='"
-        +action
-        +", name="
-        +packageName
+      String message =
+          "currentAdministrator="
+              + source.getCurrentAdministrator()
+              + " is not allowed to access package: action='"
+              + action
+              + ", name="
+              + packageName
       ;
       throw new SQLException(message);
     }
@@ -104,13 +104,13 @@ public final class PackageHandler {
 
   public static void checkAccessPackage(DatabaseConnection conn, RequestSource source, String action, int packageId) throws IOException, SQLException {
     if (!canAccessPackage(conn, source, packageId)) {
-      String message=
-        "currentAdministrator="
-        +source.getCurrentAdministrator()
-        +" is not allowed to access package: action='"
-        +action
-        +", id="
-        +packageId
+      String message =
+          "currentAdministrator="
+              + source.getCurrentAdministrator()
+              + " is not allowed to access package: action='"
+              + action
+              + ", id="
+              + packageId
       ;
       throw new SQLException(message);
     }
@@ -118,13 +118,13 @@ public final class PackageHandler {
 
   public static void checkAccessPackageDefinition(DatabaseConnection conn, RequestSource source, String action, int packageDefinition) throws IOException, SQLException {
     if (!canAccessPackageDefinition(conn, source, packageDefinition)) {
-      String message=
-        "currentAdministrator="
-        +source.getCurrentAdministrator()
-        +" is not allowed to access package: action='"
-        +action
-        +", id="
-        +packageDefinition
+      String message =
+          "currentAdministrator="
+              + source.getCurrentAdministrator()
+              + " is not allowed to access package: action='"
+              + action
+              + ", id="
+              + packageDefinition
       ;
       throw new SQLException(message);
     }
@@ -134,61 +134,61 @@ public final class PackageHandler {
    * Creates a new <code>Package</code>.
    */
   public static int addPackage(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Account.Name packageName,
-    Account.Name account,
-    int packageDefinition
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Account.Name packageName,
+      Account.Name account,
+      int packageDefinition
   ) throws IOException, SQLException {
     AccountHandler.checkAccessAccount(conn, source, "addPackage", account);
     if (AccountHandler.isAccountDisabled(conn, account)) {
-      throw new SQLException("Unable to add Package '"+packageName+"', Account disabled: "+account);
+      throw new SQLException("Unable to add Package '" + packageName + "', Account disabled: " + account);
     }
 
     // Check the PackageDefinition rules
     checkAccessPackageDefinition(conn, source, "addPackage", packageDefinition);
     // Businesses parent must be the package definition owner
-    Account.Name parent=AccountHandler.getParentAccount(conn, account);
+    Account.Name parent = AccountHandler.getParentAccount(conn, account);
     Account.Name packageDefinitionBusiness = getAccountForPackageDefinition(conn, packageDefinition);
     if (!packageDefinitionBusiness.equals(parent)) {
-      throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition #"+packageDefinition+" not owned by parent Account");
+      throw new SQLException("Unable to add Package '" + packageName + "', PackageDefinition #" + packageDefinition + " not owned by parent Account");
     }
     if (!isPackageDefinitionApproved(conn, packageDefinition)) {
-      throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not approved: "+packageDefinition);
+      throw new SQLException("Unable to add Package '" + packageName + "', PackageDefinition not approved: " + packageDefinition);
     }
     //if (!isPackageDefinitionActive(conn, packageDefinition)) {
     //  throw new SQLException("Unable to add Package '"+packageName+"', PackageDefinition not active: "+packageDefinition);
     //}
 
     int packageId = conn.updateInt(
-      "INSERT INTO\n"
-      + "  billing.\"Package\"\n"
-      + "VALUES (\n"
-      + "  default,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  now(),\n"
-      + "  ?,\n"
-      + "  null,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?,\n"
-      + "  ?\n"
-      + ") RETURNING id",
-      packageName.toString(),
-      account.toString(),
-      packageDefinition,
-      source.getCurrentAdministrator().toString(),
-      Package.DEFAULT_EMAIL_IN_BURST,
-      Package.DEFAULT_EMAIL_IN_RATE,
-      Package.DEFAULT_EMAIL_OUT_BURST,
-      Package.DEFAULT_EMAIL_OUT_RATE,
-      Package.DEFAULT_EMAIL_RELAY_BURST,
-      Package.DEFAULT_EMAIL_RELAY_RATE
+        "INSERT INTO\n"
+            + "  billing.\"Package\"\n"
+            + "VALUES (\n"
+            + "  default,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  now(),\n"
+            + "  ?,\n"
+            + "  null,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?,\n"
+            + "  ?\n"
+            + ") RETURNING id",
+        packageName.toString(),
+        account.toString(),
+        packageDefinition,
+        source.getCurrentAdministrator().toString(),
+        Package.DEFAULT_EMAIL_IN_BURST,
+        Package.DEFAULT_EMAIL_IN_RATE,
+        Package.DEFAULT_EMAIL_OUT_BURST,
+        Package.DEFAULT_EMAIL_OUT_RATE,
+        Package.DEFAULT_EMAIL_RELAY_BURST,
+        Package.DEFAULT_EMAIL_RELAY_RATE
     );
 
     // Notify all clients of the update
@@ -201,19 +201,19 @@ public final class PackageHandler {
    * Creates a new <code>PackageDefinition</code>.
    */
   public static int addPackageDefinition(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Account.Name account,
-    String category,
-    String name,
-    String version,
-    String display,
-    String description,
-    Money setupFee,
-    String setupFeeTransactionType,
-    Money monthlyRate,
-    String monthlyRateTransactionType
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Account.Name account,
+      String category,
+      String name,
+      String version,
+      String display,
+      String description,
+      Money setupFee,
+      String setupFeeTransactionType,
+      Money monthlyRate,
+      String monthlyRateTransactionType
   ) throws IOException, SQLException {
     AccountHandler.checkAccessAccount(conn, source, "addPackageDefinition", account);
     if (AccountHandler.isAccountDisabled(conn, account)) {
@@ -221,46 +221,46 @@ public final class PackageHandler {
     }
 
     int packageDefinition = conn.updateInt(
-      "INSERT INTO\n"
-      + "  billing.\"PackageDefinition\"\n"
-      + "VALUES (\n"
-      + "  default,\n" // id
-      + "  ?,\n" // accounting
-      + "  ?,\n" // category
-      + "  ?,\n" // name
-      + "  ?,\n" // version
-      + "  ?,\n" // display
-      + "  ?,\n" // description
-      + "  ?,\n" // setupFee.currency
-      + "  ?,\n" // setupFee.value
-      + "  ?,\n" // setup_fee_transaction_type
-      + "  ?,\n" // monthlyRate.currency
-      + "  ?,\n" // monthlyRate.value
-      + "  ?,\n" // monthly_rate_transaction_type
-      + "  false,\n" // active
-      + "  false\n" // approved
-      + ") RETURNING id",
-      account.toString(),
-      category,
-      name,
-      version,
-      display,
-      description,
-      setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
-      setupFee == null ? Null.NUMERIC : setupFee.getValue(),
-      setupFeeTransactionType,
-      monthlyRate.getCurrency().getCurrencyCode(),
-      monthlyRate.getValue(),
-      monthlyRateTransactionType
+        "INSERT INTO\n"
+            + "  billing.\"PackageDefinition\"\n"
+            + "VALUES (\n"
+            + "  default,\n" // id
+            + "  ?,\n" // accounting
+            + "  ?,\n" // category
+            + "  ?,\n" // name
+            + "  ?,\n" // version
+            + "  ?,\n" // display
+            + "  ?,\n" // description
+            + "  ?,\n" // setupFee.currency
+            + "  ?,\n" // setupFee.value
+            + "  ?,\n" // setup_fee_transaction_type
+            + "  ?,\n" // monthlyRate.currency
+            + "  ?,\n" // monthlyRate.value
+            + "  ?,\n" // monthly_rate_transaction_type
+            + "  false,\n" // active
+            + "  false\n" // approved
+            + ") RETURNING id",
+        account.toString(),
+        category,
+        name,
+        version,
+        display,
+        description,
+        setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
+        setupFee == null ? Null.NUMERIC : setupFee.getValue(),
+        setupFeeTransactionType,
+        monthlyRate.getCurrency().getCurrencyCode(),
+        monthlyRate.getValue(),
+        monthlyRateTransactionType
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      account,
-      AccountHandler.getHostsForAccount(conn, account),
-      false
+        conn,
+        Table.TableID.PACKAGE_DEFINITIONS,
+        account,
+        AccountHandler.getHostsForAccount(conn, account),
+        false
     );
 
     return packageDefinition;
@@ -270,305 +270,305 @@ public final class PackageHandler {
    * Copies a <code>PackageDefinition</code>.
    */
   public static int copyPackageDefinition(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int packageDefinition
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int packageDefinition
   ) throws IOException, SQLException {
     checkAccessPackageDefinition(conn, source, "copyPackageDefinition", packageDefinition);
     Account.Name account = getAccountForPackageDefinition(conn, packageDefinition);
     if (AccountHandler.isAccountDisabled(conn, account)) {
-      throw new SQLException("Unable to copy PackageDefinition, Account disabled: "+account);
+      throw new SQLException("Unable to copy PackageDefinition, Account disabled: " + account);
     }
-    String category=conn.queryString("select category from billing.\"PackageDefinition\" where id=?", packageDefinition);
-    String name=conn.queryString("select name from billing.\"PackageDefinition\" where id=?", packageDefinition);
-    String version=conn.queryString("select version from billing.\"PackageDefinition\" where id=?", packageDefinition);
-    String newVersion=null;
-    for (int c=1;c<Integer.MAX_VALUE;c++) {
-      String temp=version+"."+c;
+    String category = conn.queryString("select category from billing.\"PackageDefinition\" where id=?", packageDefinition);
+    String name = conn.queryString("select name from billing.\"PackageDefinition\" where id=?", packageDefinition);
+    String version = conn.queryString("select version from billing.\"PackageDefinition\" where id=?", packageDefinition);
+    String newVersion = null;
+    for (int c = 1; c < Integer.MAX_VALUE; c++) {
+      String temp = version + "." + c;
       if (
-        conn.queryBoolean(
-          "select (select id from billing.\"PackageDefinition\" where accounting=? and category=? and name=? and version=? limit 1) is null",
-          account,
-          category,
-          name,
-          temp
-        )
+          conn.queryBoolean(
+              "select (select id from billing.\"PackageDefinition\" where accounting=? and category=? and name=? and version=? limit 1) is null",
+              account,
+              category,
+              name,
+              temp
+          )
       ) {
-        newVersion=temp;
+        newVersion = temp;
         break;
       }
     }
     if (newVersion == null) {
-      throw new SQLException("Unable to generate new version for copy PackageDefinition: "+packageDefinition);
+      throw new SQLException("Unable to generate new version for copy PackageDefinition: " + packageDefinition);
     }
 
     int newPKey = conn.updateInt(
-      "INSERT INTO billing.\"PackageDefinition\" (\n"
-      + "  accounting,\n"
-      + "  category,\n"
-      + "  name,\n"
-      + "  version,\n"
-      + "  display,\n"
-      + "  description,\n"
-      + "  \"setupFee.currency\",\n"
-      + "  \"setupFee.value\",\n"
-      + "  setup_fee_transaction_type,\n"
-      + "  \"monthlyRate.currency\",\n"
-      + "  \"monthlyRate.value\",\n"
-      + "  monthly_rate_transaction_type\n"
-      + ") SELECT\n"
-      + "  accounting,\n"
-      + "  category,\n"
-      + "  name,\n"
-      + "  ?,\n"
-      + "  display,\n"
-      + "  description,\n"
-      + "  \"setupFee.currency\",\n"
-      + "  \"setupFee.value\",\n"
-      + "  setup_fee_transaction_type,\n"
-      + "  \"monthlyRate.currency\",\n"
-      + "  \"monthlyRate.value\",\n"
-      + "  monthly_rate_transaction_type\n"
-      + "FROM\n"
-      + "  billing.\"PackageDefinition\"\n"
-      + "WHERE\n"
-      + "  id=?\n"
-      + "RETURNING id",
-      newVersion,
-      packageDefinition
+        "INSERT INTO billing.\"PackageDefinition\" (\n"
+            + "  accounting,\n"
+            + "  category,\n"
+            + "  name,\n"
+            + "  version,\n"
+            + "  display,\n"
+            + "  description,\n"
+            + "  \"setupFee.currency\",\n"
+            + "  \"setupFee.value\",\n"
+            + "  setup_fee_transaction_type,\n"
+            + "  \"monthlyRate.currency\",\n"
+            + "  \"monthlyRate.value\",\n"
+            + "  monthly_rate_transaction_type\n"
+            + ") SELECT\n"
+            + "  accounting,\n"
+            + "  category,\n"
+            + "  name,\n"
+            + "  ?,\n"
+            + "  display,\n"
+            + "  description,\n"
+            + "  \"setupFee.currency\",\n"
+            + "  \"setupFee.value\",\n"
+            + "  setup_fee_transaction_type,\n"
+            + "  \"monthlyRate.currency\",\n"
+            + "  \"monthlyRate.value\",\n"
+            + "  monthly_rate_transaction_type\n"
+            + "FROM\n"
+            + "  billing.\"PackageDefinition\"\n"
+            + "WHERE\n"
+            + "  id=?\n"
+            + "RETURNING id",
+        newVersion,
+        packageDefinition
     );
     conn.update(
-      "insert into\n"
-      + "  billing.\"PackageDefinitionLimit\"\n"
-      + "(\n"
-      + "  package_definition,\n"
-      + "  resource,\n"
-      + "  soft_limit,\n"
-      + "  hard_limit,\n"
-      + "  \"additionalRate.currency\",\n"
-      + "  \"additionalRate.value\",\n"
-      + "  additional_transaction_type\n"
-      + ") select\n"
-      + "  ?,\n"
-      + "  resource,\n"
-      + "  soft_limit,\n"
-      + "  hard_limit,\n"
-      + "  \"additionalRate.currency\",\n"
-      + "  \"additionalRate.value\",\n"
-      + "  additional_transaction_type\n"
-      + "from\n"
-      + "  billing.\"PackageDefinitionLimit\"\n"
-      + "where\n"
-      + "  package_definition=?",
-      newPKey,
-      packageDefinition
+        "insert into\n"
+            + "  billing.\"PackageDefinitionLimit\"\n"
+            + "(\n"
+            + "  package_definition,\n"
+            + "  resource,\n"
+            + "  soft_limit,\n"
+            + "  hard_limit,\n"
+            + "  \"additionalRate.currency\",\n"
+            + "  \"additionalRate.value\",\n"
+            + "  additional_transaction_type\n"
+            + ") select\n"
+            + "  ?,\n"
+            + "  resource,\n"
+            + "  soft_limit,\n"
+            + "  hard_limit,\n"
+            + "  \"additionalRate.currency\",\n"
+            + "  \"additionalRate.value\",\n"
+            + "  additional_transaction_type\n"
+            + "from\n"
+            + "  billing.\"PackageDefinitionLimit\"\n"
+            + "where\n"
+            + "  package_definition=?",
+        newPKey,
+        packageDefinition
     );
 
     // Notify all clients of the update
     IntList servers = AccountHandler.getHostsForAccount(conn, account);
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      account,
-      servers,
-      false
+        conn,
+        Table.TableID.PACKAGE_DEFINITIONS,
+        account,
+        servers,
+        false
     );
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGE_DEFINITION_LIMITS,
-      account,
-      servers,
-      false
+        conn,
+        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        account,
+        servers,
+        false
     );
 
     return newPKey;
   }
 
   public static void updatePackageDefinition(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int packageDefinition,
-    Account.Name account,
-    String category,
-    String name,
-    String version,
-    String display,
-    String description,
-    Money setupFee,
-    String setupFeeTransactionType,
-    Money monthlyRate,
-    String monthlyRateTransactionType
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int packageDefinition,
+      Account.Name account,
+      String category,
+      String name,
+      String version,
+      String display,
+      String description,
+      Money setupFee,
+      String setupFeeTransactionType,
+      Money monthlyRate,
+      String monthlyRateTransactionType
   ) throws IOException, SQLException {
     // Security checks
     checkAccessPackageDefinition(conn, source, "updatePackageDefinition", packageDefinition);
     AccountHandler.checkAccessAccount(conn, source, "updatePackageDefinition", account);
     if (isPackageDefinitionApproved(conn, packageDefinition)) {
-      throw new SQLException("Not allowed to update an approved PackageDefinition: "+packageDefinition);
+      throw new SQLException("Not allowed to update an approved PackageDefinition: " + packageDefinition);
     }
 
     conn.update(
-      "update\n"
-      + "  billing.\"PackageDefinition\"\n"
-      + "set\n"
-      + "  accounting=?,\n"
-      + "  category=?,\n"
-      + "  name=?,\n"
-      + "  version=?,\n"
-      + "  display=?,\n"
-      + "  description=?,\n"
-      + "  \"setupFee.currency\"=?,\n"
-      + "  \"setupFee.value\"=?,\n"
-      + "  setup_fee_transaction_type=?,\n"
-      + "  \"monthlyRate.currency\"=?,\n"
-      + "  \"monthlyRate.value\"=?,\n"
-      + "  monthly_rate_transaction_type=?\n"
-      + "where\n"
-      + "  id=?",
-      account.toString(),
-      category,
-      name,
-      version,
-      display,
-      description,
-      setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
-      setupFee == null ? Null.NUMERIC : setupFee.getValue(),
-      setupFeeTransactionType,
-      monthlyRate.getCurrency().getCurrencyCode(),
-      monthlyRate.getValue(),
-      monthlyRateTransactionType,
-      packageDefinition
+        "update\n"
+            + "  billing.\"PackageDefinition\"\n"
+            + "set\n"
+            + "  accounting=?,\n"
+            + "  category=?,\n"
+            + "  name=?,\n"
+            + "  version=?,\n"
+            + "  display=?,\n"
+            + "  description=?,\n"
+            + "  \"setupFee.currency\"=?,\n"
+            + "  \"setupFee.value\"=?,\n"
+            + "  setup_fee_transaction_type=?,\n"
+            + "  \"monthlyRate.currency\"=?,\n"
+            + "  \"monthlyRate.value\"=?,\n"
+            + "  monthly_rate_transaction_type=?\n"
+            + "where\n"
+            + "  id=?",
+        account.toString(),
+        category,
+        name,
+        version,
+        display,
+        description,
+        setupFee == null ? null : setupFee.getCurrency().getCurrencyCode(),
+        setupFee == null ? Null.NUMERIC : setupFee.getValue(),
+        setupFeeTransactionType,
+        monthlyRate.getCurrency().getCurrencyCode(),
+        monthlyRate.getValue(),
+        monthlyRateTransactionType,
+        packageDefinition
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      account,
-      AccountHandler.getHostsForAccount(conn, account),
-      false
+        conn,
+        Table.TableID.PACKAGE_DEFINITIONS,
+        account,
+        AccountHandler.getHostsForAccount(conn, account),
+        false
     );
   }
 
   public static void disablePackage(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int disableLog,
-    Account.Name packageName
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int disableLog,
+      Account.Name packageName
   ) throws IOException, SQLException {
     AccountHandler.checkAccessDisableLog(conn, source, "disablePackage", disableLog, false);
     checkAccessPackage(conn, source, "disablePackage", packageName);
     if (isPackageDisabled(conn, packageName)) {
-      throw new SQLException("Package is already disabled: "+packageName);
+      throw new SQLException("Package is already disabled: " + packageName);
     }
-    IntList hsts=WebHandler.getHttpdSharedTomcatsForPackage(conn, packageName);
-    for (int c=0;c<hsts.size();c++) {
-      int hst=hsts.getInt(c);
+    IntList hsts = WebHandler.getHttpdSharedTomcatsForPackage(conn, packageName);
+    for (int c = 0; c < hsts.size(); c++) {
+      int hst = hsts.getInt(c);
       if (!WebHandler.isSharedTomcatDisabled(conn, hst)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': SharedTomcat not disabled: "+hst);
+        throw new SQLException("Cannot disable Package '" + packageName + "': SharedTomcat not disabled: " + hst);
       }
     }
-    IntList eps=EmailHandler.getPipesForPackage(conn, packageName);
-    for (int c=0;c<eps.size();c++) {
-      int ep=eps.getInt(c);
+    IntList eps = EmailHandler.getPipesForPackage(conn, packageName);
+    for (int c = 0; c < eps.size(); c++) {
+      int ep = eps.getInt(c);
       if (!EmailHandler.isPipeDisabled(conn, ep)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': Pipe not disabled: "+ep);
+        throw new SQLException("Cannot disable Package '" + packageName + "': Pipe not disabled: " + ep);
       }
     }
     List<com.aoindustries.aoserv.client.account.User.Name> users = AccountUserHandler.getUsersForPackage(conn, packageName);
     for (com.aoindustries.aoserv.client.account.User.Name user : users) {
       if (!AccountUserHandler.isUserDisabled(conn, user)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': Username not disabled: "+user);
+        throw new SQLException("Cannot disable Package '" + packageName + "': Username not disabled: " + user);
       }
     }
-    IntList hss=WebHandler.getHttpdSitesForPackage(conn, packageName);
-    for (int c=0;c<hss.size();c++) {
-      int hs=hss.getInt(c);
+    IntList hss = WebHandler.getHttpdSitesForPackage(conn, packageName);
+    for (int c = 0; c < hss.size(); c++) {
+      int hs = hss.getInt(c);
       if (!WebHandler.isSiteDisabled(conn, hs)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': Site not disabled: "+hs);
+        throw new SQLException("Cannot disable Package '" + packageName + "': Site not disabled: " + hs);
       }
     }
-    IntList els=EmailHandler.getListsForPackage(conn, packageName);
-    for (int c=0;c<els.size();c++) {
-      int el=els.getInt(c);
+    IntList els = EmailHandler.getListsForPackage(conn, packageName);
+    for (int c = 0; c < els.size(); c++) {
+      int el = els.getInt(c);
       if (!EmailHandler.isListDisabled(conn, el)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': List not disabled: "+el);
+        throw new SQLException("Cannot disable Package '" + packageName + "': List not disabled: " + el);
       }
     }
-    IntList ssrs=EmailHandler.getSmtpRelaysForPackage(conn, packageName);
-    for (int c=0;c<ssrs.size();c++) {
-      int ssr=ssrs.getInt(c);
+    IntList ssrs = EmailHandler.getSmtpRelaysForPackage(conn, packageName);
+    for (int c = 0; c < ssrs.size(); c++) {
+      int ssr = ssrs.getInt(c);
       if (!EmailHandler.isSmtpRelayDisabled(conn, ssr)) {
-        throw new SQLException("Cannot disable Package '"+packageName+"': SmtpRelay not disabled: "+ssr);
+        throw new SQLException("Cannot disable Package '" + packageName + "': SmtpRelay not disabled: " + ssr);
       }
     }
 
     conn.update(
-      "update billing.\"Package\" set disable_log=? where name=?",
-      disableLog,
-      packageName
+        "update billing.\"Package\" set disable_log=? where name=?",
+        disableLog,
+        packageName
     );
 
     // Notify all clients of the update
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGES,
-      account,
-      AccountHandler.getHostsForAccount(conn, account),
-      false
+        conn,
+        Table.TableID.PACKAGES,
+        account,
+        AccountHandler.getHostsForAccount(conn, account),
+        false
     );
   }
 
   public static void enablePackage(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Account.Name packageName
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Account.Name packageName
   ) throws IOException, SQLException {
     checkAccessPackage(conn, source, "enablePackage", packageName);
-    int disableLog=getDisableLogForPackage(conn, packageName);
+    int disableLog = getDisableLogForPackage(conn, packageName);
     if (disableLog == -1) {
-      throw new SQLException("Package is already enabled: "+packageName);
+      throw new SQLException("Package is already enabled: " + packageName);
     }
     AccountHandler.checkAccessDisableLog(conn, source, "enablePackage", disableLog, true);
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     if (AccountHandler.isAccountDisabled(conn, account)) {
-      throw new SQLException("Unable to enable Package '"+packageName+"', Account not enabled: "+account);
+      throw new SQLException("Unable to enable Package '" + packageName + "', Account not enabled: " + account);
     }
 
     conn.update(
-      "update billing.\"Package\" set disable_log=null where name=?",
-      packageName
+        "update billing.\"Package\" set disable_log=null where name=?",
+        packageName
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGES,
-      account,
-      AccountHandler.getHostsForAccount(conn, account),
-      false
+        conn,
+        Table.TableID.PACKAGES,
+        account,
+        AccountHandler.getHostsForAccount(conn, account),
+        false
     );
   }
 
   public static Account.Name generatePackageName(
-    DatabaseConnection conn,
-    Account.Name template
+      DatabaseConnection conn,
+      Account.Name template
   ) throws IOException, SQLException {
     // Load the entire list of package names
     Set<Account.Name> names = conn.queryNewCollection(
-      AoCollections::newHashSet,
-      ObjectFactories.accountNameFactory,
-      "select name from billing.\"Package\""
+        AoCollections::newHashSet,
+        ObjectFactories.accountNameFactory,
+        "select name from billing.\"Package\""
     );
     // Find one that is not used
-    for (int c=0;c<Integer.MAX_VALUE;c++) {
+    for (int c = 0; c < Integer.MAX_VALUE; c++) {
       Account.Name name;
       try {
-        name = Account.Name.valueOf(template.toString()+c);
+        name = Account.Name.valueOf(template.toString() + c);
       } catch (ValidationException e) {
         throw new SQLException(e);
       }
@@ -577,7 +577,7 @@ public final class PackageHandler {
       }
     }
     // If could not find one, report and error
-    throw new SQLException("Unable to find available package name for template: "+template);
+    throw new SQLException("Unable to find available package name for template: " + template);
   }
 
   public static int getDisableLogForPackage(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
@@ -622,31 +622,31 @@ public final class PackageHandler {
    */
   public static int findActivePackageDefinition(DatabaseConnection conn, Account.Name account, Money rate, int userLimit, int popLimit) throws IOException, SQLException {
     return conn.queryInt(
-      "select\n"
-      + "  coalesce(\n"
-      + "    (\n"
-      + "      select\n"
-      + "        pd.id\n"
-      + "      from\n"
-      + "        billing.\"PackageDefinition\" pd,\n"
-      + "        package_definitions_limits user_pdl,\n"
-      + "        package_definitions_limits pop_pdl\n"
-      + "      where\n"
-      + "        pd.accounting=?\n"
-      + "        and pd.\"monthlyRate.currency\"=?\n"
-      + "        and pd.\"monthlyRate.value\"=?\n"
-      + "        and pd.id=user_pdl.package_definition\n"
-      + "        and user_pdl.resource=?\n"
-      + "        and pd.id=pop_pdl.package_definition\n"
-      + "        and pop_pdl.resource=?\n"
-      + "      limit 1\n"
-      + "    ), -1\n"
-      + "  )",
-      account,
-      rate.getCurrency().getCurrencyCode(),
-      rate.getValue(),
-      Resource.USER,
-      Resource.EMAIL
+        "select\n"
+            + "  coalesce(\n"
+            + "    (\n"
+            + "      select\n"
+            + "        pd.id\n"
+            + "      from\n"
+            + "        billing.\"PackageDefinition\" pd,\n"
+            + "        package_definitions_limits user_pdl,\n"
+            + "        package_definitions_limits pop_pdl\n"
+            + "      where\n"
+            + "        pd.accounting=?\n"
+            + "        and pd.\"monthlyRate.currency\"=?\n"
+            + "        and pd.\"monthlyRate.value\"=?\n"
+            + "        and pd.id=user_pdl.package_definition\n"
+            + "        and user_pdl.resource=?\n"
+            + "        and pd.id=pop_pdl.package_definition\n"
+            + "        and pop_pdl.resource=?\n"
+            + "      limit 1\n"
+            + "    ), -1\n"
+            + "  )",
+        account,
+        rate.getCurrency().getCurrencyCode(),
+        rate.getValue(),
+        Resource.USER,
+        Resource.EMAIL
     );
   }
 
@@ -660,14 +660,14 @@ public final class PackageHandler {
 
   public static void checkPackageAccessHost(DatabaseConnection conn, RequestSource source, String action, Account.Name packageName, int host) throws IOException, SQLException {
     if (!canPackageAccessHost(conn, source, packageName, host)) {
-      String message=
-        "package.name="
-        +packageName
-        +" is not allowed to access server.id="
-        +host
-        +": action='"
-        +action
-        +"'"
+      String message =
+          "package.name="
+              + packageName
+              + " is not allowed to access server.id="
+              + host
+              + ": action='"
+              + action
+              + "'"
       ;
       throw new SQLException(message);
     }
@@ -678,6 +678,7 @@ public final class PackageHandler {
   }
 
   private static final Map<Integer, Account.Name> packageAccounts = new HashMap<>();
+
   public static Account.Name getAccountForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
     Integer i = packageId;
     synchronized (packageAccounts) {
@@ -686,9 +687,9 @@ public final class PackageHandler {
         return o;
       }
       Account.Name business = database.queryObject(
-        ObjectFactories.accountNameFactory,
-        "select accounting from billing.\"Package\" where id=?",
-        packageId
+          ObjectFactories.accountNameFactory,
+          "select accounting from billing.\"Package\" where id=?",
+          packageId
       );
       packageAccounts.put(i, business);
       return business;
@@ -696,6 +697,7 @@ public final class PackageHandler {
   }
 
   private static final Map<Integer, Account.Name> packageNames = new HashMap<>();
+
   public static Account.Name getNameForPackage(DatabaseConnection conn, int packageId) throws IOException, SQLException {
     Integer i = packageId;
     synchronized (packageNames) {
@@ -704,9 +706,9 @@ public final class PackageHandler {
         return o;
       }
       Account.Name name = conn.queryObject(
-        ObjectFactories.accountNameFactory,
-        "select name from billing.\"Package\" where id=?",
-        packageId
+          ObjectFactories.accountNameFactory,
+          "select name from billing.\"Package\" where id=?",
+          packageId
       );
       packageNames.put(i, name);
       return name;
@@ -714,6 +716,7 @@ public final class PackageHandler {
   }
 
   private static final Map<Account.Name, Integer> packageIds = new HashMap<>();
+
   public static int getIdForPackage(DatabaseAccess database, Account.Name name) throws IOException, SQLException {
     synchronized (packageIds) {
       Integer o = packageIds.get(name);
@@ -728,131 +731,131 @@ public final class PackageHandler {
 
   public static Account.Name getAccountForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select accounting from billing.\"PackageDefinition\" where id=?",
-      packageDefinition
+        ObjectFactories.accountNameFactory,
+        "select accounting from billing.\"PackageDefinition\" where id=?",
+        packageDefinition
     );
   }
 
   public static List<Account.Name> getAccountsForPackageDefinition(DatabaseConnection conn, int packageDefinition) throws IOException, SQLException {
     return conn.queryList(
-      ObjectFactories.accountNameFactory,
-      "select distinct\n"
-      + "  bu.accounting\n"
-      + "from\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"Account\" bu\n"
-      + "where\n"
-      + "  pk.package_definition=?\n"
-      + "  and pk.accounting=bu.accounting",
-      packageDefinition
+        ObjectFactories.accountNameFactory,
+        "select distinct\n"
+            + "  bu.accounting\n"
+            + "from\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"Account\" bu\n"
+            + "where\n"
+            + "  pk.package_definition=?\n"
+            + "  and pk.accounting=bu.accounting",
+        packageDefinition
     );
   }
 
   public static void setPackageDefinitionActive(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int packageDefinition,
-    boolean isActive
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int packageDefinition,
+      boolean isActive
   ) throws IOException, SQLException {
     checkAccessPackageDefinition(conn, source, "setPackageDefinitionActive", packageDefinition);
     // Must be approved to be activated
     if (isActive && !isPackageDefinitionApproved(conn, packageDefinition)) {
-      throw new SQLException("PackageDefinition must be approved before it may be activated: "+packageDefinition);
+      throw new SQLException("PackageDefinition must be approved before it may be activated: " + packageDefinition);
     }
 
     // Update the database
     conn.update(
-      "update billing.\"PackageDefinition\" set active=? where id=?",
-      isActive,
-      packageDefinition
+        "update billing.\"PackageDefinition\" set active=? where id=?",
+        isActive,
+        packageDefinition
     );
 
     invalidateList.addTable(conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      getAccountForPackageDefinition(conn, packageDefinition),
-      InvalidateList.allHosts,
-      false
+        Table.TableID.PACKAGE_DEFINITIONS,
+        getAccountForPackageDefinition(conn, packageDefinition),
+        InvalidateList.allHosts,
+        false
     );
     invalidateList.addTable(conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      getAccountsForPackageDefinition(conn, packageDefinition),
-      InvalidateList.allHosts,
-      false
+        Table.TableID.PACKAGE_DEFINITIONS,
+        getAccountsForPackageDefinition(conn, packageDefinition),
+        InvalidateList.allHosts,
+        false
     );
   }
 
   public static void setPackageDefinitionLimits(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int packageDefinition,
-    String[] resources,
-    int[] soft_limits,
-    int[] hard_limits,
-    Money[] additionalRates,
-    String[] additional_transaction_types
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int packageDefinition,
+      String[] resources,
+      int[] soft_limits,
+      int[] hard_limits,
+      Money[] additionalRates,
+      String[] additional_transaction_types
   ) throws IOException, SQLException {
     checkAccessPackageDefinition(conn, source, "setPackageDefinitionLimits", packageDefinition);
     // Must not be approved to be edited
     if (isPackageDefinitionApproved(conn, packageDefinition)) {
-      throw new SQLException("PackageDefinition may not have its limits set after it is approved: "+packageDefinition);
+      throw new SQLException("PackageDefinition may not have its limits set after it is approved: " + packageDefinition);
     }
 
     // Update the database
     conn.update("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition);
-    for (int c=0;c<resources.length;c++) {
+    for (int c = 0; c < resources.length; c++) {
       Money additionalRate = additionalRates[c];
       conn.update(
-        "insert into\n"
-        + "  billing.\"PackageDefinitionLimit\"\n"
-        + "(\n"
-        + "  package_definition,\n"
-        + "  resource,\n"
-        + "  soft_limit,\n"
-        + "  hard_limit,\n"
-        + "  \"additionalRate.currency\",\n"
-        + "  \"additionalRate.value\",\n"
-        + "  additional_transaction_type\n"
-        + ") values(\n"
-        + "  ?,\n"
-        + "  ?,\n"
-        + "  ?,\n"
-        + "  ?,\n"
-        + "  ?,\n"
-        + "  ?,\n"
-        + "  ?\n"
-        + ")",
-        packageDefinition,
-        resources[c],
-        soft_limits[c] == -1 ? Null.INTEGER : soft_limits[c],
-        hard_limits[c] == -1 ? Null.INTEGER : hard_limits[c],
-        additionalRate == null ? null : additionalRate.getCurrency().getCurrencyCode(),
-        additionalRate == null ? Null.NUMERIC : additionalRate.getValue(),
-        additional_transaction_types[c]
+          "insert into\n"
+              + "  billing.\"PackageDefinitionLimit\"\n"
+              + "(\n"
+              + "  package_definition,\n"
+              + "  resource,\n"
+              + "  soft_limit,\n"
+              + "  hard_limit,\n"
+              + "  \"additionalRate.currency\",\n"
+              + "  \"additionalRate.value\",\n"
+              + "  additional_transaction_type\n"
+              + ") values(\n"
+              + "  ?,\n"
+              + "  ?,\n"
+              + "  ?,\n"
+              + "  ?,\n"
+              + "  ?,\n"
+              + "  ?,\n"
+              + "  ?\n"
+              + ")",
+          packageDefinition,
+          resources[c],
+          soft_limits[c] == -1 ? Null.INTEGER : soft_limits[c],
+          hard_limits[c] == -1 ? Null.INTEGER : hard_limits[c],
+          additionalRate == null ? null : additionalRate.getCurrency().getCurrencyCode(),
+          additionalRate == null ? Null.NUMERIC : additionalRate.getValue(),
+          additional_transaction_types[c]
       );
     }
 
     invalidateList.addTable(conn,
-      Table.TableID.PACKAGE_DEFINITION_LIMITS,
-      getAccountForPackageDefinition(conn, packageDefinition),
-      InvalidateList.allHosts,
-      false
+        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        getAccountForPackageDefinition(conn, packageDefinition),
+        InvalidateList.allHosts,
+        false
     );
     invalidateList.addTable(conn,
-      Table.TableID.PACKAGE_DEFINITION_LIMITS,
-      getAccountsForPackageDefinition(conn, packageDefinition),
-      InvalidateList.allHosts,
-      false
+        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        getAccountsForPackageDefinition(conn, packageDefinition),
+        InvalidateList.allHosts,
+        false
     );
   }
 
   public static void removePackageDefinition(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int packageDefinition
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int packageDefinition
   ) throws IOException, SQLException {
     // Security checks
     PackageHandler.checkAccessPackageDefinition(conn, source, "removePackageDefinition", packageDefinition);
@@ -862,29 +865,29 @@ public final class PackageHandler {
   }
 
   public static void removePackageDefinition(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    int packageDefinition
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int packageDefinition
   ) throws IOException, SQLException {
     Account.Name account = getAccountForPackageDefinition(conn, packageDefinition);
-    IntList servers=AccountHandler.getHostsForAccount(conn, account);
-    if (conn.update("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition)>0) {
+    IntList servers = AccountHandler.getHostsForAccount(conn, account);
+    if (conn.update("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition) > 0) {
       invalidateList.addTable(
-        conn,
-        Table.TableID.PACKAGE_DEFINITION_LIMITS,
-        account,
-        servers,
-        false
+          conn,
+          Table.TableID.PACKAGE_DEFINITION_LIMITS,
+          account,
+          servers,
+          false
       );
     }
 
     conn.update("delete from billing.\"PackageDefinition\" where id=?", packageDefinition);
     invalidateList.addTable(
-      conn,
-      Table.TableID.PACKAGE_DEFINITIONS,
-      account,
-      servers,
-      false
+        conn,
+        Table.TableID.PACKAGE_DEFINITIONS,
+        account,
+        servers,
+        false
     );
   }
 }

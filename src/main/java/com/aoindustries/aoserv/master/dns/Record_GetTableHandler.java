@@ -51,13 +51,13 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   private void getTableUnfiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Record(),
-      "select * from dns.\"Record\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Record(),
+        "select * from dns.\"Record\""
     );
   }
 
@@ -78,31 +78,31 @@ public class Record_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Record(),
-      "select\n"
-      + "  dr.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  dns.\"Zone\" dz,\n"
-      + "  dns.\"Record\" dr\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=dz.package\n"
-      + "  and dz.\"zone\"=dr.\"zone\"",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Record(),
+        "select\n"
+            + "  dr.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  dns.\"Zone\" dz,\n"
+            + "  dns.\"Record\" dr\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=dz.package\n"
+            + "  and dz.\"zone\"=dr.\"zone\"",
+        source.getCurrentAdministrator()
     );
   }
 }

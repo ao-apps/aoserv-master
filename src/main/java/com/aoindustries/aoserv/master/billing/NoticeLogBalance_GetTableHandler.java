@@ -52,13 +52,13 @@ public class NoticeLogBalance_GetTableHandler extends TableHandler.GetTableHandl
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new NoticeLogBalance(),
-      "select * from billing.\"NoticeLog.balance\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new NoticeLogBalance(),
+        "select * from billing.\"NoticeLog.balance\""
     );
   }
 
@@ -70,28 +70,28 @@ public class NoticeLogBalance_GetTableHandler extends TableHandler.GetTableHandl
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new NoticeLogBalance(),
-      "select\n"
-      + "  nlb.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"NoticeLog\" nl\n"
-      + "  INNER JOIN billing.\"NoticeLog.balance\" nlb ON nl.id = nlb.\"noticeLog\"\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=nl.accounting",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new NoticeLogBalance(),
+        "select\n"
+            + "  nlb.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"NoticeLog\" nl\n"
+            + "  INNER JOIN billing.\"NoticeLog.balance\" nlb ON nl.id = nlb.\"noticeLog\"\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=nl.accounting",
+        source.getCurrentAdministrator()
     );
   }
 }

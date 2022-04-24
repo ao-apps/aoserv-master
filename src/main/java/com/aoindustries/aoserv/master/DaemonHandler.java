@@ -60,7 +60,7 @@ public final class DaemonHandler {
   private static final Map<Integer, AOServDaemonConnector> connectors = new HashMap<>();
 
   public static int getDaemonConcurrency() {
-    int total=0;
+    int total = 0;
     Iterator<Integer> iter = connectors.keySet().iterator();
     while (iter.hasNext()) {
       Integer key = iter.next();
@@ -70,7 +70,7 @@ public final class DaemonHandler {
   }
 
   public static int getDaemonConnections() {
-    int total=0;
+    int total = 0;
     Iterator<Integer> iter = connectors.keySet().iterator();
     while (iter.hasNext()) {
       Integer key = iter.next();
@@ -81,54 +81,54 @@ public final class DaemonHandler {
 
   public static HostAddress getDaemonConnectAddress(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     HostAddress address = database.queryObject(
-      ObjectFactories.hostAddressFactory,
-      "select daemon_connect_address from linux.\"Server\" where server=?",
-      linuxServer
+        ObjectFactories.hostAddressFactory,
+        "select daemon_connect_address from linux.\"Server\" where server=?",
+        linuxServer
     );
     if (address != null) {
       return address;
     }
     InetAddress ip = database.queryObject(
-      ObjectFactories.inetAddressFactory,
-      "select\n"
-      + "  host(ia.\"inetAddress\")\n"
-      + "from\n"
-      + "  linux.\"Server\" ao,\n"
-      + "  net.\"Bind\" nb,\n"
-      + "  net.\"IpAddress\" ia\n"
-      + "where\n"
-      + "  ao.server=?\n"
-      + "  and ao.daemon_connect_bind=nb.id\n"
-      + "  and nb.\"ipAddress\"=ia.id",
-      linuxServer
+        ObjectFactories.inetAddressFactory,
+        "select\n"
+            + "  host(ia.\"inetAddress\")\n"
+            + "from\n"
+            + "  linux.\"Server\" ao,\n"
+            + "  net.\"Bind\" nb,\n"
+            + "  net.\"IpAddress\" ia\n"
+            + "where\n"
+            + "  ao.server=?\n"
+            + "  and ao.daemon_connect_bind=nb.id\n"
+            + "  and nb.\"ipAddress\"=ia.id",
+        linuxServer
     );
     if (ip == null) {
-      throw new SQLException("Unable to find daemon IP address for Server: "+linuxServer);
+      throw new SQLException("Unable to find daemon IP address for Server: " + linuxServer);
     }
     if (ip.isUnspecified()) {
       ip = database.queryObject(
-        ObjectFactories.inetAddressFactory,
-        "select\n"
-        + "  host(ia.\"inetAddress\")\n"
-        + "from\n"
-        + "  linux.\"Server\" ao,\n"
-        + "  net.\"Bind\" nb,\n"
-        + "  linux.\"Server\" ao2,\n"
-        + "  net.\"Device\" nd,\n"
-        + "  net.\"IpAddress\" ia\n"
-        + "where\n"
-        + "  ao.server=?\n"
-        + "  and ao.daemon_connect_bind=nb.id\n"
-        + "  and nb.server=ao2.server\n"
-        + "  and ao2.server=nd.server\n"
-        + "  and ao2.\"daemonDeviceId\"=nd.\"deviceId\"\n"
-        + "  and nd.id=ia.device\n"
-        + "  and not ia.\"isAlias\"\n"
-        + "limit 1",
-        linuxServer
+          ObjectFactories.inetAddressFactory,
+          "select\n"
+              + "  host(ia.\"inetAddress\")\n"
+              + "from\n"
+              + "  linux.\"Server\" ao,\n"
+              + "  net.\"Bind\" nb,\n"
+              + "  linux.\"Server\" ao2,\n"
+              + "  net.\"Device\" nd,\n"
+              + "  net.\"IpAddress\" ia\n"
+              + "where\n"
+              + "  ao.server=?\n"
+              + "  and ao.daemon_connect_bind=nb.id\n"
+              + "  and nb.server=ao2.server\n"
+              + "  and ao2.server=nd.server\n"
+              + "  and ao2.\"daemonDeviceId\"=nd.\"deviceId\"\n"
+              + "  and nd.id=ia.device\n"
+              + "  and not ia.\"isAlias\"\n"
+              + "limit 1",
+          linuxServer
       );
       if (ip == null) {
-        throw new SQLException("Unable to find daemon IP address for Server: "+linuxServer);
+        throw new SQLException("Unable to find daemon IP address for Server: " + linuxServer);
       }
     }
     return HostAddress.valueOf(ip);
@@ -136,43 +136,43 @@ public final class DaemonHandler {
 
   public static Port getDaemonConnectorPort(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     return database.queryObject(
-      ObjectFactories.portFactory,
-      "select\n"
-      + "  nb.port,\n"
-      + "  nb.net_protocol\n"
-      + "from\n"
-      + "  linux.\"Server\" ao,\n"
-      + "  net.\"Bind\" nb\n"
-      + "where\n"
-      + "  ao.server=?\n"
-      + "  and ao.daemon_connect_bind=nb.id",
-      linuxServer
+        ObjectFactories.portFactory,
+        "select\n"
+            + "  nb.port,\n"
+            + "  nb.net_protocol\n"
+            + "from\n"
+            + "  linux.\"Server\" ao,\n"
+            + "  net.\"Bind\" nb\n"
+            + "where\n"
+            + "  ao.server=?\n"
+            + "  and ao.daemon_connect_bind=nb.id",
+        linuxServer
     );
   }
 
   public static String getDaemonConnectorProtocol(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     return database.queryString(
-      "select\n"
-      + "  nb.app_protocol\n"
-      + "from\n"
-      + "  linux.\"Server\" ao,\n"
-      + "  net.\"Bind\" nb\n"
-      + "where\n"
-      + "  ao.server=?\n"
-      + "  and ao.daemon_connect_bind=nb.id",
-      linuxServer
+        "select\n"
+            + "  nb.app_protocol\n"
+            + "from\n"
+            + "  linux.\"Server\" ao,\n"
+            + "  net.\"Bind\" nb\n"
+            + "where\n"
+            + "  ao.server=?\n"
+            + "  and ao.daemon_connect_bind=nb.id",
+        linuxServer
     );
   }
 
   public static int getDaemonConnectorPoolSize(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     return database.queryInt(
-      "select\n"
-      + "  pool_size\n"
-      + "from\n"
-      + "  linux.\"Server\"\n"
-      + "where\n"
-      + "  server=?",
-      linuxServer
+        "select\n"
+            + "  pool_size\n"
+            + "from\n"
+            + "  linux.\"Server\"\n"
+            + "where\n"
+            + "  server=?",
+        linuxServer
     );
   }
 
@@ -184,15 +184,15 @@ public final class DaemonHandler {
         return o;
       }
       AOServDaemonConnector conn = AOServDaemonConnector.getConnector(
-        getDaemonConnectAddress(database, linuxServer),
-        MasterConfiguration.getLocalIp(),
-        getDaemonConnectorPort(database, linuxServer),
-        getDaemonConnectorProtocol(database, linuxServer),
-        MasterConfiguration.getDaemonKey(database, linuxServer),
-        getDaemonConnectorPoolSize(database, linuxServer),
-        AOPool.DEFAULT_MAX_CONNECTION_AGE,
-        MasterConfiguration.getSSLTruststorePath(),
-        MasterConfiguration.getSSLTruststorePassword()
+          getDaemonConnectAddress(database, linuxServer),
+          MasterConfiguration.getLocalIp(),
+          getDaemonConnectorPort(database, linuxServer),
+          getDaemonConnectorProtocol(database, linuxServer),
+          MasterConfiguration.getDaemonKey(database, linuxServer),
+          getDaemonConnectorPoolSize(database, linuxServer),
+          AOPool.DEFAULT_MAX_CONNECTION_AGE,
+          MasterConfiguration.getSSLTruststorePath(),
+          MasterConfiguration.getSSLTruststorePassword()
       );
       connectors.put(i, conn);
       return conn;
@@ -257,9 +257,9 @@ public final class DaemonHandler {
 
   public static void invalidateTable(Table.TableID tableID) {
     if (
-      tableID == Table.TableID.AO_SERVERS
-      || tableID == Table.TableID.IP_ADDRESSES
-      || tableID == Table.TableID.NET_BINDS
+        tableID == Table.TableID.AO_SERVERS
+            || tableID == Table.TableID.IP_ADDRESSES
+            || tableID == Table.TableID.NET_BINDS
     ) {
       synchronized (DaemonHandler.class) {
         connectors.clear();
@@ -310,20 +310,20 @@ public final class DaemonHandler {
    * @param connectAddress Overridden connect address or <code>null</code> to use the default
    */
   public static Server.DaemonAccess grantDaemonAccess(
-    DatabaseConnection conn,
-    int linuxServer,
-    HostAddress connectAddress,
-    int daemonCommandCode,
-    String param1,
-    String param2,
-    String param3,
-    String param4
+      DatabaseConnection conn,
+      int linuxServer,
+      HostAddress connectAddress,
+      int daemonCommandCode,
+      String param1,
+      String param2,
+      String param3,
+      String param4
   ) throws IOException, SQLException {
     long key;
     synchronized (recentKeys) {
-      long currentTime=System.currentTimeMillis();
+      long currentTime = System.currentTimeMillis();
       if (lastKeyCleanTime == -1) {
-        lastKeyCleanTime=currentTime;
+        lastKeyCleanTime = currentTime;
       } else {
         long timeSince = currentTime - lastKeyCleanTime;
         if (timeSince < 0 || timeSince >= (5L * 60 * 1000)) {
@@ -337,7 +337,7 @@ public final class DaemonHandler {
               iter.remove();
             }
           }
-          lastKeyCleanTime=currentTime;
+          lastKeyCleanTime = currentTime;
         }
       }
 
@@ -359,10 +359,10 @@ public final class DaemonHandler {
     daemonConnector.grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
 
     return new Server.DaemonAccess(
-      getDaemonConnectorProtocol(conn, linuxServer),
-      connectAddress != null ? connectAddress : getDaemonConnectAddress(conn, linuxServer),
-      getDaemonConnectorPort(conn, linuxServer),
-      key
+        getDaemonConnectorProtocol(conn, linuxServer),
+        connectAddress != null ? connectAddress : getDaemonConnectAddress(conn, linuxServer),
+        getDaemonConnectorPort(conn, linuxServer),
+        key
     );
   }
 }

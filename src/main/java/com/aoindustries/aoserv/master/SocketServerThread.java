@@ -109,9 +109,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
       this.out = new StreamableOutput(new BufferedOutputStream(socket.getOutputStream()));
       InetAddress host = InetAddress.valueOf(socket.getInetAddress().getHostAddress());
       process = Process_Manager.createProcess(
-        host,
-        server.getProtocol(),
-        server.isSecure()
+          host,
+          server.getProtocol(),
+          server.isSecure()
       );
       isClosed = false;
     } catch (ValidationException e) {
@@ -119,7 +119,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
     }
   }
 
-  private final LinkedList<InvalidateCacheEntry> invalidateLists=new LinkedList<>();
+  private final LinkedList<InvalidateCacheEntry> invalidateLists = new LinkedList<>();
 
   /**
    * Invalidates the listed tables.  Also, if this connector represents a daemon,
@@ -130,15 +130,15 @@ public final class SocketServerThread extends Thread implements RequestSource {
    */
   @Override
   public void cachesInvalidated(IntList tableList) throws IOException {
-    if (tableList != null && tableList.size()>0) {
+    if (tableList != null && tableList.size() > 0) {
       synchronized (this) { // Must use "this" lock because wait is performed on this object externally
         // Register with ServerHandler for invalidation synchronization
-        int daemonServer=getDaemonServer();
-        IntList copy=new IntArrayList(tableList);
-        InvalidateCacheEntry ice=new InvalidateCacheEntry(
-          copy,
-          daemonServer,
-          daemonServer == -1?null:NetHostHandler.addInvalidateSyncEntry(daemonServer, this)
+        int daemonServer = getDaemonServer();
+        IntList copy = new IntArrayList(tableList);
+        InvalidateCacheEntry ice = new InvalidateCacheEntry(
+            copy,
+            daemonServer,
+            daemonServer == -1 ? null : NetHostHandler.addInvalidateSyncEntry(daemonServer, this)
         );
         invalidateLists.addLast(ice);
         notifyAll();
@@ -177,7 +177,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
    */
   @Override
   public String getSecurityMessageHeader() {
-    return "IP="+socket.getInetAddress().getHostAddress()+" EffUsr="+process.getEffectiveAdministrator_username()+" AuthUsr="+process.getAuthenticatedAdministrator_username();
+    return "IP=" + socket.getInetAddress().getHostAddress() + " EffUsr=" + process.getEffectiveAdministrator_username() + " AuthUsr=" + process.getAuthenticatedAdministrator_username();
   }
 
   @Override
@@ -196,18 +196,18 @@ public final class SocketServerThread extends Thread implements RequestSource {
     try {
       try {
         try {
-          this.protocolVersion=AoservProtocol.Version.getVersion(in.readUTF());
+          this.protocolVersion = AoservProtocol.Version.getVersion(in.readUTF());
         } catch (SSLHandshakeException err) {
           String message = err.getMessage();
           Level level;
           if (
-            // Do not routinely log messages that are normal due to monitoring simply connecting only
-            !(
-              // Java 11
-              "Remote host terminated the handshake".equals(message)
-              // Java 8
-              || "Remote host closed connection during handshake".equals(message)
-            )
+              // Do not routinely log messages that are normal due to monitoring simply connecting only
+              !(
+                  // Java 11
+                  "Remote host terminated the handshake".equals(message)
+                      // Java 8
+                      || "Remote host closed connection during handshake".equals(message)
+              )
           ) {
             level = Level.FINE;
           } else {
@@ -228,10 +228,10 @@ public final class SocketServerThread extends Thread implements RequestSource {
             return;
           }
           process.setDeamonServer(
-            NetHostHandler.getHostForLinuxServerHostname(
-              MasterDatabase.getDatabase(),
-              daemonServer
-            )
+              NetHostHandler.getHostForLinuxServerHostname(
+                  MasterDatabase.getDatabase(),
+                  daemonServer
+              )
           );
         } else {
           process.setDeamonServer(-1);
@@ -245,22 +245,22 @@ public final class SocketServerThread extends Thread implements RequestSource {
           out.flush();
           return;
         }
-        String host=socket.getInetAddress().getHostAddress();
+        String host = socket.getInetAddress().getHostAddress();
         setName(
-          "SocketServerThread"
-          + "?"
-          + host
-          + ":"
-          + socket.getPort()
-          + "->"
-          + socket.getLocalAddress().getHostAddress()
-          + ":"
-          + socket.getLocalPort()
-          + " as "
-          + process.getEffectiveAdministrator_username()
-          + " ("
-          + process.getAuthenticatedAdministrator_username()
-          + ")"
+            "SocketServerThread"
+                + "?"
+                + host
+                + ":"
+                + socket.getPort()
+                + "->"
+                + socket.getLocalAddress().getHostAddress()
+                + ":"
+                + socket.getLocalPort()
+                + " as "
+                + process.getEffectiveAdministrator_username()
+                + " ("
+                + process.getAuthenticatedAdministrator_username()
+                + ")"
         );
         char[] chars = in.readUTF().toCharArray(); // TODO: Write as char[] so can be zeroed
         try (UnprotectedPassword password = (chars.length == 0) ? null : new UnprotectedPassword(chars)) {
@@ -420,11 +420,11 @@ public final class SocketServerThread extends Thread implements RequestSource {
             {
               DatabaseAccess db = MasterDatabase.getDatabase();
               String message = MasterServer.authenticate(
-                db,
-                socket.getInetAddress().getHostAddress(),
-                process.getEffectiveAdministrator_username(),
-                process.getAuthenticatedAdministrator_username(),
-                password
+                  db,
+                  socket.getInetAddress().getHostAddress(),
+                  process.getEffectiveAdministrator_username(),
+                  process.getAuthenticatedAdministrator_username(),
+                  password
               );
 
               if (message != null) {
@@ -434,27 +434,27 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 out.flush();
               } else {
                 // Only master users may provide a daemon_server
-                boolean isOK=true;
-                int daemonServer=process.getDaemonServer();
+                boolean isOK = true;
+                int daemonServer = process.getDaemonServer();
                 if (daemonServer != -1) {
                   if (MasterServer.getUser(db, process.getEffectiveAdministrator_username()) == null) {
                     out.writeBoolean(false);
                     out.writeUTF("Only master users may register a daemon server.");
                     out.flush();
-                    isOK=false;
+                    isOK = false;
                   } else {
-                    UserHost[] servers=MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
+                    UserHost[] servers = MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
                     if (servers.length != 0) {
-                      isOK=false;
+                      isOK = false;
                       for (UserHost server1 : servers) {
                         if (server1.getServerPKey() == daemonServer) {
-                          isOK=true;
+                          isOK = true;
                           break;
                         }
                       }
                       if (!isOK) {
                         out.writeBoolean(false);
-                        out.writeUTF("Master user ("+process.getEffectiveAdministrator_username()+") not allowed to access server: "+daemonServer);
+                        out.writeUTF("Master user (" + process.getEffectiveAdministrator_username() + ") not allowed to access server: " + daemonServer);
                         out.flush();
                       }
                     }
@@ -499,11 +499,11 @@ public final class SocketServerThread extends Thread implements RequestSource {
             {
               out.writeBoolean(false);
               out.writeUTF(
-                "Client ("+socket.getInetAddress().getHostAddress()+":"+socket.getPort()+") requesting AOServ Protocol version "
-                +protocolVersion
-                +", server ("+socket.getLocalAddress().getHostAddress()+":"+socket.getLocalPort()+") supporting versions "
-                +Strings.join(AoservProtocol.Version.values(), ", ")
-                +".  Please upgrade the client code to match the server."
+                  "Client (" + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + ") requesting AOServ Protocol version "
+                      + protocolVersion
+                      + ", server (" + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + ") supporting versions "
+                      + Strings.join(AoservProtocol.Version.values(), ", ")
+                      + ".  Please upgrade the client code to match the server."
               );
               out.flush();
             }
@@ -514,11 +514,11 @@ public final class SocketServerThread extends Thread implements RequestSource {
       } catch (SSLException err) {
         String message = err.getMessage();
         if (
-          message == null
-          || (
-            !message.equals("Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset")
-            && !message.equals("Unrecognized SSL message, plaintext connection?")
-          )
+            message == null
+                || (
+                !message.equals("Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset")
+                    && !message.equals("Unrecognized SSL message, plaintext connection?")
+            )
         ) {
           logger.log(Level.SEVERE, null, err);
         } else {
@@ -527,13 +527,13 @@ public final class SocketServerThread extends Thread implements RequestSource {
       } catch (SocketException err) {
         String message = err.getMessage();
         if (
-          message == null
-          || (
-            // Connection reset common for abnormal client disconnects
-            !message.startsWith("Broken pipe")
-            && !message.equals("Connection reset")
-            && !message.startsWith("Connection timed out")
-          )
+            message == null
+                || (
+                // Connection reset common for abnormal client disconnects
+                !message.startsWith("Broken pipe")
+                    && !message.equals("Connection reset")
+                    && !message.startsWith("Connection timed out")
+            )
         ) {
           logger.log(Level.SEVERE, null, err);
         } else {
@@ -542,9 +542,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
       } catch (IOException err) {
         String message = err.getMessage();
         if (
-          message == null
-          // Broken pipe common for abnormal client disconnects
-          || !message.startsWith("Broken pipe")
+            message == null
+                // Broken pipe common for abnormal client disconnects
+                || !message.startsWith("Broken pipe")
         ) {
           logger.log(Level.SEVERE, null, err);
         } else {

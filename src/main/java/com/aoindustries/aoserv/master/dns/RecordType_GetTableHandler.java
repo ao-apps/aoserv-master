@@ -49,13 +49,13 @@ public class RecordType_GetTableHandler extends TableHandler.GetTableHandlerPubl
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new RecordType(),
-      "select * from dns.\"RecordType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new RecordType(),
+        "select * from dns.\"RecordType\""
     );
   }
 }

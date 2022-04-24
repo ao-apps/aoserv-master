@@ -51,88 +51,88 @@ public class VirtualHost_GetTableHandler extends TableHandler.GetTableHandlerByR
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new VirtualHost(),
-      "select\n"
-      + "  hsb.*,\n"
-      // Protocol conversion
-      + "  sc.cert_file  as ssl_cert_file,\n"
-      + "  sc.key_file   as ssl_cert_key_file,\n"
-      + "  sc.chain_file as ssl_cert_chain_file\n"
-      + "from\n"
-      + "  web.\"VirtualHost\" hsb\n"
-      // Protocol conversion
-      + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id"
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new VirtualHost(),
+        "select\n"
+            + "  hsb.*,\n"
+            // Protocol conversion
+            + "  sc.cert_file  as ssl_cert_file,\n"
+            + "  sc.key_file   as ssl_cert_key_file,\n"
+            + "  sc.chain_file as ssl_cert_chain_file\n"
+            + "from\n"
+            + "  web.\"VirtualHost\" hsb\n"
+            // Protocol conversion
+            + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id"
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new VirtualHost(),
-      "select\n"
-      + "  hsb.*,\n"
-      // Protocol conversion
-      + "  sc.cert_file  as ssl_cert_file,\n"
-      + "  sc.key_file   as ssl_cert_key_file,\n"
-      + "  sc.chain_file as ssl_cert_chain_file\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  web.\"Site\" hs,\n"
-      + "  web.\"VirtualHost\" hsb\n"
-      // Protocol conversion
-      + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=hs.ao_server\n"
-      + "  and hs.id=hsb.httpd_site",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new VirtualHost(),
+        "select\n"
+            + "  hsb.*,\n"
+            // Protocol conversion
+            + "  sc.cert_file  as ssl_cert_file,\n"
+            + "  sc.key_file   as ssl_cert_key_file,\n"
+            + "  sc.chain_file as ssl_cert_chain_file\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  web.\"Site\" hs,\n"
+            + "  web.\"VirtualHost\" hsb\n"
+            // Protocol conversion
+            + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=hs.ao_server\n"
+            + "  and hs.id=hsb.httpd_site",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new VirtualHost(),
-      "select\n"
-      + "  hsb.*,\n"
-      // Protocol conversion
-      + "  sc.cert_file  as ssl_cert_file,\n"
-      + "  sc.key_file   as ssl_cert_key_file,\n"
-      + "  sc.chain_file as ssl_cert_chain_file\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  web.\"Site\" hs,\n"
-      + "  web.\"VirtualHost\" hsb\n"
-      // Protocol conversion
-      + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=hs.package\n"
-      + "  and hs.id=hsb.httpd_site",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new VirtualHost(),
+        "select\n"
+            + "  hsb.*,\n"
+            // Protocol conversion
+            + "  sc.cert_file  as ssl_cert_file,\n"
+            + "  sc.key_file   as ssl_cert_key_file,\n"
+            + "  sc.chain_file as ssl_cert_chain_file\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  web.\"Site\" hs,\n"
+            + "  web.\"VirtualHost\" hsb\n"
+            // Protocol conversion
+            + "  left join pki.\"Certificate\" sc on hsb.certificate=sc.id\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=hs.package\n"
+            + "  and hs.id=hsb.httpd_site",
+        source.getCurrentAdministrator()
     );
   }
 }

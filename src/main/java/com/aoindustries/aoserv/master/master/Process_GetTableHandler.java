@@ -53,10 +53,10 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjectsSynced(
-      source,
-      out,
-      provideProgress,
-      Process_Manager.getSnapshot()
+        source,
+        out,
+        provideProgress,
+        Process_Manager.getSnapshot()
     );
   }
 
@@ -68,8 +68,8 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
       Process process = iter.next();
       com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
       if (
-        effectiveUser != null
-        && AccountUserHandler.canAccessUser(conn, source, effectiveUser)
+          effectiveUser != null
+              && AccountUserHandler.canAccessUser(conn, source, effectiveUser)
       ) {
         filtered.add(process);
       }

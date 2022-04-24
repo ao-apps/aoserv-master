@@ -127,73 +127,73 @@ public final class TableHandler {
    * The joins used for the business tree.
    */
   public static final String
-    BU1_PARENTS_JOIN=
-        "  account.\"Account\" bu1\n"
-      + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
-      + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
-      + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
-      + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-      + "  left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting,\n",
-    BU1_PARENTS_JOIN_NO_COMMA=
-        "  account.\"Account\" bu1\n"
-      + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
-      + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
-      + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
-      + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-      + "  left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+" on bu5.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".accounting\n",
-    BU2_PARENTS_JOIN=
-        "      account.\"Account\" bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+"\n"
-      + "      left join account.\"Account\" bu8 on bu7.parent=bu8.accounting\n"
-      + "      left join account.\"Account\" bu9 on bu8.parent=bu9.accounting\n"
-      + "      left join account.\"Account\" bu10 on bu9.parent=bu10.accounting\n"
-      + "      left join account.\"Account\" bu11 on bu10.parent=bu11.accounting\n"
-      + "      left join account.\"Account\" bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+" on bu11.parent=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".accounting,\n"
+      BU1_PARENTS_JOIN =
+          "  account.\"Account\" bu1\n"
+              + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
+              + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
+              + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
+              + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
+              + "  left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + " on bu5.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".accounting,\n",
+      BU1_PARENTS_JOIN_NO_COMMA =
+          "  account.\"Account\" bu1\n"
+              + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
+              + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
+              + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
+              + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
+              + "  left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + " on bu5.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".accounting\n",
+      BU2_PARENTS_JOIN =
+          "      account.\"Account\" bu" + Account.MAXIMUM_BUSINESS_TREE_DEPTH + "\n"
+              + "      left join account.\"Account\" bu8 on bu7.parent=bu8.accounting\n"
+              + "      left join account.\"Account\" bu9 on bu8.parent=bu9.accounting\n"
+              + "      left join account.\"Account\" bu10 on bu9.parent=bu10.accounting\n"
+              + "      left join account.\"Account\" bu11 on bu10.parent=bu11.accounting\n"
+              + "      left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH * 2 - 2) + " on bu11.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH * 2 - 2) + ".accounting,\n"
   ;
 
   /**
    * The where clauses that accompany the joins.
    */
   public static final String
-    PK_BU1_PARENTS_WHERE=
-        "    pk.accounting=bu1.accounting\n"
-      + "    or pk.accounting=bu1.parent\n"
-      + "    or pk.accounting=bu2.parent\n"
-      + "    or pk.accounting=bu3.parent\n"
-      + "    or pk.accounting=bu4.parent\n"
-      + "    or pk.accounting=bu5.parent\n"
-      + "    or pk.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-    PK1_BU1_PARENTS_OR_WHERE=
-        "    or pk1.accounting=bu1.accounting\n"
-      + "    or pk1.accounting=bu1.parent\n"
-      + "    or pk1.accounting=bu2.parent\n"
-      + "    or pk1.accounting=bu3.parent\n"
-      + "    or pk1.accounting=bu4.parent\n"
-      + "    or pk1.accounting=bu5.parent\n"
-      + "    or pk1.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-    PK1_BU1_PARENTS_WHERE=
-        "    pk1.accounting=bu1.accounting\n"
-      + "    or pk1.accounting=bu1.parent\n"
-      + "    or pk1.accounting=bu2.parent\n"
-      + "    or pk1.accounting=bu3.parent\n"
-      + "    or pk1.accounting=bu4.parent\n"
-      + "    or pk1.accounting=bu5.parent\n"
-      + "    or pk1.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH-1)+".parent\n",
-    PK3_BU2_PARENTS_OR_WHERE=
-        "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-      + "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-      + "        or pk3.accounting=bu8.parent\n"
-      + "        or pk3.accounting=bu9.parent\n"
-      + "        or pk3.accounting=bu10.parent\n"
-      + "        or pk3.accounting=bu11.parent\n"
-      + "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n",
-    PK3_BU2_PARENTS_WHERE=
-        "        pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".accounting\n"
-      + "        or pk3.accounting=bu"+Account.MAXIMUM_BUSINESS_TREE_DEPTH+".parent\n"
-      + "        or pk3.accounting=bu8.parent\n"
-      + "        or pk3.accounting=bu9.parent\n"
-      + "        or pk3.accounting=bu10.parent\n"
-      + "        or pk3.accounting=bu11.parent\n"
-      + "        or pk3.accounting=bu"+(Account.MAXIMUM_BUSINESS_TREE_DEPTH*2-2)+".parent\n"
+      PK_BU1_PARENTS_WHERE =
+          "    pk.accounting=bu1.accounting\n"
+              + "    or pk.accounting=bu1.parent\n"
+              + "    or pk.accounting=bu2.parent\n"
+              + "    or pk.accounting=bu3.parent\n"
+              + "    or pk.accounting=bu4.parent\n"
+              + "    or pk.accounting=bu5.parent\n"
+              + "    or pk.accounting=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".parent\n",
+      PK1_BU1_PARENTS_OR_WHERE =
+          "    or pk1.accounting=bu1.accounting\n"
+              + "    or pk1.accounting=bu1.parent\n"
+              + "    or pk1.accounting=bu2.parent\n"
+              + "    or pk1.accounting=bu3.parent\n"
+              + "    or pk1.accounting=bu4.parent\n"
+              + "    or pk1.accounting=bu5.parent\n"
+              + "    or pk1.accounting=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".parent\n",
+      PK1_BU1_PARENTS_WHERE =
+          "    pk1.accounting=bu1.accounting\n"
+              + "    or pk1.accounting=bu1.parent\n"
+              + "    or pk1.accounting=bu2.parent\n"
+              + "    or pk1.accounting=bu3.parent\n"
+              + "    or pk1.accounting=bu4.parent\n"
+              + "    or pk1.accounting=bu5.parent\n"
+              + "    or pk1.accounting=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".parent\n",
+      PK3_BU2_PARENTS_OR_WHERE =
+          "        or pk3.accounting=bu" + Account.MAXIMUM_BUSINESS_TREE_DEPTH + ".accounting\n"
+              + "        or pk3.accounting=bu" + Account.MAXIMUM_BUSINESS_TREE_DEPTH + ".parent\n"
+              + "        or pk3.accounting=bu8.parent\n"
+              + "        or pk3.accounting=bu9.parent\n"
+              + "        or pk3.accounting=bu10.parent\n"
+              + "        or pk3.accounting=bu11.parent\n"
+              + "        or pk3.accounting=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH * 2 - 2) + ".parent\n",
+      PK3_BU2_PARENTS_WHERE =
+          "        pk3.accounting=bu" + Account.MAXIMUM_BUSINESS_TREE_DEPTH + ".accounting\n"
+              + "        or pk3.accounting=bu" + Account.MAXIMUM_BUSINESS_TREE_DEPTH + ".parent\n"
+              + "        or pk3.accounting=bu8.parent\n"
+              + "        or pk3.accounting=bu9.parent\n"
+              + "        or pk3.accounting=bu10.parent\n"
+              + "        or pk3.accounting=bu11.parent\n"
+              + "        or pk3.accounting=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH * 2 - 2) + ".parent\n"
   ;
 
   public static interface GetObjectHandler {
@@ -206,13 +206,13 @@ public final class TableHandler {
      * Handles a client request for the given table.
      */
     void getObject(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableInput in,
-      StreamableOutput out,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableInput in,
+        StreamableOutput out,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException;
   }
 
@@ -252,10 +252,10 @@ public final class TableHandler {
   }
 
   private static void printCounts(
-    PrintStream out,
-    Class<?> type,
-    int handlerCount,
-    int tableCount
+      PrintStream out,
+      Class<?> type,
+      int handlerCount,
+      int tableCount
   ) {
     out.print(type.getSimpleName());
     out.print(" (");
@@ -279,10 +279,10 @@ public final class TableHandler {
     if (!hideIfZero || handlerCount != 0) {
       out.print(": ");
       printCounts(
-        out,
-        GetObjectHandler.class,
-        handlerCount,
-        tableCount
+          out,
+          GetObjectHandler.class,
+          handlerCount,
+          tableCount
       );
     }
   }
@@ -295,15 +295,15 @@ public final class TableHandler {
    * Gets one object from a table.
    */
   public static void getObject(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableInput in,
-    StreamableOutput out,
-    Table.TableID tableID
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableInput in,
+      StreamableOutput out,
+      Table.TableID tableID
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser=MasterServer.getUser(conn, currentAdministrator);
-    UserHost[] masterServers=masterUser == null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
 
     GetObjectHandler handler = getObjectHandlers.get(tableID);
     if (handler != null) {
@@ -317,8 +317,8 @@ public final class TableHandler {
   /**
    * Caches row counts for each table on a per-username basis.
    */
-  private static final Map<com.aoindustries.aoserv.client.account.User.Name, int[]> rowCountsPerUsername=new HashMap<>();
-  private static final Map<com.aoindustries.aoserv.client.account.User.Name, long[]> expireTimesPerUsername=new HashMap<>();
+  private static final Map<com.aoindustries.aoserv.client.account.User.Name, int[]> rowCountsPerUsername = new HashMap<>();
+  private static final Map<com.aoindustries.aoserv.client.account.User.Name, long[]> expireTimesPerUsername = new HashMap<>();
 
   static final int MAX_ROW_COUNT_CACHE_AGE = 60 * 60 * 1000; // One hour
 
@@ -327,9 +327,9 @@ public final class TableHandler {
   private static final int _numTables = _tableIDs.length;
 
   public static int getCachedRowCount(
-    DatabaseConnection conn,
-    RequestSource source,
-    Table.TableID tableID
+      DatabaseConnection conn,
+      RequestSource source,
+      Table.TableID tableID
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
@@ -337,30 +337,30 @@ public final class TableHandler {
     int[] rowCounts;
     long[] expireTimes;
     synchronized (rowCountsPerUsername) {
-      rowCounts=rowCountsPerUsername.get(currentAdministrator);
+      rowCounts = rowCountsPerUsername.get(currentAdministrator);
       if (rowCounts == null) {
-        rowCountsPerUsername.put(currentAdministrator, rowCounts=new int[_numTables]);
-        expireTimesPerUsername.put(currentAdministrator, expireTimes=new long[_numTables]);
+        rowCountsPerUsername.put(currentAdministrator, rowCounts = new int[_numTables]);
+        expireTimesPerUsername.put(currentAdministrator, expireTimes = new long[_numTables]);
       } else {
-        expireTimes=expireTimesPerUsername.get(currentAdministrator);
+        expireTimes = expireTimesPerUsername.get(currentAdministrator);
       }
     }
 
     // Synchronize on the array to provide a per-user lock
     synchronized (rowCounts) {
-      long expireTime=expireTimes[tableID.ordinal()];
-      long startTime=System.currentTimeMillis();
+      long expireTime = expireTimes[tableID.ordinal()];
+      long startTime = System.currentTimeMillis();
       if (
-        expireTime == 0
-        || expireTime <= startTime
-        || expireTime>(startTime+MAX_ROW_COUNT_CACHE_AGE)
+          expireTime == 0
+              || expireTime <= startTime
+              || expireTime > (startTime + MAX_ROW_COUNT_CACHE_AGE)
       ) {
-        rowCounts[tableID.ordinal()]=getRowCount(
-          conn,
-          source,
-          tableID
+        rowCounts[tableID.ordinal()] = getRowCount(
+            conn,
+            source,
+            tableID
         );
-        expireTimes[tableID.ordinal()]=System.currentTimeMillis()+MAX_ROW_COUNT_CACHE_AGE;
+        expireTimes[tableID.ordinal()] = System.currentTimeMillis() + MAX_ROW_COUNT_CACHE_AGE;
       }
 
       return rowCounts[tableID.ordinal()];
@@ -371,13 +371,13 @@ public final class TableHandler {
    * Gets the number of accessible rows in a table.
    */
   public static int getRowCount(
-    DatabaseConnection conn,
-    RequestSource source,
-    Table.TableID tableID
+      DatabaseConnection conn,
+      RequestSource source,
+      Table.TableID tableID
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser=MasterServer.getUser(conn, currentAdministrator);
-    UserHost[] masterServers=masterUser == null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
     switch (tableID) {
       case DISTRO_FILES :
         if (masterUser != null) {
@@ -387,19 +387,19 @@ public final class TableHandler {
               return 0;
             } else {
               return conn.queryInt(
-                "select count(*) from \"distribution.management\".\"DistroFile\""
+                  "select count(*) from \"distribution.management\".\"DistroFile\""
               );
             }
           } else {
             // Restrict to the operating system versions accessible to this user
-            IntList osVersions=getOperatingSystemVersions(conn, source);
+            IntList osVersions = getOperatingSystemVersions(conn, source);
             if (osVersions.isEmpty()) {
               return 0;
             }
-            StringBuilder sql=new StringBuilder();
+            StringBuilder sql = new StringBuilder();
             sql.append("select count(*) from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
-            for (int c=0;c<osVersions.size();c++) {
-              if (c>0) {
+            for (int c = 0; c < osVersions.size(); c++) {
+              if (c > 0) {
                 sql.append(',');
               }
               sql.append(osVersions.getInt(c));
@@ -415,9 +415,9 @@ public final class TableHandler {
           // For backwards-compatibility only
           return 0;
         }
-        throw new IOException("Unknown table ID: "+tableID); // No longer used as of version 1.44
+        throw new IOException("Unknown table ID: " + tableID); // No longer used as of version 1.44
       default :
-        throw new IOException("Unknown table ID: "+tableID);
+        throw new IOException("Unknown table ID: " + tableID);
     }
   }
 
@@ -431,13 +431,13 @@ public final class TableHandler {
      * Handles a client request for the given table.
      */
     void getTable(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException;
   }
 
@@ -481,15 +481,15 @@ public final class TableHandler {
     int handlerCount = 0;
     while (handlers.hasNext()) {
       tableCount += addGetTableHandler(handlers.next());
-      handlerCount ++;
+      handlerCount++;
     }
     if (!hideIfZero || handlerCount != 0) {
       out.print(": ");
       printCounts(
-        out,
-        GetTableHandler.class,
-        handlerCount,
-        tableCount
+          out,
+          GetTableHandler.class,
+          handlerCount,
+          tableCount
       );
     }
   }
@@ -505,13 +505,13 @@ public final class TableHandler {
      */
     @Override
     public void getTable(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException {
       if (masterUser != null) {
         assert masterServers != null;
@@ -530,12 +530,12 @@ public final class TableHandler {
      * access to all {@link Account accounts} and {@link Host hosts}.
      */
     protected abstract void getTableMaster(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser
     ) throws IOException, SQLException;
 
     /**
@@ -544,13 +544,13 @@ public final class TableHandler {
      * generally used by <a href="https://aoindustries.com/aoserv/daemon/">AOServ Daemon</a>.
      */
     protected abstract void getTableDaemon(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException;
 
     /**
@@ -559,11 +559,11 @@ public final class TableHandler {
      * {@link Host hosts} those accounts can access (see {@link AccountHost}.
      */
     protected abstract void getTableAdministrator(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID
     ) throws IOException, SQLException;
   }
 
@@ -574,13 +574,13 @@ public final class TableHandler {
      */
     @Override
     public void getTable(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException {
       getTablePublic(conn, source, out, provideProgress, tableID);
     }
@@ -589,11 +589,11 @@ public final class TableHandler {
      * Handles the request for a public table.
      */
     protected abstract void getTablePublic(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID
     ) throws IOException, SQLException;
   }
 
@@ -611,13 +611,13 @@ public final class TableHandler {
      */
     @Override
     public final void getTable(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException {
       if (AccountHandler.hasPermission(conn, source, getPermissionName())) {
         getTableHasPermission(conn, source, out, provideProgress, tableID, masterUser, masterServers);
@@ -633,13 +633,13 @@ public final class TableHandler {
      * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
      */
     protected abstract void getTableHasPermission(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException;
   }
 
@@ -650,13 +650,13 @@ public final class TableHandler {
      */
     @Override
     protected void getTableHasPermission(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException {
       if (masterUser != null) {
         assert masterServers != null;
@@ -678,12 +678,12 @@ public final class TableHandler {
      * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
      */
     protected abstract void getTableMasterHasPermission(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser
     ) throws IOException, SQLException;
 
     /**
@@ -695,13 +695,13 @@ public final class TableHandler {
      * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
      */
     protected abstract void getTableDaemonHasPermission(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID,
-      User masterUser,
-      UserHost[] masterServers
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID,
+        User masterUser,
+        UserHost[] masterServers
     ) throws IOException, SQLException;
 
     /**
@@ -713,11 +713,11 @@ public final class TableHandler {
      * @see  AccountHandler#hasPermission(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoindustries.aoserv.client.master.Permission.Name)
      */
     protected abstract void getTableAdministratorHasPermission(
-      DatabaseConnection conn,
-      RequestSource source,
-      StreamableOutput out,
-      boolean provideProgress,
-      Table.TableID tableID
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableID tableID
     ) throws IOException, SQLException;
   }
 
@@ -725,15 +725,15 @@ public final class TableHandler {
    * Gets an entire table.
    */
   public static void getTable(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    final Table.TableID tableID
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      final Table.TableID tableID
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser=MasterServer.getUser(conn, currentAdministrator);
-    UserHost[] masterServers=masterUser == null?null:MasterServer.getUserHosts(conn, currentAdministrator);
+    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
 
     GetTableHandler handler = getTableHandlers.get(tableID);
     if (handler != null) {
@@ -750,11 +750,11 @@ public final class TableHandler {
    * longer exist.
    */
   public static void getOldTable(
-    DatabaseConnection conn,
-    RequestSource source,
-    StreamableOutput out,
-    boolean provideProgress,
-    String tableName
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      String tableName
   ) throws IOException, SQLException {
     switch (tableName) {
       case "billing.whois_history" :
@@ -763,27 +763,27 @@ public final class TableHandler {
         break;
       case "mysql.mysql_reserved_words" :
         if (
-          source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-          && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
         ) {
           @SuppressWarnings("deprecation")
           com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
           conn.close(); // Don't hold database connection while writing response
           MasterServer.writeObjects(
-            source,
-            out,
-            provideProgress,
-            new AbstractList<>() {
-              @Override
-              public AOServWritable get(int index) {
-                return (out, clientVersion) ->
-                  out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+              source,
+              out,
+              provideProgress,
+              new AbstractList<>() {
+                @Override
+                public AOServWritable get(int index) {
+                  return (out, clientVersion) ->
+                      out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+                }
+                @Override
+                public int size() {
+                  return reservedWords.length;
+                }
               }
-              @Override
-              public int size() {
-                return reservedWords.length;
-              }
-            }
           );
           return;
         }
@@ -791,27 +791,27 @@ public final class TableHandler {
         break;
       case "net.net_protocols" :
         if (
-          source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-          && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
         ) {
           // Send in lowercase
           com.aoapps.net.Protocol[] netProtocols = com.aoapps.net.Protocol.values();
           conn.close(); // Don't hold database connection while writing response
           MasterServer.writeObjects(
-            source,
-            out,
-            provideProgress,
-            new AbstractList<>() {
-              @Override
-              public AOServWritable get(int index) {
-                return (out, clientVersion) ->
-                  out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
+              source,
+              out,
+              provideProgress,
+              new AbstractList<>() {
+                @Override
+                public AOServWritable get(int index) {
+                  return (out, clientVersion) ->
+                      out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
+                }
+                @Override
+                public int size() {
+                  return netProtocols.length;
+                }
               }
-              @Override
-              public int size() {
-                return netProtocols.length;
-              }
-            }
           );
           return;
         }
@@ -819,27 +819,27 @@ public final class TableHandler {
         break;
       case "postgresql.postgres_reserved_words" :
         if (
-          source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-          && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
         ) {
           @SuppressWarnings("deprecation")
           com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
           conn.close(); // Don't hold database connection while writing response
           MasterServer.writeObjects(
-            source,
-            out,
-            provideProgress,
-            new AbstractList<>() {
-              @Override
-              public AOServWritable get(int index) {
-                return (out, clientVersion) ->
-                  out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+              source,
+              out,
+              provideProgress,
+              new AbstractList<>() {
+                @Override
+                public AOServWritable get(int index) {
+                  return (out, clientVersion) ->
+                      out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+                }
+                @Override
+                public int size() {
+                  return reservedWords.length;
+                }
               }
-              @Override
-              public int size() {
-                return reservedWords.length;
-              }
-            }
           );
           return;
         }
@@ -856,29 +856,29 @@ public final class TableHandler {
   }
 
   public static void invalidate(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Table.TableID tableID,
-    int host
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Table.TableID tableID,
+      int host
   ) throws SQLException, IOException {
     checkInvalidator(conn, source, "invalidate");
     invalidateList.addTable(conn,
-      tableID,
-      InvalidateList.allAccounts,
-      host == -1 ? InvalidateList.allHosts : InvalidateList.getHostCollection(host),
-      true
+        tableID,
+        InvalidateList.allAccounts,
+        host == -1 ? InvalidateList.allHosts : InvalidateList.getHostCollection(host),
+        true
     );
   }
 
   public static void checkInvalidator(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
     if (!isInvalidator(conn, source)) {
-      throw new SQLException("Table invalidation not allowed, '"+action+"'");
+      throw new SQLException("Table invalidation not allowed, '" + action + "'");
     }
   }
 
   public static boolean isInvalidator(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.canInvalidateTables();
   }
 
@@ -894,25 +894,25 @@ public final class TableHandler {
     synchronized (tableNamesLock) {
       if (tableNames == null) {
         tableNames = db.queryCall(
-          results -> {
-            Map<Integer, String> newMap = new HashMap<>();
-            while (results.next()) {
-              Integer id = results.getInt("id");
-              String schema = results.getString("schema");
-              String name = results.getString("name");
-              if (newMap.put(id, schema + "." + name) != null) {
-                throw new SQLException("Duplicate id: " + id);
+            results -> {
+              Map<Integer, String> newMap = new HashMap<>();
+              while (results.next()) {
+                Integer id = results.getInt("id");
+                String schema = results.getString("schema");
+                String name = results.getString("name");
+                if (newMap.put(id, schema + "." + name) != null) {
+                  throw new SQLException("Duplicate id: " + id);
+                }
               }
-            }
-            return newMap;
-          },
-          "select\n"
-          + "  s.\"name\" as \"schema\",\n"
-          + "  t.id,\n"
-          + "  t.\"name\"\n"
-          + "from\n"
-          + "  \"schema\".\"Table\" t\n"
-          + "  inner join \"schema\".\"Schema\" s on t.\"schema\" = s.id"
+              return newMap;
+            },
+            "select\n"
+                + "  s.\"name\" as \"schema\",\n"
+                + "  t.id,\n"
+                + "  t.\"name\"\n"
+                + "from\n"
+                + "  \"schema\".\"Table\" t\n"
+                + "  inner join \"schema\".\"Schema\" s on t.\"schema\" = s.id"
         );
       }
       return tableNames.get(dbTableId);
@@ -926,16 +926,16 @@ public final class TableHandler {
    */
   public static String getTableName(DatabaseAccess db, Table.TableID tableID) throws IOException, SQLException {
     return getTableNameForDBTableID(
-      db,
-      convertClientTableIDToDBTableID(
         db,
-        AoservProtocol.Version.CURRENT_VERSION,
-        tableID.ordinal()
-      )
+        convertClientTableIDToDBTableID(
+            db,
+            AoservProtocol.Version.CURRENT_VERSION,
+            tableID.ordinal()
+        )
     );
   }
 
-  private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> fromClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+  private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> fromClientTableIDs = new EnumMap<>(AoservProtocol.Version.class);
 
   /**
    * Converts a specific AoservProtocol version table ID to the number used in the database storage.
@@ -943,32 +943,32 @@ public final class TableHandler {
    * @return  the {@code id} used in the database or {@code -1} if unknown
    */
   public static int convertClientTableIDToDBTableID(
-    DatabaseAccess db,
-    AoservProtocol.Version version,
-    int clientTableID
+      DatabaseAccess db,
+      AoservProtocol.Version version,
+      int clientTableID
   ) throws IOException, SQLException {
     synchronized (fromClientTableIDs) {
       Map<Integer, Integer> tableIDs = fromClientTableIDs.get(version);
       if (tableIDs == null) {
         IntList clientTables = db.queryIntList(
-          "select\n"
-          + "  st.id\n"
-          + "from\n"
-          + "  \"schema\".\"AoservProtocol\" client_ap,\n"
-          + "  \"schema\".\"Table\"          st\n"
-          + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-          + "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
-          + "where\n"
-          + "  client_ap.version=?\n"
-          + "  and client_ap.created >= \"sinceVersion\".created\n"
-          + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-          + "order by\n"
-          + "  st.id",
-          version.getVersion()
+            "select\n"
+                + "  st.id\n"
+                + "from\n"
+                + "  \"schema\".\"AoservProtocol\" client_ap,\n"
+                + "  \"schema\".\"Table\"          st\n"
+                + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+                + "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+                + "where\n"
+                + "  client_ap.version=?\n"
+                + "  and client_ap.created >= \"sinceVersion\".created\n"
+                + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
+                + "order by\n"
+                + "  st.id",
+            version.getVersion()
         );
         int numTables = clientTables.size();
         tableIDs = AoCollections.newHashMap(numTables);
-        for (int c=0;c<numTables;c++) {
+        for (int c = 0; c < numTables; c++) {
           tableIDs.put(c, clientTables.getInt(c));
         }
         fromClientTableIDs.put(version, tableIDs);
@@ -978,31 +978,31 @@ public final class TableHandler {
     }
   }
 
-  private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> toClientTableIDs=new EnumMap<>(AoservProtocol.Version.class);
+  private static final EnumMap<AoservProtocol.Version, Map<Integer, Integer>> toClientTableIDs = new EnumMap<>(AoservProtocol.Version.class);
 
   public static int convertDBTableIDToClientTableID(
-    DatabaseAccess db,
-    AoservProtocol.Version version,
-    int tableID
+      DatabaseAccess db,
+      AoservProtocol.Version version,
+      int tableID
   ) throws IOException, SQLException {
     synchronized (toClientTableIDs) {
       Map<Integer, Integer> clientTableIDs = toClientTableIDs.get(version);
       if (clientTableIDs == null) {
         IntList clientTables = db.queryIntList(
-          "select\n"
-          + "  st.id\n"
-          + "from\n"
-          + "  \"schema\".\"AoservProtocol\" client_ap,\n"
-          + "             \"schema\".\"Table\"                      st\n"
-          + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-          + "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
-          + "where\n"
-          + "  client_ap.version=?\n"
-          + "  and client_ap.created >= \"sinceVersion\".created\n"
-          + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-          + "order by\n"
-          + "  st.id",
-          version.getVersion()
+            "select\n"
+                + "  st.id\n"
+                + "from\n"
+                + "  \"schema\".\"AoservProtocol\" client_ap,\n"
+                + "             \"schema\".\"Table\"                      st\n"
+                + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+                + "  left  join \"schema\".\"AoservProtocol\"  \"lastVersion\" on st.\"lastVersion\"  = \"lastVersion\".version\n"
+                + "where\n"
+                + "  client_ap.version=?\n"
+                + "  and client_ap.created >= \"sinceVersion\".created\n"
+                + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
+                + "order by\n"
+                + "  st.id",
+            version.getVersion()
         );
         int numTables = clientTables.size();
         clientTableIDs = AoCollections.newHashMap(numTables);
@@ -1023,11 +1023,11 @@ public final class TableHandler {
    * @return  The <code>Table.TableID</code> or <code>null</code> if no match.
    */
   public static Table.TableID convertFromClientTableID(
-    DatabaseConnection conn,
-    RequestSource source,
-    int clientTableID
+      DatabaseConnection conn,
+      RequestSource source,
+      int clientTableID
   ) throws IOException, SQLException {
-    int dbTableID=convertClientTableIDToDBTableID(conn, source.getProtocolVersion(), clientTableID);
+    int dbTableID = convertClientTableIDToDBTableID(conn, source.getProtocolVersion(), clientTableID);
     if (dbTableID == -1) {
       return null;
     }
@@ -1042,18 +1042,18 @@ public final class TableHandler {
    * Converts a local (Master AoservProtocol) table ID to a client-version matched table ID.
    */
   public static int convertToClientTableID(
-    DatabaseAccess db,
-    RequestSource source,
-    Table.TableID tableID
+      DatabaseAccess db,
+      RequestSource source,
+      Table.TableID tableID
   ) throws IOException, SQLException {
-    int dbTableID=convertClientTableIDToDBTableID(db, AoservProtocol.Version.CURRENT_VERSION, tableID.ordinal());
+    int dbTableID = convertClientTableIDToDBTableID(db, AoservProtocol.Version.CURRENT_VERSION, tableID.ordinal());
     if (dbTableID == -1) {
       return -1;
     }
     return convertDBTableIDToClientTableID(db, source.getProtocolVersion(), dbTableID);
   }
 
-  private static final EnumMap<AoservProtocol.Version, Map<Table.TableID, Map<String, Integer>>> clientColumnIndexes=new EnumMap<>(AoservProtocol.Version.class);
+  private static final EnumMap<AoservProtocol.Version, Map<Table.TableID, Map<String, Integer>>> clientColumnIndexes = new EnumMap<>(AoservProtocol.Version.class);
 
   /*
    * 2018-11-18: This method appears unused.
@@ -1132,20 +1132,20 @@ public final class TableHandler {
   // TODO: Move to proper service class
   public static IntList getOperatingSystemVersions(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
     return conn.queryIntList(
-      "select distinct\n"
-      + "  se.operating_system_version\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  linux.\"Server\" ao,\n"
-      + "  net.\"Host\" se,\n"
-      + "  distribution.\"OperatingSystemVersion\" osv\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=ao.server\n"
-      + "  and ao.server=se.id\n"
-      + "  and se.operating_system_version=osv.id\n"
-      + "  and osv.is_aoserv_daemon_supported",
-      source.getCurrentAdministrator()
+        "select distinct\n"
+            + "  se.operating_system_version\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  linux.\"Server\" ao,\n"
+            + "  net.\"Host\" se,\n"
+            + "  distribution.\"OperatingSystemVersion\" osv\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=ao.server\n"
+            + "  and ao.server=se.id\n"
+            + "  and se.operating_system_version=osv.id\n"
+            + "  and osv.is_aoserv_daemon_supported",
+        source.getCurrentAdministrator()
     );
   }
 }

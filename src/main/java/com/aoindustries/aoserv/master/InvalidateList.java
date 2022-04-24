@@ -83,59 +83,59 @@ public final class InvalidateList {
   }
 
   public void addTable(
-    DatabaseAccess db,
-    Table.TableID tableID,
-    Account.Name account,
-    int host,
-    boolean recurse
+      DatabaseAccess db,
+      Table.TableID tableID,
+      Account.Name account,
+      int host,
+      boolean recurse
   ) throws IOException, SQLException {
     addTable(
-      db,
-      tableID,
-      getAccountCollection(account),
-      getHostCollection(host),
-      recurse
+        db,
+        tableID,
+        getAccountCollection(account),
+        getHostCollection(host),
+        recurse
     );
   }
 
   public void addTable(
-    DatabaseAccess db,
-    Table.TableID tableID,
-    Collection<Account.Name> accounts,
-    int host,
-    boolean recurse
+      DatabaseAccess db,
+      Table.TableID tableID,
+      Collection<Account.Name> accounts,
+      int host,
+      boolean recurse
   ) throws IOException, SQLException {
     addTable(
-      db,
-      tableID,
-      accounts,
-      getHostCollection(host),
-      recurse
+        db,
+        tableID,
+        accounts,
+        getHostCollection(host),
+        recurse
     );
   }
 
   public void addTable(
-    DatabaseAccess db,
-    Table.TableID tableID,
-    Account.Name account,
-    IntCollection hosts,
-    boolean recurse
+      DatabaseAccess db,
+      Table.TableID tableID,
+      Account.Name account,
+      IntCollection hosts,
+      boolean recurse
   ) throws IOException, SQLException {
     addTable(
-      db,
-      tableID,
-      getAccountCollection(account),
-      hosts,
-      recurse
+        db,
+        tableID,
+        getAccountCollection(account),
+        hosts,
+        recurse
     );
   }
 
   public void addTable(
-    DatabaseAccess db,
-    Table.TableID tableID,
-    Collection<Account.Name> accounts,
-    IntCollection hosts,
-    boolean recurse
+      DatabaseAccess db,
+      Table.TableID tableID,
+      Collection<Account.Name> accounts,
+      IntCollection hosts,
+      boolean recurse
   ) throws IOException, SQLException {
     // TODO: Unused 2018-11-18:
     //if (tableNames[tableID.ordinal()] == null) {
@@ -320,7 +320,7 @@ public final class InvalidateList {
   }
 
   public List<Account.Name> getAffectedAccounts(Table.TableID tableID) {
-    List<Account.Name> SV=accountLists.get(tableID);
+    List<Account.Name> SV = accountLists.get(tableID);
     if (SV != null || hostLists.containsKey(tableID)) {
       return (SV == null) ? allAccounts : SV;
     } else {

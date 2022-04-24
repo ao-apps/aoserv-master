@@ -49,13 +49,13 @@ public class ProcessorType_GetTableHandler extends TableHandler.GetTableHandlerP
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new ProcessorType(),
-      "select * from infrastructure.\"ProcessorType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new ProcessorType(),
+        "select * from infrastructure.\"ProcessorType\""
     );
   }
 }

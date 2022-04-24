@@ -68,7 +68,7 @@ public final class ClusterHandler implements CronJob {
    */
   private static final long TIMER_REMINDER_INTERVAL = 60L * 60L * 1000L; // One hour
 
-  private static boolean started=false;
+  private static boolean started = false;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {
@@ -76,7 +76,7 @@ public final class ClusterHandler implements CronJob {
       if (!started) {
         System.out.print("Starting " + ClusterHandler.class.getSimpleName() + ": ");
         CronDaemon.addCronJob(new ClusterHandler(), logger);
-        started=true;
+        started = true;
         System.out.println("Done");
         // Run immediately to populate mapping on start-up
         MasterServer.executorService.submit(ClusterHandler::updateMappings);
@@ -130,7 +130,7 @@ public final class ClusterHandler implements CronJob {
 
     static {
       Throwables.registerSurrogateFactory(ClusterException.class, (template, cause) ->
-        new ClusterException(template.getMessage(), cause)
+          new ClusterException(template.getMessage(), cause)
       );
     }
   }
@@ -157,9 +157,9 @@ public final class ClusterHandler implements CronJob {
 
   @SuppressWarnings("AssignmentToCollectionOrArrayFieldFromParameter") // private only
   private static void setMappings(
-    Map<Integer, Set<Integer>> newPrimaryMappings,
-    Map<Integer, Set<Integer>> newSecondaryMappings,
-    Map<Integer, Set<Integer>> newAutoMappings
+      Map<Integer, Set<Integer>> newPrimaryMappings,
+      Map<Integer, Set<Integer>> newSecondaryMappings,
+      Map<Integer, Set<Integer>> newAutoMappings
   ) {
     synchronized (mappingsLock) {
       primaryMappings = newPrimaryMappings;
@@ -284,21 +284,22 @@ public final class ClusterHandler implements CronJob {
   }
 
   private static final Object updateMappingsLock = new Object();
+
   @SuppressWarnings({"UseSpecificCatch", "TooBroadCatch", "SleepWhileHoldingLock", "SleepWhileInLoop"})
   private static void updateMappings() {
     synchronized (updateMappingsLock) {
       try {
         try (
           ProcessTimer timer = new ProcessTimer(
-            logger,
-            ClusterHandler.class.getName(),
-            "runCronJob",
-            "ClusterHandler - Find Virtual Host Mapping",
-            "Finding the current mapping of virtual servers onto physical servers",
-            TIMER_MAX_TIME,
-            TIMER_REMINDER_INTERVAL
-          )
-        ) {
+                logger,
+                ClusterHandler.class.getName(),
+                "runCronJob",
+                "ClusterHandler - Find Virtual Host Mapping",
+                "Finding the current mapping of virtual servers onto physical servers",
+                TIMER_MAX_TIME,
+                TIMER_REMINDER_INTERVAL
+            )
+            ) {
           MasterServer.executorService.submit(timer);
 
           // Query the servers in parallel
@@ -307,89 +308,89 @@ public final class ClusterHandler implements CronJob {
           Map<Integer, Future<Tuple3<Set<Integer>, Set<Integer>, Set<Integer>>>> futures = AoCollections.newHashMap(xenPhysicalServers.size());
           for (final Integer xenPhysicalServer : xenPhysicalServers) {
             futures.put(
-              xenPhysicalServer,
-              MasterServer.executorService.submit(() -> {
-                // Try up to ten times
-                final int ATTEMPTS = 10;
-                for (int c = 0; c < ATTEMPTS; c++) {
-                  try {
-                    final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
-                    AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
-                    // Get the DRBD states
-                    List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
-                    Set<Integer> primaryMapping = AoCollections.newHashSet(drbdReports.size());
-                    Set<Integer> secondaryMapping = AoCollections.newHashSet(drbdReports.size());
-                    for (Server.DrbdReport drbdReport : drbdReports) {
-                      // Look for primary mappings
-                      if (
-                        drbdReport.getLocalRole() == Server.DrbdReport.Role.Primary
-                        && (
-                          drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unconfigured
-                          || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Secondary
-                          || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unknown
-                        )
-                      ) {
-                        primaryMapping.add(
-                          NetHostHandler.getHostForPackageAndName(
-                            database,
-                            rootPackagePkey,
-                            drbdReport.getResourceHostname()
-                          )
-                        );
-                      }
-                      // Look for secondary mappings
-                      if (
-                        drbdReport.getLocalRole() == Server.DrbdReport.Role.Secondary
-                        && (
-                          drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unconfigured
-                          || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Primary
-                          || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unknown
-                        )
-                      ) {
-                        secondaryMapping.add(
-                          NetHostHandler.getHostForPackageAndName(
-                            database,
-                            rootPackagePkey,
-                            drbdReport.getResourceHostname()
-                          )
-                        );
-                      }
-                    }
-                    // Get the auto-start list
-                    Set<String> autoStartList = daemonConnnector.getXenAutoStartLinks();
-                    Set<Integer> autoMapping = AoCollections.newHashSet(autoStartList.size());
-                    for (String serverName : autoStartList) {
-                      autoMapping.add(
-                        NetHostHandler.getHostForPackageAndName(
-                          database,
-                          rootPackagePkey,
-                          serverName
-                        )
-                      );
-                    }
-                    return new Tuple3<>(
-                      primaryMapping,
-                      secondaryMapping,
-                      autoMapping
-                    );
-                  } catch (ThreadDeath td) {
-                    throw td;
-                  } catch (Throwable t) {
-                    if (c == (ATTEMPTS - 1) && Thread.currentThread().isInterrupted()) {
-                      throw t;
-                    }
-                    logger.log(Level.SEVERE, null, t);
+                xenPhysicalServer,
+                MasterServer.executorService.submit(() -> {
+                  // Try up to ten times
+                  final int ATTEMPTS = 10;
+                  for (int c = 0; c < ATTEMPTS; c++) {
                     try {
-                      Thread.sleep(2000);
-                    } catch (InterruptedException err) {
-                      logger.log(Level.WARNING, null, err);
-                      // Restore the interrupted status
-                      Thread.currentThread().interrupt();
+                      final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
+                      AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
+                      // Get the DRBD states
+                      List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
+                      Set<Integer> primaryMapping = AoCollections.newHashSet(drbdReports.size());
+                      Set<Integer> secondaryMapping = AoCollections.newHashSet(drbdReports.size());
+                      for (Server.DrbdReport drbdReport : drbdReports) {
+                        // Look for primary mappings
+                        if (
+                            drbdReport.getLocalRole() == Server.DrbdReport.Role.Primary
+                                && (
+                                drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unconfigured
+                                    || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Secondary
+                                    || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unknown
+                            )
+                        ) {
+                          primaryMapping.add(
+                              NetHostHandler.getHostForPackageAndName(
+                                  database,
+                                  rootPackagePkey,
+                                  drbdReport.getResourceHostname()
+                              )
+                          );
+                        }
+                        // Look for secondary mappings
+                        if (
+                            drbdReport.getLocalRole() == Server.DrbdReport.Role.Secondary
+                                && (
+                                drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unconfigured
+                                    || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Primary
+                                    || drbdReport.getRemoteRole() == Server.DrbdReport.Role.Unknown
+                            )
+                        ) {
+                          secondaryMapping.add(
+                              NetHostHandler.getHostForPackageAndName(
+                                  database,
+                                  rootPackagePkey,
+                                  drbdReport.getResourceHostname()
+                              )
+                          );
+                        }
+                      }
+                      // Get the auto-start list
+                      Set<String> autoStartList = daemonConnnector.getXenAutoStartLinks();
+                      Set<Integer> autoMapping = AoCollections.newHashSet(autoStartList.size());
+                      for (String serverName : autoStartList) {
+                        autoMapping.add(
+                            NetHostHandler.getHostForPackageAndName(
+                                database,
+                                rootPackagePkey,
+                                serverName
+                            )
+                        );
+                      }
+                      return new Tuple3<>(
+                          primaryMapping,
+                          secondaryMapping,
+                          autoMapping
+                      );
+                    } catch (ThreadDeath td) {
+                      throw td;
+                    } catch (Throwable t) {
+                      if (c == (ATTEMPTS - 1) && Thread.currentThread().isInterrupted()) {
+                        throw t;
+                      }
+                      logger.log(Level.SEVERE, null, t);
+                      try {
+                        Thread.sleep(2000);
+                      } catch (InterruptedException err) {
+                        logger.log(Level.WARNING, null, err);
+                        // Restore the interrupted status
+                        Thread.currentThread().interrupt();
+                      }
                     }
                   }
-                }
-                throw new AssertionError("Exception should have been thrown when c == " + (ATTEMPTS - 1) + " or thread interrupted");
-              })
+                  throw new AssertionError("Exception should have been thrown when c == " + (ATTEMPTS - 1) + " or thread interrupted");
+                })
             );
           }
           Map<Integer, Set<Integer>> newPrimaryMappings = AoCollections.newHashMap(futures.size());
@@ -413,9 +414,9 @@ public final class ClusterHandler implements CronJob {
             }
           }
           setMappings(
-            newPrimaryMappings,
-            newSecondaryMappings,
-            newAutoMappings
+              newPrimaryMappings,
+              newSecondaryMappings,
+              newAutoMappings
           );
         }
       } catch (ThreadDeath td) {
@@ -427,13 +428,13 @@ public final class ClusterHandler implements CronJob {
   }
 
   public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.isClusterAdmin();
   }
 
   public static void checkClusterAdmin(DatabaseConnection conn, RequestSource source, String action) throws IOException, SQLException {
     if (!isClusterAdmin(conn, source)) {
-      throw new SQLException("Cluster administration not allowed, '"+action+"'");
+      throw new SQLException("Cluster administration not allowed, '" + action + "'");
     }
   }
 }

@@ -55,11 +55,11 @@ public final class Process_Manager {
       synchronized (processes) {
         if (!processes.containsKey(id)) {
           Process process = new Process(
-            id,
-            host,
-            protocol,
-            is_secure,
-            ts
+              id,
+              host,
+              protocol,
+              is_secure,
+              ts
           );
           processes.put(id, process);
           return process;

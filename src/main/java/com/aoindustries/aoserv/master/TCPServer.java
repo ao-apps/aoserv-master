@@ -79,21 +79,21 @@ public class TCPServer extends MasterServer implements Runnable {
   public boolean isSecure() throws UnknownHostException {
     byte[] address = InetAddress.getByName(getBindAddress()).getAddress();
     if (
-      address[0] == (byte)127
-      || address[0] == (byte)10
-      || (
-        address[0] == (byte)192
-        && address[1] == (byte)168
-      )
+        address[0] == (byte) 127
+            || address[0] == (byte) 10
+            || (
+            address[0] == (byte) 192
+                && address[1] == (byte) 168
+        )
     ) {
       return true;
     }
     // Allow same class C network
     byte[] localAddress = InetAddress.getByName(serverBind).getAddress();
     return
-      address[0] == localAddress[0]
-      && address[1] == localAddress[1]
-      && address[2] == localAddress[2]
+        address[0] == localAddress[0]
+            && address[1] == localAddress[1]
+            && address[2] == localAddress[2]
     ;
   }
 
@@ -101,7 +101,7 @@ public class TCPServer extends MasterServer implements Runnable {
   public void run() {
     while (!Thread.currentThread().isInterrupted()) {
       try {
-        InetAddress address=InetAddress.getByName(serverBind);
+        InetAddress address = InetAddress.getByName(serverBind);
         synchronized (System.out) {
           System.out.println("Accepting TCP connections on " + address.getHostAddress() + ':' + serverPort);
         }

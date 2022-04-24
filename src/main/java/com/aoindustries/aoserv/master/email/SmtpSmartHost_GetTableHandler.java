@@ -51,67 +51,67 @@ public class SmtpSmartHost_GetTableHandler extends TableHandler.GetTableHandlerB
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new SmtpSmartHost(),
-      "select * from email.\"SmtpSmartHost\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new SmtpSmartHost(),
+        "select * from email.\"SmtpSmartHost\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new SmtpSmartHost(),
-      "select\n"
-      + "  essh.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  net.\"Bind\" nb,\n"
-      + "  email.\"SmtpSmartHost\" essh\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=nb.server\n"
-      + "  and nb.id=essh.net_bind",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new SmtpSmartHost(),
+        "select\n"
+            + "  essh.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  net.\"Bind\" nb,\n"
+            + "  email.\"SmtpSmartHost\" essh\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=nb.server\n"
+            + "  and nb.id=essh.net_bind",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new SmtpSmartHost(),
-      "select\n"
-      + "  essh.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  net.\"Bind\" nb,\n"
-      + "  email.\"SmtpSmartHost\" essh\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=nb.package\n"
-      + "  and nb.id=essh.net_bind",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new SmtpSmartHost(),
+        "select\n"
+            + "  essh.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  net.\"Bind\" nb,\n"
+            + "  email.\"SmtpSmartHost\" essh\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=nb.package\n"
+            + "  and nb.id=essh.net_bind",
+        source.getCurrentAdministrator()
     );
   }
 }

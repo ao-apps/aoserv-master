@@ -49,33 +49,33 @@ public class Command_GetTableHandler extends TableHandler.GetTableHandlerPublic 
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Command(),
-      "select\n"
-      + "  ac.command,\n"
-      + "  ac.\"sinceVersion\",\n"
-      + "  ac.\"lastVersion\",\n"
-      + "  st.\"name\" as \"table\",\n"
-      + "  ac.description,\n"
-      + "  ac.syntax\n"
-      + "from\n"
-      + "  \"schema\".\"AoservProtocol\" client_ap,\n"
-      + "                   aosh.\"Command\"              ac\n"
-      + "  inner join \"schema\".\"AoservProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
-      + "  left  join \"schema\".\"AoservProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
-      + "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =       st.id\n"
-      + "where\n"
-      + "  client_ap.version=?\n"
-      + "  and client_ap.created >= since_ap.created\n"
-      + "  and (\n"
-      + "    last_ap.created is null\n"
-      + "    or client_ap.created <= last_ap.created\n"
-      + "  )",
-      source.getProtocolVersion().getVersion()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Command(),
+        "select\n"
+            + "  ac.command,\n"
+            + "  ac.\"sinceVersion\",\n"
+            + "  ac.\"lastVersion\",\n"
+            + "  st.\"name\" as \"table\",\n"
+            + "  ac.description,\n"
+            + "  ac.syntax\n"
+            + "from\n"
+            + "  \"schema\".\"AoservProtocol\" client_ap,\n"
+            + "                   aosh.\"Command\"              ac\n"
+            + "  inner join \"schema\".\"AoservProtocol\" since_ap on ac.\"sinceVersion\" = since_ap.version\n"
+            + "  left  join \"schema\".\"AoservProtocol\"  last_ap on ac.\"lastVersion\"  =  last_ap.version\n"
+            + "  left  join \"schema\".\"Table\"                st on ac.\"table\"        =       st.id\n"
+            + "where\n"
+            + "  client_ap.version=?\n"
+            + "  and client_ap.created >= since_ap.created\n"
+            + "  and (\n"
+            + "    last_ap.created is null\n"
+            + "    or client_ap.created <= last_ap.created\n"
+            + "  )",
+        source.getProtocolVersion().getVersion()
     );
   }
 }

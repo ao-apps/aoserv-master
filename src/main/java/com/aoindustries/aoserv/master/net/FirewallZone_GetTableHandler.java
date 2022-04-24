@@ -51,59 +51,59 @@ public class FirewallZone_GetTableHandler extends TableHandler.GetTableHandlerBy
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new FirewallZone(),
-      "select * from net.\"FirewallZone\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new FirewallZone(),
+        "select * from net.\"FirewallZone\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new FirewallZone(),
-      "select\n"
-      + "  fz.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  net.\"FirewallZone\" fz\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=fz.server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new FirewallZone(),
+        "select\n"
+            + "  fz.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  net.\"FirewallZone\" fz\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=fz.server",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new FirewallZone(),
-      "select\n"
-      + "  fz.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  net.\"FirewallZone\" fz\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting\n"
-      + "  and bs.server=fz.server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new FirewallZone(),
+        "select\n"
+            + "  fz.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  net.\"FirewallZone\" fz\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting\n"
+            + "  and bs.server=fz.server",
+        source.getCurrentAdministrator()
     );
   }
 }

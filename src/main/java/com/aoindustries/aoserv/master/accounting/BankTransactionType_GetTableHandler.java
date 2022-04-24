@@ -49,13 +49,13 @@ public class BankTransactionType_GetTableHandler implements GetTableHandlerAccou
   @Override
   public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new BankTransactionType(),
-      "select * from accounting.\"BankTransactionType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new BankTransactionType(),
+        "select * from accounting.\"BankTransactionType\""
     );
   }
 }

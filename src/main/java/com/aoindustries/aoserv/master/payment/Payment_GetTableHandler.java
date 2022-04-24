@@ -58,13 +58,13 @@ public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermiss
   @Override
   protected void getTableMasterHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Payment(),
-      "select * from payment.\"Payment\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Payment(),
+        "select * from payment.\"Payment\""
     );
   }
 
@@ -76,27 +76,27 @@ public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermiss
   @Override
   protected void getTableAdministratorHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Payment(),
-      "select\n"
-      + "  cct.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  payment.\"Payment\" cct\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=cct.accounting",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Payment(),
+        "select\n"
+            + "  cct.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  payment.\"Payment\" cct\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=cct.accounting",
+        source.getCurrentAdministrator()
     );
   }
 }

@@ -52,36 +52,36 @@ public class SoftwareVersion_GetTableHandler extends TableHandler.GetTableHandle
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new SoftwareVersion(),
-      "select * from distribution.\"SoftwareVersion\""
-    ); 
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new SoftwareVersion(),
+        "select * from distribution.\"SoftwareVersion\""
+    );
   }
 
   private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new SoftwareVersion(),
-      "select\n"
-      + "  id,\n"
-      + "  name,\n"
-      + "  version,\n"
-      + "  updated,\n"
-      + "  ?,\n"
-      + "  operating_system_version,\n"
-      + "  disable_time,\n"
-      + "  disable_reason\n"
-      + "from\n"
-      + "  distribution.\"SoftwareVersion\"",
-      AoservProtocol.FILTERED
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new SoftwareVersion(),
+        "select\n"
+            + "  id,\n"
+            + "  name,\n"
+            + "  version,\n"
+            + "  updated,\n"
+            + "  ?,\n"
+            + "  operating_system_version,\n"
+            + "  disable_time,\n"
+            + "  disable_reason\n"
+            + "from\n"
+            + "  distribution.\"SoftwareVersion\"",
+        AoservProtocol.FILTERED
     );
   }
 

@@ -49,13 +49,13 @@ public class TicketType_GetTableHandler extends TableHandler.GetTableHandlerPubl
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new TicketType(),
-      "select * from ticket.\"TicketType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new TicketType(),
+        "select * from ticket.\"TicketType\""
     );
   }
 }

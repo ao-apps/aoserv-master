@@ -75,26 +75,26 @@ public class SSLServer extends TCPServer {
   public void run() {
     try {
       System.setProperty(
-        "javax.net.ssl.keyStorePassword",
-        MasterConfiguration.getSSLKeystorePassword()
+          "javax.net.ssl.keyStorePassword",
+          MasterConfiguration.getSSLKeystorePassword()
       );
       System.setProperty(
-        "javax.net.ssl.keyStore",
-        MasterConfiguration.getSSLKeystorePath()
+          "javax.net.ssl.keyStore",
+          MasterConfiguration.getSSLKeystorePath()
       );
     } catch (IOException err) {
       logger.log(Level.SEVERE, null, err);
       return;
     }
 
-    SSLServerSocketFactory factory = (SSLServerSocketFactory)SSLServerSocketFactory.getDefault();
+    SSLServerSocketFactory factory = (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
     while (!Thread.currentThread().isInterrupted()) {
       try {
         InetAddress address = InetAddress.getByName(serverBind);
         synchronized (System.out) {
           System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
         }
-        try (SSLServerSocket SS = (SSLServerSocket)factory.createServerSocket(serverPort, 50, address)) {
+        try (SSLServerSocket SS = (SSLServerSocket) factory.createServerSocket(serverPort, 50, address)) {
           while (!Thread.currentThread().isInterrupted()) {
             Socket socket = SS.accept();
             incConnectionCount();

@@ -45,8 +45,8 @@ public final class ResellerHandler {
    * Will skip past reseller.Reseller that are flagged as auto-escalate.
    */
   public static Account.Name getResellerForAccountAutoEscalate(
-    DatabaseConnection conn,
-    Account.Name originalAccount
+      DatabaseConnection conn,
+      Account.Name originalAccount
   ) throws IOException, SQLException {
     Account.Name account = originalAccount;
     while (account != null) {
@@ -55,6 +55,6 @@ public final class ResellerHandler {
       }
       account = AccountHandler.getParentAccount(conn, account);
     }
-    throw new SQLException("Unable to find Reseller for Account: "+originalAccount);
+    throw new SQLException("Unable to find Reseller for Account: " + originalAccount);
   }
 }

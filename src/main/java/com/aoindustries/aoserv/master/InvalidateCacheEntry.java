@@ -38,9 +38,9 @@ public final class InvalidateCacheEntry {
   private final Long cacheSyncID;
 
   public InvalidateCacheEntry(
-    IntList invalidateList,
-    int host,
-    Long cacheSyncID
+      IntList invalidateList,
+      int host,
+      Long cacheSyncID
   ) {
     this.invalidateList = invalidateList;
     this.host = host;

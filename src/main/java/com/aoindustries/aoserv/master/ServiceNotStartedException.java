@@ -46,7 +46,7 @@ public class ServiceNotStartedException extends MasterServiceException {
 
   static {
     Throwables.registerSurrogateFactory(ServiceNotStartedException.class, (template, cause) ->
-      new ServiceNotStartedException(template.getMessage(), cause)
+        new ServiceNotStartedException(template.getMessage(), cause)
     );
   }
 }

@@ -95,36 +95,36 @@ public final class WhoisHistoryService implements MasterService {
    * The amount of time to keep whois history, used as a PostgreSQL interval.
    */
   private static final String
-    CLEANUP_AFTER_GOOD_ACCOUNT = "7 years", // Was 1 year, is this overkill?
-    CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE = "7 years", // Was 1 year, is this overkill?
-    CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS = "1 year";
+      CLEANUP_AFTER_GOOD_ACCOUNT = "7 years", // Was 1 year, is this overkill?
+      CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE = "7 years", // Was 1 year, is this overkill?
+      CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS = "1 year";
 
   private static void cleanup(DatabaseConnection conn, InvalidateList invalidateList) throws IOException, SQLException {
     Set<Account.Name> accountsAffected = new HashSet<>();
 
     // Open account that have balance <= $0.00 and entry is older than one year
     List<Account.Name> deletedGoodStanding = conn.updateList(
-      ObjectFactories.accountNameFactory,
-      "DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
-      + "  SELECT\n"
-      + "    wha.id\n"
-      + "  FROM\n"
-      + "               billing.\"WhoisHistoryAccount\" wha\n"
-      + "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
-      + "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
-      + "  WHERE\n"
-      // entry is older than interval
-      + "    (now() - wh.\"time\") > ?::interval\n"
-      // open account
-      + "    AND bu.canceled IS NULL\n"
-      // balance is <= $0.00
-      + "    AND (\n"
-      + "      SELECT ab.balance FROM billing.account_balances ab\n"
-      + "      WHERE bu.accounting = ab.accounting AND ab.balance > '0'::numeric\n"
-      + "      LIMIT 1\n"
-      + "    ) IS NULL\n"
-      + ") RETURNING account",
-      CLEANUP_AFTER_GOOD_ACCOUNT
+        ObjectFactories.accountNameFactory,
+        "DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
+            + "  SELECT\n"
+            + "    wha.id\n"
+            + "  FROM\n"
+            + "               billing.\"WhoisHistoryAccount\" wha\n"
+            + "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
+            + "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
+            + "  WHERE\n"
+            // entry is older than interval
+            + "    (now() - wh.\"time\") > ?::interval\n"
+            // open account
+            + "    AND bu.canceled IS NULL\n"
+            // balance is <= $0.00
+            + "    AND (\n"
+            + "      SELECT ab.balance FROM billing.account_balances ab\n"
+            + "      WHERE bu.accounting = ab.accounting AND ab.balance > '0'::numeric\n"
+            + "      LIMIT 1\n"
+            + "    ) IS NULL\n"
+            + ") RETURNING account",
+        CLEANUP_AFTER_GOOD_ACCOUNT
     );
     if (!deletedGoodStanding.isEmpty()) {
       accountsAffected.addAll(deletedGoodStanding);
@@ -135,30 +135,30 @@ public final class WhoisHistoryService implements MasterService {
 
     // Closed account that have a balance of $0.00, has not had any billing.Transaction for interval, and entry is older than interval
     List<Account.Name> deletedCanceledZero = conn.updateList(
-      ObjectFactories.accountNameFactory,
-      "DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
-      + "  SELECT\n"
-      + "    wha.id\n"
-      + "  FROM\n"
-      + "               billing.\"WhoisHistoryAccount\" wha\n"
-      + "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
-      + "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
-      + "  WHERE\n"
-      // entry is older than interval
-      + "    (now() - wh.\"time\") > ?::interval\n"
-      // closed account
-      + "    AND bu.canceled IS NOT NULL\n"
-      // has not had any accounting billing.Transaction for interval
-      + "    AND (SELECT tr.transid FROM billing.\"Transaction\" tr WHERE bu.accounting = tr.accounting AND tr.\"time\" >= (now() - ?::interval) LIMIT 1) IS NULL\n"
-      // balance is $0.00
-      + "    AND (\n"
-      + "      SELECT ab.balance FROM billing.account_balances ab\n"
-      + "      WHERE bu.accounting = ab.accounting AND ab.balance != '0'::numeric\n"
-      + "      LIMIT 1\n"
-      + "    ) IS NULL\n"
-      + ") RETURNING account",
-      CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
-      CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS
+        ObjectFactories.accountNameFactory,
+        "DELETE FROM billing.\"WhoisHistoryAccount\" WHERE id IN (\n"
+            + "  SELECT\n"
+            + "    wha.id\n"
+            + "  FROM\n"
+            + "               billing.\"WhoisHistoryAccount\" wha\n"
+            + "    INNER JOIN billing.\"WhoisHistory\"        wh  ON wha.\"whoisHistory\" = wh.id\n"
+            + "    INNER JOIN account.\"Account\"             bu  ON wha.account          = bu.accounting\n"
+            + "  WHERE\n"
+            // entry is older than interval
+            + "    (now() - wh.\"time\") > ?::interval\n"
+            // closed account
+            + "    AND bu.canceled IS NOT NULL\n"
+            // has not had any accounting billing.Transaction for interval
+            + "    AND (SELECT tr.transid FROM billing.\"Transaction\" tr WHERE bu.accounting = tr.accounting AND tr.\"time\" >= (now() - ?::interval) LIMIT 1) IS NULL\n"
+            // balance is $0.00
+            + "    AND (\n"
+            + "      SELECT ab.balance FROM billing.account_balances ab\n"
+            + "      WHERE bu.accounting = ab.accounting AND ab.balance != '0'::numeric\n"
+            + "      LIMIT 1\n"
+            + "    ) IS NULL\n"
+            + ") RETURNING account",
+        CLEANUP_AFTER_CLOSED_ACCOUNT_ZERO_BALANCE,
+        CLEANUP_AFTER_CLOSED_ACCOUNT_NO_TRANSACTIONS
     );
     if (!deletedCanceledZero.isEmpty()) {
       accountsAffected.addAll(deletedCanceledZero);
@@ -168,17 +168,17 @@ public final class WhoisHistoryService implements MasterService {
     }
     if (!accountsAffected.isEmpty()) {
       invalidateList.addTable(conn,
-        Table.TableID.WhoisHistoryAccount,
-        accountsAffected,
-        InvalidateList.allHosts,
-        false
+          Table.TableID.WhoisHistoryAccount,
+          accountsAffected,
+          InvalidateList.allHosts,
+          false
       );
       // Affects visibility, so invalidate WhoisHistory, too
       invalidateList.addTable(conn,
-        Table.TableID.WhoisHistory,
-        accountsAffected,
-        InvalidateList.allHosts,
-        false
+          Table.TableID.WhoisHistory,
+          accountsAffected,
+          InvalidateList.allHosts,
+          false
       );
     }
     // Cleanup any orphaned data
@@ -219,7 +219,7 @@ public final class WhoisHistoryService implements MasterService {
    * Runs hourly, 12 minutes after the hour.
    */
   private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) ->
-    minute == 12;
+      minute == 12;
 
   private final CronJob cronJob = new CronJob() {
 
@@ -245,15 +245,15 @@ public final class WhoisHistoryService implements MasterService {
       try {
         try (
           ProcessTimer timer = new ProcessTimer(
-            logger,
-            getClass().getName(),
-            "runCronJob",
-            WhoisHistoryService.class.getSimpleName() + " - Whois History",
-            "Looking up whois and cleaning old records",
-            TIMER_MAX_TIME,
-            TIMER_REMINDER_INTERVAL
-          )
-        ) {
+                logger,
+                getClass().getName(),
+                "runCronJob",
+                WhoisHistoryService.class.getSimpleName() + " - Whois History",
+                "Looking up whois and cleaning old records",
+                TIMER_MAX_TIME,
+                TIMER_REMINDER_INTERVAL
+            )
+            ) {
           MasterServer.executorService.submit(timer);
 
           // Start the transaction
@@ -282,12 +282,12 @@ public final class WhoisHistoryService implements MasterService {
               final long targetSleepTime = PASS_COMPLETION_TARGET / registrableDomainCount;
               if (DEBUG) {
                 System.out.println(
-                  WhoisHistoryService.class.getSimpleName()
-                  + ": Target sleep time for "
-                  + registrableDomainCount
-                  + " registrable "
-                  + (registrableDomainCount == 1 ? "domain" : "domains")
-                  + " is " + targetSleepTime + " ms"
+                    WhoisHistoryService.class.getSimpleName()
+                        + ": Target sleep time for "
+                        + registrableDomainCount
+                        + " registrable "
+                        + (registrableDomainCount == 1 ? "domain" : "domains")
+                        + " is " + targetSleepTime + " ms"
                 );
               }
 
@@ -298,31 +298,31 @@ public final class WhoisHistoryService implements MasterService {
               {
                 // Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
                 final Map<DomainName, Timestamp> lastChecked = conn.queryCall(
-                  results -> {
-                    try {
-                      Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
-                      int oldNotUsedCount = 0;
-                      while (results.next()) {
-                        DomainName registrableDomain = DomainName.valueOf(results.getString(1));
-                        if (registrableDomains.keySet().contains(registrableDomain)) {
-                          map.put(
-                            registrableDomain,
-                            results.getTimestamp(2)
-                          );
-                        } else {
-                          oldNotUsedCount++;
+                    results -> {
+                      try {
+                        Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
+                        int oldNotUsedCount = 0;
+                        while (results.next()) {
+                          DomainName registrableDomain = DomainName.valueOf(results.getString(1));
+                          if (registrableDomains.keySet().contains(registrableDomain)) {
+                            map.put(
+                                registrableDomain,
+                                results.getTimestamp(2)
+                            );
+                          } else {
+                            oldNotUsedCount++;
+                          }
                         }
+                        if (DEBUG) {
+                          System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
+                        }
+                        return map;
+                      } catch (ValidationException e) {
+                        throw new SQLException(e);
                       }
-                      if (DEBUG) {
-                        System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
-                      }
-                      return map;
-                    } catch (ValidationException e) {
-                      throw new SQLException(e);
-                    }
-                  },
-                  // TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
-                  "select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
+                    },
+                    // TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
+                    "select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
                 );
                 lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
                 for (DomainName registrableDomain : registrableDomains.keySet()) {
@@ -389,31 +389,31 @@ public final class WhoisHistoryService implements MasterService {
                   // TODO: Store the parsed nameservers, too?  At least for when is success.
                   // This could be a batch, but this is short and simple
                   int whoisHistory = conn.updateInt(
-                    "INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
-                    registrableDomain,
-                    exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
-                    output,
-                    error
+                      "INSERT INTO billing.\"WhoisHistory\" (\"registrableDomain\", \"exitStatus\", \"output\", error) VALUES (?,?,?,?) RETURNING id",
+                      registrableDomain,
+                      exitStatus == null ? DatabaseAccess.Null.INTEGER : exitStatus,
+                      output,
+                      error
                   );
                   Set<Account.Name> accounts = registrableDomains.get(registrableDomain);
                   for (Account.Name account : accounts) {
                     conn.update(
-                      "insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
-                      whoisHistory,
-                      account
+                        "insert into billing.\"WhoisHistoryAccount\" (\"whoisHistory\", account) values(?,?)",
+                        whoisHistory,
+                        account
                     );
                   }
                   invalidateList.addTable(conn,
-                    Table.TableID.WhoisHistory,
-                    accounts,
-                    InvalidateList.allHosts,
-                    false
+                      Table.TableID.WhoisHistory,
+                      accounts,
+                      InvalidateList.allHosts,
+                      false
                   );
                   invalidateList.addTable(conn,
-                    Table.TableID.WhoisHistoryAccount,
-                    accounts,
-                    InvalidateList.allHosts,
-                    false
+                      Table.TableID.WhoisHistoryAccount,
+                      accounts,
+                      InvalidateList.allHosts,
+                      false
                   );
                   conn.commit();
                   MasterServer.invalidateTables(conn, invalidateList, null);
@@ -468,6 +468,7 @@ public final class WhoisHistoryService implements MasterService {
     }
     return merged;
   }
+
   // </editor-fold>
 
   /**
@@ -484,34 +485,34 @@ public final class WhoisHistoryService implements MasterService {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // id is that of the associated billing.WhoisHistoryAccount
           return conn.queryCall(
-            results -> {
-              if (results.next()) {
-                return new Tuple2<>(results.getString(1), results.getString(2));
-              } else {
-                throw new NoRowException();
-              }
-            },
-            "SELECT\n"
-            + "  wh.\"output\",\n"
-            + "  wh.error\n"
-            + "FROM\n"
-            + "  billing.\"WhoisHistory\"                   wh\n"
-            + "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\"\n"
-            + "WHERE\n"
-            + "  wha.id=?",
-            whoisHistoryAccount
+              results -> {
+                if (results.next()) {
+                  return new Tuple2<>(results.getString(1), results.getString(2));
+                } else {
+                  throw new NoRowException();
+                }
+              },
+              "SELECT\n"
+                  + "  wh.\"output\",\n"
+                  + "  wh.error\n"
+                  + "FROM\n"
+                  + "  billing.\"WhoisHistory\"                   wh\n"
+                  + "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\"\n"
+                  + "WHERE\n"
+                  + "  wha.id=?",
+              whoisHistoryAccount
           );
         } else {
           return conn.queryCall(
-            results -> {
-              if (results.next()) {
-                return new Tuple2<>(results.getString(1), results.getString(2));
-              } else {
-                throw new NoRowException();
-              }
-            },
-            "select \"output\", error from billing.\"WhoisHistory\" where id=?",
-            whoisHistoryAccount
+              results -> {
+                if (results.next()) {
+                  return new Tuple2<>(results.getString(1), results.getString(2));
+                } else {
+                  throw new NoRowException();
+                }
+              },
+              "select \"output\", error from billing.\"WhoisHistory\" where id=?",
+              whoisHistoryAccount
           );
         }
       } else {
@@ -521,64 +522,64 @@ public final class WhoisHistoryService implements MasterService {
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
         // id is that of the associated billing.WhoisHistoryAccount
         return conn.queryCall(
-          results -> {
-            if (results.next()) {
-              return new Tuple2<>(results.getString(1), results.getString(2));
-            } else {
-              throw new NoRowException();
-            }
-          },
-          "SELECT\n"
-          + "  wh.\"output\",\n"
-          + "  wh.error\n"
-          + "FROM\n"
-          + "  account.\"User\" un,\n"
-          + "  billing.\"Package\" pk,\n"
-          + TableHandler.BU1_PARENTS_JOIN
-          + "  billing.\"WhoisHistoryAccount\" wha,\n"
-          + "  billing.\"WhoisHistory\" wh\n"
-          + "WHERE\n"
-          + "  un.username=?\n"
-          + "  AND un.package=pk.name\n"
-          + "  AND (\n"
-          + TableHandler.PK_BU1_PARENTS_WHERE
-          + "  )\n"
-          + "  AND bu1.accounting = wha.account\n"
-          + "  AND wha.\"whoisHistory\" = wh.id\n"
-          + "  AND wha.id=?",
-          currentAdministrator,
-          whoisHistoryAccount
+            results -> {
+              if (results.next()) {
+                return new Tuple2<>(results.getString(1), results.getString(2));
+              } else {
+                throw new NoRowException();
+              }
+            },
+            "SELECT\n"
+                + "  wh.\"output\",\n"
+                + "  wh.error\n"
+                + "FROM\n"
+                + "  account.\"User\" un,\n"
+                + "  billing.\"Package\" pk,\n"
+                + TableHandler.BU1_PARENTS_JOIN
+                + "  billing.\"WhoisHistoryAccount\" wha,\n"
+                + "  billing.\"WhoisHistory\" wh\n"
+                + "WHERE\n"
+                + "  un.username=?\n"
+                + "  AND un.package=pk.name\n"
+                + "  AND (\n"
+                + TableHandler.PK_BU1_PARENTS_WHERE
+                + "  )\n"
+                + "  AND bu1.accounting = wha.account\n"
+                + "  AND wha.\"whoisHistory\" = wh.id\n"
+                + "  AND wha.id=?",
+            currentAdministrator,
+            whoisHistoryAccount
         );
       } else {
         return conn.queryCall(
-          results -> {
-            if (results.next()) {
-              return new Tuple2<>(results.getString(1), results.getString(2));
-            } else {
-              throw new NoRowException();
-            }
-          },
-          "SELECT\n"
-          + "  wh.\"output\",\n"
-          + "  wh.error\n"
-          + "FROM\n"
-          + "  account.\"User\" un,\n"
-          + "  billing.\"Package\" pk,\n"
-          + TableHandler.BU1_PARENTS_JOIN
-          + "  billing.\"WhoisHistoryAccount\" wha,\n"
-          + "  billing.\"WhoisHistory\" wh\n"
-          + "WHERE\n"
-          + "  un.username=?\n"
-          + "  AND un.package=pk.name\n"
-          + "  AND (\n"
-          + TableHandler.PK_BU1_PARENTS_WHERE
-          + "  )\n"
-          + "  AND bu1.accounting = wha.account\n"
-          + "  AND wha.\"whoisHistory\" = wh.id\n"
-          + "  AND wh.id=?\n"
-          + "LIMIT 1", // Might be reached through multiple accounts
-          currentAdministrator,
-          whoisHistoryAccount
+            results -> {
+              if (results.next()) {
+                return new Tuple2<>(results.getString(1), results.getString(2));
+              } else {
+                throw new NoRowException();
+              }
+            },
+            "SELECT\n"
+                + "  wh.\"output\",\n"
+                + "  wh.error\n"
+                + "FROM\n"
+                + "  account.\"User\" un,\n"
+                + "  billing.\"Package\" pk,\n"
+                + TableHandler.BU1_PARENTS_JOIN
+                + "  billing.\"WhoisHistoryAccount\" wha,\n"
+                + "  billing.\"WhoisHistory\" wh\n"
+                + "WHERE\n"
+                + "  un.username=?\n"
+                + "  AND un.package=pk.name\n"
+                + "  AND (\n"
+                + TableHandler.PK_BU1_PARENTS_WHERE
+                + "  )\n"
+                + "  AND bu1.accounting = wha.account\n"
+                + "  AND wha.\"whoisHistory\" = wh.id\n"
+                + "  AND wh.id=?\n"
+                + "LIMIT 1", // Might be reached through multiple accounts
+            currentAdministrator,
+            whoisHistoryAccount
         );
       }
     }
@@ -599,40 +600,40 @@ public final class WhoisHistoryService implements MasterService {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // Use join and id from WhoisHistoryAccount
           MasterServer.writeObjects(
-            conn,
-            source,
-            out,
-            provideProgress,
-            CursorMode.FETCH,
-            new WhoisHistory(),
-            "SELECT\n"
-            + "  wha.id,\n"
-            + "  wh.\"registrableDomain\",\n"
-            + "  wh.\"time\",\n"
-            + "  wh.\"exitStatus\",\n"
-            // Protocol conversion
-            + "  wha.account AS accounting\n"
-            + "FROM\n"
-            + "  billing.\"WhoisHistory\"                   wh\n"
-            + "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\""
+              conn,
+              source,
+              out,
+              provideProgress,
+              CursorMode.FETCH,
+              new WhoisHistory(),
+              "SELECT\n"
+                  + "  wha.id,\n"
+                  + "  wh.\"registrableDomain\",\n"
+                  + "  wh.\"time\",\n"
+                  + "  wh.\"exitStatus\",\n"
+                  // Protocol conversion
+                  + "  wha.account AS accounting\n"
+                  + "FROM\n"
+                  + "  billing.\"WhoisHistory\"                   wh\n"
+                  + "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\""
           );
         } else {
           MasterServer.writeObjects(
-            conn,
-            source,
-            out,
-            provideProgress,
-            CursorMode.FETCH,
-            new WhoisHistory(),
-            "select\n"
-            + "  id,\n"
-            + "  \"registrableDomain\",\n"
-            + "  \"time\",\n"
-            + "  \"exitStatus\",\n"
-            // Protocol conversion
-            + "  null as accounting\n"
-            + "from\n"
-            + "  billing.\"WhoisHistory\""
+              conn,
+              source,
+              out,
+              provideProgress,
+              CursorMode.FETCH,
+              new WhoisHistory(),
+              "select\n"
+                  + "  id,\n"
+                  + "  \"registrableDomain\",\n"
+                  + "  \"time\",\n"
+                  + "  \"exitStatus\",\n"
+                  // Protocol conversion
+                  + "  null as accounting\n"
+                  + "from\n"
+                  + "  billing.\"WhoisHistory\""
           );
         }
       }
@@ -648,65 +649,65 @@ public final class WhoisHistoryService implements MasterService {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // Use join and id from WhoisHistoryAccount
           MasterServer.writeObjects(
-            conn,
-            source,
-            out,
-            provideProgress,
-            CursorMode.AUTO,
-            new WhoisHistory(),
-            "select\n"
-            + "  wha.id,\n"
-            + "  wh.\"registrableDomain\",\n"
-            + "  wh.\"time\",\n"
-            + "  wh.\"exitStatus\",\n"
-            // Protocol conversion
-            + "  wha.account as accounting\n"
-            + "from\n"
-            + "  account.\"User\" un,\n"
-            + "  billing.\"Package\" pk,\n"
-            + TableHandler.BU1_PARENTS_JOIN
-            + "  billing.\"WhoisHistoryAccount\" wha,\n"
-            + "  billing.\"WhoisHistory\" wh\n"
-            + "where\n"
-            + "  un.username=?\n"
-            + "  and un.package=pk.name\n"
-            + "  and (\n"
-            + TableHandler.PK_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting = wha.account\n"
-            + "  and wha.\"whoisHistory\" = wh.id",
-            source.getCurrentAdministrator()
+              conn,
+              source,
+              out,
+              provideProgress,
+              CursorMode.AUTO,
+              new WhoisHistory(),
+              "select\n"
+                  + "  wha.id,\n"
+                  + "  wh.\"registrableDomain\",\n"
+                  + "  wh.\"time\",\n"
+                  + "  wh.\"exitStatus\",\n"
+                  // Protocol conversion
+                  + "  wha.account as accounting\n"
+                  + "from\n"
+                  + "  account.\"User\" un,\n"
+                  + "  billing.\"Package\" pk,\n"
+                  + TableHandler.BU1_PARENTS_JOIN
+                  + "  billing.\"WhoisHistoryAccount\" wha,\n"
+                  + "  billing.\"WhoisHistory\" wh\n"
+                  + "where\n"
+                  + "  un.username=?\n"
+                  + "  and un.package=pk.name\n"
+                  + "  and (\n"
+                  + TableHandler.PK_BU1_PARENTS_WHERE
+                  + "  )\n"
+                  + "  and bu1.accounting = wha.account\n"
+                  + "  and wha.\"whoisHistory\" = wh.id",
+              source.getCurrentAdministrator()
           );
         } else {
           MasterServer.writeObjects(
-            conn,
-            source,
-            out,
-            provideProgress,
-            CursorMode.AUTO,
-            new WhoisHistory(),
-            "select distinct\n"
-            + "  wh.id,\n"
-            + "  wh.\"registrableDomain\",\n"
-            + "  wh.\"time\",\n"
-            + "  wh.\"exitStatus\",\n"
-            // Protocol conversion
-            + "  null as accounting\n"
-            + "from\n"
-            + "  account.\"User\" un,\n"
-            + "  billing.\"Package\" pk,\n"
-            + TableHandler.BU1_PARENTS_JOIN
-            + "  billing.\"WhoisHistoryAccount\" wha,\n"
-            + "  billing.\"WhoisHistory\" wh\n"
-            + "where\n"
-            + "  un.username=?\n"
-            + "  and un.package=pk.name\n"
-            + "  and (\n"
-            + TableHandler.PK_BU1_PARENTS_WHERE
-            + "  )\n"
-            + "  and bu1.accounting = wha.account\n"
-            + "  and wha.\"whoisHistory\" = wh.id",
-            source.getCurrentAdministrator()
+              conn,
+              source,
+              out,
+              provideProgress,
+              CursorMode.AUTO,
+              new WhoisHistory(),
+              "select distinct\n"
+                  + "  wh.id,\n"
+                  + "  wh.\"registrableDomain\",\n"
+                  + "  wh.\"time\",\n"
+                  + "  wh.\"exitStatus\",\n"
+                  // Protocol conversion
+                  + "  null as accounting\n"
+                  + "from\n"
+                  + "  account.\"User\" un,\n"
+                  + "  billing.\"Package\" pk,\n"
+                  + TableHandler.BU1_PARENTS_JOIN
+                  + "  billing.\"WhoisHistoryAccount\" wha,\n"
+                  + "  billing.\"WhoisHistory\" wh\n"
+                  + "where\n"
+                  + "  un.username=?\n"
+                  + "  and un.package=pk.name\n"
+                  + "  and (\n"
+                  + TableHandler.PK_BU1_PARENTS_WHERE
+                  + "  )\n"
+                  + "  and bu1.accounting = wha.account\n"
+                  + "  and wha.\"whoisHistory\" = wh.id",
+              source.getCurrentAdministrator()
           );
         }
       }

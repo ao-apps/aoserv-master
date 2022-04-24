@@ -45,20 +45,20 @@ public final class MasterDatabase extends Database {
 
   private MasterDatabase() throws IOException {
     super(
-      MasterConfiguration.getDBDriver(),
-      MasterConfiguration.getDBURL(),
-      MasterConfiguration.getDBUser(),
-      MasterConfiguration.getDBPassword(),
-      MasterConfiguration.getDBConnectionPoolSize(),
-      MasterConfiguration.getDBMaxConnectionAge(),
-      logger
+        MasterConfiguration.getDBDriver(),
+        MasterConfiguration.getDBURL(),
+        MasterConfiguration.getDBUser(),
+        MasterConfiguration.getDBPassword(),
+        MasterConfiguration.getDBConnectionPoolSize(),
+        MasterConfiguration.getDBMaxConnectionAge(),
+        logger
     );
   }
 
   public static MasterDatabase getDatabase() throws IOException {
     synchronized (MasterDatabase.class) {
       if (masterDatabase == null) {
-        masterDatabase=new MasterDatabase();
+        masterDatabase = new MasterDatabase();
       }
       return masterDatabase;
     }

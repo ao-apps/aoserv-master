@@ -51,129 +51,129 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Device(),
-      "select"
-      + "  id,\n"
-      + "  server,\n"
-      + "  \"deviceId\",\n"
-      + "  description,\n"
-      + "  delete_route,\n"
-      + "  host(gateway) as gateway,\n"
-      + "  host(network) as network,\n"
-      + "  host(broadcast) as broadcast,\n"
-      + "  mac_address::text,\n"
-      + "  max_bit_rate,\n"
-      + "  monitoring_bit_rate_low,\n"
-      + "  monitoring_bit_rate_medium,\n"
-      + "  monitoring_bit_rate_high,\n"
-      + "  monitoring_bit_rate_critical,\n"
-      + "  monitoring_enabled\n"
-      + "from\n"
-      + "  net.\"Device\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Device(),
+        "select"
+            + "  id,\n"
+            + "  server,\n"
+            + "  \"deviceId\",\n"
+            + "  description,\n"
+            + "  delete_route,\n"
+            + "  host(gateway) as gateway,\n"
+            + "  host(network) as network,\n"
+            + "  host(broadcast) as broadcast,\n"
+            + "  mac_address::text,\n"
+            + "  max_bit_rate,\n"
+            + "  monitoring_bit_rate_low,\n"
+            + "  monitoring_bit_rate_medium,\n"
+            + "  monitoring_bit_rate_high,\n"
+            + "  monitoring_bit_rate_critical,\n"
+            + "  monitoring_enabled\n"
+            + "from\n"
+            + "  net.\"Device\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Device(),
-      "select distinct\n"
-      + "  nd.id,\n"
-      + "  nd.server,\n"
-      + "  nd.\"deviceId\",\n"
-      + "  nd.description,\n"
-      + "  nd.delete_route,\n"
-      + "  host(nd.gateway) as gateway,\n"
-      + "  host(nd.network) as network,\n"
-      + "  host(nd.broadcast) as broadcast,\n"
-      + "  nd.mac_address::text,\n"
-      + "  nd.max_bit_rate,\n"
-      + "  nd.monitoring_bit_rate_low,\n"
-      + "  nd.monitoring_bit_rate_medium,\n"
-      + "  nd.monitoring_bit_rate_high,\n"
-      + "  nd.monitoring_bit_rate_critical,\n"
-      + "  nd.monitoring_enabled\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms\n"
-      + "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
-      + "  net.\"Device\" nd\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and (\n"
-      + "    ms.server=nd.server\n"
-      + "    or ff.server=nd.server\n"
-      + "    or (\n"
-      + "      select\n"
-      + "        ffr.id\n"
-      + "      from\n"
-      + "        backup.\"FileReplication\" ffr\n"
-      + "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-      + "        inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
-      + "      where\n"
-      + "        ms.server=ffr.server\n"
-      + "        and bp.ao_server=nd.server\n"
-      + "        and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
-      + "      limit 1\n"
-      + "    ) is not null\n"
-      + "  )",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Device(),
+        "select distinct\n"
+            + "  nd.id,\n"
+            + "  nd.server,\n"
+            + "  nd.\"deviceId\",\n"
+            + "  nd.description,\n"
+            + "  nd.delete_route,\n"
+            + "  host(nd.gateway) as gateway,\n"
+            + "  host(nd.network) as network,\n"
+            + "  host(nd.broadcast) as broadcast,\n"
+            + "  nd.mac_address::text,\n"
+            + "  nd.max_bit_rate,\n"
+            + "  nd.monitoring_bit_rate_low,\n"
+            + "  nd.monitoring_bit_rate_medium,\n"
+            + "  nd.monitoring_bit_rate_high,\n"
+            + "  nd.monitoring_bit_rate_critical,\n"
+            + "  nd.monitoring_enabled\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms\n"
+            + "  left join linux.\"Server\" ff on ms.server=ff.failover_server,\n"
+            + "  net.\"Device\" nd\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and (\n"
+            + "    ms.server=nd.server\n"
+            + "    or ff.server=nd.server\n"
+            + "    or (\n"
+            + "      select\n"
+            + "        ffr.id\n"
+            + "      from\n"
+            + "        backup.\"FileReplication\" ffr\n"
+            + "        inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
+            + "        inner join linux.\"Server\" bpao on bp.ao_server=bpao.server\n" // Only allow access to the device device ID for failovers
+            + "      where\n"
+            + "        ms.server=ffr.server\n"
+            + "        and bp.ao_server=nd.server\n"
+            + "        and bpao.\"daemonDeviceId\"=nd.\"deviceId\"\n" // Only allow access to the device device ID for failovers
+            + "      limit 1\n"
+            + "    ) is not null\n"
+            + "  )",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Device(),
-      "select\n" // distinct
-      + "  nd.id,\n"
-      + "  nd.server,\n"
-      + "  nd.\"deviceId\",\n"
-      + "  nd.description,\n"
-      + "  nd.delete_route,\n"
-      + "  host(nd.gateway) as gateway,\n"
-      + "  host(nd.network) as network,\n"
-      + "  host(nd.broadcast) as broadcast,\n"
-      + "  nd.mac_address::text,\n"
-      + "  nd.max_bit_rate,\n"
-      + "  nd.monitoring_bit_rate_low,\n"
-      + "  nd.monitoring_bit_rate_medium,\n"
-      + "  nd.monitoring_bit_rate_high,\n"
-      + "  nd.monitoring_bit_rate_critical,\n"
-      + "  nd.monitoring_enabled\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      // Allow failover destinations
-      //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-      //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-      //+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
-      + "  net.\"Device\" nd\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting\n"
-      + "  and (\n"
-      + "    bs.server=nd.server\n"
-      // Need distinct above when using this or
-      //+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
-      + "  )",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Device(),
+        "select\n" // distinct
+            + "  nd.id,\n"
+            + "  nd.server,\n"
+            + "  nd.\"deviceId\",\n"
+            + "  nd.description,\n"
+            + "  nd.delete_route,\n"
+            + "  host(nd.gateway) as gateway,\n"
+            + "  host(nd.network) as network,\n"
+            + "  host(nd.broadcast) as broadcast,\n"
+            + "  nd.mac_address::text,\n"
+            + "  nd.max_bit_rate,\n"
+            + "  nd.monitoring_bit_rate_low,\n"
+            + "  nd.monitoring_bit_rate_medium,\n"
+            + "  nd.monitoring_bit_rate_high,\n"
+            + "  nd.monitoring_bit_rate_critical,\n"
+            + "  nd.monitoring_enabled\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            // Allow failover destinations
+            //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+            //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
+            //+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
+            + "  net.\"Device\" nd\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting\n"
+            + "  and (\n"
+            + "    bs.server=nd.server\n"
+            // Need distinct above when using this or
+            //+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
+            + "  )",
+        source.getCurrentAdministrator()
     );
   }
 }

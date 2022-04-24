@@ -49,13 +49,13 @@ public class DeviceId_GetTableHandler extends TableHandler.GetTableHandlerPublic
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new DeviceId(),
-      "select * from net.\"DeviceId\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new DeviceId(),
+        "select * from net.\"DeviceId\""
     );
   }
 }

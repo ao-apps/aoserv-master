@@ -52,13 +52,13 @@ public class Reseller_GetTableHandler extends TableHandler.GetTableHandlerByRole
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Reseller(),
-      "select * from reseller.\"Reseller\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Reseller(),
+        "select * from reseller.\"Reseller\""
     );
   }
 
@@ -70,26 +70,26 @@ public class Reseller_GetTableHandler extends TableHandler.GetTableHandlerByRole
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Reseller(),
-      "select\n"
-      + "  re.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  reseller.\"Reseller\" re\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  ) and bu1.accounting=re.accounting",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Reseller(),
+        "select\n"
+            + "  re.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  reseller.\"Reseller\" re\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  ) and bu1.accounting=re.accounting",
+        source.getCurrentAdministrator()
     );
   }
 }

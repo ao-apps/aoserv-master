@@ -39,583 +39,583 @@ public final class VirtualServer implements Comparable<VirtualServer> {
   static VirtualServer[] getVirtualServers() {
     List<VirtualServer> virtualServers = new ArrayList<>();
     virtualServers.add(
-      new VirtualServer(
-        "ao1.kc.aoindustries.com",
-        null,
-        null,
-        1024,
-        512,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
-        }
-      )
+        new VirtualServer(
+            "ao1.kc.aoindustries.com",
+            null,
+            null,
+            1024,
+            512,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "centos5.aoindustries.com",
-        null,
-        null,
-        256,
-        0,
-        ProcessorType.XEON_LV,
-        null,
-        -1,
-        2,
-        31,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
-        }
-      )
+        new VirtualServer(
+            "centos5.aoindustries.com",
+            null,
+            null,
+            256,
+            0,
+            ProcessorType.XEON_LV,
+            null,
+            -1,
+            2,
+            31,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "centos5-build64.aoindustries.com",
-        null,
-        null,
-        256,
-        0,
-        ProcessorType.XEON_LV,
-        null,
-        -1,
-        2,
-        31,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
-        }
-      )
+        new VirtualServer(
+            "centos5-build64.aoindustries.com",
+            null,
+            null,
+            256,
+            0,
+            ProcessorType.XEON_LV,
+            null,
+            -1,
+            2,
+            31,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "daissystems.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 4480+896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "daissystems.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 4480 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ipharos.com",
-        "xen907-1.fc.aoindustries.com",
-        "xen917-5.fc.aoindustries.com",
-        4096,
-        0, // Need 2048, Desire 4096
-        null,
-        null,
-        -1,
-        4,
-        500, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500)
-        }
-      )
+        new VirtualServer(
+            "ipharos.com",
+            "xen907-1.fc.aoindustries.com",
+            "xen917-5.fc.aoindustries.com",
+            4096,
+            0, // Need 2048, Desire 4096
+            null,
+            null,
+            -1,
+            4,
+            500, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "db1.fc.ipharos.com",
-        "xen907-1.fc.aoindustries.com",
-        "xen917-5.fc.aoindustries.com",
-        2048, // Need 4096
-        0, // Need 4096
-        null,
-        null,
-        -1,
-        4,
-        250, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
-        }
-      )
+        new VirtualServer(
+            "db1.fc.ipharos.com",
+            "xen907-1.fc.aoindustries.com",
+            "xen917-5.fc.aoindustries.com",
+            2048, // Need 4096
+            0, // Need 4096
+            null,
+            null,
+            -1,
+            4,
+            250, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.ipharos.com",
-        "xen917-5.fc.aoindustries.com",
-        null, // "xen907-1.fc.aoindustries.com",
-        2048, // Need 4096
-        0, // Need 4096
-        null,
-        null,
-        -1,
-        4,
-        250, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896+896, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 1000)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.ipharos.com",
+            "xen917-5.fc.aoindustries.com",
+            null, // "xen907-1.fc.aoindustries.com",
+            2048, // Need 4096
+            0, // Need 4096
+            null,
+            null,
+            -1,
+            4,
+            250, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896 + 896, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 1000)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "master.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "master.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ns1.aoindustries.com",
-        null, //"xen914-5.fc.lnxhosting.ca",
-        null,
-        256,
-        256,
-        null,
-        null,
-        -1,
-        2,
-        125,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
-        }
-      )
+        new VirtualServer(
+            "ns1.aoindustries.com",
+            null, //"xen914-5.fc.lnxhosting.ca",
+            null,
+            256,
+            256,
+            null,
+            null,
+            -1,
+            2,
+            125,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ns4.aoindustries.com",
-        null, //"xen917-5.fc.aoindustries.com",
-        null,
-        256,
-        256,
-        null,
-        null,
-        -1,
-        2,
-        125,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
-        }
-      )
+        new VirtualServer(
+            "ns4.aoindustries.com",
+            null, //"xen917-5.fc.aoindustries.com",
+            null,
+            256,
+            256,
+            null,
+            null,
+            -1,
+            2,
+            125,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "w1.fc.insightsys.com",
-        null,
-        null,
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        2,
-        125, // Desire 500,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "w1.fc.insightsys.com",
+            null,
+            null,
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            2,
+            125, // Desire 500,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.limlom.com",
-        "xen917-5.fc.aoindustries.com",
-        null,
-        2048,
-        0,  // Need 2048
-        null,
-        null,
-        -1,
-        1,
-        250, // Desire 1000,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.limlom.com",
+            "xen917-5.fc.aoindustries.com",
+            null,
+            2048,
+            0,  // Need 2048
+            null,
+            null,
+            -1,
+            1,
+            250, // Desire 1000,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.enduraquest.com",
-        "xen917-4.fc.aoindustries.com",
-        null,
-        4096,
-        2048, // Desire 4096
-        null,
-        null,
-        -1,
-        2,
-        1000,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1000, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.enduraquest.com",
+            "xen917-4.fc.aoindustries.com",
+            null,
+            4096,
+            2048, // Desire 4096
+            null,
+            null,
+            -1,
+            2,
+            1000,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1000, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.lnxhosting.ca",
-        "xen914-5.fc.lnxhosting.ca",
-        null,
-        4096,
-        4096,
-        null,
-        ProcessorArchitecture.X86_64,
-        -1,
-        4,
-        500,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.lnxhosting.ca",
+            "xen914-5.fc.lnxhosting.ca",
+            null,
+            4096,
+            4096,
+            null,
+            ProcessorArchitecture.X86_64,
+            -1,
+            4,
+            500,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "backup1.lnxhosting.ca",
-        "xen914-5.fc.lnxhosting.ca",
-        null,
-        512,
-        512,
-        null,
-        null,
-        -1,
-        2,
-        125, // Desire 250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62),
-          new VirtualDisk("/dev/xvdb", 8064+896*2, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
-        }
-      )
+        new VirtualServer(
+            "backup1.lnxhosting.ca",
+            "xen914-5.fc.lnxhosting.ca",
+            null,
+            512,
+            512,
+            null,
+            null,
+            -1,
+            2,
+            125, // Desire 250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62),
+                new VirtualDisk("/dev/xvdb", 8064 + 896 * 2, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.newmediaworks.com",
-        null,
-        null,
-        4096,
-        4096,
-        null,
-        null,
-        -1,
-        2,
-        1000, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.newmediaworks.com",
+            null,
+            null,
+            4096,
+            4096,
+            null,
+            null,
+            -1,
+            2,
+            1000, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.objectevolution.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896+896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.objectevolution.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896 + 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.showsandshoots.com",
-        null,
-        null,
-        512, // Desire 1024
-        512, // Desire 1024
-        null,
-        null,
-        -1,
-        2,
-        125, // Desire 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.showsandshoots.com",
+            null,
+            null,
+            512, // Desire 1024
+            512, // Desire 1024
+            null,
+            null,
+            -1,
+            2,
+            125, // Desire 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.softwaremiracles.com",
-        null,
-        null,
-        512,
-        512,
-        null,
-        null,
-        -1,
-        2,
-        125, // Desire 250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.softwaremiracles.com",
+            null,
+            null,
+            512,
+            512,
+            null,
+            null,
+            -1,
+            2,
+            125, // Desire 250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.kc.aoindustries.com",
-        null,
-        null,
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 3584+896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.kc.aoindustries.com",
+            null,
+            null,
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 3584 + 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.kc.artizen.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www1.kc.artizen.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.nl.pertinence.net",
-        null,
-        null,
-        2048,
-        1024,
-        null,
-        null,
-        -1,
-        4,
-        125, // Desire 250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 4480+896*2, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Need more space
-        }
-      )
+        new VirtualServer(
+            "www1.nl.pertinence.net",
+            null,
+            null,
+            2048,
+            1024,
+            null,
+            null,
+            -1,
+            4,
+            125, // Desire 250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 4480 + 896 * 2, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Need more space
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www2.fc.newmediaworks.com",
-        "xen907-5.fc.aoindustries.com",
-        null,
-        4096,
-        4096,
-        null,
-        null,
-        -1,
-        2,
-        1000,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500)
-        }
-      )
+        new VirtualServer(
+            "www2.fc.newmediaworks.com",
+            "xen907-5.fc.aoindustries.com",
+            null,
+            4096,
+            4096,
+            null,
+            null,
+            -1,
+            2,
+            1000,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www2.kc.aoindustries.com",
-        null,
-        null,
-        1536, // Had solution at 1024
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
-        }
-      )
+        new VirtualServer(
+            "www2.kc.aoindustries.com",
+            null,
+            null,
+            1536, // Had solution at 1024
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www3.kc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        125,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www3.kc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            125,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www4.kc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www4.kc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www5.kc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www5.kc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www6.kc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
-        }
-      )
+        new VirtualServer(
+            "www6.kc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www7.fc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        125,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
-        }
-      )
+        new VirtualServer(
+            "www7.fc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            125,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www8.kc.aoindustries.com",
-        null,
-        null,
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "www8.kc.aoindustries.com",
+            null,
+            null,
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www9.fc.aoindustries.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "www9.fc.aoindustries.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www.keepandshare.com",
-        "xen917-5.fc.aoindustries.com",
-        null,
-        8192,
-        4096, // Desire 8192
-        null,
-        null,
-        -1,
-        8,
-        750, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 7450*2, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500) // TODO: Estimated size
-        }
-      )
+        new VirtualServer(
+            "www.keepandshare.com",
+            "xen917-5.fc.aoindustries.com",
+            null,
+            8192,
+            4096, // Desire 8192
+            null,
+            null,
+            -1,
+            8,
+            750, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 7450 * 2, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500) // TODO: Estimated size
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www.swimconnection.com",
-        null,
-        null,
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        2,
-        250, // Need 1000
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
-        }
-      )
+        new VirtualServer(
+            "www.swimconnection.com",
+            null,
+            null,
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            2,
+            250, // Need 1000
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.everylocalad.com",
-        null,
-        null,
-        256,
-        256,
-        null,
-        null,
-        -1,
-        2,
-        250, // Need 500
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 32)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.everylocalad.com",
+            null,
+            null,
+            256,
+            256,
+            null,
+            null,
+            -1,
+            2,
+            250, // Need 500
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 32)
+            }
+        )
     );
     Collections.sort(virtualServers);
     // Collections.shuffle(virtualServers);
@@ -638,17 +638,17 @@ public final class VirtualServer implements Comparable<VirtualServer> {
   int selectedSecondaryServerIndex = -1;
 
   VirtualServer(
-    String hostname,
-    String primaryServerHostname,
-    String secondaryServerHostname,
-    int primaryRam,
-    int secondaryRam,
-    ProcessorType minimumProcessorType,
-    ProcessorArchitecture requiredProcessorArchitecture,
-    int minimumProcessorSpeed,
-    int processorCores,
-    int processorWeight, // On a scale of 1000
-    VirtualDisk[] virtualDisks
+      String hostname,
+      String primaryServerHostname,
+      String secondaryServerHostname,
+      int primaryRam,
+      int secondaryRam,
+      ProcessorType minimumProcessorType,
+      ProcessorArchitecture requiredProcessorArchitecture,
+      int minimumProcessorSpeed,
+      int processorCores,
+      int processorWeight, // On a scale of 1000
+      VirtualDisk[] virtualDisks
   ) {
     this.hostname = hostname;
     this.primaryServerHostname = primaryServerHostname;
@@ -706,20 +706,20 @@ public final class VirtualServer implements Comparable<VirtualServer> {
       }
     }
     // By RAM
-    if (primaryRam<other.primaryRam) {
+    if (primaryRam < other.primaryRam) {
       return 1;
     }
-    if (primaryRam>other.primaryRam) {
+    if (primaryRam > other.primaryRam) {
       return -1;
     }
-    if (secondaryRam<other.secondaryRam) {
+    if (secondaryRam < other.secondaryRam) {
       return 1;
     }
-    if (secondaryRam>other.secondaryRam) {
+    if (secondaryRam > other.secondaryRam) {
       return -1;
     }
     // By Processor Cores
-    int diff = (other.processorCores*other.processorWeight) - (processorCores*processorWeight);
+    int diff = (other.processorCores * other.processorWeight) - (processorCores * processorWeight);
     if (diff != 0) {
       return diff;
     }
@@ -728,10 +728,10 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     for (VirtualDisk virtualDisk : virtualDisks) totalExtents += virtualDisk.extents;
     long otherTotalExtents = 0;
     for (VirtualDisk virtualDisk : other.virtualDisks) otherTotalExtents += virtualDisk.extents;
-    if (totalExtents<otherTotalExtents) {
+    if (totalExtents < otherTotalExtents) {
       return -1;
     }
-    if (totalExtents>otherTotalExtents) {
+    if (totalExtents > otherTotalExtents) {
       return 1;
     }
     /*
@@ -765,7 +765,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
 
   @Override
   public boolean equals(Object obj) {
-    return (obj instanceof VirtualServer) && equals((VirtualServer)obj);
+    return (obj instanceof VirtualServer) && equals((VirtualServer) obj);
   }
 
   public boolean equals(VirtualServer other) {

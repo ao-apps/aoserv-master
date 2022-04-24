@@ -52,34 +52,34 @@ public class DaemonAcl_GetTableHandler extends TableHandler.GetTableHandlerByRol
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new DaemonAcl(),
-      "select * from linux.\"DaemonAcl\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new DaemonAcl(),
+        "select * from linux.\"DaemonAcl\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new DaemonAcl(),
-      "select\n"
-      + "  sdh.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  linux.\"DaemonAcl\" sdh\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=sdh.ao_server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new DaemonAcl(),
+        "select\n"
+            + "  sdh.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  linux.\"DaemonAcl\" sdh\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=sdh.ao_server",
+        source.getCurrentAdministrator()
     );
   }
 

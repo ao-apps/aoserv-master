@@ -49,13 +49,13 @@ public class DistroReportType_GetTableHandler extends TableHandler.GetTableHandl
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new DistroReportType(),
-      "select * from \"distribution.management\".\"DistroReportType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new DistroReportType(),
+        "select * from \"distribution.management\".\"DistroReportType\""
     );
   }
 }

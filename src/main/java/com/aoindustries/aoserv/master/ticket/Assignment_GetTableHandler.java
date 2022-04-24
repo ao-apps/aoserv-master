@@ -53,13 +53,13 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Assignment(),
-      "select * from ticket.\"Assignment\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Assignment(),
+        "select * from ticket.\"Assignment\""
     );
   }
 
@@ -73,33 +73,33 @@ public class Assignment_GetTableHandler extends TableHandler.GetTableHandlerByRo
     if (TicketHandler.isTicketAdmin(conn, source)) {
       // Only ticket admin can see assignments
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.AUTO,
-        new Assignment(),
-        "select distinct\n" // TODO: distinct required?
-        + "  ta.*\n"
-        + "from\n"
-        + "  account.\"User\" un,\n"
-        + "  billing.\"Package\" pk1,\n"
-        + TableHandler.BU1_PARENTS_JOIN
-        + "  ticket.\"Ticket\" ti,\n"
-        + "  ticket.\"Assignment\" ta\n"
-        + "where\n"
-        + "  un.username=?\n"
-        + "  and un.package=pk1.name\n"
-        + "  and (\n"
-        + TableHandler.PK1_BU1_PARENTS_WHERE
-        + "  )\n"
-        + "  and (\n"
-        + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
-        + "    or bu1.accounting=ti.brand\n" // Has access to brand
-        + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
-        + "  )\n"
-        + "  and ti.id=ta.ticket",
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.AUTO,
+          new Assignment(),
+          "select distinct\n" // TODO: distinct required?
+              + "  ta.*\n"
+              + "from\n"
+              + "  account.\"User\" un,\n"
+              + "  billing.\"Package\" pk1,\n"
+              + TableHandler.BU1_PARENTS_JOIN
+              + "  ticket.\"Ticket\" ti,\n"
+              + "  ticket.\"Assignment\" ta\n"
+              + "where\n"
+              + "  un.username=?\n"
+              + "  and un.package=pk1.name\n"
+              + "  and (\n"
+              + TableHandler.PK1_BU1_PARENTS_WHERE
+              + "  )\n"
+              + "  and (\n"
+              + "    bu1.accounting=ti.accounting\n" // Has access to ticket accounting
+              + "    or bu1.accounting=ti.brand\n" // Has access to brand
+              + "    or bu1.accounting=ti.reseller\n" // Has access to assigned reseller
+              + "  )\n"
+              + "  and ti.id=ta.ticket",
+          source.getCurrentAdministrator()
       );
     } else {
       // Non-admins don't get any assignment details

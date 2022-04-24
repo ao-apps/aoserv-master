@@ -52,20 +52,20 @@ public final class BankTransactionHandler {
   }
 
   private static final String QUERY_ACCOUNTING =
-    "select\n"
-    + "  id,\n"
-    + "  time,\n"
-    + "  account,\n"
-    + "  processor,\n"
-    + "  administrator,\n"
-    + "  type,\n"
-    + "  \"expenseCategory\",\n"
-    + "  description,\n"
-    + "  \"checkNo\",\n"
-    + "  amount,\n"
-    + "  confirmed\n"
-    + "from\n"
-    + "  accounting.\"BankTransaction\"";
+      "select\n"
+          + "  id,\n"
+          + "  time,\n"
+          + "  account,\n"
+          + "  processor,\n"
+          + "  administrator,\n"
+          + "  type,\n"
+          + "  \"expenseCategory\",\n"
+          + "  description,\n"
+          + "  \"checkNo\",\n"
+          + "  amount,\n"
+          + "  confirmed\n"
+          + "from\n"
+          + "  accounting.\"BankTransaction\"";
 
   public static class GetObject implements TableHandler.GetObjectHandler {
 
@@ -79,14 +79,14 @@ public final class BankTransactionHandler {
       int bankTransaction = in.readCompressedInt();
       if (BankAccountHandler.isBankAccounting(conn, source)) {
         MasterServer.writeObject(
-          conn,
-          source,
-          out,
-          new BankTransaction(),
-          QUERY_ACCOUNTING + "\n"
-          + "where\n"
-          + "  id=?",
-          bankTransaction
+            conn,
+            source,
+            out,
+            new BankTransaction(),
+            QUERY_ACCOUNTING + "\n"
+                + "where\n"
+                + "  id=?",
+            bankTransaction
         );
       } else {
         out.writeByte(AoservProtocol.DONE);
@@ -104,13 +104,13 @@ public final class BankTransactionHandler {
     @Override
     public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new BankTransaction(),
-        QUERY_ACCOUNTING
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new BankTransaction(),
+          QUERY_ACCOUNTING
       );
     }
   }

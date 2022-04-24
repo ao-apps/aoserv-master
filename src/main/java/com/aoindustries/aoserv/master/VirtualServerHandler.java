@@ -74,49 +74,49 @@ public final class VirtualServerHandler {
   }
 
   public static Server.DaemonAccess requestVncConsoleDaemonAccess(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "requestVncConsoleDaemonAccess", Permission.Name.vnc_console);
     // The business must have proper access
-    boolean canVncConsole=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_vnc_console");
+    boolean canVncConsole = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_vnc_console");
     if (!canVncConsole) {
-      throw new SQLException("Not allowed to VNC console to "+virtualServer);
+      throw new SQLException("Not allowed to VNC console to " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Must be a virtual server with VNC enabled
     String vncPassword = conn.queryString("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
     if (vncPassword == null) {
-      throw new SQLException("Virtual server VNC is disabled: "+virtualServer);
+      throw new SQLException("Virtual server VNC is disabled: " + virtualServer);
     }
     // Find current location of server
     int primaryPhysicalServer = ClusterHandler.getPrimaryPhysicalServer(virtualServer);
     // Grant access to the Xen outer server
     return DaemonHandler.grantDaemonAccess(
-      conn,
-      primaryPhysicalServer,
-      null,
-      AOServDaemonProtocol.VNC_CONSOLE,
-      NetHostHandler.getNameForHost(conn, virtualServer),
-      null,
-      null,
-      null
+        conn,
+        primaryPhysicalServer,
+        null,
+        AOServDaemonProtocol.VNC_CONSOLE,
+        NetHostHandler.getNameForHost(conn, virtualServer),
+        null,
+        null,
+        null
     );
   }
 
   public static String createVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "createVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -129,16 +129,16 @@ public final class VirtualServerHandler {
   }
 
   public static String rebootVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "rebootVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -151,16 +151,16 @@ public final class VirtualServerHandler {
   }
 
   public static String shutdownVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "shutdownVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -173,16 +173,16 @@ public final class VirtualServerHandler {
   }
 
   public static String destroyVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "destroyVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -195,16 +195,16 @@ public final class VirtualServerHandler {
   }
 
   public static String pauseVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "pauseVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -217,16 +217,16 @@ public final class VirtualServerHandler {
   }
 
   public static String unpauseVirtualServer(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "unpauseVirtualServer", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // TODO: Must not be a disabled server
     // Find current location of server
@@ -239,9 +239,9 @@ public final class VirtualServerHandler {
   }
 
   public static int getVirtualServerStatus(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualServer
   ) throws IOException, SQLException {
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "getVirtualServerStatus", Permission.Name.get_virtual_server_status);
@@ -256,17 +256,17 @@ public final class VirtualServerHandler {
   }
 
   public static long verifyVirtualDisk(
-    DatabaseConnection conn,
-    RequestSource source,
-    int virtualDisk
+      DatabaseConnection conn,
+      RequestSource source,
+      int virtualDisk
   ) throws IOException, SQLException {
     int virtualServer = getVirtualServerForVirtualDisk(conn, virtualDisk);
     // The user must have proper permissions
     AccountHandler.checkPermission(conn, source, "verifyVirtualDisk", Permission.Name.control_virtual_server);
     // The business must have proper access
-    boolean canControlVirtualServer=AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
+    boolean canControlVirtualServer = AccountHandler.canAccountHost_column(conn, source, virtualServer, "can_control_virtual_server");
     if (!canControlVirtualServer) {
-      throw new SQLException("Not allowed to control "+virtualServer);
+      throw new SQLException("Not allowed to control " + virtualServer);
     }
     // Must be a cluster admin
     ClusterHandler.checkClusterAdmin(conn, source, "verifyVirtualDisk");

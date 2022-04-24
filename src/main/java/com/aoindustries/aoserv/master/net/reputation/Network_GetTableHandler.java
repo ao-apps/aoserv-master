@@ -55,13 +55,13 @@ public class Network_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.FETCH,
-      new Network(),
-      "select * from \"net.reputation\".\"Network\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new Network(),
+        "select * from \"net.reputation\".\"Network\""
     );
   }
 
@@ -75,26 +75,26 @@ public class Network_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     if (masterUser.isRouter()) {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new Network(),
-        "select distinct\n"
-        + "  irsn.*\n"
-        + "from\n"
-        + "  master.\"UserHost\"                          ms\n"
-        + "  inner join net.\"Host\"                      se   on  ms.server   =   se.id\n"         // Find all servers can access
-        + "  inner join net.\"Host\"                      se2  on  se.farm     =  se2.farm\n"       // Find all servers in the same farm
-        + "  inner join net.\"Device\"                    nd   on se2.id       =   nd.server\n"     // Find all net.Device in the same farm
-        + "  inner join \"net.reputation\".\"Limiter\"    irl  on  nd.id       =  irl.net_device\n" // Find all limiters in the same farm
-        + "  inner join \"net.reputation\".\"LimiterSet\" irls on  irl.id      = irls.limiter\n"    // Find all sets used by all limiters in the same farm
-        + "  inner join \"net.reputation\".\"Set\"        irs  on irls.\"set\" =  irs.id\n"         // Find all sets used by any limiter in the same farm
-        + "  inner join \"net.reputation\".\"Network\"    irsn on  irs.id      = irsn.\"set\"\n"    // Find all networks belonging to these sets
-        + "where\n"
-        + "  ms.username=?",
-        source.getCurrentAdministrator()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new Network(),
+          "select distinct\n"
+              + "  irsn.*\n"
+              + "from\n"
+              + "  master.\"UserHost\"                          ms\n"
+              + "  inner join net.\"Host\"                      se   on  ms.server   =   se.id\n"         // Find all servers can access
+              + "  inner join net.\"Host\"                      se2  on  se.farm     =  se2.farm\n"       // Find all servers in the same farm
+              + "  inner join net.\"Device\"                    nd   on se2.id       =   nd.server\n"     // Find all net.Device in the same farm
+              + "  inner join \"net.reputation\".\"Limiter\"    irl  on  nd.id       =  irl.net_device\n" // Find all limiters in the same farm
+              + "  inner join \"net.reputation\".\"LimiterSet\" irls on  irl.id      = irls.limiter\n"    // Find all sets used by all limiters in the same farm
+              + "  inner join \"net.reputation\".\"Set\"        irs  on irls.\"set\" =  irs.id\n"         // Find all sets used by any limiter in the same farm
+              + "  inner join \"net.reputation\".\"Network\"    irsn on  irs.id      = irsn.\"set\"\n"    // Find all networks belonging to these sets
+              + "where\n"
+              + "  ms.username=?",
+          source.getCurrentAdministrator()
       );
     } else {
       MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
@@ -107,29 +107,29 @@ public class Network_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.FETCH,
-      new Network(),
-      "select\n"
-      + "  irsn.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  \"net.reputation\".\"Set\" irs,\n"
-      + "  \"net.reputation\".\"Network\" irsn\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and (\n"
-      + TableHandler.PK_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=irs.accounting\n"
-      + "  and irs.id=irsn.\"set\"",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new Network(),
+        "select\n"
+            + "  irsn.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  \"net.reputation\".\"Set\" irs,\n"
+            + "  \"net.reputation\".\"Network\" irsn\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and (\n"
+            + TableHandler.PK_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=irs.accounting\n"
+            + "  and irs.id=irsn.\"set\"",
+        source.getCurrentAdministrator()
     );
   }
 }

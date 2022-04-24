@@ -51,69 +51,69 @@ public class AttachmentBlock_GetTableHandler extends TableHandler.GetTableHandle
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new AttachmentBlock(),
-      "select * from email.\"AttachmentBlock\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new AttachmentBlock(),
+        "select * from email.\"AttachmentBlock\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new AttachmentBlock(),
-      "select\n"
-      + "  eab.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  linux.\"UserServer\" lsa,\n"
-      + "  email.\"AttachmentBlock\" eab\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=lsa.ao_server\n"
-      + "  and lsa.id=eab.linux_server_account",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new AttachmentBlock(),
+        "select\n"
+            + "  eab.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  linux.\"UserServer\" lsa,\n"
+            + "  email.\"AttachmentBlock\" eab\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=lsa.ao_server\n"
+            + "  and lsa.id=eab.linux_server_account",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new AttachmentBlock(),
-      "select\n"
-      + "  eab.*\n"
-      + "from\n"
-      + "  account.\"User\" un1,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  account.\"User\" un2,\n"
-      + "  linux.\"UserServer\" lsa,\n"
-      + "  email.\"AttachmentBlock\" eab\n"
-      + "where\n"
-      + "  un1.username=?\n"
-      + "  and un1.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=un2.package\n"
-      + "  and un2.username=lsa.username\n"
-      + "  and lsa.id=eab.linux_server_account",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new AttachmentBlock(),
+        "select\n"
+            + "  eab.*\n"
+            + "from\n"
+            + "  account.\"User\" un1,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  account.\"User\" un2,\n"
+            + "  linux.\"UserServer\" lsa,\n"
+            + "  email.\"AttachmentBlock\" eab\n"
+            + "where\n"
+            + "  un1.username=?\n"
+            + "  and un1.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=un2.package\n"
+            + "  and un2.username=lsa.username\n"
+            + "  and lsa.id=eab.linux_server_account",
+        source.getCurrentAdministrator()
     );
   }
 }

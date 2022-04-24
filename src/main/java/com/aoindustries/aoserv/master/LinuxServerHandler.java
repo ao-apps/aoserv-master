@@ -73,15 +73,15 @@ public final class LinuxServerHandler {
   private static final Map<Integer, Object> mrtgLocks = new HashMap<>();
 
   public static void getMrtgFile(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer,
-    String filename,
-    StreamableOutput out
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer,
+      String filename,
+      StreamableOutput out
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getMrtgFile", linuxServer);
     if (filename.indexOf('/') != -1 || filename.contains("..")) {
-      throw new SQLException("Invalidate filename: "+filename);
+      throw new SQLException("Invalidate filename: " + filename);
     }
 
     // Only one MRTG graph per server at a time, if don't get the lock in 15 seconds, return an error
@@ -93,7 +93,7 @@ public final class LinuxServerHandler {
           if (startTime > currentTime) {
             startTime = currentTime;
           } else if ((currentTime - startTime) >= 15000) {
-            throw new IOException("15 second timeout reached while trying to get lock to access server #"+linuxServer);
+            throw new IOException("15 second timeout reached while trying to get lock to access server #" + linuxServer);
           } else {
             try {
               mrtgLocks.wait(startTime + 15000 - currentTime);
@@ -132,42 +132,42 @@ public final class LinuxServerHandler {
   }
 
   public static void setLastDistroTime(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int linuxServer,
-    Timestamp time
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int linuxServer,
+      Timestamp time
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
     User mu = MasterServer.getUser(conn, currentAdministrator);
     if (mu == null) {
-      throw new SQLException("User "+currentAdministrator+" is not master user and may not set the last distro time");
+      throw new SQLException("User " + currentAdministrator + " is not master user and may not set the last distro time");
     }
     NetHostHandler.checkAccessHost(conn, source, "setLastDistroTime", linuxServer);
     conn.update(
-      "update linux.\"Server\" set last_distro_time=? where server=?",
-      time,
-      linuxServer
+        "update linux.\"Server\" set last_distro_time=? where server=?",
+        time,
+        linuxServer
     );
     invalidateList.addTable(
-      conn,
-      Table.TableID.SERVERS,
-      NetHostHandler.getAccountsForHost(conn, linuxServer),
-      linuxServer,
-      false
+        conn,
+        Table.TableID.SERVERS,
+        NetHostHandler.getAccountsForHost(conn, linuxServer),
+        linuxServer,
+        false
     );
   }
 
   public static void startDistro(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer,
-    boolean includeUser
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer,
+      boolean includeUser
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "startDistro", linuxServer);
-    User mu=MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
-      throw new SQLException("Only master users may start distribution verifications: "+source.getCurrentAdministrator());
+      throw new SQLException("Only master users may start distribution verifications: " + source.getCurrentAdministrator());
     }
     NetHostHandler.checkAccessHost(conn, source, "startDistro", linuxServer);
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
@@ -176,13 +176,13 @@ public final class LinuxServerHandler {
   }
 
   public static void restartCron(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
     if (!canControl) {
-      throw new SQLException("Not allowed to restart Cron on "+linuxServer);
+      throw new SQLException("Not allowed to restart Cron on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -190,13 +190,13 @@ public final class LinuxServerHandler {
   }
 
   public static void startCron(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
     if (!canControl) {
-      throw new SQLException("Not allowed to start Cron on "+linuxServer);
+      throw new SQLException("Not allowed to start Cron on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -204,13 +204,13 @@ public final class LinuxServerHandler {
   }
 
   public static void stopCron(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_cron");
     if (!canControl) {
-      throw new SQLException("Not allowed to stop Cron on "+linuxServer);
+      throw new SQLException("Not allowed to stop Cron on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -218,13 +218,13 @@ public final class LinuxServerHandler {
   }
 
   public static void restartXfs(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
     if (!canControl) {
-      throw new SQLException("Not allowed to restart XFS on "+linuxServer);
+      throw new SQLException("Not allowed to restart XFS on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -232,13 +232,13 @@ public final class LinuxServerHandler {
   }
 
   public static void startXfs(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
     if (!canControl) {
-      throw new SQLException("Not allowed to start XFS on "+linuxServer);
+      throw new SQLException("Not allowed to start XFS on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -246,13 +246,13 @@ public final class LinuxServerHandler {
   }
 
   public static void stopXfs(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xfs");
     if (!canControl) {
-      throw new SQLException("Not allowed to stop XFS on "+linuxServer);
+      throw new SQLException("Not allowed to stop XFS on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -260,13 +260,13 @@ public final class LinuxServerHandler {
   }
 
   public static void restartXvfb(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
     if (!canControl) {
-      throw new SQLException("Not allowed to restart Xvfb on "+linuxServer);
+      throw new SQLException("Not allowed to restart Xvfb on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -274,13 +274,13 @@ public final class LinuxServerHandler {
   }
 
   public static void startXvfb(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
     if (!canControl) {
-      throw new SQLException("Not allowed to start Xvfb on "+linuxServer);
+      throw new SQLException("Not allowed to start Xvfb on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -288,13 +288,13 @@ public final class LinuxServerHandler {
   }
 
   public static void stopXvfb(
-    DatabaseConnection conn,
-    RequestSource source,
-    int linuxServer
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer
   ) throws IOException, SQLException {
-    boolean canControl=AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
+    boolean canControl = AccountHandler.canAccountHost_column(conn, source, linuxServer, "can_control_xvfb");
     if (!canControl) {
-      throw new SQLException("Not allowed to stop Xvfb on "+linuxServer);
+      throw new SQLException("Not allowed to stop Xvfb on " + linuxServer);
     }
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon

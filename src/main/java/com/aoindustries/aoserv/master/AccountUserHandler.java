@@ -57,28 +57,28 @@ public final class AccountUserHandler {
 
   public static void checkAccessUser(DatabaseConnection conn, RequestSource source, String action, User.Name user) throws IOException, SQLException {
     if (!canAccessUser(conn, source, user)) {
-      String message=
-        "currentAdministrator="
-        +source.getCurrentAdministrator()
-        +" is not allowed to access username: action='"
-        +action
-        +"', username="
-        +user
+      String message =
+          "currentAdministrator="
+              + source.getCurrentAdministrator()
+              + " is not allowed to access username: action='"
+              + action
+              + "', username="
+              + user
       ;
       throw new SQLException(message);
     }
   }
 
   public static void addUser(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    Account.Name packageName,
-    User.Name name,
-    boolean avoidSecurityChecks
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      Account.Name packageName,
+      User.Name name,
+      boolean avoidSecurityChecks
   ) throws IOException, SQLException {
     if (name.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
-      throw new SQLException("Not allowed to add User for name '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+      throw new SQLException("Not allowed to add User for name '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
     }
 
     if (!avoidSecurityChecks) {
@@ -89,19 +89,19 @@ public final class AccountUserHandler {
 
       // Make sure people don't create @hostname.com account.User for domains they cannot control
       String usernameStr = name.toString();
-      int atPos=usernameStr.lastIndexOf('@');
+      int atPos = usernameStr.lastIndexOf('@');
       if (atPos != -1) {
-        String hostname=usernameStr.substring(atPos+1);
-        if (hostname.length()>0) {
+        String hostname = usernameStr.substring(atPos + 1);
+        if (hostname.length() > 0) {
           MasterServer.checkAccessHostname(conn, source, "addUser", hostname);
         }
       }
     }
 
     conn.update(
-      "insert into account.\"User\" values(?,?,null)",
-      name,
-      packageName
+        "insert into account.\"User\" values(?,?,null)",
+        name,
+        packageName
     );
 
     // Notify all clients of the update
@@ -111,16 +111,16 @@ public final class AccountUserHandler {
   }
 
   public static void disableUser(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    int disableLog,
-    User.Name user
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int disableLog,
+      User.Name user
   ) throws IOException, SQLException {
     AccountHandler.checkAccessDisableLog(conn, source, "disableUser", disableLog, false);
     checkAccessUser(conn, source, "disableUser", user);
     if (isUserDisabled(conn, user)) {
-      throw new SQLException("Username is already disabled: "+user);
+      throw new SQLException("Username is already disabled: " + user);
     }
     String un = user.toString();
     if (com.aoindustries.aoserv.client.linux.User.Name.validate(un).isValid()) {
@@ -131,10 +131,10 @@ public final class AccountUserHandler {
         throw new AssertionError("Already validated", e);
       }
       if (
-        LinuxAccountHandler.isUser(conn, linuxUsername)
-        && !LinuxAccountHandler.isUserDisabled(conn, linuxUsername)
+          LinuxAccountHandler.isUser(conn, linuxUsername)
+              && !LinuxAccountHandler.isUserDisabled(conn, linuxUsername)
       ) {
-        throw new SQLException("Cannot disable Username '"+user+"': Linux user not disabled: "+linuxUsername);
+        throw new SQLException("Cannot disable Username '" + user + "': Linux user not disabled: " + linuxUsername);
       }
     }
     if (com.aoindustries.aoserv.client.mysql.User.Name.validate(un).isValid()) {
@@ -145,10 +145,10 @@ public final class AccountUserHandler {
         throw new AssertionError("Already validated", e);
       }
       if (
-        MysqlHandler.isUser(conn, mysqlUsername)
-        && !MysqlHandler.isUserDisabled(conn, mysqlUsername)
+          MysqlHandler.isUser(conn, mysqlUsername)
+              && !MysqlHandler.isUserDisabled(conn, mysqlUsername)
       ) {
-        throw new SQLException("Cannot disable Username '"+user+"': MySQL user not disabled: "+mysqlUsername);
+        throw new SQLException("Cannot disable Username '" + user + "': MySQL user not disabled: " + mysqlUsername);
       }
     }
     if (com.aoindustries.aoserv.client.postgresql.User.Name.validate(un).isValid()) {
@@ -159,57 +159,57 @@ public final class AccountUserHandler {
         throw new AssertionError("Already validated", e);
       }
       if (
-        PostgresqlHandler.isUser(conn, postgresqlUsername)
-        && !PostgresqlHandler.isUserDisabled(conn, postgresqlUsername)
+          PostgresqlHandler.isUser(conn, postgresqlUsername)
+              && !PostgresqlHandler.isUserDisabled(conn, postgresqlUsername)
       ) {
-        throw new SQLException("Cannot disable Username '"+user+"': PostgreSQL user not disabled: "+postgresqlUsername);
+        throw new SQLException("Cannot disable Username '" + user + "': PostgreSQL user not disabled: " + postgresqlUsername);
       }
     }
     conn.update(
-      "update account.\"User\" set disable_log=? where username=?",
-      disableLog,
-      user
+        "update account.\"User\" set disable_log=? where username=?",
+        disableLog,
+        user
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.USERNAMES,
-      getAccountForUser(conn, user),
-      getHostsForUser(conn, user),
-      false
+        conn,
+        Table.TableID.USERNAMES,
+        getAccountForUser(conn, user),
+        getHostsForUser(conn, user),
+        false
     );
   }
 
   public static void enableUser(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    User.Name user
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      User.Name user
   ) throws IOException, SQLException {
     checkAccessUser(conn, source, "enableUser", user);
-    int disableLog=getDisableLogForUser(conn, user);
+    int disableLog = getDisableLogForUser(conn, user);
     if (disableLog == -1) {
-      throw new SQLException("User is already enabled: "+user);
+      throw new SQLException("User is already enabled: " + user);
     }
     AccountHandler.checkAccessDisableLog(conn, source, "enableUser", disableLog, true);
-    Account.Name pk=getPackageForUser(conn, user);
+    Account.Name pk = getPackageForUser(conn, user);
     if (PackageHandler.isPackageDisabled(conn, pk)) {
-      throw new SQLException("Unable to enable Username '"+user+"', Package not enabled: "+pk);
+      throw new SQLException("Unable to enable Username '" + user + "', Package not enabled: " + pk);
     }
 
     conn.update(
-      "update account.\"User\" set disable_log=null where username=?",
-      user
+        "update account.\"User\" set disable_log=null where username=?",
+        user
     );
 
     // Notify all clients of the update
     invalidateList.addTable(
-      conn,
-      Table.TableID.USERNAMES,
-      getAccountForUser(conn, user),
-      getHostsForUser(conn, user),
-      false
+        conn,
+        Table.TableID.USERNAMES,
+        getAccountForUser(conn, user),
+        getHostsForUser(conn, user),
+        false
     );
   }
 
@@ -245,13 +245,13 @@ public final class AccountUserHandler {
   }
 
   public static void removeUser(
-    DatabaseConnection conn,
-    RequestSource source,
-    InvalidateList invalidateList,
-    User.Name user
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      User.Name user
   ) throws IOException, SQLException {
     if (user.equals(source.getCurrentAdministrator())) {
-      throw new SQLException("Not allowed to remove self: "+user);
+      throw new SQLException("Not allowed to remove self: " + user);
     }
     checkAccessUser(conn, source, "removeUser", user);
 
@@ -259,12 +259,12 @@ public final class AccountUserHandler {
   }
 
   public static void removeUser(
-    DatabaseConnection conn,
-    InvalidateList invalidateList,
-    User.Name user
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      User.Name user
   ) throws IOException, SQLException {
     if (user.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
-      throw new SQLException("Not allowed to remove User named '"+com.aoindustries.aoserv.client.linux.User.MAIL+'\'');
+      throw new SQLException("Not allowed to remove User named '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
     }
 
     Account.Name account = getAccountForUser(conn, user);
@@ -277,14 +277,14 @@ public final class AccountUserHandler {
 
   public static Account.Name getAccountForUser(DatabaseAccess db, User.Name user) throws IOException, SQLException {
     synchronized (userAccounts) {
-      Account.Name O=userAccounts.get(user);
+      Account.Name O = userAccounts.get(user);
       if (O != null) {
         return O;
       }
       Account.Name account = db.queryObject(
-        ObjectFactories.accountNameFactory,
-        "select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name",
-        user
+          ObjectFactories.accountNameFactory,
+          "select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name",
+          user
       );
       userAccounts.put(user, account);
       return account;
@@ -294,69 +294,69 @@ public final class AccountUserHandler {
   // TODO: Cache this lookup, since it is involved iteratively when querying master processes
   public static Account.Name getPackageForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select package from account.\"User\" where username=?",
-      user
+        ObjectFactories.accountNameFactory,
+        "select package from account.\"User\" where username=?",
+        user
     );
   }
 
   public static IntList getHostsForUser(DatabaseConnection conn, User.Name user) throws IOException, SQLException {
     return conn.queryIntList(
-      "select\n"
-      + "  bs.server\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting",
-      user
+        "select\n"
+            + "  bs.server\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting",
+        user
     );
   }
 
   public static List<User.Name> getUsersForPackage(DatabaseConnection conn, Account.Name packageName) throws IOException, SQLException {
     return conn.queryList(
-      ObjectFactories.userNameFactory,
-      "select username from account.\"User\" where package=?",
-      packageName
+        ObjectFactories.userNameFactory,
+        "select username from account.\"User\" where package=?",
+        packageName
     );
   }
 
   public static boolean canUserAccessHost(DatabaseConnection conn, User.Name user, int host) throws IOException, SQLException {
     return conn.queryBoolean(
-      "select\n"
-      + "  (\n"
-      + "    select\n"
-      + "      un.username\n"
-      + "    from\n"
-      + "      account.\"User\" un,\n"
-      + "      billing.\"Package\" pk,\n"
-      + "      account.\"AccountHost\" bs\n"
-      + "    where\n"
-      + "      un.username=?\n"
-      + "      and un.package=pk.name\n"
-      + "      and pk.accounting=bs.accounting\n"
-      + "      and bs.server=?\n"
-      + "    limit 1\n"
-      + "  )\n"
-      + "  is not null\n",
-      user,
-      host
+        "select\n"
+            + "  (\n"
+            + "    select\n"
+            + "      un.username\n"
+            + "    from\n"
+            + "      account.\"User\" un,\n"
+            + "      billing.\"Package\" pk,\n"
+            + "      account.\"AccountHost\" bs\n"
+            + "    where\n"
+            + "      un.username=?\n"
+            + "      and un.package=pk.name\n"
+            + "      and pk.accounting=bs.accounting\n"
+            + "      and bs.server=?\n"
+            + "    limit 1\n"
+            + "  )\n"
+            + "  is not null\n",
+        user,
+        host
     );
   }
 
   public static void checkUserAccessHost(DatabaseConnection conn, RequestSource source, String action, User.Name user, int host) throws IOException, SQLException {
     if (!canUserAccessHost(conn, user, host)) {
-      String message=
-      "username="
-      +user
-      +" is not allowed to access server.id="
-      +host
-      +": action='"
-      +action
-      +"'"
+      String message =
+          "username="
+              + user
+              + " is not allowed to access server.id="
+              + host
+              + ": action='"
+              + action
+              + "'"
       ;
       throw new SQLException(message);
     }

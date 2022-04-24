@@ -51,63 +51,63 @@ public class FileReplicationLog_GetTableHandler extends TableHandler.GetTableHan
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.FETCH,
-      new FileReplicationLog(),
-      "select * from backup.\"FileReplicationLog\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new FileReplicationLog(),
+        "select * from backup.\"FileReplicationLog\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.FETCH,
-      new FileReplicationLog(),
-      "select\n"
-      + "  ffl.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  backup.\"FileReplication\" ffr,\n"
-      + "  backup.\"FileReplicationLog\" ffl\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=ffr.server\n"
-      + "  and ffr.id=ffl.replication",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new FileReplicationLog(),
+        "select\n"
+            + "  ffl.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  backup.\"FileReplication\" ffr,\n"
+            + "  backup.\"FileReplicationLog\" ffl\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=ffr.server\n"
+            + "  and ffr.id=ffl.replication",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.FETCH,
-      new FileReplicationLog(),
-      "select\n"
-      + "  ffl.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  backup.\"FileReplication\" ffr,\n"
-      + "  backup.\"FileReplicationLog\" ffl\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting\n"
-      + "  and bs.server=ffr.server\n"
-      + "  and ffr.id=ffl.replication",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.FETCH,
+        new FileReplicationLog(),
+        "select\n"
+            + "  ffl.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  backup.\"FileReplication\" ffr,\n"
+            + "  backup.\"FileReplicationLog\" ffl\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting\n"
+            + "  and bs.server=ffr.server\n"
+            + "  and ffr.id=ffl.replication",
+        source.getCurrentAdministrator()
     );
   }
 }

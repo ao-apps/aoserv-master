@@ -131,13 +131,13 @@ public final class OriginalClusterOptimizer {
      */
     @Override
     public int compareTo(Host other) {
-      if (ram<other.ram) {
+      if (ram < other.ram) {
         return -1;
       }
-      if (ram>other.ram) {
+      if (ram > other.ram) {
         return 1;
       }
-      return processorCores-other.processorCores;
+      return processorCores - other.processorCores;
     }
   }
 
@@ -150,12 +150,12 @@ public final class OriginalClusterOptimizer {
     private final float secondaryAllocation;
 
     private VirtualDisk(
-      String device,
-      int extents,
-      DiskType primaryDiskType,
-      float primaryAllocation,
-      DiskType secondaryDiskType,
-      float secondaryAllocation
+        String device,
+        int extents,
+        DiskType primaryDiskType,
+        float primaryAllocation,
+        DiskType secondaryDiskType,
+        float secondaryAllocation
     ) {
       this.device = device;
       this.extents = extents;
@@ -177,14 +177,14 @@ public final class OriginalClusterOptimizer {
     private final VirtualDisk[] virtualDisks;
 
     private VirtualServer(
-      String hostname,
-      int minimumPrimaryRam,
-      int minimumSecondaryRam,
-      ProcessorType minimumProcessorType,
-      ProcessorArchitecture requiredProcessorArchitecture,
-      int minimumProcessorSpeed,
-      float minimumProcessorCores,
-      VirtualDisk[] virtualDisks
+        String hostname,
+        int minimumPrimaryRam,
+        int minimumSecondaryRam,
+        ProcessorType minimumProcessorType,
+        ProcessorArchitecture requiredProcessorArchitecture,
+        int minimumProcessorSpeed,
+        float minimumProcessorCores,
+        VirtualDisk[] virtualDisks
     ) {
       this.hostname = hostname;
       this.minimumPrimaryRam = minimumPrimaryRam;
@@ -201,10 +201,10 @@ public final class OriginalClusterOptimizer {
      */
     @Override
     public int compareTo(VirtualServer other) {
-      if (minimumPrimaryRam<other.minimumPrimaryRam) {
+      if (minimumPrimaryRam < other.minimumPrimaryRam) {
         return 1;
       }
-      if (minimumPrimaryRam>other.minimumPrimaryRam) {
+      if (minimumPrimaryRam > other.minimumPrimaryRam) {
         return -1;
       }
       return Float.compare(other.minimumProcessorCores, minimumProcessorCores);
@@ -217,131 +217,131 @@ public final class OriginalClusterOptimizer {
   private static List<Host> getServers() {
     List<Host> servers = new ArrayList<>();
     servers.add(
-      new Host(
-        "gw1.fc.aoindustries.com",
-        Rack.FC_9_07,
-        2048,
-        ProcessorType.P4,
-        ProcessorArchitecture.I686,
-        2800,
-        2,
-        new Disk[] {
-          new Disk("/dev/md0", DiskType.RAID1_7200, 2044),
-          new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
-        }
-      )
+        new Host(
+            "gw1.fc.aoindustries.com",
+            Rack.FC_9_07,
+            2048,
+            ProcessorType.P4,
+            ProcessorArchitecture.I686,
+            2800,
+            2,
+            new Disk[]{
+                new Disk("/dev/md0", DiskType.RAID1_7200, 2044),
+                new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen907-1.fc.aoindustries.com",
-        Rack.FC_9_07,
-        16384,
-        ProcessorType.XEON_LV,
-        ProcessorArchitecture.X86_64,
-        2000,
-        8,
-        new Disk[] {
-          new Disk("/dev/sde1", DiskType.RAID1_7200, 7450),
-          new Disk("/dev/sdf1", DiskType.RAID1_7200, 7450),
-          new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
-          new Disk("/dev/sdh1", DiskType.RAID1_7200, 7450),
-          new Disk("/dev/sdi1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet - estimated size
-          new Disk("/dev/md3", DiskType.RAID1_15000, 4375)
-        }
-      )
+        new Host(
+            "xen907-1.fc.aoindustries.com",
+            Rack.FC_9_07,
+            16384,
+            ProcessorType.XEON_LV,
+            ProcessorArchitecture.X86_64,
+            2000,
+            8,
+            new Disk[]{
+                new Disk("/dev/sde1", DiskType.RAID1_7200, 7450),
+                new Disk("/dev/sdf1", DiskType.RAID1_7200, 7450),
+                new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
+                new Disk("/dev/sdh1", DiskType.RAID1_7200, 7450),
+                new Disk("/dev/sdi1", DiskType.RAID1_7200, 7450 * 2), // TODO: These are not purchased yet - estimated size
+                new Disk("/dev/md3", DiskType.RAID1_15000, 4375)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen907-2.fc.aoindustries.com",
-        Rack.FC_9_07,
-        2048,
-        ProcessorType.P4,
-        ProcessorArchitecture.I686,
-        2600,
-        2,
-        new Disk[] {
-          new Disk("/dev/md1", DiskType.RAID1_7200, 7112),
-          new Disk("/dev/md2", DiskType.RAID1_7200, 7139),
-          new Disk("/dev/md5", DiskType.RAID1_7200, 4769)
-        }
-      )
+        new Host(
+            "xen907-2.fc.aoindustries.com",
+            Rack.FC_9_07,
+            2048,
+            ProcessorType.P4,
+            ProcessorArchitecture.I686,
+            2600,
+            2,
+            new Disk[]{
+                new Disk("/dev/md1", DiskType.RAID1_7200, 7112),
+                new Disk("/dev/md2", DiskType.RAID1_7200, 7139),
+                new Disk("/dev/md5", DiskType.RAID1_7200, 4769)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen907-5.fc.aoindustries.com",
-        Rack.FC_9_07,
-        4096,
-        ProcessorType.P4,
-        ProcessorArchitecture.X86_64,
-        3400,
-        2,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_7200, 2102),
-          new Disk("/dev/md4", DiskType.RAID1_7200, 7112)
-        }
-      )
+        new Host(
+            "xen907-5.fc.aoindustries.com",
+            Rack.FC_9_07,
+            4096,
+            ProcessorType.P4,
+            ProcessorArchitecture.X86_64,
+            3400,
+            2,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_7200, 2102),
+                new Disk("/dev/md4", DiskType.RAID1_7200, 7112)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "gw2.fc.aoindustries.com",
-        Rack.FC_9_14,
-        2048,
-        ProcessorType.P4,
-        ProcessorArchitecture.I686,
-        2800,
-        2,
-        new Disk[] {
-          new Disk("/dev/md1", DiskType.RAID1_7200, 3236),
-          new Disk("/dev/md2", DiskType.RAID1_7200, 1449)
-        }
-      )
+        new Host(
+            "gw2.fc.aoindustries.com",
+            Rack.FC_9_14,
+            2048,
+            ProcessorType.P4,
+            ProcessorArchitecture.I686,
+            2800,
+            2,
+            new Disk[]{
+                new Disk("/dev/md1", DiskType.RAID1_7200, 3236),
+                new Disk("/dev/md2", DiskType.RAID1_7200, 1449)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen914-1.fc.aoindustries.com",
-        Rack.FC_9_14,
-        2048,
-        ProcessorType.P4,
-        ProcessorArchitecture.I686,
-        2800,
-        2,
-        new Disk[] {
-          new Disk("/dev/md1", DiskType.RAID1_7200, 2044),
-          new Disk("/dev/md2", DiskType.RAID1_7200, 3340)
-        }
-      )
+        new Host(
+            "xen914-1.fc.aoindustries.com",
+            Rack.FC_9_14,
+            2048,
+            ProcessorType.P4,
+            ProcessorArchitecture.I686,
+            2800,
+            2,
+            new Disk[]{
+                new Disk("/dev/md1", DiskType.RAID1_7200, 2044),
+                new Disk("/dev/md2", DiskType.RAID1_7200, 3340)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen914-2.fc.aoindustries.com",
-        Rack.FC_9_14,
-        4096,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.I686,
-        2400,
-        4,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
-          new Disk("/dev/md4", DiskType.RAID1_7200, 7112),
-          new Disk("/dev/md5", DiskType.RAID5_10000, 1093)
-        }
-      )
+        new Host(
+            "xen914-2.fc.aoindustries.com",
+            Rack.FC_9_14,
+            4096,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.I686,
+            2400,
+            4,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
+                new Disk("/dev/md4", DiskType.RAID1_7200, 7112),
+                new Disk("/dev/md5", DiskType.RAID5_10000, 1093)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen914-5.fc.lnxhosting.ca",
-        Rack.FC_9_14,
-        16384,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.X86_64,
-        3200,
-        8,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_7200, 7450*4), // TODO: These are not purchased yet - estimated size
-          new Disk("/dev/md4", DiskType.RAID1_7200, 9198),
-          new Disk("/dev/md5", DiskType.RAID1_7200, 9198)
-        }
-      )
+        new Host(
+            "xen914-5.fc.lnxhosting.ca",
+            Rack.FC_9_14,
+            16384,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.X86_64,
+            3200,
+            8,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_7200, 7450 * 4), // TODO: These are not purchased yet - estimated size
+                new Disk("/dev/md4", DiskType.RAID1_7200, 9198),
+                new Disk("/dev/md5", DiskType.RAID1_7200, 9198)
+            }
+        )
     );
     /* powered-down after installation of xen917-5.fc.aoindustries.com
     servers.add(
@@ -362,63 +362,63 @@ public final class OriginalClusterOptimizer {
     );
      */
     servers.add(
-      new Host(
-        "xen917-2.fc.aoindustries.com",
-        Rack.FC_9_17,
-        2048,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.I686,
-        2667,
-        4,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_7200, 2044),
-          new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
-        }
-      )
+        new Host(
+            "xen917-2.fc.aoindustries.com",
+            Rack.FC_9_17,
+            2048,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.I686,
+            2667,
+            4,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_7200, 2044),
+                new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen917-3.fc.aoindustries.com",
-        Rack.FC_9_17,
-        6144,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.X86_64,
-        2800,
-        4,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
-          new Disk("/dev/md4", DiskType.RAID1_7200, 7139)
-        }
-      )
+        new Host(
+            "xen917-3.fc.aoindustries.com",
+            Rack.FC_9_17,
+            6144,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.X86_64,
+            2800,
+            4,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
+                new Disk("/dev/md4", DiskType.RAID1_7200, 7139)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen917-4.fc.aoindustries.com",
-        Rack.FC_9_17,
-        4096,
-        ProcessorType.CORE2,
-        ProcessorArchitecture.X86_64,
-        2130,
-        2,
-        new Disk[] {
-          new Disk("/dev/md3", DiskType.RAID1_10000, 1851)
-        }
-      )
+        new Host(
+            "xen917-4.fc.aoindustries.com",
+            Rack.FC_9_17,
+            4096,
+            ProcessorType.CORE2,
+            ProcessorArchitecture.X86_64,
+            2130,
+            2,
+            new Disk[]{
+                new Disk("/dev/md3", DiskType.RAID1_10000, 1851)
+            }
+        )
     );
     servers.add(
-      new Host(
-        "xen917-5.fc.aoindustries.com",
-        Rack.FC_9_17,
-        16384,
-        ProcessorType.XEON_LV,
-        ProcessorArchitecture.X86_64,
-        2333,
-        8,
-        new Disk[] {
-          new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450*2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
-          new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - Need separate hot-swap pair
-        }
-      )
+        new Host(
+            "xen917-5.fc.aoindustries.com",
+            Rack.FC_9_17,
+            16384,
+            ProcessorType.XEON_LV,
+            ProcessorArchitecture.X86_64,
+            2333,
+            8,
+            new Disk[]{
+                new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450 * 2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
+                new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - Need separate hot-swap pair
+            }
+        )
     );
     Collections.sort(servers);
     return servers;
@@ -430,458 +430,458 @@ public final class OriginalClusterOptimizer {
   private static List<VirtualServer> getVirtualServers() {
     List<VirtualServer> virtualServers = new ArrayList<>();
     virtualServers.add(
-      new VirtualServer(
-        "ao1.kc.aoindustries.com",
-        512,
-        512,
-        null,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
-        }
-      )
+        new VirtualServer(
+            "ao1.kc.aoindustries.com",
+            512,
+            512,
+            null,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "centos5.aoindustries.com",
-        256,
-        256,
-        ProcessorType.XEON_LV,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
-        }
-      )
+        new VirtualServer(
+            "centos5.aoindustries.com",
+            256,
+            256,
+            ProcessorType.XEON_LV,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "centos5-build64.aoindustries.com",
-        256,
-        256,
-        ProcessorType.XEON_LV,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
-        }
-      )
+        new VirtualServer(
+            "centos5-build64.aoindustries.com",
+            256,
+            256,
+            ProcessorType.XEON_LV,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "daissystems.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        0.5f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "daissystems.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            0.5f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ipharos.com",
-        4096,
-        4096,
-        ProcessorType.XEON_LV,
-        null,
-        -1,
-        1.0f, // 4 * .25
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, .5f)
-        }
-      )
+        new VirtualServer(
+            "ipharos.com",
+            4096,
+            4096,
+            ProcessorType.XEON_LV,
+            null,
+            -1,
+            1.0f, // 4 * .25
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, .5f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "db1.fc.ipharos.com",
-        2048, // Need 4096
-        2048, // Need 4096
-        ProcessorType.XEON_LV,
-        null,
-        2000,
-        3.0f, // 4 * .75 - Need 4 * 1.0
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, 1.0f) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
-        }
-      )
+        new VirtualServer(
+            "db1.fc.ipharos.com",
+            2048, // Need 4096
+            2048, // Need 4096
+            ProcessorType.XEON_LV,
+            null,
+            2000,
+            3.0f, // 4 * .75 - Need 4 * 1.0
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, 1.0f) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.ipharos.com",
-        2048, // Need 4096
-        2048, // Need 4096
-        ProcessorType.XEON_LV,
-        null,
-        2333,
-        1.0f, // 4 * .25 - Need 4 * 1.0
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .5f) // Need to be 1792, .5, .5 once ipharos.com is gone
-        }
-      )
+        new VirtualServer(
+            "www1.fc.ipharos.com",
+            2048, // Need 4096
+            2048, // Need 4096
+            ProcessorType.XEON_LV,
+            null,
+            2333,
+            1.0f, // 4 * .25 - Need 4 * 1.0
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .5f) // Need to be 1792, .5, .5 once ipharos.com is gone
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "master.aoindustries.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "master.aoindustries.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ns1.aoindustries.com",
-        256,
-        256,
-        null,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
-        }
-      )
+        new VirtualServer(
+            "ns1.aoindustries.com",
+            256,
+            256,
+            null,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "ns4.aoindustries.com",
-        256,
-        256,
-        null,
-        null,
-        -1,
-        .0625f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
-        }
-      )
+        new VirtualServer(
+            "ns4.aoindustries.com",
+            256,
+            256,
+            null,
+            null,
+            -1,
+            .0625f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "w1.fc.insightsys.com",
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        .5f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, 1.0f)
-        }
-      )
+        new VirtualServer(
+            "w1.fc.insightsys.com",
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            .5f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, 1.0f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.enduraquest.com",
-        4096,
-        4096,
-        ProcessorType.CORE2,
-        null,
-        -1,
-        2.0f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1.0f, DiskType.RAID1_7200, .25f)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.enduraquest.com",
+            4096,
+            4096,
+            ProcessorType.CORE2,
+            null,
+            -1,
+            2.0f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1.0f, DiskType.RAID1_7200, .25f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.lnxhosting.ca",
-        4096,
-        4096,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.X86_64,
-        3200,
-        2.0f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-          // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
-        }
-      )
+        new VirtualServer(
+            "www1.fc.lnxhosting.ca",
+            4096,
+            4096,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.X86_64,
+            3200,
+            2.0f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+            // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "backup1.lnxhosting.ca",
-        512,
-        512,
-        ProcessorType.P4_XEON,
-        ProcessorArchitecture.X86_64,
-        3200,
-        0.5f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f),
-          new VirtualDisk("/dev/xvdb", 8064+896*4, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "backup1.lnxhosting.ca",
+            512,
+            512,
+            ProcessorType.P4_XEON,
+            ProcessorArchitecture.X86_64,
+            3200,
+            0.5f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f),
+                new VirtualDisk("/dev/xvdb", 8064 + 896 * 4, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.newmediaworks.com",
-        4096,
-        4096,
-        null,
-        null,
-        -1,
-        2.0f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.newmediaworks.com",
+            4096,
+            4096,
+            null,
+            null,
+            -1,
+            2.0f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.objectevolution.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        0.5f,
-        new VirtualDisk[] {
-          // TODO: More disk I/O here
-          new VirtualDisk("/dev/xvda", 896*2, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.objectevolution.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            0.5f,
+            new VirtualDisk[]{
+                // TODO: More disk I/O here
+                new VirtualDisk("/dev/xvda", 896 * 2, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.showsandshoots.com",
-        512, // Need 1024
-        512, // Need 1024
-        null,
-        null,
-        -1,
-        0.5f,
-        new VirtualDisk[] {
-          // TODO: More disk I/O here
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.showsandshoots.com",
+            512, // Need 1024
+            512, // Need 1024
+            null,
+            null,
+            -1,
+            0.5f,
+            new VirtualDisk[]{
+                // TODO: More disk I/O here
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.fc.softwaremiracles.com",
-        512,
-        512,
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.fc.softwaremiracles.com",
+            512,
+            512,
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.kc.aoindustries.com",
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 3584+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.kc.aoindustries.com",
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 3584 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.kc.artizen.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        0.5f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.kc.artizen.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            0.5f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www1.nl.pertinence.net",
-        2048,
-        2048,
-        null,
-        null,
-        -1,
-        1.0f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 4480+896*2, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www1.nl.pertinence.net",
+            2048,
+            2048,
+            null,
+            null,
+            -1,
+            1.0f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 4480 + 896 * 2, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www2.fc.newmediaworks.com",
-        4096,
-        4096,
-        null,
-        null,
-        -1,
-        2.0f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
-        }
-      )
+        new VirtualServer(
+            "www2.fc.newmediaworks.com",
+            4096,
+            4096,
+            null,
+            null,
+            -1,
+            2.0f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www2.kc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www2.kc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www3.kc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www3.kc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www4.kc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www4.kc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www5.kc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www5.kc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www6.kc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www6.kc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www7.fc.aoindustries.com",
-        1024,
-        0, // Need 1024
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www7.fc.aoindustries.com",
+            1024,
+            0, // Need 1024
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www8.kc.aoindustries.com",
-        2048,
-        0, // Need 2048
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 2688+896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www8.kc.aoindustries.com",
+            2048,
+            0, // Need 2048
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www9.fc.aoindustries.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,
-        .25f,
-        new VirtualDisk[] {
-      // TODO: More disk +896 here
-          new VirtualDisk("/dev/xvda", 1792+896, DiskType.RAID1_7200, 0.125f, DiskType.RAID1_7200, .125f)
-        }
-      )
+        new VirtualServer(
+            "www9.fc.aoindustries.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,
+            .25f,
+            new VirtualDisk[]{
+                // TODO: More disk +896 here
+                new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 0.125f, DiskType.RAID1_7200, .125f)
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www.keepandshare.com",
-        8192,
-        4096, // Need 8192
-        ProcessorType.XEON_LV,
-        null,
-        2333,
-        6.0f, // 8 * .75 each - Need 8 * 1.0
-        new VirtualDisk[] {
-          new VirtualDisk("/dev/xvda", 7450*2, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f) // TODO: Estimated size
-        }
-      )
+        new VirtualServer(
+            "www.keepandshare.com",
+            8192,
+            4096, // Need 8192
+            ProcessorType.XEON_LV,
+            null,
+            2333,
+            6.0f, // 8 * .75 each - Need 8 * 1.0
+            new VirtualDisk[]{
+                new VirtualDisk("/dev/xvda", 7450 * 2, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f) // TODO: Estimated size
+            }
+        )
     );
     virtualServers.add(
-      new VirtualServer(
-        "www.swimconnection.com",
-        1024,
-        1024,
-        null,
-        null,
-        -1,  // TODO: If possible, make this 3200, had solution at -1
-        1.0f,
-        new VirtualDisk[] {
-          // TODO: More disk I/O here
-          new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
-        }
-      )
+        new VirtualServer(
+            "www.swimconnection.com",
+            1024,
+            1024,
+            null,
+            null,
+            -1,  // TODO: If possible, make this 3200, had solution at -1
+            1.0f,
+            new VirtualDisk[]{
+                // TODO: More disk I/O here
+                new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
+            }
+        )
     );
     Collections.sort(virtualServers);
     return virtualServers;
@@ -903,8 +903,8 @@ public final class OriginalClusterOptimizer {
     }
     System.out.println("Servers:");
     System.out.println("    Total Processor Cores........: " + totalProcessorCores);
-    System.out.println("    Total RAM....................: " + totalRam + " MB (" + Strings.getApproximateSize(totalRam*1048576)+")");
-    System.out.println("    Total Disk Space.............: " + totalDisk + " extents (" + Strings.getApproximateSize(totalDisk*EXTENTS_SIZE)+")");
+    System.out.println("    Total RAM....................: " + totalRam + " MB (" + Strings.getApproximateSize(totalRam * 1048576) + ")");
+    System.out.println("    Total Disk Space.............: " + totalDisk + " extents (" + Strings.getApproximateSize(totalDisk * EXTENTS_SIZE) + ")");
     System.out.println("    Total Disk Arrays............: " + totalDiskArrays);
 
     List<VirtualServer> virtualServers = getVirtualServers();
@@ -922,8 +922,8 @@ public final class OriginalClusterOptimizer {
     }
     System.out.println("Virtual Servers:");
     System.out.println("    Total Minimum Processor Cores: " + totalVirtualProcessorCores);
-    System.out.println("    Total Minimum RAM............: " + totalMinimumRam + " MB (" + Strings.getApproximateSize(totalMinimumRam*1048576)+")");
-    System.out.println("    Total Virtual Disk Space.....: " + totalVirtualDisk + " extents (" + Strings.getApproximateSize(totalVirtualDisk*2*EXTENTS_SIZE)+")");
+    System.out.println("    Total Minimum RAM............: " + totalMinimumRam + " MB (" + Strings.getApproximateSize(totalMinimumRam * 1048576) + ")");
+    System.out.println("    Total Virtual Disk Space.....: " + totalVirtualDisk + " extents (" + Strings.getApproximateSize(totalVirtualDisk * 2 * EXTENTS_SIZE) + ")");
     System.out.println("    Total Virtual Disk Arrays....: " + totalVirtualDiskArrays);
 
     /*
@@ -939,11 +939,11 @@ public final class OriginalClusterOptimizer {
     int[] selectedPrimaries = new int[virtualServers.size()];
     int[] selectedSecondaries = new int[virtualServers.size()];
     mapServers(servers, virtualServers, selectedPrimaries, selectedSecondaries, 0);
-    System.out.println("Done!!!  Mapped "+mapped);
+    System.out.println("Done!!!  Mapped " + mapped);
   }
 
-  private static long mapped=0;
-  private static long skipped=0;
+  private static long mapped = 0;
+  private static long skipped = 0;
   private static long lastMapDisplayedTime = -1;
   private static long callCounter = 0;
 
@@ -956,11 +956,11 @@ public final class OriginalClusterOptimizer {
 
     callCounter++;
     long currentTime = System.currentTimeMillis();
-    long timeSince = currentTime-lastMapDisplayedTime;
-    if (lastMapDisplayedTime == -1 || timeSince<0 || timeSince >= 30000) {
+    long timeSince = currentTime - lastMapDisplayedTime;
+    if (lastMapDisplayedTime == -1 || timeSince < 0 || timeSince >= 30000) {
       if (mapped != 0 || skipped != 0) {
-        for (int d=0;d<currentVirtualServer;d++) {
-          if (d>0) {
+        for (int d = 0; d < currentVirtualServer; d++) {
+          if (d > 0) {
             System.out.print('/');
           }
           //if (selectedPrimaries[d]<10) {
@@ -973,12 +973,12 @@ public final class OriginalClusterOptimizer {
           //}
           System.out.print(selectedSecondaries[d]);
         }
-        System.out.print(" Mapped "+mapped+", skipped "+skipped);
+        System.out.print(" Mapped " + mapped + ", skipped " + skipped);
         if (mapped != 0) {
-          System.out.print(", skip/map ratio: "+SQLUtility.formatDecimal2(skipped*100/mapped));
+          System.out.print(", skip/map ratio: " + SQLUtility.formatDecimal2(skipped * 100 / mapped));
         }
-        if (timeSince>0) {
-          System.out.print(", "+(callCounter*1000/timeSince)+" calls/sec");
+        if (timeSince > 0) {
+          System.out.print(", " + (callCounter * 1000 / timeSince) + " calls/sec");
         }
         System.out.println();
         /*
@@ -1052,26 +1052,26 @@ public final class OriginalClusterOptimizer {
        */
     } else {
       final VirtualServer virtualServer = virtualServers.get(currentVirtualServer);
-      for (int primaryServerIndex=0; primaryServerIndex<hostsSize; primaryServerIndex++) {
+      for (int primaryServerIndex = 0; primaryServerIndex < hostsSize; primaryServerIndex++) {
         // Only map the virtual server to the primary server if it matches any processor type, architecture, and speed constraints.
         final Host primaryServer = hosts.get(primaryServerIndex);
         if (
-          (
-            virtualServer.minimumProcessorType == null
-            || primaryServer.processorType.compareTo(virtualServer.minimumProcessorType) >= 0
-          ) && (
-            virtualServer.requiredProcessorArchitecture == null
-            || primaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture
-          ) && (
-            virtualServer.minimumProcessorSpeed == -1
-            || primaryServer.processorSpeed >= virtualServer.minimumProcessorSpeed
-          )
+            (
+                virtualServer.minimumProcessorType == null
+                    || primaryServer.processorType.compareTo(virtualServer.minimumProcessorType) >= 0
+            ) && (
+                virtualServer.requiredProcessorArchitecture == null
+                    || primaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture
+            ) && (
+                virtualServer.minimumProcessorSpeed == -1
+                    || primaryServer.processorSpeed >= virtualServer.minimumProcessorSpeed
+            )
         ) {
-          selectedPrimaries[currentVirtualServer]=primaryServerIndex;
+          selectedPrimaries[currentVirtualServer] = primaryServerIndex;
           // Stop processing if primaryServer past capacity on either processor cores or RAM
           float totalPrimaryServerVirtualProcessorCores = 0;
           long totalPrimaryServerMinimumRam = 0;
-          for (int d=0;d <= currentVirtualServer;d++) {
+          for (int d = 0; d <= currentVirtualServer; d++) {
             if (selectedPrimaries[d] == primaryServerIndex) {
               VirtualServer mappedVirtualServer = virtualServers.get(d);
               totalPrimaryServerVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
@@ -1083,11 +1083,11 @@ public final class OriginalClusterOptimizer {
               // Make sure that the combined primary mappings plus secondary CPU cores and RAM do not exceed the total of this machine
               // for any one primary failure.  The loop represents the failure of each server, one at a time.
               boolean needsSecondarySkip = false;
-              for (int failedPrimaryServerIndex=0;failedPrimaryServerIndex<hostsSize;failedPrimaryServerIndex++) {
+              for (int failedPrimaryServerIndex = 0; failedPrimaryServerIndex < hostsSize; failedPrimaryServerIndex++) {
                 if (failedPrimaryServerIndex != primaryServerIndex) {
                   //float totalSecondaryVirtualProcessorCores = totalPrimaryServerVirtualProcessorCores;
                   long totalSecondaryMinimumRam = totalPrimaryServerMinimumRam;
-                  for (int f=0;f<currentVirtualServer;f++) {
+                  for (int f = 0; f < currentVirtualServer; f++) {
                     if (selectedPrimaries[f] == failedPrimaryServerIndex && selectedSecondaries[f] == primaryServerIndex) {
                       VirtualServer mappedVirtualServer = virtualServers.get(f);
                       //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
@@ -1095,8 +1095,8 @@ public final class OriginalClusterOptimizer {
                     }
                   }
                   if (
-                    /*primaryServer.processorCores<totalSecondaryVirtualProcessorCores
-                    && */ primaryServer.ram<totalSecondaryMinimumRam
+                      /*primaryServer.processorCores<totalSecondaryVirtualProcessorCores
+                      && */ primaryServer.ram < totalSecondaryMinimumRam
                   ) {
                     needsSecondarySkip = true;
                     break;
@@ -1111,7 +1111,7 @@ public final class OriginalClusterOptimizer {
                   // Calculate total required
                   long totalVirtualDisk = 0;
                   float totalVirtualDiskArrays = 0;
-                  for (int d=0;d <= currentVirtualServer;d++) {
+                  for (int d = 0; d <= currentVirtualServer; d++) {
                     if (selectedPrimaries[d] == primaryServerIndex) {
                       VirtualServer mappedVirtualServer = virtualServers.get(d);
                       for (VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
@@ -1122,7 +1122,7 @@ public final class OriginalClusterOptimizer {
                       }
                     }
                   }
-                  for (int d=0;d<currentVirtualServer;d++) {
+                  for (int d = 0; d < currentVirtualServer; d++) {
                     if (selectedSecondaries[d] == primaryServerIndex) {
                       VirtualServer mappedVirtualServer = virtualServers.get(d);
                       for (VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
@@ -1138,15 +1138,15 @@ public final class OriginalClusterOptimizer {
                   int totalDiskArrays = 0;
                   for (Disk disk : primaryServer.disks) {
                     if (disk.diskType == diskType) {
-                      totalDiskExtents+=disk.extents;
+                      totalDiskExtents += disk.extents;
                       totalDiskArrays++;
                     }
                   }
-                  if (totalDiskExtents<totalVirtualDisk) {
+                  if (totalDiskExtents < totalVirtualDisk) {
                     SkipType.PRIMARY_PLUS_SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
                     needsSkip = true;
                     break;
-                  } else if (totalDiskArrays<totalVirtualDiskArrays) {
+                  } else if (totalDiskArrays < totalVirtualDiskArrays) {
                     SkipType.PRIMARY_PLUS_SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
                     needsSkip = true;
                     break;
@@ -1154,10 +1154,10 @@ public final class OriginalClusterOptimizer {
                 }
                 if (!needsSkip) {
                   // Now try each of the possible secondary mappings (to all servers except the primary)
-                  for (int secondaryServerIndex=0; secondaryServerIndex<hostsSize; secondaryServerIndex++) {
+                  for (int secondaryServerIndex = 0; secondaryServerIndex < hostsSize; secondaryServerIndex++) {
                     if (secondaryServerIndex != primaryServerIndex) {
                       final Host secondaryServer = hosts.get(secondaryServerIndex);
-                      selectedSecondaries[currentVirtualServer]=secondaryServerIndex;
+                      selectedSecondaries[currentVirtualServer] = secondaryServerIndex;
 
                       // Make sure the secondary architecture matches any requirements
                       if (virtualServer.requiredProcessorArchitecture == null || secondaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture) {
@@ -1167,7 +1167,7 @@ public final class OriginalClusterOptimizer {
                           // for any one primary failure.  The loop represents the failure of each server, one at a time.
                           //float totalPrimaryVirtualProcessorCores = 0;
                           long totalPrimaryMinimumRam = 0;
-                          for (int g=0;g <= currentVirtualServer;g++) {
+                          for (int g = 0; g <= currentVirtualServer; g++) {
                             if (selectedPrimaries[g] == secondaryServerIndex) {
                               VirtualServer mappedVirtualServer = virtualServers.get(g);
                               //totalPrimaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
@@ -1175,11 +1175,11 @@ public final class OriginalClusterOptimizer {
                             }
                           }
                           needsSecondarySkip = false;
-                          for (int failedPrimaryIndex=0;failedPrimaryIndex<hostsSize;failedPrimaryIndex++) {
+                          for (int failedPrimaryIndex = 0; failedPrimaryIndex < hostsSize; failedPrimaryIndex++) {
                             if (failedPrimaryIndex != secondaryServerIndex) {
                               //float totalSecondaryVirtualProcessorCores = totalPrimaryVirtualProcessorCores;
                               long totalSecondaryMinimumRam = totalPrimaryMinimumRam;
-                              for (int h=0;h <= currentVirtualServer;h++) {
+                              for (int h = 0; h <= currentVirtualServer; h++) {
                                 if (selectedPrimaries[h] == failedPrimaryIndex && selectedSecondaries[h] == secondaryServerIndex) {
                                   VirtualServer mappedVirtualServer = virtualServers.get(h);
                                   //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
@@ -1187,8 +1187,8 @@ public final class OriginalClusterOptimizer {
                                 }
                               }
                               if (
-                                /*secondaryServer.processorCores<totalSecondaryVirtualProcessorCores
-                                && */ secondaryServer.ram<totalSecondaryMinimumRam
+                                  /*secondaryServer.processorCores<totalSecondaryVirtualProcessorCores
+                                  && */ secondaryServer.ram < totalSecondaryMinimumRam
                               ) {
                                 needsSecondarySkip = true;
                                 break;
@@ -1202,7 +1202,7 @@ public final class OriginalClusterOptimizer {
                               // Calculate total required for primaries
                               long totalVirtualDisk = 0;
                               float totalVirtualDiskArrays = 0;
-                              for (int d=0;d <= currentVirtualServer;d++) {
+                              for (int d = 0; d <= currentVirtualServer; d++) {
                                 if (selectedPrimaries[d] == secondaryServerIndex) {
                                   VirtualServer mappedVirtualServer = virtualServers.get(d);
                                   for (VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
@@ -1214,7 +1214,7 @@ public final class OriginalClusterOptimizer {
                                 }
                               }
                               // Also add total required for secondaries
-                              for (int d=0;d <= currentVirtualServer;d++) {
+                              for (int d = 0; d <= currentVirtualServer; d++) {
                                 if (selectedSecondaries[d] == secondaryServerIndex) {
                                   VirtualServer mappedVirtualServer = virtualServers.get(d);
                                   for (VirtualDisk virtualDisk : mappedVirtualServer.virtualDisks) {
@@ -1230,22 +1230,22 @@ public final class OriginalClusterOptimizer {
                               int totalDiskArrays = 0;
                               for (Disk disk : secondaryServer.disks) {
                                 if (disk.diskType == diskType) {
-                                  totalDiskExtents+=disk.extents;
+                                  totalDiskExtents += disk.extents;
                                   totalDiskArrays++;
                                 }
                               }
-                              if (totalDiskExtents<totalVirtualDisk) {
+                              if (totalDiskExtents < totalVirtualDisk) {
                                 needsSkip = true;
                                 SkipType.SECONDARY_DISK_EXTENTS_EXCEEDED.counter++;
                                 break;
-                              } else if (totalDiskArrays<totalVirtualDiskArrays) {
+                              } else if (totalDiskArrays < totalVirtualDiskArrays) {
                                 needsSkip = true;
                                 SkipType.SECONDARY_DISK_ARRAYS_EXCEEDED.counter++;
                                 break;
                               }
                             }
                             if (!needsSkip) {
-                              mapServers(hosts, virtualServers, selectedPrimaries, selectedSecondaries, currentVirtualServer+1);
+                              mapServers(hosts, virtualServers, selectedPrimaries, selectedSecondaries, currentVirtualServer + 1);
                             } else {
                               skipped++;
                             }

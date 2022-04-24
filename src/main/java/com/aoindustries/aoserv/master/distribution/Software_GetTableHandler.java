@@ -49,13 +49,13 @@ public class Software_GetTableHandler extends TableHandler.GetTableHandlerPublic
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Software(),
-      "select * from distribution.\"Software\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Software(),
+        "select * from distribution.\"Software\""
     );
   }
 }

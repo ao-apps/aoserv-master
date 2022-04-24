@@ -51,85 +51,85 @@ public class Site_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Site(),
-      "select\n"
-      + "  hts.*,\n"
-      // Protocol conversion
-      + "  (\n"
-      + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
-      + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
-      + "  ) is null as use_apache\n"
-      + "from\n"
-      + "  \"web.tomcat\".\"Site\" hts"
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Site(),
+        "select\n"
+            + "  hts.*,\n"
+            // Protocol conversion
+            + "  (\n"
+            + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
+            + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+            + "  ) is null as use_apache\n"
+            + "from\n"
+            + "  \"web.tomcat\".\"Site\" hts"
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Site(),
-      "select\n"
-      + "  hts.*,\n"
-      // Protocol conversion
-      + "  (\n"
-      + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
-      + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
-      + "  ) is null as use_apache\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  web.\"Site\" hs,\n"
-      + "  \"web.tomcat\".\"Site\" hts\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=hs.ao_server\n"
-      + "  and hs.id=hts.httpd_site",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Site(),
+        "select\n"
+            + "  hts.*,\n"
+            // Protocol conversion
+            + "  (\n"
+            + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
+            + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+            + "  ) is null as use_apache\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  web.\"Site\" hs,\n"
+            + "  \"web.tomcat\".\"Site\" hts\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=hs.ao_server\n"
+            + "  and hs.id=hts.httpd_site",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new Site(),
-      "select\n"
-      + "  hts.*,\n"
-      // Protocol conversion
-      + "  (\n"
-      + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
-      + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
-      + "  ) is null as use_apache\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  web.\"Site\" hs,\n"
-      + "  \"web.tomcat\".\"Site\" hts\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=hs.package\n"
-      + "  and hs.id=hts.httpd_site",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new Site(),
+        "select\n"
+            + "  hts.*,\n"
+            // Protocol conversion
+            + "  (\n"
+            + "    select htsjm.id from \"web.tomcat\".\"JkMount\" htsjm\n"
+            + "    where (htsjm.httpd_tomcat_site, htsjm.path)=(hts.httpd_site, '/*')\n"
+            + "  ) is null as use_apache\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  web.\"Site\" hs,\n"
+            + "  \"web.tomcat\".\"Site\" hts\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=hs.package\n"
+            + "  and hs.id=hts.httpd_site",
+        source.getCurrentAdministrator()
     );
   }
 }

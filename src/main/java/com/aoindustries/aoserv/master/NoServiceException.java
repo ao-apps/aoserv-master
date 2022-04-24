@@ -46,7 +46,7 @@ public class NoServiceException extends MasterServiceException {
 
   static {
     Throwables.registerSurrogateFactory(NoServiceException.class, (template, cause) ->
-      new NoServiceException(template.getMessage(), cause)
+        new NoServiceException(template.getMessage(), cause)
     );
   }
 }

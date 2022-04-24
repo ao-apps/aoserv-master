@@ -49,13 +49,13 @@ public class GroupType_GetTableHandler extends TableHandler.GetTableHandlerPubli
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new GroupType(),
-      "select * from linux.\"GroupType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new GroupType(),
+        "select * from linux.\"GroupType\""
     );
   }
 }

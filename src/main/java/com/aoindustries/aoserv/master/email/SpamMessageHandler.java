@@ -52,7 +52,7 @@ public final class SpamMessageHandler {
   }
 
   private static final String QUERY_MASTER =
-    "select * from email.\"SpamMessage\"";
+      "select * from email.\"SpamMessage\"";
 
   public static class GetObject implements TableHandler.GetObjectHandler {
 
@@ -66,12 +66,12 @@ public final class SpamMessageHandler {
       int spamMessage = in.readCompressedInt();
       if (masterUser != null && masterServers != null && masterServers.length == 0) {
         MasterServer.writeObject(
-          conn,
-          source,
-          out,
-          new SpamMessage(),
-          QUERY_MASTER + " where id=?",
-          spamMessage
+            conn,
+            source,
+            out,
+            new SpamMessage(),
+            QUERY_MASTER + " where id=?",
+            spamMessage
         );
       } else {
         out.writeByte(AoservProtocol.DONE);
@@ -89,13 +89,13 @@ public final class SpamMessageHandler {
     @Override
     protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new SpamMessage(),
-        QUERY_MASTER
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new SpamMessage(),
+          QUERY_MASTER
       );
     }
 

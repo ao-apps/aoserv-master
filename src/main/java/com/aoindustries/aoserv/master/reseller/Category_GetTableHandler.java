@@ -49,13 +49,13 @@ public class Category_GetTableHandler extends TableHandler.GetTableHandlerPublic
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Category(),
-      "select * from reseller.\"Category\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Category(),
+        "select * from reseller.\"Category\""
     );
   }
 }

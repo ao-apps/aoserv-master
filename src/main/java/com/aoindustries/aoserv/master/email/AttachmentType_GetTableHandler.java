@@ -49,13 +49,13 @@ public class AttachmentType_GetTableHandler extends TableHandler.GetTableHandler
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new AttachmentType(),
-      "select * from email.\"AttachmentType\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new AttachmentType(),
+        "select * from email.\"AttachmentType\""
     );
   }
 }

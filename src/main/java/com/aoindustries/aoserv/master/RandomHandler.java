@@ -78,20 +78,20 @@ public final class RandomHandler {
     }
     if (!isAllowed) {
       throw new SQLException(
-        "currentAdministrator="
-        + currentAdministrator
-        + " is not allowed to access the master entropy pool: action='"
-        + action
-        + '\''
+          "currentAdministrator="
+              + currentAdministrator
+              + " is not allowed to access the master entropy pool: action='"
+              + action
+              + '\''
       );
     }
   }
 
   public static long addMasterEntropy(
-    DatabaseConnection conn,
-    RequestSource source,
-    byte[] entropy,
-    int numBytes
+      DatabaseConnection conn,
+      RequestSource source,
+      byte[] entropy,
+      int numBytes
   ) throws IOException, SQLException {
     checkAccessEntropy(conn, source, "addMasterEntropy");
 
@@ -101,7 +101,7 @@ public final class RandomHandler {
       long available = fifoOut.available();
       int addCount = numBytes;
       if (available < addCount) {
-        addCount = (int)available;
+        addCount = (int) available;
       }
       if (addCount > 0) {
         fifoOut.write(entropy, 0, addCount);
@@ -112,10 +112,10 @@ public final class RandomHandler {
   }
 
   public static int getMasterEntropy(
-    DatabaseConnection conn,
-    RequestSource source,
-    byte[] entropy,
-    int numBytes
+      DatabaseConnection conn,
+      RequestSource source,
+      byte[] entropy,
+      int numBytes
   ) throws IOException, SQLException {
     checkAccessEntropy(conn, source, "getMasterEntropy");
 
@@ -124,7 +124,7 @@ public final class RandomHandler {
       FifoFileInputStream fifoIn = fifo.getInputStream();
       long available = fifoIn.available();
       if (available < numBytes) {
-        numBytes = (int)available;
+        numBytes = (int) available;
       }
       if (numBytes > 0) {
         int pos = 0;
@@ -142,8 +142,8 @@ public final class RandomHandler {
   }
 
   public static long getMasterEntropyNeeded(
-    DatabaseConnection conn,
-    RequestSource source
+      DatabaseConnection conn,
+      RequestSource source
   ) throws IOException, SQLException {
     checkAccessEntropy(conn, source, "getMasterEntropyNeeded");
 

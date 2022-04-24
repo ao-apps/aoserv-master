@@ -73,17 +73,17 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
   }
 
   private static void addStat(
-    List<ServerStat> objs, 
-    String name, 
-    String value, 
-    String description
+      List<ServerStat> objs,
+      String name,
+      String value,
+      String description
   ) {
     objs.add(
-      new ServerStat(
-        trim(name),
-        trim(value),
-        trim(description)
-      )
+        new ServerStat(
+            trim(name),
+            trim(value),
+            trim(description)
+        )
     );
   }
 
@@ -117,7 +117,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
       addStat(objs, ServerStat.DAEMON_TOTAL_TIME, Strings.getDecimalTimeLengthString(DaemonHandler.getDaemonTotalTime()), "Total time spent accessing daemons");
       addStat(objs, ServerStat.DAEMON_TRANSACTIONS, Long.toString(DaemonHandler.getDaemonTransactions()), "Number of transactions processed by daemons");
 
-      AOConnectionPool dbPool=MasterDatabase.getDatabase().getConnectionPool();
+      AOConnectionPool dbPool = MasterDatabase.getDatabase().getConnectionPool();
       addStat(objs, ServerStat.DB_CONCURRENCY, Integer.toString(dbPool.getConcurrency()), "Number of active database connections");
       addStat(objs, ServerStat.DB_CONNECTIONS, Integer.toString(dbPool.getConnectionCount()), "Current number of database connections");
       addStat(objs, ServerStat.DB_CONNECTS, Long.toString(dbPool.getConnects()), "Number of times connecting to the database");
@@ -126,13 +126,13 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
       addStat(objs, ServerStat.DB_TOTAL_TIME, Strings.getDecimalTimeLengthString(dbPool.getTotalTime()), "Total time spent accessing the database");
       addStat(objs, ServerStat.DB_TRANSACTIONS, Long.toString(dbPool.getTransactionCount()), "Number of transactions committed by the database");
 
-      FifoFile entropyFile=RandomHandler.getFifoFile();
+      FifoFile entropyFile = RandomHandler.getFifoFile();
       addStat(objs, ServerStat.ENTROPY_AVAIL, Long.toString(entropyFile.getLength()), "Number of bytes of entropy currently available");
       addStat(objs, ServerStat.ENTROPY_POOLSIZE, Long.toString(entropyFile.getMaximumFifoLength()), "Maximum number of bytes of entropy");
-      FifoFileInputStream entropyIn=entropyFile.getInputStream();
+      FifoFileInputStream entropyIn = entropyFile.getInputStream();
       addStat(objs, ServerStat.ENTROPY_READ_BYTES, Long.toString(entropyIn.getReadBytes()), "Number of bytes read from the entropy pool");
       addStat(objs, ServerStat.ENTROPY_READ_COUNT, Long.toString(entropyIn.getReadCount()), "Number of reads from the entropy pool");
-      FifoFileOutputStream entropyOut=entropyFile.getOutputStream();
+      FifoFileOutputStream entropyOut = entropyFile.getOutputStream();
       addStat(objs, ServerStat.ENTROPY_WRITE_BYTES, Long.toString(entropyOut.getWriteBytes()), "Number of bytes written to the entropy pool");
       addStat(objs, ServerStat.ENTROPY_WRITE_COUNT, Long.toString(entropyOut.getWriteCount()), "Number of writes to the entropy pool");
 
@@ -149,7 +149,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 
       addStat(objs, ServerStat.THREAD_COUNT, Integer.toString(ThreadUtility.getThreadCount()), "Current number of virtual machine threads");
 
-      addStat(objs, ServerStat.UPTIME, Strings.getDecimalTimeLengthString(System.currentTimeMillis()-getStartTime()), "Amount of time the master server has been running");
+      addStat(objs, ServerStat.UPTIME, Strings.getDecimalTimeLengthString(System.currentTimeMillis() - getStartTime()), "Amount of time the master server has been running");
     } catch (IOException err) {
       logger.log(Level.SEVERE, null, err);
       String message = err.getMessage();

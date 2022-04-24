@@ -49,13 +49,13 @@ public class AppProtocol_GetTableHandler extends TableHandler.GetTableHandlerPub
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new AppProtocol(),
-      "select * from net.\"AppProtocol\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new AppProtocol(),
+        "select * from net.\"AppProtocol\""
     );
   }
 }

@@ -49,13 +49,13 @@ public class SoftwareCategorization_GetTableHandler extends TableHandler.GetTabl
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new SoftwareCategorization(),
-      "select * from distribution.\"SoftwareCategorization\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new SoftwareCategorization(),
+        "select * from distribution.\"SoftwareCategorization\""
     );
   }
 }

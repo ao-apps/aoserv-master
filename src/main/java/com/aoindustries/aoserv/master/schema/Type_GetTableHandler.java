@@ -49,30 +49,30 @@ public class Type_GetTableHandler extends TableHandler.GetTableHandlerPublic {
   @Override
   protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.SELECT,
-      new Type(),
-      "select\n"
-      + "  st.id,\n"
-      + "  st.\"name\",\n"
-      + "  st.\"sinceVersion\",\n"
-      + "  st.\"lastVersion\"\n"
-      + "from\n"
-      + "  \"schema\".\"AoservProtocol\" client_ap,\n"
-      + "             \"schema\".\"Type\"           st\n"
-      + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
-      + "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
-      + "where\n"
-      + "  client_ap.version=?\n"
-      + "  and client_ap.created >= \"sinceVersion\".created\n"
-      + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
-      // TODO: This order by will probably not be necessary once the client orders with Comparable
-      + "order by\n"
-      + "  st.id",
-      source.getProtocolVersion().getVersion()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.SELECT,
+        new Type(),
+        "select\n"
+            + "  st.id,\n"
+            + "  st.\"name\",\n"
+            + "  st.\"sinceVersion\",\n"
+            + "  st.\"lastVersion\"\n"
+            + "from\n"
+            + "  \"schema\".\"AoservProtocol\" client_ap,\n"
+            + "             \"schema\".\"Type\"           st\n"
+            + "  inner join \"schema\".\"AoservProtocol\" \"sinceVersion\" on st.\"sinceVersion\" = \"sinceVersion\".version\n"
+            + "  left  join \"schema\".\"AoservProtocol\" \"lastVersion\"  on st.\"lastVersion\"  =  \"lastVersion\".version\n"
+            + "where\n"
+            + "  client_ap.version=?\n"
+            + "  and client_ap.created >= \"sinceVersion\".created\n"
+            + "  and (\"lastVersion\".created is null or client_ap.created <= \"lastVersion\".created)\n"
+            // TODO: This order by will probably not be necessary once the client orders with Comparable
+            + "order by\n"
+            + "  st.id",
+        source.getProtocolVersion().getVersion()
     );
   }
 }

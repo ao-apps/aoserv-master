@@ -51,59 +51,59 @@ public class HttpdServer_GetTableHandler extends TableHandler.GetTableHandlerByR
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new HttpdServer(),
-      "select * from web.\"HttpdServer\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new HttpdServer(),
+        "select * from web.\"HttpdServer\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new HttpdServer(),
-      "select\n"
-      + "  hs.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  web.\"HttpdServer\" hs\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=hs.ao_server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new HttpdServer(),
+        "select\n"
+            + "  hs.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  web.\"HttpdServer\" hs\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=hs.ao_server",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new HttpdServer(),
-      "select\n"
-      + "  hs.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  web.\"HttpdServer\" hs\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk.name\n"
-      + "  and pk.accounting=bs.accounting\n"
-      + "  and bs.server=hs.ao_server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new HttpdServer(),
+        "select\n"
+            + "  hs.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  web.\"HttpdServer\" hs\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk.name\n"
+            + "  and pk.accounting=bs.accounting\n"
+            + "  and bs.server=hs.ao_server",
+        source.getCurrentAdministrator()
     );
   }
 }

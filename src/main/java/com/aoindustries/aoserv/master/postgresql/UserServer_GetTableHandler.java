@@ -52,70 +52,70 @@ public class UserServer_GetTableHandler extends TableHandler.GetTableHandlerByRo
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new UserServer(),
-      "select * from postgresql.\"UserServer\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new UserServer(),
+        "select * from postgresql.\"UserServer\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new UserServer(),
-      "SELECT\n"
-      + "  psu.*\n"
-      + "FROM\n"
-      + "             master.\"UserHost\"       ms\n"
-      + "  INNER JOIN postgresql.\"Server\"     ps  ON ms.server =  ps.ao_server\n"
-      + "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
-      + "where\n"
-      + "  ms.username = ?",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new UserServer(),
+        "SELECT\n"
+            + "  psu.*\n"
+            + "FROM\n"
+            + "             master.\"UserHost\"       ms\n"
+            + "  INNER JOIN postgresql.\"Server\"     ps  ON ms.server =  ps.ao_server\n"
+            + "  INNER JOIN postgresql.\"UserServer\" psu ON ps.bind   = psu.postgres_server\n"
+            + "where\n"
+            + "  ms.username = ?",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new UserServer(),
-      "select\n"
-      + "  psu.id,\n"
-      + "  psu.username,\n"
-      + "  psu.postgres_server,\n"
-      + "  psu.disable_log,\n"
-      + "  case when psu.predisable_password is null then null else ? end\n"
-      + "from\n"
-      + "  account.\"User\" un1,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  account.\"User\" un2,\n"
-      + "  postgresql.\"UserServer\" psu\n"
-      + "where\n"
-      + "  un1.username=?\n"
-      + "  and un1.package=pk1.name\n"
-      + "  and (\n"
-      + TableHandler.PK1_BU1_PARENTS_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=un2.package\n"
-      + "  and un2.username=psu.username",
-      AoservProtocol.FILTERED,
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new UserServer(),
+        "select\n"
+            + "  psu.id,\n"
+            + "  psu.username,\n"
+            + "  psu.postgres_server,\n"
+            + "  psu.disable_log,\n"
+            + "  case when psu.predisable_password is null then null else ? end\n"
+            + "from\n"
+            + "  account.\"User\" un1,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  account.\"User\" un2,\n"
+            + "  postgresql.\"UserServer\" psu\n"
+            + "where\n"
+            + "  un1.username=?\n"
+            + "  and un1.package=pk1.name\n"
+            + "  and (\n"
+            + TableHandler.PK1_BU1_PARENTS_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=un2.package\n"
+            + "  and un2.username=psu.username",
+        AoservProtocol.FILTERED,
+        source.getCurrentAdministrator()
     );
   }
 }

@@ -52,72 +52,72 @@ public class GroupServer_GetTableHandler extends TableHandler.GetTableHandlerByR
   @Override
   protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new GroupServer(),
-      "select * from linux.\"GroupServer\""
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new GroupServer(),
+        "select * from linux.\"GroupServer\""
     );
   }
 
   @Override
   protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new GroupServer(),
-      "select\n"
-      + "  lsg.*\n"
-      + "from\n"
-      + "  master.\"UserHost\" ms,\n"
-      + "  linux.\"GroupServer\" lsg\n"
-      + "where\n"
-      + "  ms.username=?\n"
-      + "  and ms.server=lsg.ao_server",
-      source.getCurrentAdministrator()
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new GroupServer(),
+        "select\n"
+            + "  lsg.*\n"
+            + "from\n"
+            + "  master.\"UserHost\" ms,\n"
+            + "  linux.\"GroupServer\" lsg\n"
+            + "where\n"
+            + "  ms.username=?\n"
+            + "  and ms.server=lsg.ao_server",
+        source.getCurrentAdministrator()
     );
   }
 
   @Override
   protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
     MasterServer.writeObjects(
-      conn,
-      source,
-      out,
-      provideProgress,
-      CursorMode.AUTO,
-      new GroupServer(),
-      "select\n"
-      + "  lsg.*\n"
-      + "from\n"
-      + "  account.\"User\" un,\n"
-      + "  billing.\"Package\" pk1,\n"
-      + TableHandler.BU1_PARENTS_JOIN
-      + "  billing.\"Package\" pk2,\n"
-      + "  linux.\"Group\" lg,\n"
-      + "  account.\"AccountHost\" bs,\n"
-      + "  linux.\"GroupServer\" lsg\n"
-      + "where\n"
-      + "  un.username=?\n"
-      + "  and un.package=pk1.name\n"
-      + "  and (\n"
-      + "    lg.name in (?,?,?)\n"
-      + TableHandler.PK1_BU1_PARENTS_OR_WHERE
-      + "  )\n"
-      + "  and bu1.accounting=pk2.accounting\n"
-      + "  and pk2.name=lg.package\n"
-      + "  and pk1.accounting=bs.accounting\n"
-      + "  and lg.name=lsg.name\n"
-      + "  and bs.server=lsg.ao_server",
-      source.getCurrentAdministrator(),
-      Group.FTPONLY,
-      Group.MAIL,
-      Group.MAILONLY
+        conn,
+        source,
+        out,
+        provideProgress,
+        CursorMode.AUTO,
+        new GroupServer(),
+        "select\n"
+            + "  lsg.*\n"
+            + "from\n"
+            + "  account.\"User\" un,\n"
+            + "  billing.\"Package\" pk1,\n"
+            + TableHandler.BU1_PARENTS_JOIN
+            + "  billing.\"Package\" pk2,\n"
+            + "  linux.\"Group\" lg,\n"
+            + "  account.\"AccountHost\" bs,\n"
+            + "  linux.\"GroupServer\" lsg\n"
+            + "where\n"
+            + "  un.username=?\n"
+            + "  and un.package=pk1.name\n"
+            + "  and (\n"
+            + "    lg.name in (?,?,?)\n"
+            + TableHandler.PK1_BU1_PARENTS_OR_WHERE
+            + "  )\n"
+            + "  and bu1.accounting=pk2.accounting\n"
+            + "  and pk2.name=lg.package\n"
+            + "  and pk1.accounting=bs.accounting\n"
+            + "  and lg.name=lsg.name\n"
+            + "  and bs.server=lsg.ao_server",
+        source.getCurrentAdministrator(),
+        Group.FTPONLY,
+        Group.MAIL,
+        Group.MAILONLY
     );
   }
 }

@@ -56,30 +56,30 @@ public final class PkiCertificateHandler {
 
   public static Account.Name getPackageForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
     return conn.queryObject(
-      ObjectFactories.accountNameFactory,
-      "select package from pki.\"Certificate\" where id=?",
-      certificate
+        ObjectFactories.accountNameFactory,
+        "select package from pki.\"Certificate\" where id=?",
+        certificate
     );
   }
 
   public static int getLinuxServerForCertificate(DatabaseConnection conn, int certificate) throws IOException, SQLException {
     return conn.queryInt(
-      "select ao_server from pki.\"Certificate\" where id=?",
-      certificate
+        "select ao_server from pki.\"Certificate\" where id=?",
+        certificate
     );
   }
 
   public static List<Certificate.Check> check(
-    DatabaseConnection conn,
-    RequestSource source,
-    int certificate,
-    boolean allowCached
+      DatabaseConnection conn,
+      RequestSource source,
+      int certificate,
+      boolean allowCached
   ) throws IOException, SQLException {
     // Check access
     checkAccessCertificate(conn, source, "check", certificate);
     AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
-      conn,
-      getLinuxServerForCertificate(conn, certificate)
+        conn,
+        getLinuxServerForCertificate(conn, certificate)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.checkSslCertificate(certificate, allowCached);

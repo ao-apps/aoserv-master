@@ -57,13 +57,13 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
       MasterServer.writeObjects(source, out, false, Collections.emptyList());
     } else {
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new DistroFile(),
-        "select * from \"distribution.management\".\"DistroFile\""
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new DistroFile(),
+          "select * from \"distribution.management\".\"DistroFile\""
       );
     }
   }
@@ -85,13 +85,13 @@ public class DistroFile_GetTableHandler extends TableHandler.GetTableHandlerByRo
       }
       sql.append(')');
       MasterServer.writeObjects(
-        conn,
-        source,
-        out,
-        provideProgress,
-        CursorMode.FETCH,
-        new DistroFile(),
-        sql.toString()
+          conn,
+          source,
+          out,
+          provideProgress,
+          CursorMode.FETCH,
+          new DistroFile(),
+          sql.toString()
       );
     }
   }
