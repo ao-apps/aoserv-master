@@ -1711,7 +1711,7 @@ public final class TicketHandler /*implements Runnable*/ {
 
   private static Thread thread;
    */
-  private static boolean cronDaemonAdded = false;
+  private static boolean cronDaemonAdded;
 
   /**
    * Runs once every four hours

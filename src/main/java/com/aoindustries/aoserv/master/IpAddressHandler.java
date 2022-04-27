@@ -93,7 +93,9 @@ public final class IpAddressHandler {
           }
           final String farm = NetHostHandler.getFarmForHost(conn, host);
           String hostname = "unassigned" + octet + "." + net + farm + '.' + Zone.API_ZONE;
-          while (hostname.endsWith(".")) hostname = hostname.substring(0, hostname.length() - 1);
+          while (hostname.endsWith(".")) {
+            hostname = hostname.substring(0, hostname.length() - 1);
+          }
           return DomainName.valueOf(hostname);
         }
         case INET6 : {

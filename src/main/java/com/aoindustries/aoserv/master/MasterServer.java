@@ -161,7 +161,7 @@ public abstract class MasterServer {
    * cache updates.
    */
   private static final Map<Identifier, List<RequestSource>> cacheListeners = new LinkedHashMap<>();
-  private static int cacheListenersSize = 0;
+  private static int cacheListenersSize;
 
   /**
    * The address that this server will bind to.
@@ -302,7 +302,7 @@ public abstract class MasterServer {
   }
 
   private static final Object connectionsLock = new Object();
-  private static long connections = 0;
+  private static long connections;
 
   protected static void incConnectionCount() {
     synchronized (connectionsLock) {
@@ -11068,7 +11068,9 @@ public abstract class MasterServer {
     if (conn.queryBoolean(
         "select (select zone from dns.\"ForbiddenZone\" where zone=?) is not null",
         zone
-    )) throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: " + hostname);
+    )) {
+      throw new SQLException("Access to this hostname forbidden: Exists in dns.ForbiddenZone: " + hostname);
+    }
 
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 

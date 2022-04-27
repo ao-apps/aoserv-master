@@ -70,7 +70,7 @@ public final class TableHandler {
 
   private static final Logger logger = Logger.getLogger(TableHandler.class.getName());
 
-  private static boolean started = false;
+  private static boolean started;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {

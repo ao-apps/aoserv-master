@@ -1633,32 +1633,32 @@ public final class LinuxAccountHandler {
 
     // Must be needingful not by SharedTomcatSite to be tying to SharedTomcat please
     int useCount = conn.queryInt(
-        "select count(*) from linux.\"GroupUser\" lga, " +
-            "linux.\"UserServer\" lsa, " +
-            "\"web.tomcat\".\"SharedTomcat\" hst, " +
-            "\"web.tomcat\".\"SharedTomcatSite\" htss, " +
-            "web.\"Site\" hs " +
-            "where lga.\"user\" = lsa.username and " +
-            "lsa.id             = hst.linux_server_account and " +
-            "htss.tomcat_site   = hs.id and " +
-            "lga.\"group\"      = hs.linux_group and " +
-            "hst.id             = htss.httpd_shared_tomcat and " +
-            "lga.id = ?",
+        "select count(*) from linux.\"GroupUser\" lga, "
+            + "linux.\"UserServer\" lsa, "
+            + "\"web.tomcat\".\"SharedTomcat\" hst, "
+            + "\"web.tomcat\".\"SharedTomcatSite\" htss, "
+            + "web.\"Site\" hs "
+            + "where lga.\"user\" = lsa.username and "
+            + "lsa.id             = hst.linux_server_account and "
+            + "htss.tomcat_site   = hs.id and "
+            + "lga.\"group\"      = hs.linux_group and "
+            + "hst.id             = htss.httpd_shared_tomcat and "
+            + "lga.id = ?",
         groupUser
     );
     if (useCount == 0) {
       useCount = conn.queryInt(
-          "select count(*) from linux.\"GroupUser\" lga, " +
-              "linux.\"GroupServer\" lsg, " +
-              "\"web.tomcat\".\"SharedTomcat\" hst, " +
-              "\"web.tomcat\".\"SharedTomcatSite\" htss, " +
-              "web.\"Site\" hs " +
-              "where lga.\"group\" = lsg.name and " +
-              "lsg.id              = hst.linux_server_group and " +
-              "htss.tomcat_site    = hs.id and " +
-              "lga.\"user\"        = hs.linux_account and " +
-              "hst.id              = htss.httpd_shared_tomcat and " +
-              "lga.id = ?",
+          "select count(*) from linux.\"GroupUser\" lga, "
+              + "linux.\"GroupServer\" lsg, "
+              + "\"web.tomcat\".\"SharedTomcat\" hst, "
+              + "\"web.tomcat\".\"SharedTomcatSite\" htss, "
+              + "web.\"Site\" hs "
+              + "where lga.\"group\" = lsg.name and "
+              + "lsg.id              = hst.linux_server_group and "
+              + "htss.tomcat_site    = hs.id and "
+              + "lga.\"user\"        = hs.linux_account and "
+              + "hst.id              = htss.httpd_shared_tomcat and "
+              + "lga.id = ?",
           groupUser
       );
     }

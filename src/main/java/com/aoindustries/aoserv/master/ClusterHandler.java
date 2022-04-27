@@ -68,7 +68,7 @@ public final class ClusterHandler implements CronJob {
    */
   private static final long TIMER_REMINDER_INTERVAL = 60L * 60L * 1000L; // One hour
 
-  private static boolean started = false;
+  private static boolean started;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {

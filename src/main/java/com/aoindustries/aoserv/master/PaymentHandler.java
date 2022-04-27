@@ -96,7 +96,7 @@ public final class PaymentHandler /*implements CronJob*/ {
    */
   private static final long TIMER_REMINDER_INTERVAL = 2L * 60 * 60 * 1000;
 
-  private static boolean started = false;
+  private static boolean started;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {

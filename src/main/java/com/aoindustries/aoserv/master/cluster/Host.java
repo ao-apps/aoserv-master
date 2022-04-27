@@ -255,17 +255,17 @@ public final class Host implements Comparable<Host> {
   /**
    * The allocated secondary RAM on a per-primary-server basis.
    */
-  int[] allocatedSecondaryRAMs = null;
+  int[] allocatedSecondaryRAMs;
 
   /**
    * The maximum secondary RAM allocated on any of the primary servers.
    */
-  int maximumAllocatedSecondaryRAM = 0;
+  int maximumAllocatedSecondaryRAM;
 
   /**
    * The allocated processor weight during the recursive processing.
    */
-  int allocatedProcessorWeight = 0;
+  int allocatedProcessorWeight;
 
   Host(String hostname, Rack rack, int ram, ProcessorType processorType, ProcessorArchitecture processorArchitecture, int processorSpeed, int processorCores, Disk[] disks) {
     this.hostname = hostname;

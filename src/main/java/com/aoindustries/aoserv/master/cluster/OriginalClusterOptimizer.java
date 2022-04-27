@@ -942,10 +942,10 @@ public final class OriginalClusterOptimizer {
     System.out.println("Done!!!  Mapped " + mapped);
   }
 
-  private static long mapped = 0;
-  private static long skipped = 0;
+  private static long mapped;
+  private static long skipped;
   private static long lastMapDisplayedTime = -1;
-  private static long callCounter = 0;
+  private static long callCounter;
 
   /**
    * TODO: How can we optimize further knowing that multiple virtual servers have exactly the same configuration (and therefore don't affect the overall results when switched positions)

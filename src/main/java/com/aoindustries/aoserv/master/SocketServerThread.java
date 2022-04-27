@@ -516,8 +516,8 @@ public final class SocketServerThread extends Thread implements RequestSource {
         if (
             message == null
                 || (
-                !message.equals("Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset")
-                    && !message.equals("Unrecognized SSL message, plaintext connection?")
+                !"Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset".equals(message)
+                    && !"Unrecognized SSL message, plaintext connection?".equals(message)
             )
         ) {
           logger.log(Level.SEVERE, null, err);
@@ -531,7 +531,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 || (
                 // Connection reset common for abnormal client disconnects
                 !message.startsWith("Broken pipe")
-                    && !message.equals("Connection reset")
+                    && !"Connection reset".equals(message)
                     && !message.startsWith("Connection timed out")
             )
         ) {

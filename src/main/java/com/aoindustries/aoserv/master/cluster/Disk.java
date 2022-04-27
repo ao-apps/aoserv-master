@@ -35,12 +35,12 @@ public final class Disk {
   /**
    * The allocated extents during the recursive processing.
    */
-  int allocatedExtents = 0;
+  int allocatedExtents;
 
   /**
    * The allocated weight during the recursive processing.
    */
-  int allocatedWeight = 0;
+  int allocatedWeight;
 
   Disk(String device, DiskType diskType, int extents) {
     this.device = device;

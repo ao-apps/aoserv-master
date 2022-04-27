@@ -69,7 +69,7 @@ public final class AccountCleaner implements CronJob {
    */
   private static final int CANCELED_KEEP_DAYS = 30;
 
-  private static boolean started = false;
+  private static boolean started;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {

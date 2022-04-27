@@ -165,7 +165,7 @@ public final class SignupHandler {
     return requestId;
   }
 
-  private static boolean cronDaemonAdded = false;
+  private static boolean cronDaemonAdded;
 
   private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute == 32 && hour == 6;
 

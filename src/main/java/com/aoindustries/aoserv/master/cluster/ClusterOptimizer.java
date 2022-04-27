@@ -125,7 +125,7 @@ public final class ClusterOptimizer {
   }
 
   private static long lastMapDisplayedTime = -1;
-  private static long callCounter = 0;
+  private static long callCounter;
 
   private static void displayProgress(VirtualServer[] virtualServers, Host[] servers, int currentVirtualServer) {
     callCounter++;
@@ -166,7 +166,9 @@ public final class ClusterOptimizer {
     for (SkipType skipType : SkipType.values()) {
       System.out.print(skipType.name());
       System.out.print(' ');
-      for (int c = skipType.name().length(); c < 44; c++) System.out.print(' ');
+      for (int c = skipType.name().length(); c < 44; c++) {
+        System.out.print(' ');
+      }
       System.out.println(skipType.counter);
     }
   }
@@ -228,8 +230,8 @@ public final class ClusterOptimizer {
     }
   }
 
-  private static long mapped = 0;
-  private static long skipped = 0;
+  private static long mapped;
+  private static long skipped;
 
   /**
    * Try all permutations of mappings from virtual server to physical servers, only continuing to the next allocation

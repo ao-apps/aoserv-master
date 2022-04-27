@@ -36,8 +36,8 @@ public final class VirtualDisk {
   final DiskType secondaryDiskType;
   final int secondaryWeight;
 
-  Disk selectedPrimaryDisk = null;
-  Disk selectedSecondaryDisk = null;
+  Disk selectedPrimaryDisk;
+  Disk selectedSecondaryDisk;
 
   VirtualDisk(
       String device,

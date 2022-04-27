@@ -41,7 +41,7 @@ import java.util.Objects;
  */
 public class Process extends com.aoindustries.aoserv.client.master.Process {
 
-  private static boolean logCommands = false;
+  private static boolean logCommands;
 
   /**
    * Turns on/off command logging.

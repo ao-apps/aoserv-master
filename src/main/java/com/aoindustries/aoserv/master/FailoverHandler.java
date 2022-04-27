@@ -366,7 +366,7 @@ public final class FailoverHandler implements CronJob {
     return Thread.NORM_PRIORITY - 1;
   }
 
-  private static boolean started = false;
+  private static boolean started;
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void start() {
