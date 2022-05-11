@@ -39,7 +39,7 @@ import java.sql.SQLException;
 import org.apache.commons.lang3.NotImplementedException;
 
 /**
- * The <code>IPAddressHandler</code> handles all the accesses to the <code>net.IpAddress</code> table.
+ * The <code>IpAddressHandler</code> handles all the accesses to the <code>net.IpAddress</code> table.
  *
  * @author  AO Industries, Inc.
  */
@@ -51,9 +51,9 @@ public final class IpAddressHandler {
   }
 
   public static void checkAccessIpAddress(DatabaseConnection conn, RequestSource source, String action, int ipAddressId) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         NetHostHandler.checkAccessHost(conn, source, action, getHostForIpAddress(conn, ipAddressId));
       }
     } else {
@@ -76,7 +76,7 @@ public final class IpAddressHandler {
     try {
       final InetAddress inetAddress = getInetAddressForIpAddress(conn, ipAddress);
       switch (inetAddress.getAddressFamily()) {
-        case INET : {
+        case INET: {
           String ip = inetAddress.toString();
           int pos = ip.lastIndexOf('.');
           final String octet = ip.substring(pos + 1);
@@ -98,10 +98,10 @@ public final class IpAddressHandler {
           }
           return DomainName.valueOf(hostname);
         }
-        case INET6 : {
+        case INET6: {
           throw new NotImplementedException();
         }
-        default :
+        default:
           throw new AssertionError();
       }
     } catch (ValidationException e) {
@@ -138,14 +138,14 @@ public final class IpAddressHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         account,
         fromHost,
         false
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         account,
         toHost,
         false
@@ -162,7 +162,7 @@ public final class IpAddressHandler {
       int dhcpAddress,
       InetAddress inetAddress
   ) throws IOException, SQLException {
-    checkAccessIpAddress(conn, source, "setIPAddressDHCPAddress", dhcpAddress);
+    checkAccessIpAddress(conn, source, "setDhcpAddressDestination", dhcpAddress);
     if (!isDhcpAddress(conn, dhcpAddress)) {
       throw new SQLException("net.IpAddress is not DHCP-enabled: " + dhcpAddress);
     }
@@ -176,14 +176,14 @@ public final class IpAddressHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         account,
         host,
         false
     );
 
     // Update any DNS records that follow this IP address
-    MasterServer.getService(DnsService.class).updateDhcpDnsRecords(conn, invalidateList, dhcpAddress, inetAddress);
+    AoservMaster.getService(DnsService.class).updateDhcpDnsRecords(conn, invalidateList, dhcpAddress, inetAddress);
   }
 
   /**
@@ -196,8 +196,8 @@ public final class IpAddressHandler {
       int ipAddress,
       DomainName hostname
   ) throws IOException, SQLException {
-    checkAccessIpAddress(conn, source, "setIPAddressHostname", ipAddress);
-    MasterServer.checkAccessHostname(conn, source, "setIPAddressHostname", hostname.toString());
+    checkAccessIpAddress(conn, source, "setIpAddressHostname", ipAddress);
+    AoservMaster.checkAccessHostname(conn, source, "setIpAddressHostname", hostname.toString());
 
     setIpAddressHostname(conn, invalidateList, ipAddress, hostname);
   }
@@ -212,7 +212,7 @@ public final class IpAddressHandler {
       DomainName hostname
   ) throws IOException, SQLException {
     // Can't set the hostname on a disabled package
-    //String packageName=getPackageForIPAddress(conn, ipAddress);
+    //String packageName=getPackageForIpAddress(conn, ipAddress);
     //if (PackageHandler.isPackageDisabled(conn, packageName)) {
     //  throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
     //}
@@ -231,14 +231,14 @@ public final class IpAddressHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         getAccountForIpAddress(conn, ipAddress),
         getHostForIpAddress(conn, ipAddress),
         false
     );
 
     // Update any reverse DNS matchins this IP address
-    MasterServer.getService(DnsService.class).updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
+    AoservMaster.getService(DnsService.class).updateReverseDnsIfExists(conn, invalidateList, ip, hostname);
   }
 
   public static void setIpAddressMonitoringEnabled(
@@ -248,7 +248,7 @@ public final class IpAddressHandler {
       int ipAddress,
       boolean monitoringEnabled
   ) throws IOException, SQLException {
-    checkAccessIpAddress(conn, source, "setIPAddressMonitoringEnabled", ipAddress);
+    checkAccessIpAddress(conn, source, "setIpAddressMonitoringEnabled", ipAddress);
 
     setIpAddressMonitoringEnabled(conn, invalidateList, ipAddress, monitoringEnabled);
   }
@@ -267,7 +267,7 @@ public final class IpAddressHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         getAccountForIpAddress(conn, ipAddress),
         getHostForIpAddress(conn, ipAddress),
         false
@@ -284,8 +284,8 @@ public final class IpAddressHandler {
       int ipAddress,
       Account.Name newPackage
   ) throws IOException, SQLException {
-    checkAccessIpAddress(conn, source, "setIPAddressPackage", ipAddress);
-    PackageHandler.checkAccessPackage(conn, source, "setIPAddressPackage", newPackage);
+    checkAccessIpAddress(conn, source, "setIpAddressPackage", ipAddress);
+    PackageHandler.checkAccessPackage(conn, source, "setIpAddressPackage", newPackage);
 
     setIpAddressPackage(conn, invalidateList, ipAddress, newPackage);
   }
@@ -323,7 +323,7 @@ public final class IpAddressHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         InvalidateList.getAccountCollection(oldAccounting, newAccounting),
         host,
         false
@@ -457,7 +457,7 @@ public final class IpAddressHandler {
         ipAddress
     );
     invalidateList.addTable(conn,
-        Table.TableID.IP_ADDRESSES,
+        Table.TableId.IP_ADDRESSES,
         getAccountForIpAddress(conn, ipAddress),
         getHostForIpAddress(conn, ipAddress),
         false

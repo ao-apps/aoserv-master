@@ -30,7 +30,7 @@ import com.aoapps.net.InetAddress;
 import com.aoapps.net.Port;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.sql.SQLException;
@@ -113,7 +113,7 @@ public final class LinuxServerHandler {
     try {
       if (DaemonHandler.isDaemonAvailable(linuxServer)) {
         try {
-          AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+          AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
           conn.close(); // Don't hold database connection while connecting to the daemon
           daemonConnector.getMrtgFile(filename, out);
         } catch (IOException err) {
@@ -139,7 +139,7 @@ public final class LinuxServerHandler {
       Timestamp time
   ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User mu = MasterServer.getUser(conn, currentAdministrator);
+    User mu = AoservMaster.getUser(conn, currentAdministrator);
     if (mu == null) {
       throw new SQLException("User " + currentAdministrator + " is not master user and may not set the last distro time");
     }
@@ -151,7 +151,7 @@ public final class LinuxServerHandler {
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.SERVERS,
+        Table.TableId.SERVERS,
         NetHostHandler.getAccountsForHost(conn, linuxServer),
         linuxServer,
         false
@@ -165,12 +165,12 @@ public final class LinuxServerHandler {
       boolean includeUser
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "startDistro", linuxServer);
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
       throw new SQLException("Only master users may start distribution verifications: " + source.getCurrentAdministrator());
     }
     NetHostHandler.checkAccessHost(conn, source, "startDistro", linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.startDistro(includeUser);
   }
@@ -184,7 +184,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to restart Cron on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.restartCron();
   }
@@ -198,7 +198,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to start Cron on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.startCron();
   }
@@ -212,7 +212,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to stop Cron on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.stopCron();
   }
@@ -226,7 +226,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to restart XFS on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.restartXfs();
   }
@@ -240,7 +240,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to start XFS on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.startXfs();
   }
@@ -254,7 +254,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to stop XFS on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.stopXfs();
   }
@@ -268,7 +268,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to restart Xvfb on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.restartXvfb();
   }
@@ -282,7 +282,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to start Xvfb on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.startXvfb();
   }
@@ -296,7 +296,7 @@ public final class LinuxServerHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to stop Xvfb on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.stopXvfb();
   }
@@ -304,7 +304,7 @@ public final class LinuxServerHandler {
   public static String get3wareRaidReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "get3wareRaidReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.get3wareRaidReport();
   }
@@ -312,21 +312,21 @@ public final class LinuxServerHandler {
   public static String getUpsStatus(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getUpsStatus", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getUpsStatus();
   }
 
   public static String getMdStatReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getMdStatReport", linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getMdStatReport();
   }
 
   public static String getMdMismatchReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getMdMismatchReport", linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getMdMismatchReport();
   }
@@ -334,7 +334,7 @@ public final class LinuxServerHandler {
   public static String getDrbdReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getDrbdReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getDrbdReport();
   }
@@ -342,7 +342,7 @@ public final class LinuxServerHandler {
   public static String[] getLvmReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getLvmReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getLvmReport();
   }
@@ -350,7 +350,7 @@ public final class LinuxServerHandler {
   public static String getHddTempReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getHddTempReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getHddTempReport();
   }
@@ -358,7 +358,7 @@ public final class LinuxServerHandler {
   public static String getHddModelReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getHddModelReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getHddModelReport();
   }
@@ -366,7 +366,7 @@ public final class LinuxServerHandler {
   public static String getFilesystemsCsvReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getFilesystemsCsvReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getFilesystemsCsvReport();
   }
@@ -374,7 +374,7 @@ public final class LinuxServerHandler {
   public static String getLoadAvgReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getLoadAvgReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getLoadAvgReport();
   }
@@ -382,15 +382,23 @@ public final class LinuxServerHandler {
   public static String getMemInfoReport(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getMemInfoReport", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getMemInfoReport();
   }
 
-  public static String checkPort(DatabaseConnection conn, RequestSource source, int linuxServer, InetAddress ipAddress, Port port, String appProtocol, String monitoringParameters) throws IOException, SQLException {
+  public static String checkPort(
+      DatabaseConnection conn,
+      RequestSource source,
+      int linuxServer,
+      InetAddress ipAddress,
+      Port port,
+      String appProtocol,
+      String monitoringParameters
+  ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "checkPort", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.checkPort(ipAddress, port, appProtocol, monitoringParameters);
   }
@@ -398,7 +406,7 @@ public final class LinuxServerHandler {
   public static String checkSmtpBlacklist(DatabaseConnection conn, RequestSource source, int linuxServer, InetAddress sourceIp, InetAddress connectIp) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "checkSmtpBlacklist", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.checkSmtpBlacklist(sourceIp, connectIp);
   }
@@ -406,7 +414,7 @@ public final class LinuxServerHandler {
   public static long getSystemTimeMillis(DatabaseConnection conn, RequestSource source, int linuxServer) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "getSystemTimeMillis", linuxServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getSystemTimeMillis();
   }

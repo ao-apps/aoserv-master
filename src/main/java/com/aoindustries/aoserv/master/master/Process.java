@@ -61,44 +61,44 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
       SmallIdentifier id,
       InetAddress host,
       String protocol,
-      boolean is_secure,
-      Timestamp connect_time
+      boolean isSecure,
+      Timestamp connectTime
   ) {
     this.id = id;
     this.host = host;
     this.protocol = protocol;
-    this.is_secure = is_secure;
-    this.connect_time = UnmodifiableTimestamp.valueOf(connect_time);
+    this.isSecure = isSecure;
+    this.connectTime = UnmodifiableTimestamp.valueOf(connectTime);
     this.priority = Thread.NORM_PRIORITY;
     this.state = LOGIN;
-    this.state_start_time = this.connect_time;
+    this.stateStartTime = this.connectTime;
   }
 
   public synchronized void commandCompleted() {
     long time = System.currentTimeMillis();
-    total_time += time - state_start_time.getTime();
+    totalTime += time - stateStartTime.getTime();
     state = SLEEP;
     command = null;
-    state_start_time = new UnmodifiableTimestamp(time);
+    stateStartTime = new UnmodifiableTimestamp(time);
   }
 
   public synchronized void commandRunning() {
-    use_count++;
+    useCount++;
     state = RUN;
-    state_start_time = new UnmodifiableTimestamp(System.currentTimeMillis());
+    stateStartTime = new UnmodifiableTimestamp(System.currentTimeMillis());
   }
 
   public synchronized void commandSleeping() {
     if (!state.equals(SLEEP)) {
       long time = System.currentTimeMillis();
       state = SLEEP;
-      total_time += time - state_start_time.getTime();
-      state_start_time = new UnmodifiableTimestamp(time);
+      totalTime += time - stateStartTime.getTime();
+      stateStartTime = new UnmodifiableTimestamp(time);
     }
   }
 
-  public void setAOServProtocol(String aoserv_protocol) {
-    this.aoserv_protocol = aoserv_protocol;
+  public void setAoservProtocol(String aoservProtocol) {
+    this.aoservProtocol = aoservProtocol;
   }
 
   @Override
@@ -126,7 +126,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
   }
 
   public void setAuthenticatedUser(User.Name username) {
-    authenticated_user = username;
+    authenticatedUser = username;
   }
 
   public void setConnectorId(Identifier connectorId) {
@@ -134,11 +134,11 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
   }
 
   public void setDeamonServer(int server) {
-    daemon_server = server;
+    daemonServer = server;
   }
 
   public void setEffectiveUser(User.Name username) {
-    effective_user = username;
+    effectiveUser = username;
   }
 
   public void setPriority(int priority) {

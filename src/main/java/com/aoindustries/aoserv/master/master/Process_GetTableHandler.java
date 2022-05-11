@@ -29,7 +29,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.AccountUserHandler;
-import com.aoindustries.aoserv.master.MasterServer;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -46,13 +46,20 @@ import java.util.Set;
 public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.MASTER_PROCESSES);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.MASTER_PROCESSES);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjectsSynced(
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjectsSynced(
         source,
         out,
         provideProgress,
@@ -60,7 +67,7 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
     );
   }
 
-  private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+  private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableId tableId) throws IOException, SQLException {
     List<Process> processesCopy = Process_Manager.getSnapshot();
     List<Process> filtered = new ArrayList<>();
     Iterator<Process> iter = processesCopy.iterator();
@@ -74,16 +81,30 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
         filtered.add(process);
       }
     }
-    MasterServer.writeObjectsSynced(source, out, provideProgress, filtered);
+    AoservMaster.writeObjectsSynced(source, out, provideProgress, filtered);
   }
 
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    getTableFiltered(conn, source, out, provideProgress, tableID);
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableId);
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    getTableFiltered(conn, source, out, provideProgress, tableID);
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    getTableFiltered(conn, source, out, provideProgress, tableId);
   }
 }

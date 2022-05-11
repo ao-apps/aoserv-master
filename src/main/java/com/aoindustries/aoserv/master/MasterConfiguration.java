@@ -66,19 +66,19 @@ public final class MasterConfiguration {
     }
   }
 
-  public static String getSSLKeystorePassword() throws IOException {
+  public static String getSslKeystorePassword() throws IOException {
     return getProperty("aoserv.master.ssl.keystore.password");
   }
 
-  public static String getSSLKeystorePath() throws IOException {
+  public static String getSslKeystorePath() throws IOException {
     return getProperty("aoserv.master.ssl.keystore.path");
   }
 
-  public static String getSSLTruststorePassword() throws IOException {
+  public static String getSslTruststorePassword() throws IOException {
     return getProperty("aoserv.daemon.client.ssl.truststore.password");
   }
 
-  public static String getSSLTruststorePath() throws IOException {
+  public static String getSslTruststorePath() throws IOException {
     return getProperty("aoserv.daemon.client.ssl.truststore.path");
   }
 
@@ -120,52 +120,53 @@ public final class MasterConfiguration {
     }
   }
 
-  public static String getDBDriver() throws IOException {
+  public static String getDbDriver() throws IOException {
     return getProperty("aoserv.master.db.driver");
   }
 
-  public static String getDBURL() throws IOException {
+  public static String getDbUrl() throws IOException {
     return getProperty("aoserv.master.db.url");
   }
 
-  public static String getDBUser() throws IOException {
+  public static String getDbUser() throws IOException {
     return getProperty("aoserv.master.db.user");
   }
 
-  public static String getDBPassword() throws IOException {
+  public static String getDbPassword() throws IOException {
     return getProperty("aoserv.master.db.password");
   }
 
-  public static int getDBConnectionPoolSize() throws IOException {
+  public static int getDbConnectionPoolSize() throws IOException {
     return Integer.parseInt(getProperty("aoserv.master.db.connections"));
   }
 
-  public static long getDBMaxConnectionAge() throws IOException {
+  public static long getDbMaxConnectionAge() throws IOException {
     String s = getProperty("aoserv.master.db.max_connection_age");
     return s == null || s.length() == 0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(s);
   }
 
-  public static String getBackupDBDriver() throws IOException {
+  // TODO: There is no longer any backup database.  These should all be unused already and should be removed.
+  public static String getBackupDbDriver() throws IOException {
     return getProperty("aoserv.master.backup.db.driver");
   }
 
-  public static String getBackupDBURL() throws IOException {
+  public static String getBackupDbUrl() throws IOException {
     return getProperty("aoserv.master.backup.db.url");
   }
 
-  public static String getBackupDBUser() throws IOException {
+  public static String getBackupDbUser() throws IOException {
     return getProperty("aoserv.master.backup.db.user");
   }
 
-  public static String getBackupDBPassword() throws IOException {
+  public static String getBackupDbPassword() throws IOException {
     return getProperty("aoserv.master.backup.db.password");
   }
 
-  public static int getBackupDBConnectionPoolSize() throws IOException {
+  public static int getBackupDbConnectionPoolSize() throws IOException {
     return Integer.parseInt(getProperty("aoserv.master.backup.db.connections"));
   }
 
-  public static long getBackupDBMaxConnectionAge() throws IOException {
+  public static long getBackupDbMaxConnectionAge() throws IOException {
     String s = getProperty("aoserv.master.backup.db.max_connection_age");
     return s == null || s.length() == 0 ? AOPool.DEFAULT_MAX_CONNECTION_AGE : Long.parseLong(s);
   }
@@ -197,7 +198,7 @@ public final class MasterConfiguration {
     return getProperty("aoserv.master.ticket.source." + protocol + "." + index + "." + field);
   }
 
-  public static String getTicketURL() throws IOException {
+  public static String getTicketUrl() throws IOException {
     return getProperty("aoserv.master.ticket.url");
   }
 

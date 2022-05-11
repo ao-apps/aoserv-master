@@ -23,6 +23,14 @@
 
 package com.aoindustries.aoserv.master.master;
 
+import static com.aoindustries.aoserv.master.AoservMaster.getRequestConcurrency;
+import static com.aoindustries.aoserv.master.AoservMaster.getRequestConnections;
+import static com.aoindustries.aoserv.master.AoservMaster.getRequestMaxConcurrency;
+import static com.aoindustries.aoserv.master.AoservMaster.getRequestTotalTime;
+import static com.aoindustries.aoserv.master.AoservMaster.getRequestTransactions;
+import static com.aoindustries.aoserv.master.AoservMaster.getStartTime;
+import static com.aoindustries.aoserv.master.AoservMaster.writeObjects;
+
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.FifoFile;
 import com.aoapps.hodgepodge.io.FifoFileInputStream;
@@ -37,13 +45,6 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.DaemonHandler;
 import com.aoindustries.aoserv.master.MasterDatabase;
-import static com.aoindustries.aoserv.master.MasterServer.getRequestConcurrency;
-import static com.aoindustries.aoserv.master.MasterServer.getRequestConnections;
-import static com.aoindustries.aoserv.master.MasterServer.getRequestMaxConcurrency;
-import static com.aoindustries.aoserv.master.MasterServer.getRequestTotalTime;
-import static com.aoindustries.aoserv.master.MasterServer.getRequestTransactions;
-import static com.aoindustries.aoserv.master.MasterServer.getStartTime;
-import static com.aoindustries.aoserv.master.MasterServer.writeObjects;
 import com.aoindustries.aoserv.master.RandomHandler;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -64,14 +65,15 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
   private static final Logger logger = Logger.getLogger(ServerStat_GetTableHandler.class.getName());
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.MASTER_SERVER_STATS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.MASTER_SERVER_STATS);
   }
 
   private static String trim(String inStr) {
     return (inStr == null) ? null : inStr.trim();
   }
 
+  @SuppressWarnings("deprecation")
   private static void addStat(
       List<ServerStat> objs,
       String name,
@@ -88,7 +90,13 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
   }
 
   @Override
-  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+  protected void getTablePublic(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
     List<ServerStat> objs;
     try {
       // Create the list of objects first

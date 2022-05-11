@@ -58,9 +58,9 @@ public final class NetReputationSetHandler {
   }
 
   public static void checkAccessIpReputationSet(DatabaseConnection conn, RequestSource source, String action, int ipReputationSet) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         // Must be an admin or router to submit reputation
         String message =
             "currentAdministrator="
@@ -68,8 +68,7 @@ public final class NetReputationSetHandler {
                 + " is not allowed to access ip reputation set: action='"
                 + action
                 + ", id="
-                + ipReputationSet
-        ;
+                + ipReputationSet;
         throw new SQLException(message);
       }
     } else {
@@ -102,8 +101,7 @@ public final class NetReputationSetHandler {
   private static int getNetwork(int host, short networkPrefix) {
     return
         host
-            & (0xffffffff << (32 - networkPrefix))
-    ;
+            & (0xffffffff << (32 - networkPrefix));
   }
 
   /**
@@ -120,84 +118,79 @@ public final class NetReputationSetHandler {
             + "IN EXCLUSIVE MODE");
   }
 
-  /* TODO: Do in batches
-  private static void createTempTable(DatabaseConnection conn, String suffix) throws SQLException {
-    conn.update(
-      "CREATE TEMPORARY TABLE add_reputation_" + suffix + " (\n"
-      + "  host INTEGER NOT NULL,\n"
-      + "  network INTEGER NOT NULL,\n"
-      + "  confidence CHAR(1) NOT NULL,\n"
-      + "  score SMALLINT NOT NULL\n"
-      + ")"
-    );
-  }
-
-  private static void addTempRows(
-    DatabaseConnection conn,
-    short networkPrefix,
-    Set.AddReputation[] addReputations,
-    Set.ReputationType reputationType,
-    String suffix
-  ) throws SQLException {
-    try (PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)")) {
-      boolean hasRow = false;
-      for (Set.AddReputation addRep : addReputations) {
-        if (addRep.getReputationType() == reputationType) {
-          hasRow = true;
-          int host = addRep.getHost();
-          pstmt.setInt   (1, host);
-          pstmt.setInt   (2, getNetwork(host, networkPrefix));
-          pstmt.setString(3, Character.toString(addRep.getConfidence().toChar()));
-          pstmt.setShort (4, addRep.getScore());
-          pstmt.addBatch();
-        }
-      }
-      if (hasRow) {
-        pstmt.executeBatch();
-      }
-    } catch (Error | RuntimeException | SQLException e) {
-      ErrorPrinter.addSQL(e, pstmt);
-      throw e;
-    }
-  }
-   */
-
-  /**
-   * Updates the host reputations for any that exist.
-   * Adds the new hosts that did not exist.
-   *
-   * @return  true if any updated
-   */
-  /* TODO: Do in batches
-  private static boolean updateHosts(
-    DatabaseConnection conn,
-    String suffix,
-    short maxUncertainReputation,
-    short maxDefiniteReputation
-  ) throws SQLException {
-    throw new SQLException("TODO: Implement method");
-  }
-   */
-
-  /**
-   * Updates the network reputations for any that exist.
-   * Adds the new networks that did not exist.
-   *
-   * @return  true if any updated
-   */
-  /* TODO: Do in batches
-  private static boolean updateNetworks(
-    DatabaseConnection conn,
-    String suffix,
-    short networkPrefix,
-    short maxNetworkReputation
-  ) throws SQLException {
-    // Determine the maximum score that will result in maxNetworkReputation when divided by network size
-    final int maxScore = ((maxNetworkReputation + 1) << (32 - networkPrefix)) - 1;
-    conn.execute
-    throw new SQLException("TODO: Implement method");
-  }
-   */
+  // TODO: Do in batches
+  //private static void createTempTable(DatabaseConnection conn, String suffix) throws SQLException {
+  //  conn.update(
+  //    "CREATE TEMPORARY TABLE add_reputation_" + suffix + " (\n"
+  //    + "  host INTEGER NOT NULL,\n"
+  //    + "  network INTEGER NOT NULL,\n"
+  //    + "  confidence CHAR(1) NOT NULL,\n"
+  //    + "  score SMALLINT NOT NULL\n"
+  //    + ")"
+  //  );
+  //}
+  //
+  //private static void addTempRows(
+  //  DatabaseConnection conn,
+  //  short networkPrefix,
+  //  Set.AddReputation[] addReputations,
+  //  Set.ReputationType reputationType,
+  //  String suffix
+  //) throws SQLException {
+  //  try (PreparedStatement pstmt = conn.getConnection().prepareStatement("INSERT INTO add_reputation_" + suffix + " VALUES (?,?,?,?)")) {
+  //    boolean hasRow = false;
+  //    for (Set.AddReputation addRep : addReputations) {
+  //      if (addRep.getReputationType() == reputationType) {
+  //        hasRow = true;
+  //        int host = addRep.getHost();
+  //        pstmt.setInt   (1, host);
+  //        pstmt.setInt   (2, getNetwork(host, networkPrefix));
+  //        pstmt.setString(3, Character.toString(addRep.getConfidence().toChar()));
+  //        pstmt.setShort (4, addRep.getScore());
+  //        pstmt.addBatch();
+  //      }
+  //    }
+  //    if (hasRow) {
+  //      pstmt.executeBatch();
+  //    }
+  //  } catch (Error | RuntimeException | SQLException e) {
+  //    ErrorPrinter.addSql(e, pstmt);
+  //    throw e;
+  //  }
+  //}
+  //
+  ///**
+  // * Updates the host reputations for any that exist.
+  // * Adds the new hosts that did not exist.
+  // *
+  // * @return  true if any updated
+  // */
+  //private static boolean updateHosts(
+  //  DatabaseConnection conn,
+  //  String suffix,
+  //  short maxUncertainReputation,
+  //  short maxDefiniteReputation
+  //) throws SQLException {
+  //  throw new SQLException("TODO: Implement method");
+  //}
+  //
+  ///**
+  // * Updates the network reputations for any that exist.
+  // * Adds the new networks that did not exist.
+  // *
+  // * @return  true if any updated
+  // */
+  //private static boolean updateNetworks(
+  //  DatabaseConnection conn,
+  //  String suffix,
+  //  short networkPrefix,
+  //  short maxNetworkReputation
+  //) throws SQLException {
+  //  // Determine the maximum score that will result in maxNetworkReputation when divided by network size
+  //  final int maxScore = ((maxNetworkReputation + 1) << (32 - networkPrefix)) - 1;
+  //  conn.execute
+  //  throw new SQLException("TODO: Implement method");
+  //}
 
   private static short constrainReputation(int newReputation, Set.ConfidenceType confidence, short maxUncertainReputation, short maxDefiniteReputation) {
     if (confidence == Set.ConfidenceType.UNCERTAIN) {
@@ -252,6 +245,7 @@ public final class NetReputationSetHandler {
         Host dbHost = conn.queryObject(
             Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
             result -> {
+              @SuppressWarnings("deprecation")
               Host obj = new Host();
               obj.init(result);
               return obj;
@@ -343,6 +337,7 @@ public final class NetReputationSetHandler {
           Network dbNetwork = conn.queryObject(
               Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
               result -> {
+                @SuppressWarnings("deprecation")
                 Network obj = new Network();
                 obj.init(result);
                 return obj;
@@ -429,7 +424,7 @@ public final class NetReputationSetHandler {
       if (hostsUpdated) {
         invalidateList.addTable(
             conn,
-            Table.TableID.IP_REPUTATION_SET_HOSTS,
+            Table.TableId.IP_REPUTATION_SET_HOSTS,
             account,
             AccountHandler.getHostsForAccount(conn, account),
             false
@@ -438,32 +433,32 @@ public final class NetReputationSetHandler {
       if (networksUpdated) {
         invalidateList.addTable(
             conn,
-            Table.TableID.IP_REPUTATION_SET_NETWORKS,
+            Table.TableId.IP_REPUTATION_SET_NETWORKS,
             account,
             AccountHandler.getHostsForAccount(conn, account),
             false
         );
       }
       // Also notify routers
-      for (Map.Entry<com.aoindustries.aoserv.client.account.User.Name, User> entry : MasterServer.getUsers(conn).entrySet()) {
+      for (Map.Entry<com.aoindustries.aoserv.client.account.User.Name, User> entry : AoservMaster.getUsers(conn).entrySet()) {
         com.aoindustries.aoserv.client.account.User.Name user = entry.getKey();
         User mu = entry.getValue();
         if (mu.isRouter()) {
           // TODO: Filter isRouter users by server_farm
-          for (UserHost ms : MasterServer.getUserHosts(conn, user)) {
+          for (UserHost ms : AoservMaster.getUserHosts(conn, user)) {
             if (hostsUpdated) {
               invalidateList.addTable(conn,
-                  Table.TableID.IP_REPUTATION_SET_HOSTS,
+                  Table.TableId.IP_REPUTATION_SET_HOSTS,
                   InvalidateList.allAccounts,
-                  ms.getServerPKey(),
+                  ms.getServerPkey(),
                   false
               );
             }
             if (networksUpdated) {
               invalidateList.addTable(conn,
-                  Table.TableID.IP_REPUTATION_SET_NETWORKS,
+                  Table.TableId.IP_REPUTATION_SET_NETWORKS,
                   InvalidateList.allAccounts,
-                  ms.getServerPKey(),
+                  ms.getServerPkey(),
                   false
               );
             }

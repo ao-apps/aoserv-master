@@ -38,8 +38,8 @@ import com.aoindustries.aoserv.client.dns.ZoneTable;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.net.AppProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.InvalidateList;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.ObjectFactories;
 import com.aoindustries.aoserv.master.PackageHandler;
@@ -76,7 +76,7 @@ public final class DnsService implements MasterService {
       int ttl
   ) throws IOException, SQLException {
     // Must be allowed to access this zone
-    checkAccessDNSZone(conn, source, "addRecord", zone);
+    checkAccessDnsZone(conn, source, "addRecord", zone);
 
     // Must have appropriate priority
     if (conn.queryBoolean("select has_priority from dns.\"RecordType\" where type=?", type)) {
@@ -169,10 +169,10 @@ public final class DnsService implements MasterService {
         destination,
         (ttl == -1) ? Null.INTEGER : ttl
     );
-    invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
     // Update the serial of the zone
-    updateDNSZoneSerial(conn, invalidateList, zone);
+    updateDnsZoneSerial(conn, invalidateList, zone);
 
     // Notify all clients of the update
     return recordId;
@@ -182,7 +182,7 @@ public final class DnsService implements MasterService {
    * Creates a new <code>Zone</code>.
    */
   @SuppressWarnings("deprecation")
-  public void addDNSZone(
+  public void addDnsZone(
       DatabaseConnection conn,
       RequestSource source,
       InvalidateList invalidateList,
@@ -192,19 +192,19 @@ public final class DnsService implements MasterService {
       int ttl
   ) throws IOException, SQLException {
     // Must be allowed to access this package
-    PackageHandler.checkAccessPackage(conn, source, "addDNSZone", packageName);
+    PackageHandler.checkAccessPackage(conn, source, "addDnsZone", packageName);
     if (PackageHandler.isPackageDisabled(conn, packageName)) {
       throw new SQLException("Not allowed to add Zone to disabled Package: " + packageName);
     }
-    MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
+    AoservMaster.checkAccessHostname(conn, source, "addDnsZone", zone);
     // Check the zone format
-    List<DomainName> tlds = getDNSTLDs(conn);
-    if (!ZoneTable.checkDNSZone(zone, tlds)) {
+    List<DomainName> tlds = getTopLevelDomains(conn);
+    if (!ZoneTable.checkDnsZone(zone, tlds)) {
       throw new SQLException("Invalid zone: " + zone);
     }
 
     // Must not be allocated in any way to another account
-    MasterServer.checkAccessHostname(conn, source, "addDNSZone", zone);
+    AoservMaster.checkAccessHostname(conn, source, "addDnsZone", zone);
 
     // Add the dns_zone entry
     conn.update(
@@ -247,45 +247,45 @@ public final class DnsService implements MasterService {
         "mail"
     );
 
-    final String INSERT_RECORD = "insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", destination) values(?,?,?,?)";
+    final String insertRecord = "insert into dns.\"Record\"(\"zone\", \"domain\", \"type\", destination) values(?,?,?,?)";
     // TODO: Take a "mail exchanger" parameter to properly setup the default MX records.
     //       If in this domain, sets up SPF like below.  If outside this domain (ends in .),
     //       sets up MX to the mail exchanger, and CNAME "mail" to the mail exchanger.
 
     // TODO: Take nameservers from reseller.Brand
 
-    String aType;
+    String atype;
     switch (ip.getAddressFamily()) {
-      case INET :
-        aType = RecordType.A;
+      case INET:
+        atype = RecordType.A;
         break;
-      case INET6 :
-        aType = RecordType.AAAA;
+      case INET6:
+        atype = RecordType.AAAA;
         break;
-      default :
+      default:
         throw new AssertionError();
     }
 
-    conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns1.aoindustries.com.");
-    conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns2.aoindustries.com.");
-    conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns3.aoindustries.com.");
-    conn.update(INSERT_RECORD, zone, "@",    RecordType.NS,  "ns4.aoindustries.com.");
-    conn.update(INSERT_RECORD, zone, "@",    RecordType.TXT, "v=spf1 a mx -all");
-    conn.update(INSERT_RECORD, zone, "@",    aType,       ip.toString());
+    conn.update(insertRecord, zone, "@",    RecordType.NS,  "ns1.aoindustries.com.");
+    conn.update(insertRecord, zone, "@",    RecordType.NS,  "ns2.aoindustries.com.");
+    conn.update(insertRecord, zone, "@",    RecordType.NS,  "ns3.aoindustries.com.");
+    conn.update(insertRecord, zone, "@",    RecordType.NS,  "ns4.aoindustries.com.");
+    conn.update(insertRecord, zone, "@",    RecordType.TXT, "v=spf1 a mx -all");
+    conn.update(insertRecord, zone, "@",    atype,       ip.toString());
     /*
     conn.update(INSERT_RECORD, zone, "ftp",  aType,       ip.toString());
     conn.update(INSERT_RECORD, zone, "ftp",  RecordType.TXT, "v=spf1 -all");
      */
-    conn.update(INSERT_RECORD, zone, "mail", aType,       ip.toString());
+    conn.update(insertRecord, zone, "mail", atype,       ip.toString());
     // See http://www.openspf.org/FAQ/Common_mistakes#helo "Publish SPF records for HELO names used by your mail servers"
-    conn.update(INSERT_RECORD, zone, "mail", RecordType.TXT, "v=spf1 a -all");
-    conn.update(INSERT_RECORD, zone, "www",  aType,       ip.toString());
+    conn.update(insertRecord, zone, "mail", RecordType.TXT, "v=spf1 a -all");
+    conn.update(insertRecord, zone, "www",  atype,       ip.toString());
     // See http://www.openspf.org/FAQ/Common_mistakes#all-domains "Publish null SPF records for your domains that don't send mail"
-    conn.update(INSERT_RECORD, zone, "www",  RecordType.TXT, "v=spf1 -all");
+    conn.update(insertRecord, zone, "www",  RecordType.TXT, "v=spf1 -all");
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
   }
 
   /**
@@ -305,31 +305,31 @@ public final class DnsService implements MasterService {
 
     // Remove the dns.Record entry
     conn.update("delete from dns.\"Record\" where id=?", recordId);
-    invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
     // Update the serial of the zone
-    updateDNSZoneSerial(conn, invalidateList, zone);
+    updateDnsZoneSerial(conn, invalidateList, zone);
   }
 
   /**
    * Removes a <code>Zone</code>.
    */
-  public void removeDNSZone(
+  public void removeDnsZone(
       DatabaseConnection conn,
       RequestSource source,
       InvalidateList invalidateList,
       String zone
   ) throws IOException, SQLException {
     // Must be allowed to access this zone
-    checkAccessDNSZone(conn, source, "removeDNSZone", zone);
+    checkAccessDnsZone(conn, source, "removeDnsZone", zone);
 
-    removeDNSZone(conn, invalidateList, zone);
+    removeDnsZone(conn, invalidateList, zone);
   }
 
   /**
    * Removes a <code>Zone</code>.
    */
-  public void removeDNSZone(
+  public void removeDnsZone(
       DatabaseConnection conn,
       InvalidateList invalidateList,
       String zone
@@ -341,8 +341,8 @@ public final class DnsService implements MasterService {
     conn.update("delete from dns.\"Zone\" where \"zone\"=?", zone);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DNS_ZONES, InvalidateList.allAccounts, InvalidateList.allHosts, false);
   }
 
   /**
@@ -372,7 +372,7 @@ public final class DnsService implements MasterService {
     InetAddress ipAddress,
     List<DomainName> tlds
   ) throws IOException, SQLException {
-    DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
+    DomainName tld = ZoneTable.getHostTld(hostname, tlds);
     String zone = tld + ".";
     boolean exists = conn.queryBoolean(
       "select (select zone from dns.\"Zone\" where zone=?) is not null",
@@ -386,32 +386,32 @@ public final class DnsService implements MasterService {
         preTld
       );
       if (!exists) {
-        String aType;
+        String atype;
         switch (ipAddress.getAddressFamily()) {
-          case INET :
-            aType = RecordType.A;
+          case INET:
+            atype = RecordType.A;
             break;
-          case INET6 :
-            aType = RecordType.AAAA;
+          case INET6:
+            atype = RecordType.AAAA;
             break;
-          default :
+          default:
             throw new AssertionError();
         }
         conn.update(
           "insert into dns.\"Record\" (\"zone\", \"domain\", \"type\", destination) values (?,?,?,?)",
           zone,
           preTld,
-          aType,
+          atype,
           ipAddress
         );
         invalidateList.addTable(
           conn,
-          Table.TableID.DNS_RECORDS,
+          Table.TableId.DNS_RECORDS,
           getAccountForDNSZone(conn, zone),
           getDnsLinuxServers(conn),
           false
         );
-        updateDNSZoneSerial(conn, invalidateList, zone);
+        updateDnsZoneSerial(conn, invalidateList, zone);
         return true;
       }
     }
@@ -421,7 +421,7 @@ public final class DnsService implements MasterService {
 
   private static void checkAccessRecord(DatabaseConnection conn, RequestSource source, String action, int recordId) throws IOException, SQLException {
     if (
-        !isDNSAdmin(conn, source)
+        !isDnsAdmin(conn, source)
             && !PackageHandler.canAccessPackage(conn, source, getPackageForRecord(conn, recordId))
     ) {
       String message =
@@ -430,21 +430,19 @@ public final class DnsService implements MasterService {
               + " is not allowed to access dns_record: action='"
               + action
               + ", id="
-              + recordId
-      ;
+              + recordId;
       throw new SQLException(message);
     }
   }
 
-  public boolean canAccessDNSZone(DatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
+  public boolean canAccessDnsZone(DatabaseConnection conn, RequestSource source, String zone) throws IOException, SQLException {
     return
-        isDNSAdmin(conn, source)
-            || PackageHandler.canAccessPackage(conn, source, getPackageForDNSZone(conn, zone))
-    ;
+        isDnsAdmin(conn, source)
+            || PackageHandler.canAccessPackage(conn, source, getPackageForDnsZone(conn, zone));
   }
 
-  private void checkAccessDNSZone(DatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
-    if (!canAccessDNSZone(conn, source, zone)) {
+  private void checkAccessDnsZone(DatabaseConnection conn, RequestSource source, String action, String zone) throws IOException, SQLException {
+    if (!canAccessDnsZone(conn, source, zone)) {
       String message =
           "currentAdministrator="
               + source.getCurrentAdministrator()
@@ -452,8 +450,7 @@ public final class DnsService implements MasterService {
               + action
               + ", zone='"
               + zone
-              + '\''
-      ;
+              + '\'';
       throw new SQLException(message);
     }
   }
@@ -462,12 +459,12 @@ public final class DnsService implements MasterService {
    * Admin access to named info is granted if either no server is restricted, or one of the
    * granted servers is a named machine.
    */
-  private static boolean isDNSAdmin(
+  private static boolean isDnsAdmin(
       DatabaseConnection conn,
       RequestSource source
   ) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
-    return mu != null && mu.isDNSAdmin();
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
+    return mu != null && mu.isDnsAdmin();
   }
 
   /* Unused 2018-12-02:
@@ -521,7 +518,7 @@ public final class DnsService implements MasterService {
    * TODO: This could replace ForbiddenZones by adding more specific entries, and marking as isRegistrable=false?
    * </p>
    */
-  public List<DomainName> getDNSTLDs(DatabaseConnection conn) throws IOException, SQLException {
+  public List<DomainName> getTopLevelDomains(DatabaseConnection conn) throws IOException, SQLException {
     synchronized (dnstldLock) {
       if (dnstldCache == null) {
         dnstldCache = conn.queryList(
@@ -537,7 +534,7 @@ public final class DnsService implements MasterService {
     return conn.queryString("select \"zone\" from dns.\"Record\" where id=?", recordId);
   }
 
-  public boolean isDNSZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
+  public boolean isDnsZoneAvailable(DatabaseConnection conn, String zone) throws IOException, SQLException {
     return conn.queryBoolean("select (select zone from dns.\"Zone\" where zone=?) is null", zone);
   }
 
@@ -549,7 +546,7 @@ public final class DnsService implements MasterService {
     );
   }
 
-  private static Account.Name getPackageForDNSZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
+  private static Account.Name getPackageForDnsZone(DatabaseConnection conn, String zone) throws IOException, SQLException {
     return conn.queryObject(
         ObjectFactories.accountNameFactory,
         "select package from dns.\"Zone\" where zone=?",
@@ -557,25 +554,27 @@ public final class DnsService implements MasterService {
     );
   }
 
-  public void invalidateTable(Table.TableID tableID) {
-    switch (tableID) {
-      case DNS_TLDS :
+  public void invalidateTable(Table.TableId tableId) {
+    switch (tableId) {
+      case DNS_TLDS:
         synchronized (dnstldLock) {
           dnstldCache = null;
         }
         break;
+      default:
+        // fall-through
     }
   }
 
   // TODO: Manage SPF records here
-  public void removeUnusedDNSRecord(
+  public void removeUnusedDnsRecord(
       DatabaseConnection conn,
       InvalidateList invalidateList,
       DomainName hostname,
       List<DomainName> tlds
   ) throws IOException, SQLException {
     if (conn.queryBoolean("select (select id from web.\"VirtualHostName\" where hostname=? limit 1) is null", hostname)) {
-      DomainName tld = ZoneTable.getHostTLD(hostname, tlds);
+      DomainName tld = ZoneTable.getHostTld(hostname, tlds);
       String zone = tld + ".";
       if (conn.queryBoolean("select (select zone from dns.\"Zone\" where zone=?) is not null", zone)) {
         String preTld = getPreTld(hostname, tld);
@@ -591,12 +590,12 @@ public final class DnsService implements MasterService {
         if (deleteCount > 0) {
           invalidateList.addTable(
               conn,
-              Table.TableID.DNS_RECORDS,
+              Table.TableId.DNS_RECORDS,
               getAccountForDnsZone(conn, zone),
               getDnsLinuxServers(conn),
               false
           );
-          updateDNSZoneSerial(conn, invalidateList, zone);
+          updateDnsZoneSerial(conn, invalidateList, zone);
         }
       }
     }
@@ -605,7 +604,7 @@ public final class DnsService implements MasterService {
   /**
    * Sets the default TTL for a <code>Zone</code>.
    */
-  public void setDNSZoneTTL(
+  public void setDnsZoneTtl(
       DatabaseConnection conn,
       RequestSource source,
       InvalidateList invalidateList,
@@ -613,19 +612,19 @@ public final class DnsService implements MasterService {
       int ttl
   ) throws IOException, SQLException {
     // Must be allowed to access this zone
-    checkAccessDNSZone(conn, source, "setDNSZoneTTL", zone);
+    checkAccessDnsZone(conn, source, "setDnsZoneTtl", zone);
     if (ttl <= 0 || ttl > 24 * 60 * 60) {
       throw new SQLException("Illegal TTL value: " + ttl);
     }
     conn.update("update dns.\"Zone\" set ttl=? where zone=?", ttl, zone);
     invalidateList.addTable(
         conn,
-        Table.TableID.DNS_ZONES,
+        Table.TableId.DNS_ZONES,
         getAccountForDnsZone(conn, zone),
         getDnsLinuxServers(conn),
         false
     );
-    updateDNSZoneSerial(conn, invalidateList, zone);
+    updateDnsZoneSerial(conn, invalidateList, zone);
   }
 
   public void updateDhcpDnsRecords(
@@ -651,7 +650,7 @@ public final class DnsService implements MasterService {
 
     // Invalidate the records
     invalidateList.addTable(conn,
-        Table.TableID.DNS_RECORDS,
+        Table.TableId.DNS_RECORDS,
         InvalidateList.allAccounts,
         InvalidateList.allHosts,
         false
@@ -659,7 +658,7 @@ public final class DnsService implements MasterService {
 
     // Update the zone serials
     for (String zone : zones) {
-      updateDNSZoneSerial(
+      updateDnsZoneSerial(
           conn,
           invalidateList,
           zone
@@ -667,7 +666,7 @@ public final class DnsService implements MasterService {
     }
   }
 
-  private static void updateDNSZoneSerial(
+  private static void updateDnsZoneSerial(
       DatabaseConnection conn,
       InvalidateList invalidateList,
       String zone
@@ -688,7 +687,7 @@ public final class DnsService implements MasterService {
     // Place the serial back in the database
     conn.update("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
     invalidateList.addTable(conn,
-        Table.TableID.DNS_ZONES,
+        Table.TableId.DNS_ZONES,
         InvalidateList.allAccounts,
         InvalidateList.allHosts,
         false
@@ -703,7 +702,7 @@ public final class DnsService implements MasterService {
       DomainName hostname
   ) throws IOException, SQLException {
     switch (ip.getAddressFamily()) {
-      case INET : {
+      case INET: {
         final String netmask;
         final String ipStr = ip.toString();
         if (
@@ -717,7 +716,7 @@ public final class DnsService implements MasterService {
           netmask = null;
         }
         if (netmask != null) {
-          String arpaZone = Zone.getArpaZoneForIPAddress(ip, netmask);
+          String arpaZone = Zone.getArpaZoneForIpAddress(ip, netmask);
           if (
               conn.queryBoolean(
                   "select (select zone from dns.\"Zone\" where zone=?) is not null",
@@ -734,7 +733,7 @@ public final class DnsService implements MasterService {
                     RecordType.PTR
                 )
             ) {
-              updateDNSZoneSerial(conn, invalidateList, arpaZone);
+              updateDnsZoneSerial(conn, invalidateList, arpaZone);
 
               conn.update(
                   "update dns.\"Record\" set destination=? where \"zone\"=? and \"domain\"=? and \"type\"=?",
@@ -743,15 +742,15 @@ public final class DnsService implements MasterService {
                   oct4,
                   RecordType.PTR
               );
-              invalidateList.addTable(conn, Table.TableID.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+              invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
             }
           }
         }
         break;
       }
-      case INET6 :
+      case INET6:
         throw new NotImplementedException();
-      default :
+      default:
         throw new AssertionError();
     }
   }

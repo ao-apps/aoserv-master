@@ -87,7 +87,7 @@ public final class BillingTransactionHandler {
       String paymentType,
       String paymentInfo,
       String processor,
-      byte payment_confirmed
+      byte paymentConfirmed
   ) throws IOException, SQLException {
     BankAccountHandler.checkIsAccounting(conn, source, "addTransaction");
     AccountHandler.checkAccessAccount(conn, source, "addTransaction", account);
@@ -112,7 +112,7 @@ public final class BillingTransactionHandler {
         paymentType,
         paymentInfo,
         processor,
-        payment_confirmed
+        paymentConfirmed
     );
   }
 
@@ -134,7 +134,7 @@ public final class BillingTransactionHandler {
       String paymentType,
       String paymentInfo,
       String processor,
-      byte payment_confirmed
+      byte paymentConfirmed
   ) throws IOException, SQLException {
     if (administrator.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
       throw new SQLException("Not allowed to add Transaction for user '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
@@ -163,7 +163,7 @@ public final class BillingTransactionHandler {
           paymentType,
           paymentInfo,
           processor,
-          payment_confirmed == Transaction.CONFIRMED ? "Y" : payment_confirmed == Transaction.NOT_CONFIRMED ? "N" : "W"
+          paymentConfirmed == Transaction.CONFIRMED ? "Y" : paymentConfirmed == Transaction.NOT_CONFIRMED ? "N" : "W"
       );
     } else {
       String cast;
@@ -188,12 +188,12 @@ public final class BillingTransactionHandler {
           paymentType,
           paymentInfo,
           processor,
-          payment_confirmed == Transaction.CONFIRMED ? "Y" : payment_confirmed == Transaction.NOT_CONFIRMED ? "N" : "W"
+          paymentConfirmed == Transaction.CONFIRMED ? "Y" : paymentConfirmed == Transaction.NOT_CONFIRMED ? "N" : "W"
       );
     }
 
     // Notify all clients of the updates
-    invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, AccountHandler.getHostsForAccount(conn, account), false);
+    invalidateList.addTable(conn, Table.TableId.TRANSACTIONS, account, AccountHandler.getHostsForAccount(conn, account), false);
     return transaction;
   }
 
@@ -208,7 +208,7 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       // TODO: release conn before writing to out
-      MasterServer.writePenniesCheckBusiness(
+      AoservMaster.writePenniesCheckBusiness(
           conn,
           source,
           "getAccountBalance",
@@ -237,7 +237,7 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       // TODO: release conn before writing to out
-      MasterServer.writePenniesCheckBusiness(
+      AoservMaster.writePenniesCheckBusiness(
           conn,
           source,
           "getAccountBalanceBefore",
@@ -266,7 +266,7 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       // TODO: release conn before writing to out
-      MasterServer.writePenniesCheckBusiness(
+      AoservMaster.writePenniesCheckBusiness(
           conn,
           source,
           "getConfirmedAccountBalance",
@@ -325,7 +325,7 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       // TODO: release conn before writing to out
-      MasterServer.writePenniesCheckBusiness(
+      AoservMaster.writePenniesCheckBusiness(
           conn,
           source,
           "getConfirmedAccountBalanceBefore",
@@ -346,6 +346,7 @@ public final class BillingTransactionHandler {
   /**
    * Gets all billing.Transaction for one business.
    */
+  @SuppressWarnings("deprecation")
   public static void getTransactionsForAccount(
       DatabaseConnection conn,
       RequestSource source,
@@ -355,12 +356,12 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-      User masterUser = MasterServer.getUser(conn, currentAdministrator);
-      UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
+      User masterUser = AoservMaster.getUser(conn, currentAdministrator);
+      UserHost[] masterServers = masterUser == null ? null : AoservMaster.getUserHosts(conn, currentAdministrator);
       if (masterUser != null) {
         if (masterServers.length == 0) {
           // TODO: release conn before writing to out
-          MasterServer.writeObjects(
+          AoservMaster.writeObjects(
               conn,
               source,
               out,
@@ -373,11 +374,11 @@ public final class BillingTransactionHandler {
           );
         } else {
           conn.close(); // Don't hold database connection while writing response
-          MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+          AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
         }
       } else {
         // TODO: release conn before writing to out
-        MasterServer.writeObjects(
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -413,6 +414,7 @@ public final class BillingTransactionHandler {
   /**
    * Gets all billing.Transaction for one business administrator.
    */
+  @SuppressWarnings("deprecation")
   public static void getTransactionsForAdministrator(
       DatabaseConnection conn,
       RequestSource source,
@@ -424,7 +426,7 @@ public final class BillingTransactionHandler {
       AccountUserHandler.checkAccessUser(conn, source, "getTransactionsForAdministrator", source.getCurrentAdministrator());
 
       // TODO: release conn before writing to out
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -440,6 +442,7 @@ public final class BillingTransactionHandler {
     }
   }
 
+  @SuppressWarnings("deprecation")
   public static void getTransactionsSearch(
       DatabaseConnection conn,
       RequestSource source,
@@ -449,8 +452,8 @@ public final class BillingTransactionHandler {
   ) throws IOException, SQLException {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
       com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-      User masterUser = MasterServer.getUser(conn, currentAdministrator);
-      UserHost[] masterServers = masterUser == null ? null : MasterServer.getUserHosts(conn, currentAdministrator);
+      User masterUser = AoservMaster.getUser(conn, currentAdministrator);
+      UserHost[] masterServers = masterUser == null ? null : AoservMaster.getUserHosts(conn, currentAdministrator);
       StringBuilder sql;
       final List<Object> params = new ArrayList<>();
       if (masterUser != null) {
@@ -466,7 +469,7 @@ public final class BillingTransactionHandler {
           params.add(Currency.USD.getCurrencyCode());
         } else {
           conn.close(); // Don't hold database connection while writing response
-          MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+          AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
           return;
         }
       } else {
@@ -548,16 +551,16 @@ public final class BillingTransactionHandler {
         sql.append("  AND tr.payment_confirmed=?\n");
         String dbValue;
         switch (criteria.getPaymentConfirmed()) {
-          case Transaction.CONFIRMED :
+          case Transaction.CONFIRMED:
             dbValue = "Y";
             break;
-          case Transaction.NOT_CONFIRMED :
+          case Transaction.NOT_CONFIRMED:
             dbValue = "N";
             break;
-          case Transaction.WAITING_CONFIRMATION :
+          case Transaction.WAITING_CONFIRMATION:
             dbValue = "W";
             break;
-          default :
+          default:
             throw new AssertionError();
         }
         params.add(dbValue);
@@ -565,7 +568,7 @@ public final class BillingTransactionHandler {
 
       Connection dbConn = conn.getConnection(true);
       try (
-        PreparedStatement pstmt = dbConn.prepareStatement(
+          PreparedStatement pstmt = dbConn.prepareStatement(
               sql.toString(),
               provideProgress ? ResultSet.TYPE_SCROLL_SENSITIVE : ResultSet.TYPE_FORWARD_ONLY,
               ResultSet.CONCUR_READ_ONLY
@@ -576,10 +579,10 @@ public final class BillingTransactionHandler {
           try (ResultSet results = pstmt.executeQuery()) {
             // TODO: Call other writeObjects, passing sql and parameters, to support cursor/fetch?
             // TODO: release conn before writing to out
-            MasterServer.writeObjects(source, out, provideProgress, new Transaction(), results);
+            AoservMaster.writeObjects(source, out, provideProgress, new Transaction(), results);
           }
         } catch (Error | RuntimeException | SQLException e) {
-          ErrorPrinter.addSQL(e, pstmt);
+          ErrorPrinter.addSql(e, pstmt);
           throw e;
         }
       }
@@ -631,7 +634,7 @@ public final class BillingTransactionHandler {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TRANSACTIONS, account, InvalidateList.allHosts, false);
   }
 
   public static void transactionDeclined(
@@ -678,7 +681,7 @@ public final class BillingTransactionHandler {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TRANSACTIONS, account, InvalidateList.allHosts, false);
   }
 
   public static void transactionHeld(
@@ -725,7 +728,7 @@ public final class BillingTransactionHandler {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TRANSACTIONS, account, InvalidateList.allHosts, false);
   }
 
   public static Account.Name getAccountForTransaction(DatabaseConnection conn, int transaction) throws IOException, SQLException {

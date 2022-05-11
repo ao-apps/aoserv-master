@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
- *
  * <ul>
  * <li>TODO: Provide separate control over secondary processor type, currently only secondary architecture and number of cores are considered.</li>
  * <li>TODO: Have separate core count and CPU weight.  Cores&lt;=count on box, sum of primary weight &lt;= # of cores on box, each virtualServer adds cores*weight to overall weight.</li>
@@ -83,8 +82,7 @@ public final class OriginalClusterOptimizer {
     SECONDARY_CORES_EXCEEDED,
     SECONDARY_RAM_EXCEEDED,
     SECONDARY_DISK_EXTENTS_EXCEEDED,
-    SECONDARY_DISK_ARRAYS_EXCEEDED
-    ;
+    SECONDARY_DISK_ARRAYS_EXCEEDED;
 
     public long counter = 0;
   }
@@ -608,7 +606,7 @@ public final class OriginalClusterOptimizer {
             2.0f,
             new VirtualDisk[]{
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
-            // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
+                // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
             }
         )
     );
@@ -948,7 +946,7 @@ public final class OriginalClusterOptimizer {
   private static long callCounter;
 
   /**
-   * TODO: How can we optimize further knowing that multiple virtual servers have exactly the same configuration (and therefore don't affect the overall results when switched positions)
+   * TODO: How can we optimize further knowing that multiple virtual servers have exactly the same configuration (and therefore don't affect the overall results when switched positions).
    */
   private static void mapServers(List<Host> hosts, List<VirtualServer> virtualServers, int[] selectedPrimaries, int[] selectedSecondaries, int currentVirtualServer) {
     final int hostsSize = hosts.size();

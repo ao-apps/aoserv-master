@@ -34,15 +34,16 @@ import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 
 /**
- * The <code>AOServServer</code> accepts connections from an <code>SimpleAOClient</code>.
+ * The <code>AOServServer</code> accepts connections from an <code>SslConnector</code>.
  * Once the connection is accepted and authenticated, the server carries out all actions requested
  * by the client while providing the necessary security checks and data filters.
  * <p>
  * This server is completely threaded to handle multiple, simultaneous clients.
  * </p>
+ *
  * @author  AO Industries, Inc.
  */
-public class SSLServer extends TCPServer {
+public class SslServer extends TcpServer {
 
   private static final Logger logger = Logger.getLogger(NetHostHandler.class.getName());
 
@@ -52,9 +53,9 @@ public class SSLServer extends TCPServer {
   static final String PROTOCOL_SSL = "ssl";
 
   /**
-   * Creates a new, running <code>AOServServer</code>.
+   * Creates a new, running <code>AoservMaster</code>.
    */
-  SSLServer(String serverBind, int serverPort) {
+  SslServer(String serverBind, int serverPort) {
     super(serverBind, serverPort);
   }
 
@@ -76,11 +77,11 @@ public class SSLServer extends TCPServer {
     try {
       System.setProperty(
           "javax.net.ssl.keyStorePassword",
-          MasterConfiguration.getSSLKeystorePassword()
+          MasterConfiguration.getSslKeystorePassword()
       );
       System.setProperty(
           "javax.net.ssl.keyStore",
-          MasterConfiguration.getSSLKeystorePath()
+          MasterConfiguration.getSslKeystorePath()
       );
     } catch (IOException err) {
       logger.log(Level.SEVERE, null, err);

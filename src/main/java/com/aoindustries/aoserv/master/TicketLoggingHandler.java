@@ -66,13 +66,13 @@ public class TicketLoggingHandler extends QueuedHandler {
     Account.Name rootAccounting = AccountHandler.getRootAccount();
     Level level = rec.getLevel();
     // Generate the summary from level, prefix classname, method
-    StringBuilder tempSB = new StringBuilder();
-    tempSB.append('[').append(level).append(']');
+    StringBuilder tempSb = new StringBuilder();
+    tempSb.append('[').append(level).append(']');
     if (summaryPrefix != null && summaryPrefix.length() > 0) {
-      tempSB.append(' ').append(summaryPrefix);
+      tempSb.append(' ').append(summaryPrefix);
     }
-    tempSB.append(" - ").append(rec.getSourceClassName()).append(" - ").append(rec.getSourceMethodName());
-    String summary = tempSB.toString();
+    tempSb.append(" - ").append(rec.getSourceClassName()).append(" - ").append(rec.getSourceMethodName());
+    String summary = tempSb.toString();
 
     // Start the transaction
     try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
@@ -146,7 +146,7 @@ public class TicketLoggingHandler extends QueuedHandler {
         );
         conn.commit();
       }
-      MasterServer.invalidateTables(conn, invalidateList, null);
+      AoservMaster.invalidateTables(conn, invalidateList, null);
     }
   }
 }

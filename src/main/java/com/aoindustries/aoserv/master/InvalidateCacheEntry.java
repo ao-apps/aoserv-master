@@ -35,16 +35,16 @@ public final class InvalidateCacheEntry {
 
   private final IntList invalidateList;
   private final int host;
-  private final Long cacheSyncID;
+  private final Long cacheSyncId;
 
   public InvalidateCacheEntry(
       IntList invalidateList,
       int host,
-      Long cacheSyncID
+      Long cacheSyncId
   ) {
     this.invalidateList = invalidateList;
     this.host = host;
-    this.cacheSyncID = cacheSyncID;
+    this.cacheSyncId = cacheSyncId;
   }
 
   public IntList getInvalidateList() {
@@ -55,7 +55,7 @@ public final class InvalidateCacheEntry {
     return host;
   }
 
-  public Long getCacheSyncID() {
-    return cacheSyncID;
+  public Long getCacheSyncId() {
+    return cacheSyncId;
   }
 }

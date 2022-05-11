@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2022-02-18T23:36:29-06:00"
+    dateModified="2022-05-04T04:08:06-05:00"
   >
     <c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
       <changelog:release
@@ -49,6 +49,16 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         scmUrl="@{project.scm.url}"
       >
         <!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
+        <ul>
+          <li>Performed <ao:a href="https://checkstyle.org/">Checkstyle</ao:a> clean-up:
+            <ol>
+              <li>Renamed <code>FTPHandler</code> to <code>FtpHandler</code>.</li>
+              <li>Renamed <code>SSLServer</code> to <code>SslServer</code>.</li>
+              <li>Renamed <code>TCPServer</code> to <code>TcpServer</code>.</li>
+              <li>Renamed <code>MasterServer</code> to <code>AoservMaster</code>.</li>
+            </ol>
+          </li>
+        </ul>
       </changelog:release>
     </c:if>
 

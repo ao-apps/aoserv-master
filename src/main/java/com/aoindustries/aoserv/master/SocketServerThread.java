@@ -63,9 +63,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
   private static final Logger logger = Logger.getLogger(SocketServerThread.class.getName());
 
   /**
-   * The <code>{@link TCPServer}</code> that created this <code>SocketServerThread</code>.
+   * The <code>{@link TcpServer}</code> that created this <code>SocketServerThread</code>.
    */
-  private final TCPServer server;
+  private final TcpServer server;
 
   /**
    * The <code>{@link Socket}</code> that is connected.
@@ -87,9 +87,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
    */
   private AoservProtocol.Version protocolVersion;
 
-  /**
-   * The server if this is a connection from a daemon.
-   */
+  ///**
+  // * The server if this is a connection from a daemon.
+  // */
 
   /**
    * The master process.
@@ -101,7 +101,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
   /**
    * Creates a new, running <code>AOServServerThread</code>.
    */
-  public SocketServerThread(TCPServer server, Socket socket) throws IOException, SQLException {
+  public SocketServerThread(TcpServer server, Socket socket) throws IOException, SQLException {
     try {
       this.server = server;
       this.socket = socket;
@@ -124,9 +124,10 @@ public final class SocketServerThread extends Thread implements RequestSource {
   /**
    * Invalidates the listed tables.  Also, if this connector represents a daemon,
    * this invalidate is registered with ServerHandler for invalidation synchronization.
-   *
+   * <p>
    * IDEA: Could reduce signals under high load by combining entries that are not synchronous.
    *       Could even combine synchronous ones as long as all sync entries were acknowledged in the proper order.
+   * </p>
    */
   @Override
   public void cachesInvalidated(IntList tableList) throws IOException {
@@ -216,7 +217,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
           logger.log(level, null, err);
           return;
         }
-        process.setAOServProtocol(protocolVersion.getVersion());
+        process.setAoservProtocol(protocolVersion.getVersion());
         if (in.readBoolean()) {
           DomainName daemonServer;
           try {
@@ -273,153 +274,152 @@ public final class SocketServerThread extends Thread implements RequestSource {
           }
 
           switch (protocolVersion) {
-            case VERSION_1_86_0 :
-            case VERSION_1_84_13 :
-            case VERSION_1_83_2 :
-            case VERSION_1_83_1 :
-            case VERSION_1_83_0 :
-            case VERSION_1_82_1 :
-            case VERSION_1_82_0 :
-            case VERSION_1_81_22 :
-            case VERSION_1_81_21 :
-            case VERSION_1_81_20 :
-            case VERSION_1_81_19 :
-            case VERSION_1_81_18 :
-            case VERSION_1_81_17 :
-            case VERSION_1_81_16 :
-            case VERSION_1_81_15 :
-            case VERSION_1_81_14 :
-            case VERSION_1_81_13 :
-            case VERSION_1_81_12 :
-            case VERSION_1_81_11 :
-            case VERSION_1_81_10 :
-            case VERSION_1_81_9 :
-            case VERSION_1_81_8 :
-            case VERSION_1_81_7 :
-            case VERSION_1_81_6 :
-            case VERSION_1_81_5 :
-            case VERSION_1_81_4 :
-            case VERSION_1_81_3 :
-            case VERSION_1_81_2 :
-            case VERSION_1_81_1 :
-            case VERSION_1_81_0 :
-            case VERSION_1_80_2 :
-            case VERSION_1_80_1 :
-            case VERSION_1_80_0 :
-            case VERSION_1_80 :
-            case VERSION_1_79 :
-            case VERSION_1_78 :
-            case VERSION_1_77 :
-            case VERSION_1_76 :
-            case VERSION_1_75 :
-            case VERSION_1_74 :
-            case VERSION_1_73 :
-            case VERSION_1_72 :
-            case VERSION_1_71 :
-            case VERSION_1_70 :
-            case VERSION_1_69 :
-            case VERSION_1_68 :
-            case VERSION_1_67 :
-            case VERSION_1_66 :
-            case VERSION_1_65 :
-            case VERSION_1_64 :
-            case VERSION_1_63 :
-            case VERSION_1_62 :
-            case VERSION_1_61 :
-            case VERSION_1_60 :
-            case VERSION_1_59 :
-            case VERSION_1_58 :
-            case VERSION_1_57 :
-            case VERSION_1_56 :
-            case VERSION_1_55 :
-            case VERSION_1_54 :
-            case VERSION_1_53 :
-            case VERSION_1_52 :
-            case VERSION_1_51 :
-            case VERSION_1_50 :
-            case VERSION_1_49 :
-            case VERSION_1_48 :
-            case VERSION_1_47 :
-            case VERSION_1_46 :
-            case VERSION_1_45 :
-            case VERSION_1_44 :
-            case VERSION_1_43 :
-            case VERSION_1_42 :
-            case VERSION_1_41 :
-            case VERSION_1_40 :
-            case VERSION_1_39 :
-            case VERSION_1_38 :
-            case VERSION_1_37 :
-            case VERSION_1_36 :
-            case VERSION_1_35 :
-            case VERSION_1_34 :
-            case VERSION_1_33 :
-            case VERSION_1_32 :
-            case VERSION_1_31 :
-            case VERSION_1_30 :
-            case VERSION_1_29 :
-            case VERSION_1_28 :
-            case VERSION_1_27 :
-            case VERSION_1_26 :
-            case VERSION_1_25 :
-            case VERSION_1_24 :
-            case VERSION_1_23 :
-            case VERSION_1_22 :
-            case VERSION_1_21 :
-            case VERSION_1_20 :
-            case VERSION_1_19 :
-            case VERSION_1_18 :
-            case VERSION_1_17 :
-            case VERSION_1_16 :
-            case VERSION_1_15 :
-            case VERSION_1_14 :
-            case VERSION_1_13 :
-            case VERSION_1_12 :
-            case VERSION_1_11 :
-            case VERSION_1_10 :
-            case VERSION_1_9 :
-            case VERSION_1_8 :
-            case VERSION_1_7 :
-            case VERSION_1_6 :
-            case VERSION_1_5 :
-            case VERSION_1_4 :
-            case VERSION_1_3 :
-            case VERSION_1_2 :
-            case VERSION_1_1 :
-            case VERSION_1_0_A_130 :
-            case VERSION_1_0_A_129 :
-            case VERSION_1_0_A_128 :
-            case VERSION_1_0_A_127 :
-            case VERSION_1_0_A_126 :
-            case VERSION_1_0_A_125 :
-            case VERSION_1_0_A_124 :
-            case VERSION_1_0_A_123 :
-            case VERSION_1_0_A_122 :
-            case VERSION_1_0_A_121 :
-            case VERSION_1_0_A_120 :
-            case VERSION_1_0_A_119 :
-            case VERSION_1_0_A_118 :
-            case VERSION_1_0_A_117 :
-            case VERSION_1_0_A_116 :
-            case VERSION_1_0_A_115 :
-            case VERSION_1_0_A_114 :
-            case VERSION_1_0_A_113 :
-            case VERSION_1_0_A_112 :
-            case VERSION_1_0_A_111 :
-            case VERSION_1_0_A_110 :
-            case VERSION_1_0_A_109 :
-            case VERSION_1_0_A_108 :
-            case VERSION_1_0_A_107 :
-            case VERSION_1_0_A_106 :
-            case VERSION_1_0_A_105 :
-            case VERSION_1_0_A_104 :
-            case VERSION_1_0_A_103 :
-            case VERSION_1_0_A_102 :
-            case VERSION_1_0_A_101 :
-            case VERSION_1_0_A_100 :
-            {
+            case VERSION_1_86_0:
+            case VERSION_1_84_13:
+            case VERSION_1_83_2:
+            case VERSION_1_83_1:
+            case VERSION_1_83_0:
+            case VERSION_1_82_1:
+            case VERSION_1_82_0:
+            case VERSION_1_81_22:
+            case VERSION_1_81_21:
+            case VERSION_1_81_20:
+            case VERSION_1_81_19:
+            case VERSION_1_81_18:
+            case VERSION_1_81_17:
+            case VERSION_1_81_16:
+            case VERSION_1_81_15:
+            case VERSION_1_81_14:
+            case VERSION_1_81_13:
+            case VERSION_1_81_12:
+            case VERSION_1_81_11:
+            case VERSION_1_81_10:
+            case VERSION_1_81_9:
+            case VERSION_1_81_8:
+            case VERSION_1_81_7:
+            case VERSION_1_81_6:
+            case VERSION_1_81_5:
+            case VERSION_1_81_4:
+            case VERSION_1_81_3:
+            case VERSION_1_81_2:
+            case VERSION_1_81_1:
+            case VERSION_1_81_0:
+            case VERSION_1_80_2:
+            case VERSION_1_80_1:
+            case VERSION_1_80_0:
+            case VERSION_1_80:
+            case VERSION_1_79:
+            case VERSION_1_78:
+            case VERSION_1_77:
+            case VERSION_1_76:
+            case VERSION_1_75:
+            case VERSION_1_74:
+            case VERSION_1_73:
+            case VERSION_1_72:
+            case VERSION_1_71:
+            case VERSION_1_70:
+            case VERSION_1_69:
+            case VERSION_1_68:
+            case VERSION_1_67:
+            case VERSION_1_66:
+            case VERSION_1_65:
+            case VERSION_1_64:
+            case VERSION_1_63:
+            case VERSION_1_62:
+            case VERSION_1_61:
+            case VERSION_1_60:
+            case VERSION_1_59:
+            case VERSION_1_58:
+            case VERSION_1_57:
+            case VERSION_1_56:
+            case VERSION_1_55:
+            case VERSION_1_54:
+            case VERSION_1_53:
+            case VERSION_1_52:
+            case VERSION_1_51:
+            case VERSION_1_50:
+            case VERSION_1_49:
+            case VERSION_1_48:
+            case VERSION_1_47:
+            case VERSION_1_46:
+            case VERSION_1_45:
+            case VERSION_1_44:
+            case VERSION_1_43:
+            case VERSION_1_42:
+            case VERSION_1_41:
+            case VERSION_1_40:
+            case VERSION_1_39:
+            case VERSION_1_38:
+            case VERSION_1_37:
+            case VERSION_1_36:
+            case VERSION_1_35:
+            case VERSION_1_34:
+            case VERSION_1_33:
+            case VERSION_1_32:
+            case VERSION_1_31:
+            case VERSION_1_30:
+            case VERSION_1_29:
+            case VERSION_1_28:
+            case VERSION_1_27:
+            case VERSION_1_26:
+            case VERSION_1_25:
+            case VERSION_1_24:
+            case VERSION_1_23:
+            case VERSION_1_22:
+            case VERSION_1_21:
+            case VERSION_1_20:
+            case VERSION_1_19:
+            case VERSION_1_18:
+            case VERSION_1_17:
+            case VERSION_1_16:
+            case VERSION_1_15:
+            case VERSION_1_14:
+            case VERSION_1_13:
+            case VERSION_1_12:
+            case VERSION_1_11:
+            case VERSION_1_10:
+            case VERSION_1_9:
+            case VERSION_1_8:
+            case VERSION_1_7:
+            case VERSION_1_6:
+            case VERSION_1_5:
+            case VERSION_1_4:
+            case VERSION_1_3:
+            case VERSION_1_2:
+            case VERSION_1_1:
+            case VERSION_1_0_A_130:
+            case VERSION_1_0_A_129:
+            case VERSION_1_0_A_128:
+            case VERSION_1_0_A_127:
+            case VERSION_1_0_A_126:
+            case VERSION_1_0_A_125:
+            case VERSION_1_0_A_124:
+            case VERSION_1_0_A_123:
+            case VERSION_1_0_A_122:
+            case VERSION_1_0_A_121:
+            case VERSION_1_0_A_120:
+            case VERSION_1_0_A_119:
+            case VERSION_1_0_A_118:
+            case VERSION_1_0_A_117:
+            case VERSION_1_0_A_116:
+            case VERSION_1_0_A_115:
+            case VERSION_1_0_A_114:
+            case VERSION_1_0_A_113:
+            case VERSION_1_0_A_112:
+            case VERSION_1_0_A_111:
+            case VERSION_1_0_A_110:
+            case VERSION_1_0_A_109:
+            case VERSION_1_0_A_108:
+            case VERSION_1_0_A_107:
+            case VERSION_1_0_A_106:
+            case VERSION_1_0_A_105:
+            case VERSION_1_0_A_104:
+            case VERSION_1_0_A_103:
+            case VERSION_1_0_A_102:
+            case VERSION_1_0_A_101:
+            case VERSION_1_0_A_100: {
               DatabaseAccess db = MasterDatabase.getDatabase();
-              String message = MasterServer.authenticate(
+              String message = AoservMaster.authenticate(
                   db,
                   socket.getInetAddress().getHostAddress(),
                   process.getEffectiveAdministrator_username(),
@@ -434,25 +434,25 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 out.flush();
               } else {
                 // Only master users may provide a daemon_server
-                boolean isOK = true;
+                boolean isOk = true;
                 int daemonServer = process.getDaemonServer();
                 if (daemonServer != -1) {
-                  if (MasterServer.getUser(db, process.getEffectiveAdministrator_username()) == null) {
+                  if (AoservMaster.getUser(db, process.getEffectiveAdministrator_username()) == null) {
                     out.writeBoolean(false);
                     out.writeUTF("Only master users may register a daemon server.");
                     out.flush();
-                    isOK = false;
+                    isOk = false;
                   } else {
-                    UserHost[] servers = MasterServer.getUserHosts(db, process.getEffectiveAdministrator_username());
+                    UserHost[] servers = AoservMaster.getUserHosts(db, process.getEffectiveAdministrator_username());
                     if (servers.length != 0) {
-                      isOK = false;
+                      isOk = false;
                       for (UserHost server1 : servers) {
-                        if (server1.getServerPKey() == daemonServer) {
-                          isOK = true;
+                        if (server1.getServerPkey() == daemonServer) {
+                          isOk = true;
                           break;
                         }
                       }
-                      if (!isOK) {
+                      if (!isOk) {
                         out.writeBoolean(false);
                         out.writeUTF("Master user (" + process.getEffectiveAdministrator_username() + ") not allowed to access server: " + daemonServer);
                         out.flush();
@@ -460,10 +460,10 @@ public final class SocketServerThread extends Thread implements RequestSource {
                     }
                   }
                 }
-                if (isOK) {
+                if (isOk) {
                   out.writeBoolean(true);
                   if (existingId == null) {
-                    Identifier connectorId = MasterServer.getNextConnectorId(protocolVersion);
+                    Identifier connectorId = AoservMaster.getNextConnectorId(protocolVersion);
                     process.setConnectorId(connectorId);
                     if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
                       assert connectorId.getHi() == 0;
@@ -478,14 +478,14 @@ public final class SocketServerThread extends Thread implements RequestSource {
                   // Command sequence starts at a random value
                   final long startSeq;
                   if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-                    startSeq = MasterServer.getSecureRandom().nextLong();
+                    startSeq = AoservMaster.getSecureRandom().nextLong();
                     out.writeLong(startSeq);
                   } else {
                     startSeq = 0;
                   }
                   out.flush();
 
-                  MasterServer.updateAOServProtocolLastUsed(db, protocolVersion);
+                  AoservMaster.updateAoservProtocolLastUsed(db, protocolVersion);
 
                   long seq = startSeq;
                   while (server.handleRequest(this, seq++, in, out, process)) {
@@ -495,8 +495,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
               }
               break;
             }
-            default :
-            {
+            default: {
               out.writeBoolean(false);
               out.writeUTF(
                   "Client (" + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + ") requesting AOServ Protocol version "

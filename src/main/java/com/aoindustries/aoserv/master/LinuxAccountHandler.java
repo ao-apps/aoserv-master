@@ -48,7 +48,7 @@ import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.web.Site;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -70,16 +70,15 @@ public final class LinuxAccountHandler {
     throw new AssertionError();
   }
 
-  /** Matches value in /etc/login.defs on CentOS 7 */
+  /** Matches value in /etc/login.defs on CentOS 7. */
   private static final int
       CENTOS_7_SYS_GID_MIN = 201,
-      CENTOS_7_SYS_UID_MIN = 201
-  ;
+      CENTOS_7_SYS_UID_MIN = 201;
 
   /** Default sudo setting for newly added "aoadmin" system users. */
   private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD:ALL";
 
-  /** Amazon EC2 cloud-init */
+  /** Amazon EC2 cloud-init. */
   private static final String CENTOS_SUDO = "ALL=(ALL) NOPASSWD:ALL";
 
   /** Default sudo setting for newly added "aoserv-xen-migration" system users. */
@@ -89,9 +88,9 @@ public final class LinuxAccountHandler {
   private static final Map<Integer, Boolean> disabledUserServers = new HashMap<>();
 
   public static void checkAccessUser(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.linux.User.Name user) throws IOException, SQLException {
-    com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    com.aoindustries.aoserv.client.master.User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         IntList lsas = getUserServersForUser(conn, user);
         boolean found = false;
         for (Integer lsa : lsas) {
@@ -107,8 +106,7 @@ public final class LinuxAccountHandler {
                   + " is not allowed to access linux_account: action='"
                   + action
                   + ", username="
-                  + user
-          ;
+                  + user;
           throw new SQLException(message);
         }
       }
@@ -118,9 +116,9 @@ public final class LinuxAccountHandler {
   }
 
   public static void checkAccessGroup(DatabaseConnection conn, RequestSource source, String action, Group.Name group) throws IOException, SQLException {
-    com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    com.aoindustries.aoserv.client.master.User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         IntList lsgs = getGroupServersForGroup(conn, group);
         boolean found = false;
         for (int lsg : lsgs) {
@@ -136,8 +134,7 @@ public final class LinuxAccountHandler {
                   + " is not allowed to access linux_group: action='"
                   + action
                   + ", name="
-                  + group
-          ;
+                  + group;
           throw new SQLException(message);
         }
       }
@@ -152,9 +149,9 @@ public final class LinuxAccountHandler {
   }
 
   public static boolean canAccessUserServer(DatabaseConnection conn, RequestSource source, int userServer) throws IOException, SQLException {
-    com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    com.aoindustries.aoserv.client.master.User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         return NetHostHandler.canAccessHost(conn, source, getServerForUserServer(conn, userServer));
       } else {
         return true;
@@ -172,8 +169,7 @@ public final class LinuxAccountHandler {
               + " is not allowed to access linux_server_account: action='"
               + action
               + ", id="
-              + userServer
-      ;
+              + userServer;
       throw new SQLException(message);
     }
   }
@@ -181,8 +177,7 @@ public final class LinuxAccountHandler {
   public static boolean canAccessGroupServer(DatabaseConnection conn, RequestSource source, int groupServer) throws IOException, SQLException {
     return
         PackageHandler.canAccessPackage(conn, source, getPackageForGroupServer(conn, groupServer))
-            && NetHostHandler.canAccessHost(conn, source, getServerForGroupServer(conn, groupServer))
-    ;
+            && NetHostHandler.canAccessHost(conn, source, getServerForGroupServer(conn, groupServer));
   }
 
   public static void checkAccessGroupServer(DatabaseConnection conn, RequestSource source, String action, int groupServer) throws IOException, SQLException {
@@ -193,8 +188,7 @@ public final class LinuxAccountHandler {
               + " is not allowed to access linux_server_group: action='"
               + action
               + ", id="
-              + groupServer
-      ;
+              + groupServer;
       throw new SQLException(message);
     }
   }
@@ -209,9 +203,9 @@ public final class LinuxAccountHandler {
       com.aoindustries.aoserv.client.linux.User.Name user,
       Group.Name primaryGroup,
       Gecos name,
-      Gecos office_location,
-      Gecos office_phone,
-      Gecos home_phone,
+      Gecos officeLocation,
+      Gecos officePhone,
+      Gecos homePhone,
       String type,
       PosixPath shell,
       boolean skipSecurityChecks
@@ -236,15 +230,15 @@ public final class LinuxAccountHandler {
         "insert into linux.\"User\" values(?,?,?,?,?,?,?,now(),null)",
         user,
         name,
-        office_location,
-        office_phone,
-        home_phone,
+        officeLocation,
+        officePhone,
+        homePhone,
         type,
         shell
     );
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.LINUX_ACCOUNTS,
+        Table.TableId.LINUX_ACCOUNTS,
         AccountUserHandler.getAccountForUser(conn, user),
         InvalidateList.allHosts,
         false
@@ -288,7 +282,7 @@ public final class LinuxAccountHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.LINUX_GROUPS,
+        Table.TableId.LINUX_GROUPS,
         PackageHandler.getAccountForPackage(conn, packageName),
         InvalidateList.allHosts,
         false
@@ -353,7 +347,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_GROUP_ACCOUNTS,
+        Table.TableId.LINUX_GROUP_ACCOUNTS,
         InvalidateList.getAccountCollection(
             AccountUserHandler.getAccountForUser(conn, user),
             getAccountForGroup(conn, group)
@@ -426,12 +420,12 @@ public final class LinuxAccountHandler {
         throw new SQLException("Invalid home directory: " + home);
       }
 
-      final String SLASH_WEBAPPS = "/webapps";
+      final String slashWebapps = "/webapps";
       if (homeStr.startsWith(httpdSitesDir + "/")) {
         // May also be in /www/(sitename)/webapps
         String siteName = homeStr.substring(httpdSitesDir.toString().length() + 1);
-        if (siteName.endsWith(SLASH_WEBAPPS)) {
-          siteName = siteName.substring(0, siteName.length() - SLASH_WEBAPPS.length());
+        if (siteName.endsWith(slashWebapps)) {
+          siteName = siteName.substring(0, siteName.length() - slashWebapps.length());
         }
         // May be in /www/(sitename)
         int httpdSite = WebHandler.getSite(conn, linuxServer, siteName);
@@ -451,8 +445,8 @@ public final class LinuxAccountHandler {
       if (homeStr.startsWith(httpdSharedTomcatsDir + "/")) {
         // May also be in /wwwgroup/(tomcatname)/webapps
         String tomcatName = homeStr.substring(httpdSharedTomcatsDir.toString().length() + 1);
-        if (tomcatName.endsWith(SLASH_WEBAPPS)) {
-          tomcatName = tomcatName.substring(0, tomcatName.length() - SLASH_WEBAPPS.length());
+        if (tomcatName.endsWith(slashWebapps)) {
+          tomcatName = tomcatName.substring(0, tomcatName.length() - slashWebapps.length());
         }
         // May be in /wwwgroup/(tomcatname)
         int httpdSharedTomcat = WebHandler.getSharedTomcat(conn, linuxServer, tomcatName);
@@ -472,8 +466,8 @@ public final class LinuxAccountHandler {
 
     // The primary group for this user must exist on this server
     Group.Name primaryGroup = getPrimaryGroup(conn, user, osv);
-    int primaryLSG = getGroupServer(conn, primaryGroup, linuxServer);
-    if (primaryLSG < 0) {
+    int primaryGroupServer = getGroupServer(conn, primaryGroup, linuxServer);
+    if (primaryGroupServer < 0) {
       throw new SQLException("Unable to find primary Linux group '" + primaryGroup + "' on Server #" + linuxServer + " for Linux account '" + user + "'");
     }
 
@@ -513,7 +507,7 @@ public final class LinuxAccountHandler {
     Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         account,
         linuxServer,
         true
@@ -535,7 +529,7 @@ public final class LinuxAccountHandler {
       );
       invalidateList.addTable(
           conn,
-          Table.TableID.EMAIL_ATTACHMENT_BLOCKS,
+          Table.TableId.EMAIL_ATTACHMENT_BLOCKS,
           account,
           linuxServer,
           false
@@ -587,7 +581,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_GROUPS,
+        Table.TableId.LINUX_SERVER_GROUPS,
         account,
         linuxServer,
         true
@@ -632,7 +626,7 @@ public final class LinuxAccountHandler {
       int gid
   ) throws IOException, SQLException {
     // This must be a master user with access to the server
-    com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    com.aoindustries.aoserv.client.master.User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
       throw new SQLException("Not a master user: " + source.getCurrentAdministrator());
     }
@@ -643,13 +637,13 @@ public final class LinuxAccountHandler {
     }
     int gidMin = LinuxServerHandler.getGidMin(conn, linuxServer);
     int gidMax = LinuxServerHandler.getGidMax(conn, linuxServer);
-    // The group ID must not already exist on this server
-    {
-      Group.Name existing = getGroupByGid(conn, linuxServer, gid);
-      if (existing != null) {
-        throw new SQLException("Group #" + gid + " already exists on server #" + linuxServer + ": " + existing);
+      // The group ID must not already exist on this server
+      {
+        Group.Name existing = getGroupByGid(conn, linuxServer, gid);
+        if (existing != null) {
+          throw new SQLException("Group #" + gid + " already exists on server #" + linuxServer + ": " + existing);
+        }
       }
-    }
     // Must be one of the expected patterns for the servers operating system version
     int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
     if (
@@ -768,7 +762,7 @@ public final class LinuxAccountHandler {
       // Notify all clients of the update
       invalidateList.addTable(
           conn,
-          Table.TableID.LINUX_SERVER_GROUPS,
+          Table.TableId.LINUX_SERVER_GROUPS,
           NetHostHandler.getAccountsForHost(conn, linuxServer),
           linuxServer,
           true
@@ -941,7 +935,7 @@ public final class LinuxAccountHandler {
       PosixPath shell
   ) throws IOException, SQLException {
     // This must be a master user with access to the server
-    com.aoindustries.aoserv.client.master.User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    com.aoindustries.aoserv.client.master.User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
       throw new SQLException("Not a master user: " + source.getCurrentAdministrator());
     }
@@ -952,13 +946,13 @@ public final class LinuxAccountHandler {
     }
     int uidMin = LinuxServerHandler.getUidMin(conn, linuxServer);
     int uidMax = LinuxServerHandler.getUidMax(conn, linuxServer);
-    // The user ID must not already exist on this server
-    {
-      com.aoindustries.aoserv.client.linux.User.Name existing = getUserByUid(conn, linuxServer, uid);
-      if (existing != null) {
-        throw new SQLException("User #" + uid + " already exists on server #" + linuxServer + ": " + existing);
+      // The user ID must not already exist on this server
+      {
+        com.aoindustries.aoserv.client.linux.User.Name existing = getUserByUid(conn, linuxServer, uid);
+        if (existing != null) {
+          throw new SQLException("User #" + uid + " already exists on server #" + linuxServer + ": " + existing);
+        }
       }
-    }
     // Get the group name for the requested gid
     Group.Name group = getGroupByGid(conn, linuxServer, gid);
     if (group == null) {
@@ -1044,7 +1038,7 @@ public final class LinuxAccountHandler {
       // Notify all clients of the update
       invalidateList.addTable(
           conn,
-          Table.TableID.LINUX_SERVER_ACCOUNTS,
+          Table.TableId.LINUX_SERVER_ACCOUNTS,
           NetHostHandler.getAccountsForHost(conn, linuxServer),
           linuxServer,
           true
@@ -1070,12 +1064,12 @@ public final class LinuxAccountHandler {
       throw new SQLException("Not allowed to copy User named '" + User.MAIL + '\'');
     }
     int from_server = getServerForUserServer(conn, from_userServer);
-    int to_lsa = conn.queryInt(
+    int to_userServer = conn.queryInt(
         "select id from linux.\"UserServer\" where username=? and ao_server=?",
         user,
         to_server
     );
-    checkAccessUserServer(conn, source, "copyHomeDirectory", to_lsa);
+    checkAccessUserServer(conn, source, "copyHomeDirectory", to_userServer);
     String type = getTypeForUser(conn, user);
     if (
         !type.equals(UserType.USER)
@@ -1085,15 +1079,15 @@ public final class LinuxAccountHandler {
       throw new SQLException("Not allowed to copy LinuxAccounts of type '" + type + "', username=" + user);
     }
 
-    AOServDaemonConnector fromDaemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
-    AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
+    AoservDaemonConnector fromDaemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
+    AoservDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
     conn.close(); // Don't hold database connection while connecting to the daemon
     long byteCount = fromDaemonConnector.copyHomeDirectory(user, toDaemonConnector);
     return byteCount;
   }
 
   /**
-   * Copies a password from one linux account to another
+   * Copies a password from one linux account to another.
    */
   public static void copyUserServerPassword(
       DatabaseConnection conn,
@@ -1142,11 +1136,11 @@ public final class LinuxAccountHandler {
       throw new SQLException("Not allowed to copy passwords to LinuxAccounts of type '" + to_type + "', username=" + to_user);
     }
 
-    AOServDaemonConnector fromDemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
-    AOServDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
+    AoservDaemonConnector fromDemonConnector = DaemonHandler.getDaemonConnector(conn, from_server);
+    AoservDaemonConnector toDaemonConnector = DaemonHandler.getDaemonConnector(conn, to_server);
     conn.close(); // Don't hold database connection while connecting to the daemon
-    Tuple2<String, Integer> enc_password = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
-    toDaemonConnector.setEncryptedLinuxAccountPassword(to_user, enc_password.getElement1(), enc_password.getElement2());
+    Tuple2<String, Integer> encPassword = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
+    toDaemonConnector.setEncryptedLinuxAccountPassword(to_user, encPassword.getElement1(), encPassword.getElement2());
 
     //Account.Name from_account=UsernameHandler.getAccountForUsername(conn, from_username);
     //Account.Name to_account=UsernameHandler.getAccountForUsername(conn, to_username);
@@ -1181,7 +1175,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_ACCOUNTS,
+        Table.TableId.LINUX_ACCOUNTS,
         AccountUserHandler.getAccountForUser(conn, user),
         AccountUserHandler.getHostsForUser(conn, user),
         false
@@ -1248,7 +1242,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         linuxServer,
         false
@@ -1279,7 +1273,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_ACCOUNTS,
+        Table.TableId.LINUX_ACCOUNTS,
         AccountUserHandler.getAccountForUser(conn, user),
         AccountUserHandler.getHostsForUser(conn, user),
         false
@@ -1311,7 +1305,7 @@ public final class LinuxAccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         AccountUserHandler.getAccountForUser(conn, la),
         getServerForUserServer(conn, userServer),
         false
@@ -1337,7 +1331,7 @@ public final class LinuxAccountHandler {
       content = "";
     } else {
       int linuxServer = getServerForUserServer(conn, userServer);
-      AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+      AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
       // TODO: Add a listener to daemonConnector, which would ensure (and maybe close?) no active database connection
       //       while performing I/O with a daemon.
       conn.close(); // Don't hold database connection while connecting to the daemon
@@ -1361,7 +1355,7 @@ public final class LinuxAccountHandler {
     }
     int linuxServer = getServerForUserServer(conn, userServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getCronTable(user);
   }
@@ -1374,12 +1368,12 @@ public final class LinuxAccountHandler {
     return conn.queryInt("select coalesce(disable_log, -1) from linux.\"UserServer\" where id=?", userServer);
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.LINUX_ACCOUNTS) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.LINUX_ACCOUNTS) {
       synchronized (LinuxAccountHandler.class) {
         disabledUsers.clear();
       }
-    } else if (tableID == Table.TableID.LINUX_SERVER_ACCOUNTS) {
+    } else if (tableId == Table.TableId.LINUX_SERVER_ACCOUNTS) {
       synchronized (LinuxAccountHandler.class) {
         disabledUserServers.clear();
       }
@@ -1484,7 +1478,7 @@ public final class LinuxAccountHandler {
     }
 
     int linuxServer = getServerForUserServer(conn, userServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     String crypted = daemonConnector.getEncryptedLinuxAccountPassword(user).getElement1();
     return crypted.length() >= 2 && !User.NO_PASSWORD_CONFIG_VALUE.equals(crypted);
@@ -1500,7 +1494,7 @@ public final class LinuxAccountHandler {
     int linuxServer = getServerForUserServer(conn, userServer);
     if (DaemonHandler.isDaemonAvailable(linuxServer)) {
       try {
-        AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+        AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
         conn.close(); // Don't hold database connection while connecting to the daemon
         return daemonConnector.isProcmailManual(userServer) ? AoservProtocol.TRUE : AoservProtocol.FALSE;
       } catch (IOException err) {
@@ -1555,12 +1549,12 @@ public final class LinuxAccountHandler {
     Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 
     if (ftpModified) {
-      invalidateList.addTable(conn, Table.TableID.FTP_GUEST_USERS, account, linuxServers, false);
+      invalidateList.addTable(conn, Table.TableId.FTP_GUEST_USERS, account, linuxServers, false);
     }
     if (groupAccountModified) {
-      invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, account, linuxServers, false);
+      invalidateList.addTable(conn, Table.TableId.LINUX_GROUP_ACCOUNTS, account, linuxServers, false);
     }
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void removeGroup(
@@ -1609,12 +1603,12 @@ public final class LinuxAccountHandler {
 
     // Notify all clients of the update
     if (linuxServers.size() > 0) {
-      invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, account, linuxServers, false);
+      invalidateList.addTable(conn, Table.TableId.LINUX_SERVER_GROUPS, account, linuxServers, false);
     }
     if (groupAccountsModified) {
-      invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, account, linuxServers, false);
+      invalidateList.addTable(conn, Table.TableId.LINUX_GROUP_ACCOUNTS, account, linuxServers, false);
     }
-    invalidateList.addTable(conn, Table.TableID.LINUX_GROUPS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_GROUPS, account, linuxServers, false);
   }
 
   public static void removeGroupUser(
@@ -1673,7 +1667,7 @@ public final class LinuxAccountHandler {
     conn.update("delete from linux.\"GroupUser\" where id=?", groupUser);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
   }
 
   /* Unused 2019-07-10:
@@ -1740,7 +1734,7 @@ public final class LinuxAccountHandler {
       conn.update("delete from linux.\"GroupUser\" where id=?", groupUser);
 
       // Notify all clients of the update
-      invalidateList.addTable(conn, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
+      invalidateList.addTable(conn, Table.TableId.LINUX_GROUP_ACCOUNTS, accounts, linuxServers, false);
     }
   }
    */
@@ -1797,9 +1791,9 @@ public final class LinuxAccountHandler {
     }
 
     // Delete the email configurations that depend on this account
-    IntList addresses = conn.queryIntList("select email_address from email.\"InboxAddress\" where linux_server_account=?", userServer);
-    int size = addresses.size();
-    boolean addressesModified = size > 0;
+    final IntList addresses = conn.queryIntList("select email_address from email.\"InboxAddress\" where linux_server_account=?", userServer);
+    final int size = addresses.size();
+    final boolean addressesModified = size > 0;
     for (int c = 0; c < size; c++) {
       int address = addresses.getInt(c);
       conn.update("delete from email.\"InboxAddress\" where email_address=?", address);
@@ -1812,17 +1806,17 @@ public final class LinuxAccountHandler {
 
     // Delete the attachment blocks
     if (conn.update("delete from email.\"AttachmentBlock\" where linux_server_account=?", userServer) > 0) {
-      invalidateList.addTable(conn, Table.TableID.EMAIL_ATTACHMENT_BLOCKS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.EMAIL_ATTACHMENT_BLOCKS, account, linuxServer, false);
     }
 
     // Delete the account from the server
     conn.update("delete from linux.\"UserServer\" where id=?", userServer);
-    invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, account, linuxServer, true);
+    invalidateList.addTable(conn, Table.TableId.LINUX_SERVER_ACCOUNTS, account, linuxServer, true);
 
     // Notify all clients of the update
     if (addressesModified) {
-      invalidateList.addTable(conn, Table.TableID.LINUX_ACC_ADDRESSES, account, linuxServer, false);
-      invalidateList.addTable(conn, Table.TableID.EMAIL_ADDRESSES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.LINUX_ACC_ADDRESSES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.EMAIL_ADDRESSES, account, linuxServer, false);
     }
   }
 
@@ -1875,13 +1869,14 @@ public final class LinuxAccountHandler {
     );
 
     if (primaryCount > 0) {
-      throw new SQLException("linux_server_group.id=" + groupServer + " is the primary group for " + primaryCount + " Linux server " + (primaryCount == 1 ? "account" : "accounts") + " on " + linuxServer);
+      throw new SQLException("linux_server_group.id=" + groupServer + " is the primary group for " + primaryCount
+          + " Linux server " + (primaryCount == 1 ? "account" : "accounts") + " on " + linuxServer);
     }
     // Delete from the database
     conn.update("delete from linux.\"GroupServer\" where id=?", groupServer);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_GROUPS, account, linuxServer, true);
+    invalidateList.addTable(conn, Table.TableId.LINUX_SERVER_GROUPS, account, linuxServer, true);
   }
 
   public static void setAutoresponder(
@@ -1912,15 +1907,15 @@ public final class LinuxAccountHandler {
 
     // The from must be on this account
     if (from != -1) {
-      int fromLSA = conn.queryInt("select linux_server_account from email.\"InboxAddress\" where id=?", from);
-      if (fromLSA != userServer) {
-        throw new SQLException("((linux_acc_address.id=" + from + ").linux_server_account=" + fromLSA + ") != ((linux_server_account.id=" + userServer + ").username=" + user + ")");
+      int from_userServer = conn.queryInt("select linux_server_account from email.\"InboxAddress\" where id=?", from);
+      if (from_userServer != userServer) {
+        throw new SQLException("((linux_acc_address.id=" + from + ").linux_server_account=" + from_userServer + ") != ((linux_server_account.id=" + userServer + ").username=" + user + ")");
       }
     }
 
-    Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
-    int linuxServer = getServerForUserServer(conn, userServer);
-    PosixPath path;
+    final Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
+    final int linuxServer = getServerForUserServer(conn, userServer);
+    final PosixPath path;
     if (content == null && !enabled) {
       path = null;
     } else {
@@ -1957,7 +1952,7 @@ public final class LinuxAccountHandler {
       );
     }
     try (
-      PreparedStatement pstmt = conn.getConnection().prepareStatement(
+        PreparedStatement pstmt = conn.getConnection().prepareStatement(
             "update\n"
                 + "  linux.\"UserServer\"\n"
                 + "set\n"
@@ -1981,21 +1976,21 @@ public final class LinuxAccountHandler {
         pstmt.setInt(5, userServer);
         pstmt.executeUpdate();
       } catch (Error | RuntimeException | SQLException e) {
-        ErrorPrinter.addSQL(e, pstmt);
+        ErrorPrinter.addSql(e, pstmt);
         throw e;
       }
     }
 
     // Store the content on the server
     if (path != null) {
-      AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+      AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
       conn.commit();
       conn.close(); // Don't hold database connection while connecting to the daemon
       daemonConnector.setAutoresponderContent(path, content == null ? "" : content, uid, gid);
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_SERVER_ACCOUNTS, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_SERVER_ACCOUNTS, account, linuxServer, false);
   }
 
   /**
@@ -2023,7 +2018,7 @@ public final class LinuxAccountHandler {
     }
     int linuxServer = getServerForUserServer(conn, userServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.setCronTable(user, cronTable);
   }
@@ -2049,7 +2044,7 @@ public final class LinuxAccountHandler {
     conn.update("update linux.\"User\" set home_phone=? where username=?", phone, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void setUserFullName(
@@ -2073,7 +2068,7 @@ public final class LinuxAccountHandler {
     conn.update("update linux.\"User\" set name=? where username=?", name, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void setUserOfficeLocation(
@@ -2097,7 +2092,7 @@ public final class LinuxAccountHandler {
     conn.update("update linux.\"User\" set office_location=? where username=?", location, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void setUserOfficePhone(
@@ -2121,7 +2116,7 @@ public final class LinuxAccountHandler {
     conn.update("update linux.\"User\" set office_phone=? where username=?", phone, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void setUserShell(
@@ -2149,7 +2144,7 @@ public final class LinuxAccountHandler {
     conn.update("update linux.\"User\" set shell=? where username=?", shell, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.LINUX_ACCOUNTS, account, linuxServers, false);
+    invalidateList.addTable(conn, Table.TableId.LINUX_ACCOUNTS, account, linuxServers, false);
   }
 
   public static void setUserServerPassword(
@@ -2187,7 +2182,7 @@ public final class LinuxAccountHandler {
     Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
     int linuxServer = getServerForUserServer(conn, userServer);
     try {
-      AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+      AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
       conn.close(); // Don't hold database connection while connecting to the daemon
       daemonConnector.setLinuxServerAccountPassword(user, password);
     } catch (IOException | SQLException err) {
@@ -2198,10 +2193,10 @@ public final class LinuxAccountHandler {
     // Update the linux.Server table for emailmon and ftpmon
     /*if (username.equals(User.EMAILMON)) {
       conn.update("update linux.\"Server\" set emailmon_password=? where server=?", password == null || password.length() == 0?null:password, linuxServer);
-      invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
     } else if (username.equals(User.FTPMON)) {
       conn.update("update linux.\"Server\" set ftpmon_password=? where server=?", password == null || password.length() == 0?null:password, linuxServer);
-      invalidateList.addTable(conn, Table.TableID.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.AO_SERVERS, ServerHandler.getAccountsForHost(conn, linuxServer), linuxServer, false);
     }*/
   }
 
@@ -2230,7 +2225,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2267,7 +2262,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2297,7 +2292,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2327,7 +2322,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2364,7 +2359,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2401,7 +2396,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2431,7 +2426,7 @@ public final class LinuxAccountHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.LINUX_SERVER_ACCOUNTS,
+        Table.TableId.LINUX_SERVER_ACCOUNTS,
         getAccountForUserServer(conn, userServer),
         getServerForUserServer(conn, userServer),
         false
@@ -2448,7 +2443,7 @@ public final class LinuxAccountHandler {
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "waitForLinuxAccountRebuild", linuxServer);
     NetHostHandler.waitForInvalidates(linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.waitForLinuxAccountRebuild();
   }
@@ -2746,7 +2741,7 @@ public final class LinuxAccountHandler {
     }
 
     // Perform the password comparison
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
         getServerForUserServer(conn, userServer)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
@@ -2785,7 +2780,7 @@ public final class LinuxAccountHandler {
     );
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.LINUX_GROUP_ACCOUNTS,
+        Table.TableId.LINUX_GROUP_ACCOUNTS,
         InvalidateList.getAccountCollection(AccountUserHandler.getAccountForUser(conn, user), getAccountForGroup(conn, group)),
         getServersForGroupUser(conn, groupUser),
         false

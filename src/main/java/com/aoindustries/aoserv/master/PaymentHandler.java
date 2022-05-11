@@ -71,9 +71,10 @@ import java.util.logging.Logger;
 
 /**
  * The {@link PaymentHandler} handles all the accesses to the <code>payment.CreditCard</code> table.
- *
+ * <p>
  * TODO: Deactivate immediately on expired card
  * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.
+ * </p>
  *
  * @author  AO Industries, Inc.
  */
@@ -310,7 +311,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.CREDIT_CARDS, account, InvalidateList.allHosts, false);
     return creditCard;
   }
 
@@ -332,7 +333,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         PaymentHandler.getAccountForCreditCard(conn, creditCard),
         InvalidateList.allHosts,
         false
@@ -392,7 +393,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         business,
         AccountHandler.getHostsForAccount(conn, business),
         false
@@ -556,7 +557,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     Account.Name account = getAccountForCreditCard(conn, creditCard);
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -634,7 +635,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     Account.Name account = getAccountForCreditCard(conn, creditCard);
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -680,7 +681,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     Account.Name account = getAccountForCreditCard(conn, creditCard);
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -713,7 +714,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     Account.Name account = getAccountForCreditCard(conn, creditCard);
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -748,7 +749,7 @@ public final class PaymentHandler /*implements CronJob*/ {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.CREDIT_CARDS,
+        Table.TableId.CREDIT_CARDS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -787,37 +788,37 @@ public final class PaymentHandler /*implements CronJob*/ {
       String invoiceNumber,
       String purchaseOrderNumber,
       String description,
-      User.Name creditCardCreatedBy,
-      String creditCardPrincipalName,
-      Account.Name creditCardAccounting,
-      String creditCardGroupName,
-      String creditCardProviderUniqueId,
-      String creditCardMaskedCardNumber,
+      User.Name creditCard_createdBy,
+      String creditCard_principalName,
+      Account.Name creditCard_accounting,
+      String creditCard_groupName,
+      String creditCard_providerUniqueId,
+      String creditCard_maskedCardNumber,
       Byte creditCard_expirationMonth,
       Short creditCard_expirationYear,
-      String creditCardFirstName,
-      String creditCardLastName,
-      String creditCardCompanyName,
-      String creditCardEmail,
-      String creditCardPhone,
-      String creditCardFax,
-      String creditCardCustomerId,
-      String creditCardCustomerTaxId,
-      String creditCardStreetAddress1,
-      String creditCardStreetAddress2,
-      String creditCardCity,
-      String creditCardState,
-      String creditCardPostalCode,
-      String creditCardCountryCode,
-      String creditCardComments,
+      String creditCard_firstName,
+      String creditCard_lastName,
+      String creditCard_companyName,
+      String creditCard_email,
+      String creditCard_phone,
+      String creditCard_fax,
+      String creditCard_customerId,
+      String creditCard_customerTaxId,
+      String creditCard_streetAddress1,
+      String creditCard_streetAddress2,
+      String creditCard_city,
+      String creditCard_state,
+      String creditCard_postalCode,
+      String creditCard_countryCode,
+      String creditCard_comments,
       long authorizationTime,
       String authorizationPrincipalName
   ) throws IOException, SQLException {
     AccountHandler.checkPermission(conn, source, "addPayment", Permission.Name.add_credit_card_transaction);
     checkAccessProcessor(conn, source, "addPayment", processor);
     AccountHandler.checkAccessAccount(conn, source, "addPayment", account);
-    AccountHandler.checkAccessAccount(conn, source, "addPayment", creditCardAccounting);
-    AccountUserHandler.checkAccessUser(conn, source, "addPayment", creditCardCreatedBy);
+    AccountHandler.checkAccessAccount(conn, source, "addPayment", creditCard_accounting);
+    AccountUserHandler.checkAccessUser(conn, source, "addPayment", creditCard_createdBy);
 
     return addPayment(
         conn,
@@ -847,29 +848,29 @@ public final class PaymentHandler /*implements CronJob*/ {
         invoiceNumber,
         purchaseOrderNumber,
         description,
-        creditCardCreatedBy,
-        creditCardPrincipalName,
-        creditCardAccounting,
-        creditCardGroupName,
-        creditCardProviderUniqueId,
-        creditCardMaskedCardNumber,
+        creditCard_createdBy,
+        creditCard_principalName,
+        creditCard_accounting,
+        creditCard_groupName,
+        creditCard_providerUniqueId,
+        creditCard_maskedCardNumber,
         creditCard_expirationMonth,
         creditCard_expirationYear,
-        creditCardFirstName,
-        creditCardLastName,
-        creditCardCompanyName,
-        creditCardEmail,
-        creditCardPhone,
-        creditCardFax,
-        creditCardCustomerId,
-        creditCardCustomerTaxId,
-        creditCardStreetAddress1,
-        creditCardStreetAddress2,
-        creditCardCity,
-        creditCardState,
-        creditCardPostalCode,
-        creditCardCountryCode,
-        creditCardComments,
+        creditCard_firstName,
+        creditCard_lastName,
+        creditCard_companyName,
+        creditCard_email,
+        creditCard_phone,
+        creditCard_fax,
+        creditCard_customerId,
+        creditCard_customerTaxId,
+        creditCard_streetAddress1,
+        creditCard_streetAddress2,
+        creditCard_city,
+        creditCard_state,
+        creditCard_postalCode,
+        creditCard_countryCode,
+        creditCard_comments,
         authorizationTime,
         source.getCurrentAdministrator(),
         authorizationPrincipalName
@@ -907,29 +908,29 @@ public final class PaymentHandler /*implements CronJob*/ {
       String invoiceNumber,
       String purchaseOrderNumber,
       String description,
-      User.Name creditCardCreatedBy,
-      String creditCardPrincipalName,
-      Account.Name creditCardAccounting,
-      String creditCardGroupName,
-      String creditCardProviderUniqueId,
-      String creditCardMaskedCardNumber,
+      User.Name creditCard_createdBy,
+      String creditCard_principalName,
+      Account.Name creditCard_accounting,
+      String creditCard_groupName,
+      String creditCard_providerUniqueId,
+      String creditCard_maskedCardNumber,
       Byte creditCard_expirationMonth,
       Short creditCard_expirationYear,
-      String creditCardFirstName,
-      String creditCardLastName,
-      String creditCardCompanyName,
-      String creditCardEmail,
-      String creditCardPhone,
-      String creditCardFax,
-      String creditCardCustomerId,
-      String creditCardCustomerTaxId,
-      String creditCardStreetAddress1,
-      String creditCardStreetAddress2,
-      String creditCardCity,
-      String creditCardState,
-      String creditCardPostalCode,
-      String creditCardCountryCode,
-      String creditCardComments,
+      String creditCard_firstName,
+      String creditCard_lastName,
+      String creditCard_companyName,
+      String creditCard_email,
+      String creditCard_phone,
+      String creditCard_fax,
+      String creditCard_customerId,
+      String creditCard_customerTaxId,
+      String creditCard_streetAddress1,
+      String creditCard_streetAddress2,
+      String creditCard_city,
+      String creditCard_state,
+      String creditCard_postalCode,
+      String creditCard_countryCode,
+      String creditCard_comments,
       long authorizationTime,
       User.Name authorizationUsername,
       String authorizationPrincipalName
@@ -1026,36 +1027,36 @@ public final class PaymentHandler /*implements CronJob*/ {
         invoiceNumber,
         purchaseOrderNumber,
         description,
-        creditCardCreatedBy,
-        creditCardPrincipalName,
-        creditCardAccounting,
-        creditCardGroupName,
-        creditCardProviderUniqueId,
-        creditCardMaskedCardNumber,
+        creditCard_createdBy,
+        creditCard_principalName,
+        creditCard_accounting,
+        creditCard_groupName,
+        creditCard_providerUniqueId,
+        creditCard_maskedCardNumber,
         creditCard_expirationMonth == null ? DatabaseAccess.Null.SMALLINT : creditCard_expirationMonth.shortValue(),
         creditCard_expirationYear == null ? DatabaseAccess.Null.SMALLINT : creditCard_expirationYear,
-        creditCardFirstName,
-        creditCardLastName,
-        creditCardCompanyName,
-        creditCardEmail,
-        creditCardPhone,
-        creditCardFax,
-        creditCardCustomerId,
-        creditCardCustomerTaxId,
-        creditCardStreetAddress1,
-        creditCardStreetAddress2,
-        creditCardCity,
-        creditCardState,
-        creditCardPostalCode,
-        creditCardCountryCode,
-        creditCardComments,
+        creditCard_firstName,
+        creditCard_lastName,
+        creditCard_companyName,
+        creditCard_email,
+        creditCard_phone,
+        creditCard_fax,
+        creditCard_customerId,
+        creditCard_customerTaxId,
+        creditCard_streetAddress1,
+        creditCard_streetAddress2,
+        creditCard_city,
+        creditCard_state,
+        creditCard_postalCode,
+        creditCard_countryCode,
+        creditCard_comments,
         new Timestamp(authorizationTime),
         authorizationUsername,
         authorizationPrincipalName
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
     return payment;
   }
 
@@ -1254,7 +1255,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
   }
 
   public static void paymentAuthorizeCompleted(
@@ -1405,7 +1406,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.CREDIT_CARD_TRANSACTIONS, account, InvalidateList.allHosts, false);
   }
 
   private static class AutomaticPayment {
@@ -1510,7 +1511,7 @@ public final class PaymentHandler /*implements CronJob*/ {
     System.err.println("DEBUG: month=" + year + "-" + month);
     try {
       try (
-        ProcessTimer timer = new ProcessTimer(
+          ProcessTimer timer = new ProcessTimer(
               logger,
               PaymentHandler.class.getName(),
               "processAutomaticPayments",
@@ -1520,7 +1521,7 @@ public final class PaymentHandler /*implements CronJob*/ {
               TIMER_REMINDER_INTERVAL
           );
           ) {
-        MasterServer.executorService.submit(timer);
+        AoservMaster.executorService.submit(timer);
 
         // Find the beginning of the next month (for transaction search)
         GregorianCalendar beginningOfNextMonth = new GregorianCalendar(Type.DATE_TIME_ZONE);
@@ -1535,12 +1536,12 @@ public final class PaymentHandler /*implements CronJob*/ {
 
         // Find the last microsecond of the current month - PostgreSQL has microsecond precision
         Timestamp lastMicrosecondOfMonth;
-        {
-          Calendar lastSecondOfTheMonth = (Calendar) beginningOfNextMonth.clone();
-          lastSecondOfTheMonth.add(Calendar.SECOND, -1);
-          lastMicrosecondOfMonth = new Timestamp(lastSecondOfTheMonth.getTimeInMillis());
-          lastMicrosecondOfMonth.setNanos(999999000);
-        }
+          {
+            Calendar lastSecondOfTheMonth = (Calendar) beginningOfNextMonth.clone();
+            lastSecondOfTheMonth.add(Calendar.SECOND, -1);
+            lastMicrosecondOfMonth = new Timestamp(lastSecondOfTheMonth.getTimeInMillis());
+            lastMicrosecondOfMonth.setNanos(999999000);
+          }
 
         // Start the transaction
         try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
@@ -1772,7 +1773,7 @@ public final class PaymentHandler /*implements CronJob*/ {
             } else {
               paymentTypeName = null;
             }
-            int transID = BillingTransactionHandler.addTransaction(
+            int transid = BillingTransactionHandler.addTransaction(
                 conn,
                 invalidateList,
                 'T',
@@ -1799,7 +1800,7 @@ public final class PaymentHandler /*implements CronJob*/ {
                     false, // testMode
                     InetAddress.getLocalHost().getHostAddress(),
                     120, // duplicateWindow
-                    Integer.toString(transID), // orderNumber
+                    Integer.toString(transid), // orderNumber
                     automaticPayment.amount.getCurrency(),
                     automaticPayment.amount.getValue(),
                     null, // taxAmount
@@ -1853,17 +1854,16 @@ public final class PaymentHandler /*implements CronJob*/ {
             AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
             TokenizedCreditCard tokenizedCreditCard = authorizationResult.getTokenizedCreditCard();
             switch (authorizationResult.getCommunicationResult()) {
-              case LOCAL_ERROR :
-              case IO_ERROR :
-              case GATEWAY_ERROR :
-              {
+              case LOCAL_ERROR:
+              case IO_ERROR:
+              case GATEWAY_ERROR: {
                 // Update transaction as failed
                 //     TODO: Deactivate the card if this is the 3rd consecutive failure
                 //     TODO: Notify customer
                 BillingTransactionHandler.transactionDeclined(
                     conn,
                     invalidateList,
-                    transID,
+                    transid,
                     Integer.parseInt(transaction.getPersistenceUniqueId()),
                     tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
                 );
@@ -1871,15 +1871,15 @@ public final class PaymentHandler /*implements CronJob*/ {
                 System.out.println("    Result: Error");
                 break;
               }
-              case SUCCESS :
+              case SUCCESS: {
                 // Check approval result
                 switch (authorizationResult.getApprovalResult()) {
-                  case HOLD : {
+                  case HOLD: {
                     // Update transaction
                     BillingTransactionHandler.transactionHeld(
                         conn,
                         invalidateList,
-                        transID,
+                        transid,
                         Integer.parseInt(transaction.getPersistenceUniqueId()),
                         tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
                     );
@@ -1888,14 +1888,14 @@ public final class PaymentHandler /*implements CronJob*/ {
                     System.out.println("    Review Reason: " + authorizationResult.getReviewReason());
                     break;
                   }
-                  case DECLINED : {
+                  case DECLINED: {
                     // Update transaction as declined
                     //     TODO: Deactivate the card if this is the 3rd consecutive failure
                     //     TODO: Notify customer
                     BillingTransactionHandler.transactionDeclined(
                         conn,
                         invalidateList,
-                        transID,
+                        transid,
                         Integer.parseInt(transaction.getPersistenceUniqueId()),
                         tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
                     );
@@ -1904,12 +1904,12 @@ public final class PaymentHandler /*implements CronJob*/ {
                     System.out.println("    Decline Reason: " + authorizationResult.getDeclineReason());
                     break;
                   }
-                  case APPROVED : {
+                  case APPROVED: {
                     // Update transaction as successful
                     BillingTransactionHandler.transactionApproved(
                         conn,
                         invalidateList,
-                        transID,
+                        transid,
                         Integer.parseInt(transaction.getPersistenceUniqueId()),
                         tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
                     );
@@ -1921,12 +1921,13 @@ public final class PaymentHandler /*implements CronJob*/ {
                   }
                 }
                 break;
+              }
               default:
                 throw new RuntimeException("Unexpected value for authorization communication result: " + authorizationResult.getCommunicationResult());
             }
           }
           conn.commit();
-          MasterServer.invalidateTables(conn, invalidateList, null);
+          AoservMaster.invalidateTables(conn, invalidateList, null);
         }
       }
     } catch (ThreadDeath td) {
@@ -1939,7 +1940,7 @@ public final class PaymentHandler /*implements CronJob*/ {
   // TODO: Synchronize should become its own service, once we've moved this handler into the new service architecture
   private static void synchronizeStoredCards(PrintWriter verboseOut, PrintWriter infoOut, PrintWriter warningOut, boolean dryRun) throws IOException, SQLException {
     try (
-      ProcessTimer timer = new ProcessTimer(
+        ProcessTimer timer = new ProcessTimer(
             logger,
             PaymentHandler.class.getName(),
             "synchronizeStoredCards",
@@ -1949,7 +1950,7 @@ public final class PaymentHandler /*implements CronJob*/ {
             TIMER_REMINDER_INTERVAL
         );
         ) {
-      MasterServer.executorService.submit(timer);
+      AoservMaster.executorService.submit(timer);
 
       // Start the transaction
       try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
@@ -1989,7 +1990,8 @@ public final class PaymentHandler /*implements CronJob*/ {
                 + "  provider_id"
         );
         if (infoOut != null) {
-          infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size() + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
+          infoOut.println(PaymentHandler.class.getSimpleName() + ".synchronizeStoredCards: Found " + providers.size()
+              + " enabled " + (providers.size() == 1 ? "payment processor" : "payment processors"));
         }
 
         // Find all the stored cards
@@ -2001,7 +2003,7 @@ public final class PaymentHandler /*implements CronJob*/ {
           processor.synchronizeStoredCards(null, verboseOut, infoOut, warningOut, dryRun);
         }
         conn.commit();
-        MasterServer.invalidateTables(conn, invalidateList, null);
+        AoservMaster.invalidateTables(conn, invalidateList, null);
       }
     }
   }
@@ -2125,43 +2127,40 @@ public final class PaymentHandler /*implements CronJob*/ {
     System.exit(exitStatus);
   }
 
-  /**
-   * Runs at 12:12 am on the first day of the month.
-   */
-  /*public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-    return
-      minute == 12
-      && hour == 0
-      && dayOfMonth == 1
-    ;
-  }*/
-
-  /*public int getCronJobScheduleMode() {
-    return CRON_JOB_SCHEDULE_SKIP;
-  }*/
-
-  /*public String getCronJobName() {
-    return "CreditCardHandler";
-  }*/
-
-  /*public int getCronJobThreadPriority() {
-    return Thread.NORM_PRIORITY+1;
-  }*/
-
-  /*
-  public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-    // Find last month
-    GregorianCalendar gcal = new GregorianCalendar(Type.DATE_TIME_ZONE);
-    gcal.set(Calendar.YEAR, year);
-    gcal.set(Calendar.MONTH, month-1);
-    gcal.set(Calendar.DAY_OF_MONTH, 1);
-    gcal.set(Calendar.HOUR_OF_DAY, 0);
-    gcal.set(Calendar.MINUTE, 0);
-    gcal.set(Calendar.SECOND, 0);
-    gcal.set(Calendar.MILLISECOND, 0);
-    gcal.add(Calendar.MONTH, -1);
-    // Process for last month
-    processAutomaticPayments(gcal.get(Calendar.MONTH) + 1, gcal.get(Calendar.YEAR));
-  }
-  */
+  ///**
+  // * Runs at 12:12 am on the first day of the month.
+  // */
+  //public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+  //  return
+  //    minute == 12
+  //    && hour == 0
+  //    && dayOfMonth == 1;
+  //}
+  //
+  //public int getCronJobScheduleMode() {
+  //  return CRON_JOB_SCHEDULE_SKIP;
+  //}
+  //
+  //public String getCronJobName() {
+  //  return "CreditCardHandler";
+  //}
+  //
+  //public int getCronJobThreadPriority() {
+  //  return Thread.NORM_PRIORITY+1;
+  //}
+  //
+  //public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+  //  // Find last month
+  //  GregorianCalendar gcal = new GregorianCalendar(Type.DATE_TIME_ZONE);
+  //  gcal.set(Calendar.YEAR, year);
+  //  gcal.set(Calendar.MONTH, month-1);
+  //  gcal.set(Calendar.DAY_OF_MONTH, 1);
+  //  gcal.set(Calendar.HOUR_OF_DAY, 0);
+  //  gcal.set(Calendar.MINUTE, 0);
+  //  gcal.set(Calendar.SECOND, 0);
+  //  gcal.set(Calendar.MILLISECOND, 0);
+  //  gcal.add(Calendar.MONTH, -1);
+  //  // Process for last month
+  //  processAutomaticPayments(gcal.get(Calendar.MONTH) + 1, gcal.get(Calendar.YEAR));
+  //}
 }

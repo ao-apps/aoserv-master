@@ -63,8 +63,7 @@ public final class AccountUserHandler {
               + " is not allowed to access username: action='"
               + action
               + "', username="
-              + user
-      ;
+              + user;
       throw new SQLException(message);
     }
   }
@@ -93,7 +92,7 @@ public final class AccountUserHandler {
       if (atPos != -1) {
         String hostname = usernameStr.substring(atPos + 1);
         if (hostname.length() > 0) {
-          MasterServer.checkAccessHostname(conn, source, "addUser", hostname);
+          AoservMaster.checkAccessHostname(conn, source, "addUser", hostname);
         }
       }
     }
@@ -106,8 +105,8 @@ public final class AccountUserHandler {
 
     // Notify all clients of the update
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
-    invalidateList.addTable(conn, Table.TableID.USERNAMES, account, InvalidateList.allHosts, false);
-    //invalidateList.addTable(conn, Table.TableID.PACKAGES, accounting, null);
+    invalidateList.addTable(conn, Table.TableId.USERNAMES, account, InvalidateList.allHosts, false);
+    //invalidateList.addTable(conn, Table.TableId.PACKAGES, accounting, null);
   }
 
   public static void disableUser(
@@ -174,7 +173,7 @@ public final class AccountUserHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.USERNAMES,
+        Table.TableId.USERNAMES,
         getAccountForUser(conn, user),
         getHostsForUser(conn, user),
         false
@@ -206,7 +205,7 @@ public final class AccountUserHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.USERNAMES,
+        Table.TableId.USERNAMES,
         getAccountForUser(conn, user),
         getHostsForUser(conn, user),
         false
@@ -217,8 +216,8 @@ public final class AccountUserHandler {
     return conn.queryInt("select coalesce(disable_log, -1) from account.\"User\" where username=?", user);
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.USERNAMES) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.USERNAMES) {
       synchronized (disabledUsers) {
         disabledUsers.clear();
       }
@@ -272,14 +271,14 @@ public final class AccountUserHandler {
     conn.update("delete from account.\"User\" where username=?", user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.USERNAMES, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.USERNAMES, account, InvalidateList.allHosts, false);
   }
 
   public static Account.Name getAccountForUser(DatabaseAccess db, User.Name user) throws IOException, SQLException {
     synchronized (userAccounts) {
-      Account.Name O = userAccounts.get(user);
-      if (O != null) {
-        return O;
+      Account.Name existing = userAccounts.get(user);
+      if (existing != null) {
+        return existing;
       }
       Account.Name account = db.queryObject(
           ObjectFactories.accountNameFactory,
@@ -356,8 +355,7 @@ public final class AccountUserHandler {
               + host
               + ": action='"
               + action
-              + "'"
-      ;
+              + "'";
       throw new SQLException(message);
     }
   }

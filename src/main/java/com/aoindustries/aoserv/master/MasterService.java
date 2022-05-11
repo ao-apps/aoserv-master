@@ -32,7 +32,7 @@ import java.util.Collections;
  */
 // TODO: Move this, along with related stuff, to a new ao-service-manager project
 // TODO: Then monitor the service states in noc-monitor
-// TODO: Finally, use the service manager for AOServDaemon, and monitor, too
+// TODO: Finally, use the service manager for AoservDaemon, and monitor, too
 public interface MasterService {
 
   /**

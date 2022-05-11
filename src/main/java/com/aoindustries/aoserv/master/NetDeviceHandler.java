@@ -24,7 +24,7 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoapps.dbc.DatabaseConnection;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -47,7 +47,7 @@ public final class NetDeviceHandler {
     }
     NetHostHandler.checkAccessHost(conn, source, "getDeviceBondingReport", host);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getNetDeviceBondingReport(device);
   }
@@ -59,7 +59,7 @@ public final class NetDeviceHandler {
     }
     NetHostHandler.checkAccessHost(conn, source, "getDeviceStatisticsReport", host);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, host);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getNetDeviceStatisticsReport(device);
   }

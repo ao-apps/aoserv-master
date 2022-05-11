@@ -32,8 +32,8 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -75,18 +75,27 @@ public final class TransactionHandler {
   public static class GetObject implements TableHandler.GetObjectHandler {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.TRANSACTIONS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.TRANSACTIONS);
     }
 
     @Override
-    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    @SuppressWarnings("deprecation")
+    public void getObject(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableInput in,
+        StreamableOutput out,
+        Table.TableId tableId,
+        User masterUser,
+        UserHost[] masterServers
+    ) throws IOException, SQLException {
       int transid = in.readCompressedInt();
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
         if (masterUser != null) {
           assert masterServers != null;
           if (masterServers.length == 0) {
-            MasterServer.writeObject(
+            AoservMaster.writeObject(
                 conn,
                 source,
                 out,
@@ -99,7 +108,7 @@ public final class TransactionHandler {
             out.writeShort(AoservProtocol.DONE);
           }
         } else {
-          MasterServer.writeObject(
+          AoservMaster.writeObject(
               conn,
               source,
               out,
@@ -121,14 +130,22 @@ public final class TransactionHandler {
   public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.TRANSACTIONS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.TRANSACTIONS);
     }
 
     @Override
-    protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+    @SuppressWarnings("deprecation")
+    protected void getTableMaster(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId,
+        User masterUser
+    ) throws IOException, SQLException {
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-        MasterServer.writeObjects(
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -139,7 +156,7 @@ public final class TransactionHandler {
             Currency.USD.getCurrencyCode()
         );
       } else {
-        MasterServer.writeObjects(
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -152,14 +169,29 @@ public final class TransactionHandler {
     }
 
     @Override
-    protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+    protected void getTableDaemon(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId,
+        User masterUser,
+        UserHost[] masterServers
+    ) throws IOException, SQLException {
+      AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
     }
 
     @Override
-    protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+    @SuppressWarnings("deprecation")
+    protected void getTableAdministrator(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId
+    ) throws IOException, SQLException {
       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-        MasterServer.writeObjects(
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -172,7 +204,7 @@ public final class TransactionHandler {
             Currency.USD.getCurrencyCode()
         );
       } else {
-        MasterServer.writeObjects(
+        AoservMaster.writeObjects(
             conn,
             source,
             out,

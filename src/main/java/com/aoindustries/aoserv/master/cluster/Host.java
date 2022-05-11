@@ -234,7 +234,9 @@ public final class Host implements Comparable<Host> {
     Collections.sort(servers);
     // Collections.shuffle(servers);
     Host[] array = servers.toArray(new Host[servers.size()]);
-    for (Host server : array) server.allocatedSecondaryRAMs = new int[array.length];
+    for (Host server : array) {
+      server.allocatedSecondaryRams = new int[array.length];
+    }
     return array;
   }
 
@@ -250,17 +252,17 @@ public final class Host implements Comparable<Host> {
   /**
    * The primary RAM allocated during the recursive processing.
    */
-  int allocatedPrimaryRAM;
+  int allocatedPrimaryRam;
 
   /**
    * The allocated secondary RAM on a per-primary-server basis.
    */
-  int[] allocatedSecondaryRAMs;
+  int[] allocatedSecondaryRams;
 
   /**
    * The maximum secondary RAM allocated on any of the primary servers.
    */
-  int maximumAllocatedSecondaryRAM;
+  int maximumAllocatedSecondaryRam;
 
   /**
    * The allocated processor weight during the recursive processing.

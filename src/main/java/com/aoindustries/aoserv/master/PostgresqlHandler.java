@@ -35,7 +35,7 @@ import com.aoindustries.aoserv.client.password.PasswordChecker;
 import com.aoindustries.aoserv.client.postgresql.Database;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -60,9 +60,9 @@ public final class PostgresqlHandler {
   private static final Map<com.aoindustries.aoserv.client.postgresql.User.Name, Boolean> disabledUsers = new HashMap<>();
 
   public static void checkAccessDatabase(DatabaseConnection conn, RequestSource source, String action, int database) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForDatabase(conn, database));
       }
     } else {
@@ -75,9 +75,9 @@ public final class PostgresqlHandler {
   }
 
   public static void checkAccessUserServer(DatabaseConnection conn, RequestSource source, String action, int userServer) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForUserServer(conn, userServer));
       }
     } else {
@@ -86,9 +86,9 @@ public final class PostgresqlHandler {
   }
 
   public static void checkAccessUser(DatabaseConnection conn, RequestSource source, String action, com.aoindustries.aoserv.client.postgresql.User.Name user) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         IntList psus = getUserServersForUser(conn, user);
         boolean found = false;
         for (int psu : psus) {
@@ -104,8 +104,7 @@ public final class PostgresqlHandler {
                   + " is not allowed to access postgres_user: action='"
                   + action
                   + ", user="
-                  + user
-          ;
+                  + user;
           throw new SQLException(message);
         }
       }
@@ -144,7 +143,7 @@ public final class PostgresqlHandler {
     if (datdbaServer != postgresqlServer) {
       throw new SQLException("(datdba.postgres_server=" + datdbaServer + ") != (postgres_server=" + postgresqlServer + ")");
     }
-    com.aoindustries.aoserv.client.postgresql.User.Name datdbaUsername = getUserForUserServer(conn, datdba);
+    final com.aoindustries.aoserv.client.postgresql.User.Name datdbaUsername = getUserForUserServer(conn, datdba);
     if (datdbaUsername.equals(com.aoindustries.aoserv.client.linux.User.MAIL)) {
       throw new SQLException("Not allowed to add Database with datdba of '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
     }
@@ -152,7 +151,7 @@ public final class PostgresqlHandler {
       throw new SQLException("Unable to add Database, UserServer disabled: " + datdba);
     }
     // Look up the accounting code
-    Account.Name account = AccountUserHandler.getAccountForUser(conn, datdbaUsername);
+    final Account.Name account = AccountUserHandler.getAccountForUser(conn, datdbaUsername);
     // Encoding must exist for this version of the database
     if (
         !conn.queryBoolean(
@@ -204,7 +203,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update, the server will detect this change and automatically add the database
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_DATABASES,
+        Table.TableId.POSTGRES_DATABASES,
         account,
         linuxServer,
         false
@@ -247,7 +246,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_SERVER_USERS,
+        Table.TableId.POSTGRES_SERVER_USERS,
         AccountUserHandler.getAccountForUser(conn, user),
         linuxServer,
         true
@@ -283,7 +282,7 @@ public final class PostgresqlHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.POSTGRES_USERS,
+        Table.TableId.POSTGRES_USERS,
         AccountUserHandler.getAccountForUser(conn, user),
         InvalidateList.allHosts,
         false
@@ -317,7 +316,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_SERVER_USERS,
+        Table.TableId.POSTGRES_SERVER_USERS,
         getAccountForUserServer(conn, userServer),
         getLinuxServerForUserServer(conn, userServer),
         false
@@ -359,7 +358,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_USERS,
+        Table.TableId.POSTGRES_USERS,
         AccountUserHandler.getAccountForUser(conn, user),
         AccountUserHandler.getHostsForUser(conn, user),
         false
@@ -367,7 +366,7 @@ public final class PostgresqlHandler {
   }
 
   /**
-   * Dumps a PostgreSQL database
+   * Dumps a PostgreSQL database.
    */
   public static void dumpDatabase(
       DatabaseConnection conn,
@@ -379,7 +378,7 @@ public final class PostgresqlHandler {
     checkAccessDatabase(conn, source, "dumpDatabase", database);
 
     int linuxServer = getLinuxServerForDatabase(conn, database);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.dumpPostgresDatabase(
         database,
@@ -422,7 +421,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_SERVER_USERS,
+        Table.TableId.POSTGRES_SERVER_USERS,
         AccountUserHandler.getAccountForUser(conn, pu),
         getLinuxServerForUserServer(conn, userServer),
         false
@@ -458,7 +457,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_USERS,
+        Table.TableId.POSTGRES_USERS,
         AccountUserHandler.getAccountForUser(conn, user),
         AccountUserHandler.getHostsForUser(conn, user),
         false
@@ -470,8 +469,8 @@ public final class PostgresqlHandler {
    */
   public static Database.Name generateDatabaseName(
       DatabaseConnection conn,
-      String template_base,
-      String template_added
+      String templateBase,
+      String templateAdded
   ) throws IOException, SQLException {
     // Load the entire list of postgres database names
     Set<Database.Name> names = conn.queryNewCollection(
@@ -483,7 +482,7 @@ public final class PostgresqlHandler {
     for (int c = 0; c < Integer.MAX_VALUE; c++) {
       Database.Name name;
       try {
-        name = Database.Name.valueOf((c == 0) ? template_base : (template_base + template_added + c));
+        name = Database.Name.valueOf((c == 0) ? templateBase : (templateBase + templateAdded + c));
       } catch (ValidationException e) {
         throw new SQLException(e.getLocalizedMessage(), e);
       }
@@ -492,7 +491,7 @@ public final class PostgresqlHandler {
       }
     }
     // If could not find one, report and error
-    throw new SQLException("Unable to find available PostgreSQL database name for template_base=" + template_base + " and template_added=" + template_added);
+    throw new SQLException("Unable to find available PostgreSQL database name for template_base=" + templateBase + " and template_added=" + templateAdded);
   }
 
   public static int getDisableLogForUserServer(DatabaseConnection conn, int userServer) throws IOException, SQLException {
@@ -523,18 +522,22 @@ public final class PostgresqlHandler {
     );
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    switch (tableID) {
-      case POSTGRES_SERVER_USERS :
+  public static void invalidateTable(Table.TableId tableId) {
+    switch (tableId) {
+      case POSTGRES_SERVER_USERS: {
         synchronized (PostgresqlHandler.class) {
           disabledUserServers.clear();
         }
         break;
-      case POSTGRES_USERS :
+      }
+      case POSTGRES_USERS: {
         synchronized (PostgresqlHandler.class) {
           disabledUsers.clear();
         }
         break;
+      }
+      default:
+        // fall-through
     }
   }
 
@@ -640,7 +643,7 @@ public final class PostgresqlHandler {
     }
 
     int linuxServer = getLinuxServerForUserServer(conn, userServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     String password = daemonConnector.getPostgresUserPassword(userServer);
     return !com.aoindustries.aoserv.client.postgresql.User.NO_PASSWORD_DB_VALUE.equals(password);
@@ -680,7 +683,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_DATABASES,
+        Table.TableId.POSTGRES_DATABASES,
         account,
         linuxServer,
         false
@@ -719,7 +722,7 @@ public final class PostgresqlHandler {
     // Notify all clients of the updates
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_SERVER_USERS,
+        Table.TableId.POSTGRES_SERVER_USERS,
         account,
         linuxServer,
         true
@@ -759,7 +762,7 @@ public final class PostgresqlHandler {
       conn.update("delete from postgresql.\"UserServer\" where username=?", user);
       invalidateList.addTable(
           conn,
-          Table.TableID.POSTGRES_SERVER_USERS,
+          Table.TableId.POSTGRES_SERVER_USERS,
           account,
           linuxServers,
           false
@@ -770,7 +773,7 @@ public final class PostgresqlHandler {
     conn.update("delete from postgresql.\"User\" where username=?", user);
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_USERS,
+        Table.TableId.POSTGRES_USERS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -809,7 +812,7 @@ public final class PostgresqlHandler {
     }
 
     // Contact the daemon for the update
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.setPostgresUserPassword(userServer, password);
   }
@@ -845,7 +848,7 @@ public final class PostgresqlHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.POSTGRES_SERVER_USERS,
+        Table.TableId.POSTGRES_SERVER_USERS,
         getAccountForUserServer(conn, userServer),
         getLinuxServerForUserServer(conn, userServer),
         false
@@ -859,7 +862,7 @@ public final class PostgresqlHandler {
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "waitForDatabaseRebuild", linuxServer);
     NetHostHandler.waitForInvalidates(linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.waitForPostgresDatabaseRebuild();
   }
@@ -871,7 +874,7 @@ public final class PostgresqlHandler {
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "waitForServerRebuild", linuxServer);
     NetHostHandler.waitForInvalidates(linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.waitForPostgresServerRebuild();
   }
@@ -883,7 +886,7 @@ public final class PostgresqlHandler {
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "waitForUserRebuild", linuxServer);
     NetHostHandler.waitForInvalidates(linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.waitForPostgresUserRebuild();
   }
@@ -1013,7 +1016,7 @@ public final class PostgresqlHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to restart PostgreSQL on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.restartPostgres(postgresqlServer);
   }
@@ -1028,9 +1031,9 @@ public final class PostgresqlHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to start PostgreSQL on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
-    daemonConnector.startPostgreSQL(postgresqlServer);
+    daemonConnector.startPostgresql(postgresqlServer);
   }
 
   public static void stopServer(
@@ -1043,8 +1046,8 @@ public final class PostgresqlHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to stop PostgreSQL on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
-    daemonConnector.stopPostgreSQL(postgresqlServer);
+    daemonConnector.stopPostgresql(postgresqlServer);
   }
 }

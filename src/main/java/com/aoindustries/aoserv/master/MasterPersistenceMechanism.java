@@ -392,7 +392,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
   }
 
   /**
-   * Stores the results of a sale transaction:
+   * Stores the results of a sale transaction.
    * <ol>
    *   <li>authorizationResult</li>
    *   <li>captureTime</li>
@@ -400,8 +400,9 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
    *   <li>captureResult</li>
    *   <li>status</li>
    * </ol>
-   *
+   * <p>
    * The current status must be PROCESSING or AUTHORIZED.
+   * </p>
    */
   @Override
   public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {
@@ -466,13 +467,14 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
   }
 
   /**
-   * Stores the results of an authorize transaction:
+   * Stores the results of an authorize transaction.
    * <ol>
    *   <li>authorizationResult</li>
    *   <li>status</li>
    * </ol>
-   *
+   * <p>
    * The current status must be PROCESSING.
+   * </p>
    */
   @Override
   public void authorizeCompleted(Principal principal, Transaction transaction) throws SQLException {

@@ -36,8 +36,8 @@ import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.backup.FileReplicationLog;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonProtocol;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonProtocol;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -67,7 +67,7 @@ public final class FailoverHandler implements CronJob {
       boolean isSuccessful
   ) throws IOException, SQLException {
     //String mustring = source.getUsername();
-    //User mu = MasterServer.getUser(conn, mustring);
+    //User mu = AoservMaster.getUser(conn, mustring);
     //if (mu == null) {
     //  throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
     //}
@@ -106,7 +106,7 @@ public final class FailoverHandler implements CronJob {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FAILOVER_FILE_LOG,
+        Table.TableId.FAILOVER_FILE_LOG,
         NetHostHandler.getAccountsForHost(conn, host),
         host,
         false
@@ -133,7 +133,8 @@ public final class FailoverHandler implements CronJob {
     Account.Name userPackage = AccountUserHandler.getPackageForUser(conn, source.getCurrentAdministrator());
     Account.Name serverPackage = PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, host));
     if (!userPackage.equals(serverPackage)) {
-      throw new SQLException("userPackage != serverPackage: may only set backup.FileReplication.max_bit_rate for servers that have the same package as the business_administrator setting the bit rate");
+      throw new SQLException("userPackage != serverPackage: may only set backup.FileReplication.max_bit_rate for servers"
+          + " that have the same package as the business_administrator setting the bit rate");
     }
 
     if (bitRate == null) {
@@ -145,7 +146,7 @@ public final class FailoverHandler implements CronJob {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FAILOVER_FILE_REPLICATIONS,
+        Table.TableId.FAILOVER_FILE_REPLICATIONS,
         NetHostHandler.getAccountsForHost(conn, host),
         host,
         false
@@ -207,7 +208,7 @@ public final class FailoverHandler implements CronJob {
     if (modified) {
       invalidateList.addTable(
           conn,
-          Table.TableID.FAILOVER_FILE_SCHEDULE,
+          Table.TableId.FAILOVER_FILE_SCHEDULE,
           NetHostHandler.getAccountsForHost(conn, host),
           host,
           false
@@ -291,7 +292,7 @@ public final class FailoverHandler implements CronJob {
     if (modified) {
       invalidateList.addTable(
           conn,
-          Table.TableID.FILE_BACKUP_SETTINGS,
+          Table.TableId.FILE_BACKUP_SETTINGS,
           NetHostHandler.getAccountsForHost(conn, host),
           host,
           false
@@ -307,6 +308,7 @@ public final class FailoverHandler implements CronJob {
     return conn.queryInt("select backup_partition from backup.\"FileReplication\" where id=?", fileReplication);
   }
 
+  @SuppressWarnings("deprecation")
   public static void getFileReplicationLogs(
       DatabaseConnection conn,
       RequestSource source,
@@ -319,7 +321,7 @@ public final class FailoverHandler implements CronJob {
     NetHostHandler.checkAccessHost(conn, source, "getFileReplicationLogs", fromHost);
 
     // TODO: release conn before writing to out
-    MasterServer.writeObjects(
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -346,7 +348,7 @@ public final class FailoverHandler implements CronJob {
     int toLinuxServer = BackupHandler.getLinuxServerForBackupPartition(conn, backupPartition);
 
     // Contact the server
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toLinuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, toLinuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     return daemonConnector.getFailoverFileReplicationActivity(fileReplication);
   }
@@ -403,7 +405,7 @@ public final class FailoverHandler implements CronJob {
   ) throws IOException, SQLException {
     // Security checks
     //String username=source.getUsername();
-    //User masterUser=MasterServer.getUser(conn, username);
+    //User masterUser=AoservMaster.getUser(conn, username);
     //if (masterUser == null) {
     //  throw new SQLException("Only master users allowed to request daemon access.");
     //}
@@ -430,15 +432,15 @@ public final class FailoverHandler implements CronJob {
       serverName =
           PackageHandler.getNameForPackage(conn, NetHostHandler.getPackageForHost(conn, fromServer))
               + "/"
-              + NetHostHandler.getNameForHost(conn, fromServer)
-      ;
+              + NetHostHandler.getNameForHost(conn, fromServer);
     }
 
-    int quota_gid = conn.queryInt("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", fileReplication);
+    int quotaGid = conn.queryInt("select coalesce(quota_gid, -1) from backup.\"FileReplication\" where id=?", fileReplication);
 
     // Verify that the backup_partition is the correct type
-    boolean isQuotaEnabled = conn.queryBoolean("select bp.quota_enabled from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication);
-    if (quota_gid == -1) {
+    boolean isQuotaEnabled = conn.queryBoolean("select bp.quota_enabled from backup.\"FileReplication\" ffr"
+        + " inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication);
+    if (quotaGid == -1) {
       if (isQuotaEnabled) {
         throw new SQLException("quota_gid is null when quota_enabled=true: backup.FileReplication.id=" + fileReplication);
       }
@@ -457,11 +459,11 @@ public final class FailoverHandler implements CronJob {
         conn,
         toServer,
         connectAddress,
-        AOServDaemonProtocol.FAILOVER_FILE_REPLICATION,
+        AoservDaemonProtocol.FAILOVER_FILE_REPLICATION,
         Integer.toString(fileReplication),
         serverName,
         conn.queryString("select bp.path from backup.\"FileReplication\" ffr inner join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id where ffr.id=?", fileReplication),
-        quota_gid == -1 ? null : Integer.toString(quota_gid)
+        quotaGid == -1 ? null : Integer.toString(quotaGid)
     );
   }
 }

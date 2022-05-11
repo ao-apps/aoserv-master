@@ -31,7 +31,7 @@ import com.aoapps.net.InetAddress;
 import com.aoapps.net.Port;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
@@ -57,7 +57,7 @@ public final class DaemonHandler {
    */
   public static final int DAEMON_RETRY_DELAY = 5 * 1000; // Used to be 60 * 1000
 
-  private static final Map<Integer, AOServDaemonConnector> connectors = new HashMap<>();
+  private static final Map<Integer, AoservDaemonConnector> connectors = new HashMap<>();
 
   public static int getDaemonConcurrency() {
     int total = 0;
@@ -176,14 +176,14 @@ public final class DaemonHandler {
     );
   }
 
-  public static AOServDaemonConnector getDaemonConnector(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
+  public static AoservDaemonConnector getDaemonConnector(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
     Integer i = linuxServer;
     synchronized (DaemonHandler.class) {
-      AOServDaemonConnector o = connectors.get(i);
+      AoservDaemonConnector o = connectors.get(i);
       if (o != null) {
         return o;
       }
-      AOServDaemonConnector conn = AOServDaemonConnector.getConnector(
+      AoservDaemonConnector conn = AoservDaemonConnector.getConnector(
           getDaemonConnectAddress(database, linuxServer),
           MasterConfiguration.getLocalIp(),
           getDaemonConnectorPort(database, linuxServer),
@@ -191,8 +191,8 @@ public final class DaemonHandler {
           MasterConfiguration.getDaemonKey(database, linuxServer),
           getDaemonConnectorPoolSize(database, linuxServer),
           AOPool.DEFAULT_MAX_CONNECTION_AGE,
-          MasterConfiguration.getSSLTruststorePath(),
-          MasterConfiguration.getSSLTruststorePassword()
+          MasterConfiguration.getSslTruststorePath(),
+          MasterConfiguration.getSslTruststorePassword()
       );
       connectors.put(i, conn);
       return conn;
@@ -255,11 +255,11 @@ public final class DaemonHandler {
 
   private static final Map<Integer, Long> downDaemons = new HashMap<>();
 
-  public static void invalidateTable(Table.TableID tableID) {
+  public static void invalidateTable(Table.TableId tableId) {
     if (
-        tableID == Table.TableID.AO_SERVERS
-            || tableID == Table.TableID.IP_ADDRESSES
-            || tableID == Table.TableID.NET_BINDS
+        tableId == Table.TableId.AO_SERVERS
+            || tableId == Table.TableId.IP_ADDRESSES
+            || tableId == Table.TableId.NET_BINDS
     ) {
       synchronized (DaemonHandler.class) {
         connectors.clear();
@@ -342,7 +342,7 @@ public final class DaemonHandler {
       }
 
       // Generate the key
-      SecureRandom secureRandom = MasterServer.getSecureRandom();
+      SecureRandom secureRandom = AoservMaster.getSecureRandom();
       while (true) {
         key = secureRandom.nextLong();
         Long l = key;
@@ -354,7 +354,7 @@ public final class DaemonHandler {
     }
 
     // Send the key to the daemon
-    AOServDaemonConnector daemonConnector = getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.grantDaemonAccess(key, daemonCommandCode, param1, param2, param3, param4);
 

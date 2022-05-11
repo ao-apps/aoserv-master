@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+aoserv-master - Master server for the AOServ Platform.
+Copyright (C) 2022  AO Industries, Inc.
+    support@aoindustries.com
+    7262 Bull Pen Cir
+    Mobile, AL 36695
+
+This file is part of aoserv-master.
+
+aoserv-master is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+aoserv-master is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<!DOCTYPE suppressions PUBLIC
+  "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+  "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<suppressions>
+
+  <!-- TODO: Complete Javadocs -->
+  <suppress checks="(MissingJavadocMethod|MissingJavadocType|SummaryJavadoc)" />
+
+  <!-- We use underscores in service implementation names -->
+  <suppress
+    checks="TypeName"
+    files="[/\\].*_(GetTableHandler|Manager).*\.java$"
+  />
+
+  <!-- Allowing underscore separators for methods and data that span database joins -->
+  <suppress
+    checks="(LocalVariableName|MemberName|ParameterName)"
+    message="'[a-z]([a-z0-9][a-zA-Z0-9]*)?(_[a-z]([a-z0-9][a-zA-Z0-9]*)?)*'"
+  />
+
+  <!-- Allow long lines for system group and user definitions -->
+  <suppress
+    checks="LineLength"
+    files="[/\\]LinuxAccountHandler.*\.java$"
+  />
+
+  <!-- Will not split declaration to avoid duplicating Javadoc comment -->
+  <suppress
+    checks="MultipleVariableDeclarations"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]LinuxAccountHandler\.java$"
+  />
+  <suppress
+    checks="MultipleVariableDeclarations"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]billing[/\\]WhoisHistoryService\.java$"
+  />
+
+  <!-- Will not reorder overloads -->
+  <suppress
+    checks="OverloadMethodsDeclarationOrder"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]AoservMaster\.java$"
+  />
+  <suppress
+    checks="OverloadMethodsDeclarationOrder"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]NetReputationSetHandler\.java$"
+  />
+  <suppress
+    checks="OverloadMethodsDeclarationOrder"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]WebHandler\.java$"
+  />
+
+</suppressions>

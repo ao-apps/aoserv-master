@@ -30,7 +30,7 @@ import com.aoapps.dbc.DatabaseAccess;
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.lang.Strings;
 import com.aoapps.net.Email;
-import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.AoservObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.Permission;
 import com.aoindustries.aoserv.client.master.User;
@@ -63,13 +63,13 @@ public final class TicketHandler /*implements Runnable*/ {
 
   // <editor-fold desc="Security">
   /**
-   * To be able to access a ticket action, must both have access to its
+   * To be able to access a ticket action, must both have access to its ticket.
    */
   public static boolean canAccessTicketAction(DatabaseConnection conn, RequestSource source, int action) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
       // Master users allowed, daemon not allowed
-      return MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length == 0;
+      return AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length == 0;
     } else {
       Account.Name account = getAccountForAction(conn, action);
       if (isTicketAdmin(conn, source)) {
@@ -97,16 +97,15 @@ public final class TicketHandler /*implements Runnable*/ {
               + " is not allowed to access ticket_action: verb='"
               + verb
               + ", action="
-              + action
-      ;
+              + action;
       throw new SQLException(message);
     }
   }
 
   public static boolean canAccessTicket(DatabaseConnection conn, RequestSource source, int ticket) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length == 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length == 0) {
         // Master users
         return true;
       } else {
@@ -123,8 +122,7 @@ public final class TicketHandler /*implements Runnable*/ {
                     || Status.HOLD.equals(status)
                     || Status.BOUNCED.equals(status)
             )
-                && TicketType.LOGS.equals(getTypeForTicket(conn, ticket))
-        ;
+                && TicketType.LOGS.equals(getTypeForTicket(conn, ticket));
       }
     } else {
       Account.Name account = getAccountForTicket(conn, ticket);
@@ -150,8 +148,7 @@ public final class TicketHandler /*implements Runnable*/ {
               + " is not allowed to access ticket: action='"
               + action
               + ", ticket="
-              + ticket
-      ;
+              + ticket;
       throw new SQLException(message);
     }
   }
@@ -164,7 +161,7 @@ public final class TicketHandler /*implements Runnable*/ {
   public static int generateTicketId(
       DatabaseConnection conn
   ) throws IOException, SQLException {
-    SecureRandom secureRandom = MasterServer.getSecureRandom();
+    SecureRandom secureRandom = AoservMaster.getSecureRandom();
     for (int range = 1000000; range < 1000000000; range *= 10) {
       for (int attempt = 0; attempt < 1000; attempt++) {
         int ticket = secureRandom.nextInt(range);
@@ -263,7 +260,7 @@ public final class TicketHandler /*implements Runnable*/ {
     int ticket = generateTicketId(conn);
 
     conn.update(
-        AOServObject.USE_SQL_DATA_WRITE
+        AoservObject.USE_SQL_DATA_WRITE
             ? "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?,?,?,?,now(),?,?,?,?,?,?,?)"
             : "insert into ticket.\"Ticket\" values(?,?,?,?,?,?,?,?,?::\"com.aoapps.net\".\"Email\",?,?,?,now(),?,?,?,?,?,?,?)",
         ticket,
@@ -274,7 +271,7 @@ public final class TicketHandler /*implements Runnable*/ {
         createdBy,
         category == -1 ? DatabaseAccess.Null.INTEGER : category,
         type,
-        AOServObject.USE_SQL_DATA_WRITE ? fromAddress : Objects.toString(fromAddress, null),
+        AoservObject.USE_SQL_DATA_WRITE ? fromAddress : Objects.toString(fromAddress, null),
         summary,
         details,
         rawEmail,
@@ -294,25 +291,24 @@ public final class TicketHandler /*implements Runnable*/ {
       && !account.equals(AccountHandler.getRootAccount())
     ) {
       String message =
-        "Account:   "+account+"\n"+
-        "Username:   "+username+"\n"+
-        "Type:       "+type+"\n"+
-        "Deadline:   "+(deadline == -1?"":SQLUtility.formatDate(deadline, timeZone))+"\n"+
-        "Technology: "+(technology == null?"":technology)+"\n"+
-        "\n\n"+
-        details+"\n\n"+
-        MasterConfiguration.getTicketURL()+id
-      ;
-      sendEmail("support@aoindustries.com", "URGENT ticket notification", message, "ID: "+id+" "+details);
+        "Account:   " + account + "\n" +
+        "Username:   " + username + "\n" +
+        "Type:       " + type + "\n" +
+        "Deadline:   " + (deadline == -1 ? "" : SQLUtility.formatDate(deadline, timeZone)) + "\n" +
+        "Technology: " + (technology == null ? "" : technology) + "\n" +
+        "\n\n" +
+        details + "\n\n"+
+        MasterConfiguration.getTicketURL() + id;
+      sendEmail("support@aoindustries.com", "URGENT ticket notification", message, "ID: " + id + " " + details);
     }*/
 
     // Notify all clients of the updates
     if (account != null) {
-      invalidateList.addTable(conn, Table.TableID.TICKETS, account, InvalidateList.allHosts, false);
+      invalidateList.addTable(conn, Table.TableId.TICKETS, account, InvalidateList.allHosts, false);
     }
-    invalidateList.addTable(conn, Table.TableID.TICKETS, brand, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.TICKETS, reseller, InvalidateList.allHosts, false);
-    //invalidateList.addTable(conn, Table.TableID.ACTIONS, account, null);
+    invalidateList.addTable(conn, Table.TableId.TICKETS, brand, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TICKETS, reseller, InvalidateList.allHosts, false);
+    //invalidateList.addTable(conn, Table.TableId.ACTIONS, account, null);
     return ticket;
   }
 
@@ -420,14 +416,14 @@ public final class TicketHandler /*implements Runnable*/ {
     String account = getAccountForTicket(conn, ticket);
     invalidateList.addTable(
       conn,
-      Table.TableID.TICKETS,
+      Table.TableId.TICKETS,
       account,
       InvalidateList.allServers,
       false
     );
     invalidateList.addTable(
       conn,
-      Table.TableID.ACTIONS,
+      Table.TableId.ACTIONS,
       account,
       InvalidateList.allServers,
       false
@@ -442,8 +438,7 @@ public final class TicketHandler /*implements Runnable*/ {
         MasterConfiguration.getTicketURL()+ticket+"\n\n"+
         "for more details.\n\n"+
         "--------------------------------------------------------------\n"+
-        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE."
-      ;
+        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
       sendEmail(to, "Ticket "+ticket+" was bounced.", message, null);
     }
   }
@@ -486,14 +481,14 @@ public final class TicketHandler /*implements Runnable*/ {
     String account = getAccountForTicket(conn, ticket);
     invalidateList.addTable(
       conn,
-      Table.TableID.TICKETS,
+      Table.TableId.TICKETS,
       account,
       InvalidateList.allServers,
       false
     );
     invalidateList.addTable(
       conn,
-      Table.TableID.ACTIONS,
+      Table.TableId.ACTIONS,
       account,
       InvalidateList.allServers,
       false
@@ -538,14 +533,14 @@ public final class TicketHandler /*implements Runnable*/ {
     String account = getAccountForTicket(conn, ticket);
     invalidateList.addTable(
       conn,
-      Table.TableID.TICKETS,
+      Table.TableId.TICKETS,
       account,
       InvalidateList.allServers,
       false
     );
     invalidateList.addTable(
       conn,
-      Table.TableID.ACTIONS,
+      Table.TableId.ACTIONS,
       account,
       InvalidateList.allServers,
       false
@@ -588,13 +583,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By oldAccount
       if (oldAccount != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             oldAccount,
             InvalidateList.allHosts,
             false
         );
         invalidateList.addTable(conn,
-            Table.TableID.TICKET_ACTIONS,
+            Table.TableId.TICKET_ACTIONS,
             oldAccount,
             InvalidateList.allHosts,
             false
@@ -603,13 +598,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By newAccount
       if (newAccount != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             newAccount,
             InvalidateList.allHosts,
             false
         );
         invalidateList.addTable(conn,
-            Table.TableID.TICKET_ACTIONS,
+            Table.TableId.TICKET_ACTIONS,
             newAccount,
             InvalidateList.allHosts,
             false
@@ -622,13 +617,13 @@ public final class TicketHandler /*implements Runnable*/ {
           ticket
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           brand,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           brand,
           InvalidateList.allHosts,
           false
@@ -640,13 +635,13 @@ public final class TicketHandler /*implements Runnable*/ {
           ticket
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           reseller,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           reseller,
           InvalidateList.allHosts,
           false
@@ -691,13 +686,13 @@ public final class TicketHandler /*implements Runnable*/ {
       Account.Name account = getAccountForTicket(conn, ticket);
       if (account != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             account,
             InvalidateList.allHosts,
             false
         );
         invalidateList.addTable(conn,
-            Table.TableID.TICKET_ACTIONS,
+            Table.TableId.TICKET_ACTIONS,
             account,
             InvalidateList.allHosts,
             false
@@ -706,13 +701,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By brand
       Account.Name brand = getBrandForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           brand,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           brand,
           InvalidateList.allHosts,
           false
@@ -720,13 +715,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By reseller
       Account.Name reseller = getResellerForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           reseller,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           reseller,
           InvalidateList.allHosts,
           false
@@ -773,13 +768,13 @@ public final class TicketHandler /*implements Runnable*/ {
       Account.Name account = getAccountForTicket(conn, ticket);
       if (account != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             account,
             InvalidateList.allHosts,
             false
         );
         invalidateList.addTable(conn,
-            Table.TableID.TICKET_ACTIONS,
+            Table.TableId.TICKET_ACTIONS,
             account,
             InvalidateList.allHosts,
             false
@@ -788,13 +783,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By brand
       Account.Name brand = getBrandForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           brand,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           brand,
           InvalidateList.allHosts,
           false
@@ -802,13 +797,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By reseller
       Account.Name reseller = getResellerForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           reseller,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           reseller,
           InvalidateList.allHosts,
           false
@@ -853,13 +848,13 @@ public final class TicketHandler /*implements Runnable*/ {
       Account.Name account = getAccountForTicket(conn, ticket);
       if (account != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             account,
             InvalidateList.allHosts,
             false
         );
         invalidateList.addTable(conn,
-            Table.TableID.TICKET_ACTIONS,
+            Table.TableId.TICKET_ACTIONS,
             account,
             InvalidateList.allHosts,
             false
@@ -868,13 +863,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By brand
       Account.Name brand = getBrandForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           brand,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           brand,
           InvalidateList.allHosts,
           false
@@ -882,13 +877,13 @@ public final class TicketHandler /*implements Runnable*/ {
       // By reseller
       Account.Name reseller = getResellerForTicket(conn, ticket);
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           reseller,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           reseller,
           InvalidateList.allHosts,
           false
@@ -931,13 +926,13 @@ public final class TicketHandler /*implements Runnable*/ {
     Account.Name account = getAccountForTicket(conn, ticket);
     if (account != null) {
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           account,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           account,
           InvalidateList.allHosts,
           false
@@ -946,13 +941,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By brand
     Account.Name brand = getBrandForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         brand,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         brand,
         InvalidateList.allHosts,
         false
@@ -960,13 +955,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By reseller
     Account.Name reseller = getResellerForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         reseller,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         reseller,
         InvalidateList.allHosts,
         false
@@ -1002,13 +997,13 @@ public final class TicketHandler /*implements Runnable*/ {
     Account.Name account = getAccountForTicket(conn, ticket);
     if (account != null) {
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           account,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           account,
           InvalidateList.allHosts,
           false
@@ -1017,13 +1012,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By brand
     Account.Name brand = getBrandForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         brand,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         brand,
         InvalidateList.allHosts,
         false
@@ -1031,13 +1026,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By reseller
     Account.Name reseller = getResellerForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         reseller,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         reseller,
         InvalidateList.allHosts,
         false
@@ -1073,13 +1068,13 @@ public final class TicketHandler /*implements Runnable*/ {
     Account.Name account = getAccountForTicket(conn, ticket);
     if (account != null) {
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           account,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           account,
           InvalidateList.allHosts,
           false
@@ -1088,13 +1083,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By brand
     Account.Name brand = getBrandForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         brand,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         brand,
         InvalidateList.allHosts,
         false
@@ -1102,13 +1097,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By reseller
     Account.Name reseller = getResellerForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         reseller,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         reseller,
         InvalidateList.allHosts,
         false
@@ -1144,13 +1139,13 @@ public final class TicketHandler /*implements Runnable*/ {
     Account.Name account = getAccountForTicket(conn, ticket);
     if (account != null) {
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           account,
           InvalidateList.allHosts,
           false
       );
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           account,
           InvalidateList.allHosts,
           false
@@ -1159,13 +1154,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By brand
     Account.Name brand = getBrandForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         brand,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         brand,
         InvalidateList.allHosts,
         false
@@ -1173,13 +1168,13 @@ public final class TicketHandler /*implements Runnable*/ {
     // By reseller
     Account.Name reseller = getResellerForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         reseller,
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         reseller,
         InvalidateList.allHosts,
         false
@@ -1226,7 +1221,7 @@ public final class TicketHandler /*implements Runnable*/ {
     Account.Name account = getAccountForTicket(conn, ticket);
     if (account != null) {
       invalidateList.addTable(conn,
-          Table.TableID.TICKET_ACTIONS,
+          Table.TableId.TICKET_ACTIONS,
           account,
           InvalidateList.allHosts,
           false
@@ -1235,7 +1230,7 @@ public final class TicketHandler /*implements Runnable*/ {
     // By brand
     Account.Name brand = getBrandForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         brand,
         InvalidateList.allHosts,
         false
@@ -1243,7 +1238,7 @@ public final class TicketHandler /*implements Runnable*/ {
     // By reseller
     Account.Name reseller = getResellerForTicket(conn, ticket);
     invalidateList.addTable(conn,
-        Table.TableID.TICKET_ACTIONS,
+        Table.TableId.TICKET_ACTIONS,
         reseller,
         InvalidateList.allHosts,
         false
@@ -1267,7 +1262,7 @@ public final class TicketHandler /*implements Runnable*/ {
       // By account
       if (account != null) {
         invalidateList.addTable(conn,
-            Table.TableID.TICKETS,
+            Table.TableId.TICKETS,
             account,
             InvalidateList.allHosts,
             false
@@ -1275,14 +1270,14 @@ public final class TicketHandler /*implements Runnable*/ {
       }
       // By brand
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           brand,
           InvalidateList.allHosts,
           false
       );
       // By reseller
       invalidateList.addTable(conn,
-          Table.TableID.TICKETS,
+          Table.TableId.TICKETS,
           reseller,
           InvalidateList.allHosts,
           false
@@ -1307,14 +1302,14 @@ public final class TicketHandler /*implements Runnable*/ {
       if (username.equals(User.MAIL)) {
         throw new SQLException("Not allowed to complete Ticket as user '"+User.MAIL+'\'');
       }
-  
+
       conn.update(
         "update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
         username,
         Status.COMPLETED,
         ticket
       );
-  
+
       conn.update(
         "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
         ticket,
@@ -1322,24 +1317,24 @@ public final class TicketHandler /*implements Runnable*/ {
         ActionType.COMPLETE_TICKET,
         comments
       );
-  
+
       // Notify all clients of the update
       String account = getAccountForTicket(conn, ticket);
       invalidateList.addTable(
         conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         account,
         InvalidateList.allServers,
         false
       );
       invalidateList.addTable(
         conn,
-        Table.TableID.ACTIONS,
+        Table.TableId.ACTIONS,
         account,
         InvalidateList.allServers,
         false
       );
-  
+
       if (account != null && !account.equals(AccountHandler.getRootAccount())) {
         String to = getContactEmails(conn, ticket);
         String message =
@@ -1348,12 +1343,11 @@ public final class TicketHandler /*implements Runnable*/ {
           MasterConfiguration.getTicketURL()+ticket+"\n\n"+
           "for more details.\n\n"+
           "--------------------------------------------------------------\n"+
-          "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE."
-        ;
+          "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
         sendEmail(to, "Ticket "+ticket+" was completed.", message, null);
       }
     }
-  
+
     public static void holdTicket(
       DatabaseConnection conn,
       RequestSource source,
@@ -1367,16 +1361,16 @@ public final class TicketHandler /*implements Runnable*/ {
       }
       String username=source.getUsername();
       UsernameHandler.checkAccessUsername(conn, source, "holdTicket", username);
-  
+
       String baAccount = UsernameHandler.getAccountForUsername(conn, username);
       boolean isAdminChange=baAccount.equals(AccountHandler.getRootAccount());
-  
+
       conn.update(
         "update ticket.\"Ticket\" set status=? where id=?",
         isAdminChange?Status.ADMIN_HOLD:Status.CLIENT_HOLD,
         ticket
       );
-  
+
       conn.update(
         "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
         ticket,
@@ -1384,25 +1378,25 @@ public final class TicketHandler /*implements Runnable*/ {
         isAdminChange?ActionType.ADMIN_HOLD:ActionType.CLIENT_HOLD,
         comments
       );
-  
+
       // Notify all clients of the update
       String account=getAccountForTicket(conn, ticket);
       invalidateList.addTable(
         conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         account,
         InvalidateList.allServers,
         false
       );
       invalidateList.addTable(
         conn,
-        Table.TableID.ACTIONS,
+        Table.TableId.ACTIONS,
         account,
         InvalidateList.allServers,
         false
       );
     }
-  
+
     public static void killTicket(
       DatabaseConnection conn,
       RequestSource source,
@@ -1419,19 +1413,19 @@ public final class TicketHandler /*implements Runnable*/ {
       if (username.equals(User.MAIL)) {
         throw new SQLException("Not allowed to kill Ticket as user '"+User.MAIL+'\'');
       }
-  
+
       String account1 = conn.queryString("select pk.accounting from account.\"User\" un, billing.\"Package\" pk where un.username=? and un.package=pk.name", username);
       String account2 = conn.queryString("select accounting from ticket.\"Ticket\" where id=?", ticket);
-  
+
       boolean isClientChange=account1.equals(account2);
-  
+
       conn.update(
         "update ticket.\"Ticket\" set close_date=now(), closed_by=?, status=?, assigned_to=null where id=?",
         username,
         isClientChange?Status.CLIENT_KILL:Status.ADMIN_KILL,
         ticket
       );
-  
+
       conn.update(
         "insert into actions(ticket_id, administrator, action_type, comments) values(?,?,?,?)",
         ticket,
@@ -1439,19 +1433,19 @@ public final class TicketHandler /*implements Runnable*/ {
         isClientChange?ActionType.CLIENT_KILLED:ActionType.ADMIN_KILL,
         comments
       );
-  
+
       // Notify all clients of the update
       String account=getAccountForTicket(conn, ticket);
       invalidateList.addTable(
         conn,
-        Table.TableID.TICKETS,
+        Table.TableId.TICKETS,
         account,
         InvalidateList.allServers,
         false
       );
       invalidateList.addTable(
         conn,
-        Table.TableID.ACTIONS,
+        Table.TableId.ACTIONS,
         account,
         InvalidateList.allServers,
         false
@@ -1466,8 +1460,7 @@ public final class TicketHandler /*implements Runnable*/ {
       MasterConfiguration.getTicketURL()+ticket+"\n\n"+
       "for more details.\n\n"+
       "--------------------------------------------------------------\n"+
-      "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE."
-    ;
+      "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
     sendEmail(to, "Ticket "+ticket+" was killed.", message, null);
   }*/
   //}
@@ -1504,14 +1497,14 @@ public final class TicketHandler /*implements Runnable*/ {
     String account=getAccountForTicket(conn, ticket);
     invalidateList.addTable(
       conn,
-      Table.TableID.TICKETS,
+      Table.TableId.TICKETS,
       account,
       InvalidateList.allServers,
       false
     );
     invalidateList.addTable(
       conn,
-      Table.TableID.ACTIONS,
+      Table.TableId.ACTIONS,
       account,
       InvalidateList.allServers,
       false
@@ -1525,8 +1518,7 @@ public final class TicketHandler /*implements Runnable*/ {
         MasterConfiguration.getTicketURL()+ticket+"\n\n"+
         "for more details.\n\n"+
         "--------------------------------------------------------------\n"+
-        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE."
-      ;
+        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
       sendEmail(to, "Ticket "+ticket+" was reactivated.", message, null);
     }
   }
@@ -1562,14 +1554,14 @@ public final class TicketHandler /*implements Runnable*/ {
     String account=getAccountForTicket(conn, ticket);
     invalidateList.addTable(
       conn,
-      Table.TableID.TICKETS,
+      Table.TableId.TICKETS,
       account,
       InvalidateList.allServers,
       false
     );
     invalidateList.addTable(
       conn,
-      Table.TableID.ACTIONS,
+      Table.TableId.ACTIONS,
       account,
       InvalidateList.allServers,
       false
@@ -1583,8 +1575,7 @@ public final class TicketHandler /*implements Runnable*/ {
         MasterConfiguration.getTicketURL()+ticket+"\n\n"+
         "for more details.\n\n"+
         "--------------------------------------------------------------\n"+
-        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE."
-      ;
+        "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
       sendEmail(to, "Ticket "+ticket+" was updated.", message, null);
     }
   }*/
@@ -1655,8 +1646,7 @@ public final class TicketHandler /*implements Runnable*/ {
     return
       !Status.ADMIN_KILL.equals(status)
       && !Status.CLIENT_KILL.equals(status)
-      && !Status.COMPLETED.equals(status)
-    ;
+      && !Status.COMPLETED.equals(status);
   }*/
   // </editor-fold>
   // <editor-fold desc="Email Integration">
@@ -1671,7 +1661,7 @@ public final class TicketHandler /*implements Runnable*/ {
           if (orAddys.length>0) {
             MailMessage msg=new MailMessage(MasterConfiguration.getTicketSmtpServer());
             msg.from("support@aoindustries.com");
-            msg.to(orAddys[MasterServer.getFastRandom().nextInt(orAddys.length)]);
+            msg.to(orAddys[AoservMaster.getFastRandom().nextInt(orAddys.length)]);
             msg.setSubject(subject);
             PrintStream email=msg.getPrintStream();
 
@@ -1714,7 +1704,7 @@ public final class TicketHandler /*implements Runnable*/ {
   private static boolean cronDaemonAdded;
 
   /**
-   * Runs once every four hours
+   * Runs once every four hours.
    */
   private static final Schedule schedule = (minute, hour, dayOfMonth, month, dayOfWeek, year) -> minute == 25 && (hour & 3) == 3;
 
@@ -1759,7 +1749,7 @@ public final class TicketHandler /*implements Runnable*/ {
                     if (updateCount > 0) {
                       invalidateList.addTable(
                           conn,
-                          Table.TableID.TICKET_ACTIONS,
+                          Table.TableId.TICKET_ACTIONS,
                           InvalidateList.allAccounts,
                           InvalidateList.allHosts,
                           false
@@ -1777,14 +1767,14 @@ public final class TicketHandler /*implements Runnable*/ {
                     if (updateCount > 0) {
                       invalidateList.addTable(
                           conn,
-                          Table.TableID.TICKETS,
+                          Table.TableId.TICKETS,
                           InvalidateList.allAccounts,
                           InvalidateList.allHosts,
                           false
                       );
                     }
                     conn.commit();
-                    MasterServer.invalidateTables(conn, invalidateList, null);
+                    AoservMaster.invalidateTables(conn, invalidateList, null);
                   }
                 } catch (ThreadDeath td) {
                   throw td;
@@ -1809,269 +1799,265 @@ public final class TicketHandler /*implements Runnable*/ {
     }
   }
 
-  /**
-   * The amount of time sleeping between IMAP folder scans.
-   */
-  /*
-  public static final long
-    SLEEP_INTERVAL = 60L * 1000,
-    TIMER_MAX_TIME = 15L * 60 * 1000,
-    TIMER_REMINDER_INTERVAL = 60L * 60 * 1000
-  ;*/
-
-  /**
-   * The email part separator.
-   */
+  ///**
+  // * The amount of time sleeping between IMAP folder scans.
+  // */
+  //public static final long
+  //  SLEEP_INTERVAL = 60L * 1000,
+  //  TIMER_MAX_TIME = 15L * 60 * 1000,
+  //  TIMER_REMINDER_INTERVAL = 60L * 60 * 1000;
+  //
+  ///**
+  // * The email part separator.
+  // */
   //public static final String PART_SEPARATOR="\n----------------------------------------------------------------------------------------------------\n\n";
-
-  /*
-  public void run() {
-    while (!Thread.currentThread().isInterrupted()) {
-      try {
-        try {
-          Thread.sleep(SLEEP_INTERVAL);
-        } catch (InterruptedException err) {
-          logger.log(Level.WARNING, null, err);
-          // Restore the interrupted status
-          Thread.currentThread().interrupt();
-          break;
-        }
-        ProcessTimer timer=new ProcessTimer(
-          MasterConfiguration.getWarningSmtpServer(),
-          MasterConfiguration.getWarningEmailFrom(),
-          MasterConfiguration.getWarningEmailTo(),
-          "Ticket Handler",
-          "Creating ticket.Ticket from IMAP folders",
-          TIMER_MAX_TIME,
-          TIMER_REMINDER_INTERVAL
-        );
-        try {
-          timer.start();
-          // Start the transaction
-          try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
-            InvalidateList invalidateList = new InvalidateList();
-            for (int c=1;c<Integer.MAX_VALUE;c++) {
-              String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
-              if (hostname == null) {
-                break;
-              }
-              String username=MasterConfiguration.getTicketSource("imap", c, "username");
-              String password=MasterConfiguration.getTicketSource("imap", c, "password");
-              String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
-              String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
-              List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
-              String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
-              if (assign_to != null) {
-                assign_to=assign_to.trim();
-              }
-
-              Properties props = new Properties();
-              props.put("mail.store.protocol", "imap");
-              Session session=Session.getInstance(props, null);
-              Store store=session.getStore();
-              try {
-                store.connect(
-                  hostname,
-                  username,
-                  password
-                );
-                Folder folder=store.getFolder(folderName);
-                if (!folder.exists()) {
-                  UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
-                } else {
-                  try {
-                    folder.open(Folder.READ_WRITE);
-                    Message[] messages=folder.getMessages();
-                    for (int f=0;f<messages.length;f++) {
-                      Message message=messages[f];
-                      if (!message.isSet(Flags.Flag.DELETED)) {
-                        // The list of emails notified of ticket changes
-                        StringBuilder notifyEmails=new StringBuilder();
-                        List<String> notifyUsed=new SortedArrayList<>();
-
-                        // Get the from addresses
-                        Address[] fromAddresses=message.getFrom();
-                        List<String> froms=new ArrayList<>(fromAddresses == null ? 0 : fromAddresses.length);
-                        if (fromAddresses != null) {
-                          for (int d=0;d<fromAddresses.length;d++) {
-                            Address addy=fromAddresses[d];
-                            String s;
-                            if (addy instanceof InternetAddress) {
-                              s=((InternetAddress)addy).getAddress().toLowerCase();
-                            } else {
-                              s = addy.toString().toLowerCase();
-                            }
-                            froms.add(s);
-                            if (!notifyUsed.contains(s)) {
-                              if (notifyEmails.length()>0) {
-                                notifyEmails.append('\n');
-                              }
-                              notifyEmails.append(s);
-                              notifyUsed.add(s);
-                            }
-                          }
-                        }
-                        // Get the to addresses
-                        Address[] toAddresses=message.getAllRecipients();
-                        List<String> tos=new ArrayList<>(toAddresses == null ? 0 : toAddresses.length);
-                        if (toAddresses != null) {
-                          for (int d=0;d<toAddresses.length;d++) {
-                            Address addy=toAddresses[d];
-                            String s;
-                            if (addy instanceof InternetAddress) {
-                              s=((InternetAddress)addy).getAddress().toLowerCase();
-                            } else {
-                              s = addy.toString().toLowerCase();
-                            }
-                            // Skip if in the ignore list
-                            boolean ignored=false;
-                            for (int e=0;e<ignore_recipients.size();e++) {
-                              String ignoredAddy=ignore_recipients.get(e);
-                              if (ignoredAddy.equalsIgnoreCase(s)) {
-                                ignored=true;
-                                break;
-                              }
-                            }
-                            if (!ignored) {
-                              tos.add(s);
-                              if (!notifyUsed.contains(s)) {
-                                if (notifyEmails.length()>0) {
-                                  notifyEmails.append('\n');
-                                }
-                                notifyEmails.append(s);
-                                notifyUsed.add(s);
-                              }
-                            }
-                          }
-                        }
-
-                        // Try to guess the business ownership, but never guess for a cancelled business
-                        String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
-
-                        String emailBody=getMessageBody(message);
-
-                        // Add ticket
-                        addTicket(
-                          conn,
-                          invalidateList,
-                          account,
-                          null,
-                          TicketType.NONE,
-                          emailBody,
-                          -1,
-                          Priority.NORMAL,
-                          Priority.NORMAL,
-                          null,
-                          assign_to == null || assign_to.length() == 0 ? null : assign_to,
-                          notifyEmails.toString(),
-                          ""
-                        );
-
-                        // Commit individual ticket
-                        conn.commit();
-                      }
-                    }
-                    // Archive all messages
-                    if (archiveFolderName != null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
-                      Folder archiveFolder=store.getFolder(archiveFolderName);
-                      try {
-                        if (!archiveFolder.exists()) {
-                          UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
-                        } else {
-                          folder.copyMessages(messages, archiveFolder);
-                        }
-                      } finally {
-                        if (archiveFolder.isOpen()) {
-                          archiveFolder.close(true);
-                        }
-                      }
-                    }
-                    // Delete all messages
-                    folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
-                    folder.expunge();
-                  } finally {
-                    if (folder.isOpen()) {
-                      folder.close(true);
-                    }
-                  }
-                }
-              } finally {
-                if (store.isConnected()) {
-                  store.close();
-                }
-              }
-            }
-            conn.commit();
-            MasterServer.invalidateTables(conn, invalidateList, null);
-          }
-        } finally {
-          timer.stop();
-        }
-      } catch (ThreadDeath td) {
-        throw td;
-      } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
-      }
-    }
-  }
-*/
-  // private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
-
-  /**
-   * Gets the String form of the message body.
-   */
-  /*
-  public String getMessageBody(Message message) throws IOException, MessagingException {
-    try {
-      StringBuilder sb = new StringBuilder();
-      Enumeration headers=message.getMatchingHeaders(MATCH_HEADERS);
-      while (headers.hasMoreElements()) {
-        Header h=(Header)headers.nextElement();
-        String name=h.getName();
-        String val=h.getValue();
-        if (val != null && (val=val.trim()).length()>0) {
-          sb.append(name).append(": ").append(val).append('\n');
-        }
-      }
-      if (sb.length()>0) {
-        sb.append('\n');
-      }
-      getMessageBody0(message.getContent(), sb);
-      return sb.toString();
-    } catch (UnsupportedEncodingException err) {
-      logger.log(Level.WARNING, null, err);
-      return message.getContent().toString();
-    }
-  }
-
-  private void getMessageBody0(Object content, StringBuilder sb) throws IOException, MessagingException {
-    if (content instanceof MimeMultipart) {
-      MimeMultipart mpart = (MimeMultipart)content;
-      int partCount = mpart.getCount();
-      for (int i = 0; i<partCount; i++) {
-        getMessageBody0(mpart.getBodyPart(i), sb);
-      }
-    } else if (content instanceof String) {
-      if (sb.length()>0) {
-        sb.append(PART_SEPARATOR);
-      }
-      sb.append(Strings.wordWrap((String)content, 100));
-    } else if (content instanceof Part) {
-      Part part=(Part)content;
-      if (part.isMimeType("multipart/*")) {
-        getMessageBody0(part.getContent(), sb);
-      } else {
-        if (sb.length()>0) {
-          sb.append(PART_SEPARATOR);
-        }
-        sb.append(Strings.wordWrap(part.getContent().toString(), 100));
-      }
-    } else {
-      if (sb.length()>0) {
-        sb.append(PART_SEPARATOR);
-      }
-      sb.append(Strings.wordWrap(content.toString(), 100));
-    }
-  }*/
+  //
+  //public void run() {
+  //  while (!Thread.currentThread().isInterrupted()) {
+  //    try {
+  //      try {
+  //        Thread.sleep(SLEEP_INTERVAL);
+  //      } catch (InterruptedException err) {
+  //        logger.log(Level.WARNING, null, err);
+  //        // Restore the interrupted status
+  //        Thread.currentThread().interrupt();
+  //        break;
+  //      }
+  //      ProcessTimer timer=new ProcessTimer(
+  //        MasterConfiguration.getWarningSmtpServer(),
+  //        MasterConfiguration.getWarningEmailFrom(),
+  //        MasterConfiguration.getWarningEmailTo(),
+  //        "Ticket Handler",
+  //        "Creating ticket.Ticket from IMAP folders",
+  //        TIMER_MAX_TIME,
+  //        TIMER_REMINDER_INTERVAL
+  //      );
+  //      try {
+  //        timer.start();
+  //        // Start the transaction
+  //        try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+  //          InvalidateList invalidateList = new InvalidateList();
+  //          for (int c=1;c<Integer.MAX_VALUE;c++) {
+  //            String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
+  //            if (hostname == null) {
+  //              break;
+  //            }
+  //            String username=MasterConfiguration.getTicketSource("imap", c, "username");
+  //            String password=MasterConfiguration.getTicketSource("imap", c, "password");
+  //            String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
+  //            String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
+  //            List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
+  //            String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
+  //            if (assign_to != null) {
+  //              assign_to=assign_to.trim();
+  //            }
+  //
+  //            Properties props = new Properties();
+  //            props.put("mail.store.protocol", "imap");
+  //            Session session=Session.getInstance(props, null);
+  //            Store store=session.getStore();
+  //            try {
+  //              store.connect(
+  //                hostname,
+  //                username,
+  //                password
+  //              );
+  //              Folder folder=store.getFolder(folderName);
+  //              if (!folder.exists()) {
+  //                UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
+  //              } else {
+  //                try {
+  //                  folder.open(Folder.READ_WRITE);
+  //                  Message[] messages=folder.getMessages();
+  //                  for (int f=0;f<messages.length;f++) {
+  //                    Message message=messages[f];
+  //                    if (!message.isSet(Flags.Flag.DELETED)) {
+  //                      // The list of emails notified of ticket changes
+  //                      StringBuilder notifyEmails=new StringBuilder();
+  //                      List<String> notifyUsed=new SortedArrayList<>();
+  //
+  //                      // Get the from addresses
+  //                      Address[] fromAddresses=message.getFrom();
+  //                      List<String> froms=new ArrayList<>(fromAddresses == null ? 0 : fromAddresses.length);
+  //                      if (fromAddresses != null) {
+  //                        for (int d=0;d<fromAddresses.length;d++) {
+  //                          Address addy=fromAddresses[d];
+  //                          String s;
+  //                          if (addy instanceof InternetAddress) {
+  //                            s=((InternetAddress)addy).getAddress().toLowerCase();
+  //                          } else {
+  //                            s = addy.toString().toLowerCase();
+  //                          }
+  //                          froms.add(s);
+  //                          if (!notifyUsed.contains(s)) {
+  //                            if (notifyEmails.length()>0) {
+  //                              notifyEmails.append('\n');
+  //                            }
+  //                            notifyEmails.append(s);
+  //                            notifyUsed.add(s);
+  //                          }
+  //                        }
+  //                      }
+  //                      // Get the to addresses
+  //                      Address[] toAddresses=message.getAllRecipients();
+  //                      List<String> tos=new ArrayList<>(toAddresses == null ? 0 : toAddresses.length);
+  //                      if (toAddresses != null) {
+  //                        for (int d=0;d<toAddresses.length;d++) {
+  //                          Address addy=toAddresses[d];
+  //                          String s;
+  //                          if (addy instanceof InternetAddress) {
+  //                            s=((InternetAddress)addy).getAddress().toLowerCase();
+  //                          } else {
+  //                            s = addy.toString().toLowerCase();
+  //                          }
+  //                          // Skip if in the ignore list
+  //                          boolean ignored=false;
+  //                          for (int e=0;e<ignore_recipients.size();e++) {
+  //                            String ignoredAddy=ignore_recipients.get(e);
+  //                            if (ignoredAddy.equalsIgnoreCase(s)) {
+  //                              ignored=true;
+  //                              break;
+  //                            }
+  //                          }
+  //                          if (!ignored) {
+  //                            tos.add(s);
+  //                            if (!notifyUsed.contains(s)) {
+  //                              if (notifyEmails.length()>0) {
+  //                                notifyEmails.append('\n');
+  //                              }
+  //                              notifyEmails.append(s);
+  //                              notifyUsed.add(s);
+  //                            }
+  //                          }
+  //                        }
+  //                      }
+  //
+  //                      // Try to guess the business ownership, but never guess for a cancelled business
+  //                      String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
+  //
+  //                      String emailBody=getMessageBody(message);
+  //
+  //                      // Add ticket
+  //                      addTicket(
+  //                        conn,
+  //                        invalidateList,
+  //                        account,
+  //                        null,
+  //                        TicketType.NONE,
+  //                        emailBody,
+  //                        -1,
+  //                        Priority.NORMAL,
+  //                        Priority.NORMAL,
+  //                        null,
+  //                        assign_to == null || assign_to.length() == 0 ? null : assign_to,
+  //                        notifyEmails.toString(),
+  //                        ""
+  //                      );
+  //
+  //                      // Commit individual ticket
+  //                      conn.commit();
+  //                    }
+  //                  }
+  //                  // Archive all messages
+  //                  if (archiveFolderName != null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
+  //                    Folder archiveFolder=store.getFolder(archiveFolderName);
+  //                    try {
+  //                      if (!archiveFolder.exists()) {
+  //                        UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
+  //                      } else {
+  //                        folder.copyMessages(messages, archiveFolder);
+  //                      }
+  //                    } finally {
+  //                      if (archiveFolder.isOpen()) {
+  //                        archiveFolder.close(true);
+  //                      }
+  //                    }
+  //                  }
+  //                  // Delete all messages
+  //                  folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
+  //                  folder.expunge();
+  //                } finally {
+  //                  if (folder.isOpen()) {
+  //                    folder.close(true);
+  //                  }
+  //                }
+  //              }
+  //            } finally {
+  //              if (store.isConnected()) {
+  //                store.close();
+  //              }
+  //            }
+  //          }
+  //          conn.commit();
+  //          AoservMaster.invalidateTables(conn, invalidateList, null);
+  //        }
+  //      } finally {
+  //        timer.stop();
+  //      }
+  //    } catch (ThreadDeath td) {
+  //      throw td;
+  //    } catch (Throwable t) {
+  //      logger.log(Level.SEVERE, null, t);
+  //    }
+  //  }
+  //}
+  //
+  //private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
+  //
+  ///**
+  // * Gets the String form of the message body.
+  // */
+  //public String getMessageBody(Message message) throws IOException, MessagingException {
+  //  try {
+  //    StringBuilder sb = new StringBuilder();
+  //    Enumeration headers=message.getMatchingHeaders(MATCH_HEADERS);
+  //    while (headers.hasMoreElements()) {
+  //      Header h=(Header)headers.nextElement();
+  //      String name=h.getName();
+  //      String val=h.getValue();
+  //      if (val != null && (val=val.trim()).length()>0) {
+  //        sb.append(name).append(": ").append(val).append('\n');
+  //      }
+  //    }
+  //    if (sb.length()>0) {
+  //      sb.append('\n');
+  //    }
+  //    getMessageBody0(message.getContent(), sb);
+  //    return sb.toString();
+  //  } catch (UnsupportedEncodingException err) {
+  //    logger.log(Level.WARNING, null, err);
+  //    return message.getContent().toString();
+  //  }
+  //}
+  //
+  //private void getMessageBody0(Object content, StringBuilder sb) throws IOException, MessagingException {
+  //  if (content instanceof MimeMultipart) {
+  //    MimeMultipart mpart = (MimeMultipart)content;
+  //    int partCount = mpart.getCount();
+  //    for (int i = 0; i<partCount; i++) {
+  //      getMessageBody0(mpart.getBodyPart(i), sb);
+  //    }
+  //  } else if (content instanceof String) {
+  //    if (sb.length()>0) {
+  //      sb.append(PART_SEPARATOR);
+  //    }
+  //    sb.append(Strings.wordWrap((String)content, 100));
+  //  } else if (content instanceof Part) {
+  //    Part part=(Part)content;
+  //    if (part.isMimeType("multipart/*")) {
+  //      getMessageBody0(part.getContent(), sb);
+  //    } else {
+  //      if (sb.length()>0) {
+  //        sb.append(PART_SEPARATOR);
+  //      }
+  //      sb.append(Strings.wordWrap(part.getContent().toString(), 100));
+  //    }
+  //  } else {
+  //    if (sb.length()>0) {
+  //      sb.append(PART_SEPARATOR);
+  //    }
+  //    sb.append(Strings.wordWrap(content.toString(), 100));
+  //  }
+  //}
   // </editor-fold>
 }

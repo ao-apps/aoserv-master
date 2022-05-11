@@ -28,7 +28,7 @@ import com.aoapps.sql.SQLUtility;
 
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
- *
+ * <pre>
  * TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: If two servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: Allow to specify that two virtual servers may not use the same primary xen machine (like ns1 and ns4 in California)
@@ -42,6 +42,7 @@ import com.aoapps.sql.SQLUtility;
  *       Require that cores be a power of 2, so easier to map to CPUs consistently.
  * TODO: Change weight to be 1024, so powers of two add up well (like 512+256+64+64+64+32+16+16 equals a full CPU)
  * TODO: If all else fails, integrate this with the aoserv daemon code and run massively parallel processing of subtrees.  (More brute force)
+ * </pre>
  *
  * @author  AO Industries, Inc.
  */
@@ -71,8 +72,7 @@ public final class ClusterOptimizer {
     SECONDARY_DISK_TYPE_MISMATCH,
     SECONDARY_DISK_EXTENTS_EXCEEDED,
     SECONDARY_DISK_WEIGHT_EXCEEDED,
-    SECONDARY_DISK_MATCHES_PREVIOUS
-    ;
+    SECONDARY_DISK_MATCHES_PREVIOUS;
 
     public long counter = 0;
   }
@@ -278,12 +278,12 @@ public final class ClusterOptimizer {
             final int newAllocatedProcessorWeight = oldAllocatedProcessorWeight + virtualServer.processorCores * virtualServer.processorWeight;
             if ((primaryServer.processorCores * 1000) >= newAllocatedProcessorWeight) {
               // Stop processing if primaryServer past capacity on RAM (primary + maximum of the secondaries)
-              final int oldAllocatedPrimaryRAM = primaryServer.allocatedPrimaryRAM;
-              final int newAllocatedPrimaryRAM = oldAllocatedPrimaryRAM + virtualServer.primaryRam;
-              if (primaryServer.ram >= (newAllocatedPrimaryRAM + primaryServer.maximumAllocatedSecondaryRAM)) {
+              final int oldAllocatedPrimaryRam = primaryServer.allocatedPrimaryRam;
+              final int newAllocatedPrimaryRam = oldAllocatedPrimaryRam + virtualServer.primaryRam;
+              if (primaryServer.ram >= (newAllocatedPrimaryRam + primaryServer.maximumAllocatedSecondaryRam)) {
                 virtualServers[currentVirtualServer].selectedPrimaryServerIndex = primaryServerIndex;
                 primaryServer.allocatedProcessorWeight = newAllocatedProcessorWeight;
-                primaryServer.allocatedPrimaryRAM = newAllocatedPrimaryRAM;
+                primaryServer.allocatedPrimaryRam = newAllocatedPrimaryRam;
 
                 // Try all the combinations of virtualDisk to disk mappings (recursively)
                 if (TRACE) {
@@ -293,7 +293,7 @@ public final class ClusterOptimizer {
 
                 virtualServers[currentVirtualServer].selectedPrimaryServerIndex = -1;
                 primaryServer.allocatedProcessorWeight = oldAllocatedProcessorWeight;
-                primaryServer.allocatedPrimaryRAM = oldAllocatedPrimaryRAM;
+                primaryServer.allocatedPrimaryRam = oldAllocatedPrimaryRam;
               } else {
                 skipped++;
                 SkipType.PRIMARY_RAM_EXCEEDED.counter++;
@@ -415,14 +415,14 @@ public final class ClusterOptimizer {
             if (secondaryServer.processorCores >= virtualServer.processorCores) {
               // Make sure that the combined primary mapping plus secondary RAM does not exceed the total of this possible secondary machine
               // for any one primary failure.  The loop represents the failure of each server, one at a time.
-              final int oldAllocatedSecondaryRAM = secondaryServer.allocatedSecondaryRAMs[primaryServerIndex];
-              final int newAllocatedSecondaryRAM = oldAllocatedSecondaryRAM + virtualServer.secondaryRam;
-              if (secondaryServer.ram >= (secondaryServer.allocatedPrimaryRAM + newAllocatedSecondaryRAM)) {
+              final int oldAllocatedSecondaryRam = secondaryServer.allocatedSecondaryRams[primaryServerIndex];
+              final int newAllocatedSecondaryRam = oldAllocatedSecondaryRam + virtualServer.secondaryRam;
+              if (secondaryServer.ram >= (secondaryServer.allocatedPrimaryRam + newAllocatedSecondaryRam)) {
                 virtualServers[currentVirtualServer].selectedSecondaryServerIndex = secondaryServerIndex;
-                secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = newAllocatedSecondaryRAM;
-                final int oldMaximumAllocatedSecondaryRAM = secondaryServer.maximumAllocatedSecondaryRAM;
-                if (newAllocatedSecondaryRAM > oldMaximumAllocatedSecondaryRAM) {
-                  secondaryServer.maximumAllocatedSecondaryRAM = newAllocatedSecondaryRAM;
+                secondaryServer.allocatedSecondaryRams[primaryServerIndex] = newAllocatedSecondaryRam;
+                final int oldMaximumAllocatedSecondaryRam = secondaryServer.maximumAllocatedSecondaryRam;
+                if (newAllocatedSecondaryRam > oldMaximumAllocatedSecondaryRam) {
+                  secondaryServer.maximumAllocatedSecondaryRam = newAllocatedSecondaryRam;
                 }
 
                 // Try all the combinations of virtualDisk to disk mappings (recursively)
@@ -432,8 +432,8 @@ public final class ClusterOptimizer {
                 mapVirtualDisksToSecondaryDisks(virtualServers, hosts, currentVirtualServer, virtualServer.virtualDisks, secondaryServer.disks, 0);
 
                 virtualServers[currentVirtualServer].selectedSecondaryServerIndex = -1;
-                secondaryServer.allocatedSecondaryRAMs[primaryServerIndex] = oldAllocatedSecondaryRAM;
-                secondaryServer.maximumAllocatedSecondaryRAM = oldMaximumAllocatedSecondaryRAM;
+                secondaryServer.allocatedSecondaryRams[primaryServerIndex] = oldAllocatedSecondaryRam;
+                secondaryServer.maximumAllocatedSecondaryRam = oldMaximumAllocatedSecondaryRam;
               } else {
                 skipped++;
                 SkipType.SECONDARY_RAM_EXCEEDED.counter++;
@@ -442,7 +442,9 @@ public final class ClusterOptimizer {
               skipped++;
               SkipType.SECONDARY_CORES_EXCEEDED.counter++;
               if (TRACE) {
-                System.out.println("        SECONDARY_CORES_EXCEEDED: " + secondaryServer.hostname + "." + secondaryServer.processorCores + "<" + virtualServer.hostname + "." + virtualServer.processorCores);
+                System.out.println("        SECONDARY_CORES_EXCEEDED: "
+                    + secondaryServer.hostname + "." + secondaryServer.processorCores
+                    + "<" + virtualServer.hostname + "." + virtualServer.processorCores);
               }
             }
           } else {
@@ -457,7 +459,14 @@ public final class ClusterOptimizer {
     }
   }
 
-  private static void mapVirtualDisksToSecondaryDisks(VirtualServer[] virtualServers, Host[] servers, int currentVirtualServer, VirtualDisk[] virtualDisks, Disk[] secondaryDisks, int currentVirtualDisk) {
+  private static void mapVirtualDisksToSecondaryDisks(
+      VirtualServer[] virtualServers,
+      Host[] servers,
+      int currentVirtualServer,
+      VirtualDisk[] virtualDisks,
+      Disk[] secondaryDisks,
+      int currentVirtualDisk
+  ) {
     final int secondaryDisksSize = secondaryDisks.length;
     final int virtualDisksSize = virtualDisks.length;
 

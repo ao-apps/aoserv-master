@@ -35,7 +35,7 @@ import com.aoapps.lang.validation.ValidationResult;
 import com.aoapps.net.Email;
 import com.aoapps.security.HashedPassword;
 import com.aoapps.security.UnprotectedPassword;
-import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.AoservObject;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Administrator;
 import com.aoindustries.aoserv.client.account.Profile;
@@ -86,8 +86,7 @@ public final class AccountHandler {
         getAllowedAccounts(db, source)
             .contains(
                 account //UsernameHandler.getAccountForUser(conn, administrator)
-            )
-    ;
+            );
   }
 
   public static boolean canAccessDisableLog(DatabaseConnection conn, RequestSource source, int disableLog, boolean enabling) throws IOException, SQLException {
@@ -149,7 +148,7 @@ public final class AccountHandler {
     );
 
     // Notify the clients
-    invalidateList.addTable(conn, Table.TableID.BUSINESSES, account, getHostsForAccount(conn, account), false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESSES, account, getHostsForAccount(conn, account), false);
   }
 
   public static boolean canAccountHost_column(
@@ -207,16 +206,15 @@ public final class AccountHandler {
         AccountUserHandler.getAccountForUser(conn, source.getCurrentAdministrator())
     );
     if (canAdd) {
-      User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+      User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
       if (mu != null) {
-        if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+        if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
           canAdd = false;
         }
       } else {
         canAdd =
             canAccessAccount(conn, source, parent)
-                && NetHostHandler.canAccessHost(conn, source, host)
-        ;
+                && NetHostHandler.canAccessHost(conn, source, host);
       }
     }
     if (!canAdd) {
@@ -284,9 +282,9 @@ public final class AccountHandler {
       }
       List<Account.Name> accounts = userAccounts.get(currentAdministrator);
       if (accounts == null) {
-        User mu = MasterServer.getUser(db, currentAdministrator);
+        User mu = AoservMaster.getUser(db, currentAdministrator);
         if (mu != null) {
-          if (MasterServer.getUserHosts(db, currentAdministrator).length != 0) {
+          if (AoservMaster.getUserHosts(db, currentAdministrator).length != 0) {
             accounts = db.queryNewCollection(
                 AoCollections::newSortedArrayList,
                 ObjectFactories.accountNameFactory,
@@ -350,9 +348,9 @@ public final class AccountHandler {
       // TODO: No longer take a default server, add in a separate step
       int defaultServer,
       Account.Name parent,
-      boolean can_add_backup_servers,
-      boolean can_add_businesses,
-      boolean can_see_prices,
+      boolean canAddBackupServers,
+      boolean canAddBusinesses,
+      boolean canSeePrices,
       boolean billParent
   ) throws IOException, SQLException {
     checkAddAccount(conn, source, "addAccount", parent, defaultServer);
@@ -390,9 +388,9 @@ public final class AccountHandler {
         name,
         contractVersion,
         parent,
-        can_add_backup_servers,
-        can_add_businesses,
-        can_see_prices,
+        canAddBackupServers,
+        canAddBusinesses,
+        canSeePrices,
         billParent
     );
     conn.update(
@@ -426,13 +424,13 @@ public final class AccountHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESSES,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.SERVERS,          InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.AO_SERVERS,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS,  InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.NET_DEVICES,      InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES,     InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.BUSINESSES,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.SERVERS,          InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.AO_SERVERS,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.VIRTUAL_SERVERS,  InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.NET_DEVICES,      InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.IP_ADDRESSES,     InvalidateList.allAccounts, InvalidateList.allHosts, true);
   }
 
   /**
@@ -465,7 +463,7 @@ public final class AccountHandler {
       throw new SQLException("Not allowed to add Administrator named '" + com.aoindustries.aoserv.client.linux.User.MAIL + '\'');
     }
     if (country != null && country.equals(CountryCode.US)) {
-      state = convertUSState(conn, state);
+      state = convertUsState(conn, state);
     }
 
     String supportCode = enableEmailSupport ? generateSupportCode(conn) : null;
@@ -519,11 +517,11 @@ public final class AccountHandler {
     Account.Name account = AccountUserHandler.getAccountForUser(conn, user);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_ADMINISTRATOR_PERMISSIONS, account, InvalidateList.allHosts, false);
   }
 
-  public static String convertUSState(DatabaseConnection conn, String state) throws IOException, SQLException {
+  public static String convertUsState(DatabaseConnection conn, String state) throws IOException, SQLException {
     String newState = conn.queryString(
         "select coalesce((select code from account.\"UsState\" where upper(name)=upper(?) or code=upper(?)),'')",
         state,
@@ -568,7 +566,7 @@ public final class AccountHandler {
     checkAccessAccount(conn, source, "addProfile", account);
 
     if (country.equals(CountryCode.US)) {
-      state = convertUSState(conn, state);
+      state = convertUsState(conn, state);
     }
 
     int priority = conn.queryInt("select coalesce(max(priority)+1, 1) from account.\"Profile\" where accounting=?", account);
@@ -603,7 +601,7 @@ public final class AccountHandler {
           "INSERT INTO account.\"Profile.billingEmail{}\" VALUES (?,?,?)",
           profile,
           index++,
-          AOServObject.USE_SQL_DATA_WRITE ? email : email.toString()
+          AoservObject.USE_SQL_DATA_WRITE ? email : email.toString()
       );
     }
     index = 0;
@@ -612,12 +610,12 @@ public final class AccountHandler {
           "INSERT INTO account.\"Profile.technicalEmail{}\" VALUES (?,?,?)",
           profile,
           index++,
-          AOServObject.USE_SQL_DATA_WRITE ? email : email.toString()
+          AoservObject.USE_SQL_DATA_WRITE ? email : email.toString()
       );
     }
     // TODO: Update stored cards since they have "email", "phone", and "fax" from the account profile.
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_PROFILES, account, InvalidateList.allHosts, false);
     return profile;
   }
 
@@ -676,9 +674,9 @@ public final class AccountHandler {
       throw new SQLException("Unable to add AccountHost, parent does not have access to host.  account=" + account + ", host=" + host);
     }
 
-    boolean hasDefault = conn.queryBoolean("select (select id from account.\"AccountHost\" where accounting=? and is_default limit 1) is not null", account);
+    final boolean hasDefault = conn.queryBoolean("select (select id from account.\"AccountHost\" where accounting=? and is_default limit 1) is not null", account);
 
-    int accountHost = conn.updateInt(
+    final int accountHost = conn.updateInt(
         "INSERT INTO account.\"AccountHost\" (accounting, server, is_default) VALUES (?,?,?) RETURNING id",
         account,
         host,
@@ -686,12 +684,12 @@ public final class AccountHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.SERVERS,          InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.AO_SERVERS,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS,  InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.NET_DEVICES,      InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES,     InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.SERVERS,          InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.AO_SERVERS,       InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.VIRTUAL_SERVERS,  InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.NET_DEVICES,      InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.IP_ADDRESSES,     InvalidateList.allAccounts, InvalidateList.allHosts, true);
     return accountHost;
   }
 
@@ -718,7 +716,7 @@ public final class AccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.DISABLE_LOG,
+        Table.TableId.DISABLE_LOG,
         account,
         InvalidateList.allHosts,
         false
@@ -766,7 +764,7 @@ public final class AccountHandler {
         type,
         (transaction == NoticeLog.NO_TRANSACTION) ? Null.INTEGER : transaction
     );
-    invalidateList.addTable(conn, Table.TableID.NOTICE_LOG, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.NOTICE_LOG, account, InvalidateList.allHosts, false);
 
     // Add current balances
     if (
@@ -784,7 +782,7 @@ public final class AccountHandler {
             account.toString()
         ) > 0
     ) {
-      invalidateList.addTable(conn, Table.TableID.NoticeLogBalance, account, InvalidateList.allHosts, false);
+      invalidateList.addTable(conn, Table.TableId.NoticeLogBalance, account, InvalidateList.allHosts, false);
     }
 
     return id;
@@ -819,7 +817,7 @@ public final class AccountHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESSES, account, getHostsForAccount(conn, account), false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESSES, account, getHostsForAccount(conn, account), false);
   }
 
   public static void disableAdministrator(
@@ -843,7 +841,7 @@ public final class AccountHandler {
 
     // Notify all clients of the update
     Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, getHostsForAccount(conn, account), false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_ADMINISTRATORS, account, getHostsForAccount(conn, account), false);
   }
 
   public static void enableAccount(
@@ -869,7 +867,7 @@ public final class AccountHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESSES, account, getHostsForAccount(conn, account), false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESSES, account, getHostsForAccount(conn, account), false);
   }
 
   public static void enableAdministrator(
@@ -893,7 +891,7 @@ public final class AccountHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.BUSINESS_ADMINISTRATORS,
+        Table.TableId.BUSINESS_ADMINISTRATORS,
         AccountUserHandler.getAccountForUser(conn, administrator),
         AccountUserHandler.getHostsForUser(conn, administrator),
         false
@@ -904,7 +902,7 @@ public final class AccountHandler {
    * Generates a random, unused support code.
    */
   public static String generateSupportCode(DatabaseConnection conn) throws IOException, SQLException {
-    SecureRandom secureRandom = MasterServer.getSecureRandom();
+    SecureRandom secureRandom = AoservMaster.getSecureRandom();
     StringBuilder sb = new StringBuilder(11);
     for (int range = 1000000; range < 1000000000; range *= 10) {
       for (int attempt = 0; attempt < 1000; attempt++) {
@@ -1056,7 +1054,7 @@ public final class AccountHandler {
     conn.update("delete from account.\"Administrator\" where username=?", administrator);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
   }
 
   /**
@@ -1446,12 +1444,12 @@ public final class AccountHandler {
     conn.update("delete from account.\"AccountHost\" where id=?", accountHost);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.AO_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.VIRTUAL_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.NET_DEVICES, InvalidateList.allAccounts, InvalidateList.allHosts, true);
-    invalidateList.addTable(conn, Table.TableID.IP_ADDRESSES, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.AO_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.VIRTUAL_SERVERS, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.NET_DEVICES, InvalidateList.allAccounts, InvalidateList.allHosts, true);
+    invalidateList.addTable(conn, Table.TableId.IP_ADDRESSES, InvalidateList.allAccounts, InvalidateList.allHosts, true);
   }
 
   public static void removeDisableLog(
@@ -1464,7 +1462,7 @@ public final class AccountHandler {
     conn.update("delete from account.\"DisableLog\" where id=?", disableLog);
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.DISABLE_LOG, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DISABLE_LOG, account, InvalidateList.allHosts, false);
   }
 
   public static void setAccountName(
@@ -1482,18 +1480,18 @@ public final class AccountHandler {
 
     // Notify all clients of the update
     Collection<Account.Name> accts = InvalidateList.getAccountCollection(account, name);
-    invalidateList.addTable(conn, Table.TableID.BUSINESSES, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_PROFILES, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_SERVERS, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.CREDIT_CARDS, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.DISABLE_LOG, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.MONTHLY_CHARGES, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.NOTICE_LOG, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.PACKAGE_DEFINITIONS, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.PACKAGES, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.SERVERS, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.TICKETS, accts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.TRANSACTIONS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESSES, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_PROFILES, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_SERVERS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.CREDIT_CARDS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.DISABLE_LOG, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.MONTHLY_CHARGES, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.NOTICE_LOG, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.PACKAGE_DEFINITIONS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.PACKAGES, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.SERVERS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TICKETS, accts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.TRANSACTIONS, accts, InvalidateList.allHosts, false);
   }
 
   /**
@@ -1565,7 +1563,7 @@ public final class AccountHandler {
       // Notify all clients of the update
       invalidateList.addTable(
           db,
-          Table.TableID.BUSINESS_ADMINISTRATORS,
+          Table.TableId.BUSINESS_ADMINISTRATORS,
           AccountUserHandler.getAccountForUser(db, administrator),
           InvalidateList.allHosts,
           false
@@ -1613,12 +1611,13 @@ public final class AccountHandler {
     }
 
     if (country != null && country.equals(CountryCode.US)) {
-      state = convertUSState(conn, state);
+      state = convertUsState(conn, state);
     }
 
     Account.Name account = AccountUserHandler.getAccountForUser(conn, administrator);
     conn.update(
-        "update account.\"Administrator\" set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
+        "update account.\"Administrator\" set name=?, title=?, birthday=?, private=?, work_phone=?, home_phone=?, "
+            + "cell_phone=?, fax=?, email=?, address1=?, address2=?, city=?, state=?, country=?, zip=? where username=?",
         name,
         title,
         birthday == null ? Null.DATE : birthday,
@@ -1638,11 +1637,11 @@ public final class AccountHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.BUSINESS_ADMINISTRATORS, account, InvalidateList.allHosts, false);
   }
 
   /**
-   * Sets the default Host for a Account
+   * Sets the default Host for an Account.
    */
   public static void setDefaultAccountHost(
       DatabaseConnection conn,
@@ -1675,7 +1674,7 @@ public final class AccountHandler {
 
     // Notify all clients of the update
     invalidateList.addTable(conn,
-        Table.TableID.BUSINESS_SERVERS,
+        Table.TableId.BUSINESS_SERVERS,
         account,
         InvalidateList.allHosts,
         false
@@ -1689,6 +1688,7 @@ public final class AccountHandler {
             results -> {
               Map<com.aoindustries.aoserv.client.account.User.Name, Administrator> table = new HashMap<>();
               while (results.next()) {
+                @SuppressWarnings("deprecation")
                 Administrator ba = new Administrator();
                 ba.init(results);
                 table.put(ba.getKey(), ba);
@@ -1702,8 +1702,8 @@ public final class AccountHandler {
     }
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.BUSINESS_ADMINISTRATORS) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.BUSINESS_ADMINISTRATORS) {
       synchronized (administratorsLock) {
         administrators = null;
       }
@@ -1713,14 +1713,14 @@ public final class AccountHandler {
       synchronized (administratorDisableLogs) {
         administratorDisableLogs.clear();
       }
-    } else if (tableID == Table.TableID.BUSINESSES) {
+    } else if (tableId == Table.TableId.BUSINESSES) {
       synchronized (userAccountsLock) {
         userAccounts = null;
       }
       synchronized (disabledAccounts) {
         disabledAccounts.clear();
       }
-    } else if (tableID == Table.TableID.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
+    } else if (tableId == Table.TableId.BUSINESS_ADMINISTRATOR_PERMISSIONS) {
       synchronized (cachedPermissionsLock) {
         cachedPermissions = null;
       }
@@ -1813,7 +1813,11 @@ public final class AccountHandler {
     return conn.queryBoolean("select account.is_account_or_parent(?,?)", parentAccounting, account);
   }
 
-  public static boolean canSwitchUser(DatabaseAccess db, com.aoindustries.aoserv.client.account.User.Name authenticatedAs, com.aoindustries.aoserv.client.account.User.Name connectAs) throws IOException, SQLException {
+  public static boolean canSwitchUser(
+      DatabaseAccess db,
+      com.aoindustries.aoserv.client.account.User.Name authenticatedAs,
+      com.aoindustries.aoserv.client.account.User.Name connectAs
+  ) throws IOException, SQLException {
     Account.Name authAccounting = AccountUserHandler.getAccountForUser(db, authenticatedAs);
     Account.Name connectAccounting = AccountUserHandler.getAccountForUser(db, connectAs);
     // Cannot switch within same account
@@ -1873,7 +1877,8 @@ public final class AccountHandler {
           }
           return accountContacts;
         },
-        "select bp.accounting, bp.billing_email, bp.technical_email from account.\"Profile\" bp, account.\"Account\" bu where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
+        "select bp.accounting, bp.billing_email, bp.technical_email from account.\"Profile\" bp, account.\"Account\" bu"
+            + " where bp.accounting=bu.accounting and bu.canceled is null order by bp.accounting, bp.priority desc"
     );
   }
 
@@ -1901,9 +1906,9 @@ public final class AccountHandler {
     for (String address : addresses) {
       String addy = address.toLowerCase();
       // Look for billing and technical contact matches, 10 points each
-      Iterator<Account.Name> I = accountContacts.keySet().iterator();
-      while (I.hasNext()) {
-        Account.Name account = I.next();
+      Iterator<Account.Name> i = accountContacts.keySet().iterator();
+      while (i.hasNext()) {
+        Account.Name account = i.next();
         List<String> list = accountContacts.get(account);
         for (String contact : list) {
           if (addy.equals(contact)) {
@@ -1974,11 +1979,11 @@ public final class AccountHandler {
     }
 
     // Find the highest weight
-    Iterator<Account.Name> I = accountWeights.keySet().iterator();
+    Iterator<Account.Name> i = accountWeights.keySet().iterator();
     int highest = 0;
     Account.Name highestAccounting = null;
-    while (I.hasNext()) {
-      Account.Name account = I.next();
+    while (i.hasNext()) {
+      Account.Name account = i.next();
       int weight = accountWeights.get(account);
       if (weight > highest) {
         highest = weight;
@@ -2040,8 +2045,7 @@ public final class AccountHandler {
               + host
               + ": action='"
               + action
-              + "'"
-      ;
+              + "'";
       throw new SQLException(message);
     }
   }

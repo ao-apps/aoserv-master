@@ -42,10 +42,10 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
 import com.aoindustries.aoserv.master.InvalidateList;
 import com.aoindustries.aoserv.master.MasterDatabase;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.ObjectFactories;
 import com.aoindustries.aoserv.master.RequestSource;
@@ -168,14 +168,14 @@ public final class WhoisHistoryService implements MasterService {
     }
     if (!accountsAffected.isEmpty()) {
       invalidateList.addTable(conn,
-          Table.TableID.WhoisHistoryAccount,
+          Table.TableId.WhoisHistoryAccount,
           accountsAffected,
           InvalidateList.allHosts,
           false
       );
       // Affects visibility, so invalidate WhoisHistory, too
       invalidateList.addTable(conn,
-          Table.TableID.WhoisHistory,
+          Table.TableId.WhoisHistory,
           accountsAffected,
           InvalidateList.allHosts,
           false
@@ -244,7 +244,7 @@ public final class WhoisHistoryService implements MasterService {
     public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
       try {
         try (
-          ProcessTimer timer = new ProcessTimer(
+            ProcessTimer timer = new ProcessTimer(
                 logger,
                 getClass().getName(),
                 "runCronJob",
@@ -254,7 +254,7 @@ public final class WhoisHistoryService implements MasterService {
                 TIMER_REMINDER_INTERVAL
             )
             ) {
-          MasterServer.executorService.submit(timer);
+          AoservMaster.executorService.submit(timer);
 
           // Start the transaction
           try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
@@ -264,7 +264,7 @@ public final class WhoisHistoryService implements MasterService {
              */
             cleanup(conn, invalidateList);
             conn.commit();
-            MasterServer.invalidateTables(conn, invalidateList, null);
+            AoservMaster.invalidateTables(conn, invalidateList, null);
             invalidateList.reset();
 
             /*
@@ -295,53 +295,55 @@ public final class WhoisHistoryService implements MasterService {
               // The list is not pruned yet, because it might become time while slowly processing the list
               // Timestamp null when never looked-up
               Map<DomainName, Timestamp> lookupOrder;
-              {
-                // Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
-                final Map<DomainName, Timestamp> lastChecked = conn.queryCall(
-                    results -> {
-                      try {
-                        Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount); // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
-                        int oldNotUsedCount = 0;
-                        while (results.next()) {
-                          DomainName registrableDomain = DomainName.valueOf(results.getString(1));
-                          if (registrableDomains.keySet().contains(registrableDomain)) {
-                            map.put(
-                                registrableDomain,
-                                results.getTimestamp(2)
-                            );
-                          } else {
-                            oldNotUsedCount++;
+                {
+                  // Lookup the most recent time for all previously logged registrable domains, ordered by oldest first
+                  final Map<DomainName, Timestamp> lastChecked = conn.queryCall(
+                      results -> {
+                        try {
+                          // Minimize early rehashes, perfect fit if only registrableDomainCount will be returned
+                          Map<DomainName, Timestamp> map = AoCollections.newLinkedHashMap(registrableDomainCount);
+                          int oldNotUsedCount = 0;
+                          while (results.next()) {
+                            DomainName registrableDomain = DomainName.valueOf(results.getString(1));
+                            if (registrableDomains.keySet().contains(registrableDomain)) {
+                              map.put(
+                                  registrableDomain,
+                                  results.getTimestamp(2)
+                              );
+                            } else {
+                              oldNotUsedCount++;
+                            }
                           }
+                          if (DEBUG) {
+                            System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount
+                                + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
+                          }
+                          return map;
+                        } catch (ValidationException e) {
+                          throw new SQLException(e);
                         }
-                        if (DEBUG) {
-                          System.out.println(WhoisHistoryService.class.getSimpleName() + ": Old not used now count: " + oldNotUsedCount + ", if this becomes a large value, might be worth doing a WHERE \"registrableDomain\" IN (...)");
-                        }
-                        return map;
-                      } catch (ValidationException e) {
-                        throw new SQLException(e);
-                      }
-                    },
-                    // TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
-                    "select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
-                );
-                lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
-                for (DomainName registrableDomain : registrableDomains.keySet()) {
-                  if (!lastChecked.containsKey(registrableDomain)) {
-                    lookupOrder.put(registrableDomain, null);
+                      },
+                      // TODO: We could send a WHERE "registrableDomain" IN (...), but this is less code now
+                      "select \"registrableDomain\", max(\"time\") from billing.\"WhoisHistory\" group by \"registrableDomain\" order by max"
+                  );
+                  lookupOrder = AoCollections.newLinkedHashMap(registrableDomainCount);
+                  for (DomainName registrableDomain : registrableDomains.keySet()) {
+                    if (!lastChecked.containsKey(registrableDomain)) {
+                      lookupOrder.put(registrableDomain, null);
+                    }
                   }
+                  if (DEBUG) {
+                    System.out.println(WhoisHistoryService.class.getSimpleName() + ": Number never checked: " + lookupOrder.size());
+                  }
+                  lookupOrder.putAll(lastChecked);
+                  assert registrableDomains.keySet().equals(lookupOrder.keySet());
                 }
-                if (DEBUG) {
-                  System.out.println(WhoisHistoryService.class.getSimpleName() + ": Number never checked: " + lookupOrder.size());
-                }
-                lookupOrder.putAll(lastChecked);
-                assert registrableDomains.keySet().equals(lookupOrder.keySet());
-              }
               // Performs the whois lookup once per unique registrable domain
               try {
                 for (Map.Entry<DomainName, Timestamp> entry : lookupOrder.entrySet()) {
-                  DomainName registrableDomain = entry.getKey();
-                  Timestamp time = entry.getValue();
-                  boolean checkNow;
+                  final DomainName registrableDomain = entry.getKey();
+                  final Timestamp time = entry.getValue();
+                  final boolean checkNow;
                   if (time == null) {
                     checkNow = true;
                     if (DEBUG) {
@@ -361,7 +363,7 @@ public final class WhoisHistoryService implements MasterService {
                     }
                     break;
                   }
-                  long startTime = System.currentTimeMillis();
+                  final long startTime = System.currentTimeMillis();
                   Integer exitStatus;
                   String output;
                   String error;
@@ -404,19 +406,19 @@ public final class WhoisHistoryService implements MasterService {
                     );
                   }
                   invalidateList.addTable(conn,
-                      Table.TableID.WhoisHistory,
+                      Table.TableId.WhoisHistory,
                       accounts,
                       InvalidateList.allHosts,
                       false
                   );
                   invalidateList.addTable(conn,
-                      Table.TableID.WhoisHistoryAccount,
+                      Table.TableId.WhoisHistoryAccount,
                       accounts,
                       InvalidateList.allHosts,
                       false
                   );
                   conn.commit();
-                  MasterServer.invalidateTables(conn, invalidateList, null);
+                  AoservMaster.invalidateTables(conn, invalidateList, null);
                   conn.close(); // Don't hold database connection while sleeping
                   invalidateList.reset();
                   long sleepTime = targetSleepTime - (System.currentTimeMillis() - startTime);
@@ -437,7 +439,7 @@ public final class WhoisHistoryService implements MasterService {
               System.out.println(WhoisHistoryService.class.getSimpleName() + ": No registrable domains");
             }
             conn.commit();
-            MasterServer.invalidateTables(conn, invalidateList, null);
+            AoservMaster.invalidateTables(conn, invalidateList, null);
           }
         }
       } catch (ThreadDeath td) {
@@ -455,7 +457,7 @@ public final class WhoisHistoryService implements MasterService {
    */
   private Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
     Map<DomainName, Set<Account.Name>> merged = new HashMap<>();
-    for (WhoisHistoryDomainLocator locator : MasterServer.getServices(WhoisHistoryDomainLocator.class)) {
+    for (WhoisHistoryDomainLocator locator : AoservMaster.getServices(WhoisHistoryDomainLocator.class)) {
       for (Map.Entry<DomainName, Set<Account.Name>> entry : locator.getWhoisHistoryDomains(conn).entrySet()) {
         DomainName registrableDomain = entry.getKey();
         Set<Account.Name> accounts = merged.get(registrableDomain);
@@ -473,14 +475,15 @@ public final class WhoisHistoryService implements MasterService {
 
   /**
    * Gets the whois output and error for the specific billing.WhoisHistory record.
-   *
+   * <p>
    * The same filtering as {@link #startGetTableHandler()}
+   * </p>
    */
   public Tuple2<String, String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User masterUser = MasterServer.getUser(conn, currentAdministrator);
+    User masterUser = AoservMaster.getUser(conn, currentAdministrator);
     if (masterUser != null) {
-      UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
+      UserHost[] masterServers = AoservMaster.getUserHosts(conn, currentAdministrator);
       if (masterServers.length == 0) {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // id is that of the associated billing.WhoisHistoryAccount
@@ -591,15 +594,23 @@ public final class WhoisHistoryService implements MasterService {
     return new TableHandler.GetTableHandlerByRole() {
 
       @Override
-      public Set<Table.TableID> getTableIds() {
-        return EnumSet.of(Table.TableID.WhoisHistory);
+      public Set<Table.TableId> getTableIds() {
+        return EnumSet.of(Table.TableId.WhoisHistory);
       }
 
       @Override
-      protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
+      @SuppressWarnings("deprecation")
+      protected void getTableMaster(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId,
+          User masterUser
+      ) throws IOException, SQLException {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // Use join and id from WhoisHistoryAccount
-          MasterServer.writeObjects(
+          AoservMaster.writeObjects(
               conn,
               source,
               out,
@@ -618,7 +629,7 @@ public final class WhoisHistoryService implements MasterService {
                   + "  INNER JOIN billing.\"WhoisHistoryAccount\" wha ON wh.id = wha.\"whoisHistory\""
           );
         } else {
-          MasterServer.writeObjects(
+          AoservMaster.writeObjects(
               conn,
               source,
               out,
@@ -639,16 +650,31 @@ public final class WhoisHistoryService implements MasterService {
       }
 
       @Override
-      protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+      protected void getTableDaemon(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId,
+          User masterUser,
+          UserHost[] masterServers
+      ) throws IOException, SQLException {
         // The servers don't need access to this information
-        MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+        AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
       }
 
       @Override
-      protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+      @SuppressWarnings("deprecation")
+      protected void getTableAdministrator(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId
+      ) throws IOException, SQLException {
         if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_18) <= 0) {
           // Use join and id from WhoisHistoryAccount
-          MasterServer.writeObjects(
+          AoservMaster.writeObjects(
               conn,
               source,
               out,
@@ -679,7 +705,7 @@ public final class WhoisHistoryService implements MasterService {
               source.getCurrentAdministrator()
           );
         } else {
-          MasterServer.writeObjects(
+          AoservMaster.writeObjects(
               conn,
               source,
               out,

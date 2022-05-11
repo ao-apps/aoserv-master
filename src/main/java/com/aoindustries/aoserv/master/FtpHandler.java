@@ -31,14 +31,14 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 /**
- * The <code>FTPHandler</code> handles all the accesses to the FTP tables.
+ * The <code>FtpHandler</code> handles all the accesses to the FTP tables.
  *
  * @author  AO Industries, Inc.
  */
-public final class FTPHandler {
+public final class FtpHandler {
 
   /** Make no instances. */
-  private FTPHandler() {
+  private FtpHandler() {
     throw new AssertionError();
   }
 
@@ -48,7 +48,7 @@ public final class FTPHandler {
       InvalidateList invalidateList,
       User.Name linuxUser
   ) throws IOException, SQLException {
-    LinuxAccountHandler.checkAccessUser(conn, source, "addFTPGuestUser", linuxUser);
+    LinuxAccountHandler.checkAccessUser(conn, source, "addFtpGuestUser", linuxUser);
     if (linuxUser.equals(User.MAIL)) {
       throw new SQLException("Not allowed to add FTP guest user for mail");
     }
@@ -71,7 +71,7 @@ public final class FTPHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FTP_GUEST_USERS,
+        Table.TableId.FTP_GUEST_USERS,
         AccountUserHandler.getAccountForUser(conn, linuxUser),
         LinuxAccountHandler.getServersForUser(conn, linuxUser),
         false
@@ -84,7 +84,7 @@ public final class FTPHandler {
       InvalidateList invalidateList,
       User.Name linuxUser
   ) throws IOException, SQLException {
-    LinuxAccountHandler.checkAccessUser(conn, source, "removeFTPGuestUser", linuxUser);
+    LinuxAccountHandler.checkAccessUser(conn, source, "removeGuestUser", linuxUser);
     if (linuxUser.equals(User.MAIL)) {
       throw new SQLException("Not allowed to remove GuestUser for user '" + User.MAIL + '\'');
     }
@@ -94,7 +94,7 @@ public final class FTPHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FTP_GUEST_USERS,
+        Table.TableId.FTP_GUEST_USERS,
         AccountUserHandler.getAccountForUser(conn, linuxUser),
         LinuxAccountHandler.getServersForUser(conn, linuxUser),
         false
@@ -111,7 +111,7 @@ public final class FTPHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.PRIVATE_FTP_SERVERS,
+        Table.TableId.PRIVATE_FTP_SERVERS,
         NetBindHandler.getAccountForBind(conn, bind),
         NetBindHandler.getHostForBind(conn, bind),
         false

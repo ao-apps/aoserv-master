@@ -25,13 +25,13 @@ package com.aoindustries.aoserv.master.account;
 
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
-import com.aoindustries.aoserv.client.AOServObject;
+import com.aoindustries.aoserv.client.AoservObject;
 import com.aoindustries.aoserv.client.account.Profile;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -46,17 +46,27 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
 
   private static final String COLUMNS =
       "  ap.*,\n"
-          + "  ARRAY(SELECT be.\"billingEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
-          + "  ARRAY(SELECT te.\"technicalEmail\"" + (AOServObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
+      + "  ARRAY(SELECT be.\"billingEmail\"" + (AoservObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.billingEmail{}\" be\n"
+      + "    WHERE ap.id = be.id ORDER BY index) AS \"billingEmail{}\",\n"
+      + "  ARRAY(SELECT te.\"technicalEmail\"" + (AoservObject.USE_ARRAY_OF_DOMAIN ? "" : "::text") + " FROM account.\"Profile.technicalEmail{}\" te\n"
+      + "    WHERE ap.id = te.id ORDER BY index) AS \"technicalEmail{}\"";
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.BUSINESS_PROFILES);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.BUSINESS_PROFILES);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -73,8 +83,17 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   // TODO: Does the daemon need access to the profiles?  What for?  I find no reference in the aoserv-daemon project
   // TODO: This might be best changed once roles are defined, and not just a class of filtering by server.
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -96,8 +115,15 @@ public class Profile_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

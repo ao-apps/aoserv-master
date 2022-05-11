@@ -126,8 +126,8 @@ public final class CvsHandler {
           slashPos = pathStr.length();
         }
         String groupName = pathStr.substring(httpdSharedTomcatsDirStr.length() + 1, slashPos);
-        int groupLSA = conn.queryInt("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", groupName, linuxServer);
-        LinuxAccountHandler.checkAccessUserServer(conn, source, "addCvsRepository", groupLSA);
+        int groupUser = conn.queryInt("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", groupName, linuxServer);
+        LinuxAccountHandler.checkAccessUserServer(conn, source, "addCvsRepository", groupUser);
       } else {
         throw new SQLException("Invalid path: " + path);
       }
@@ -206,7 +206,7 @@ public final class CvsHandler {
       );
       invalidateList.addTable(
           conn,
-          Table.TableID.CVS_REPOSITORIES,
+          Table.TableId.CVS_REPOSITORIES,
           LinuxAccountHandler.getAccountForUserServer(conn, linuxUserServer),
           linuxServer,
           false
@@ -241,7 +241,7 @@ public final class CvsHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.CVS_REPOSITORIES,
+        Table.TableId.CVS_REPOSITORIES,
         LinuxAccountHandler.getAccountForUserServer(conn, lsa),
         LinuxAccountHandler.getServerForUserServer(conn, lsa),
         false
@@ -273,7 +273,7 @@ public final class CvsHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.CVS_REPOSITORIES,
+        Table.TableId.CVS_REPOSITORIES,
         LinuxAccountHandler.getAccountForUserServer(conn, lsa),
         LinuxAccountHandler.getServerForUserServer(conn, lsa),
         false
@@ -288,8 +288,8 @@ public final class CvsHandler {
     return conn.queryInt("select linux_server_account from scm.\"CvsRepository\" where id=?", cvsRepository);
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.CVS_REPOSITORIES) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.CVS_REPOSITORIES) {
       synchronized (CvsHandler.class) {
         disabledCvsRepositories.clear();
       }
@@ -340,7 +340,7 @@ public final class CvsHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.CVS_REPOSITORIES,
+        Table.TableId.CVS_REPOSITORIES,
         LinuxAccountHandler.getAccountForUserServer(conn, linuxUserServer),
         linuxServer,
         false
@@ -380,7 +380,7 @@ public final class CvsHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.CVS_REPOSITORIES,
+        Table.TableId.CVS_REPOSITORIES,
         LinuxAccountHandler.getAccountForUserServer(conn, lsa),
         LinuxAccountHandler.getServerForUserServer(conn, lsa),
         false

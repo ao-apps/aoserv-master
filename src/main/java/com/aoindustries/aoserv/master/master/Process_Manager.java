@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Process manager.
+ *
  * @author  AO Industries, Inc.
  */
 public final class Process_Manager {
@@ -46,7 +48,7 @@ public final class Process_Manager {
 
   private static final Map<SmallIdentifier, Process> processes = new LinkedHashMap<>();
 
-  public static Process createProcess(InetAddress host, String protocol, boolean is_secure) {
+  public static Process createProcess(InetAddress host, String protocol, boolean isSecure) {
     Instant now = Instant.now();
     Timestamp ts = new Timestamp(now.getEpochSecond() * 1000);
     ts.setNanos(now.getNano());
@@ -58,7 +60,7 @@ public final class Process_Manager {
               id,
               host,
               protocol,
-              is_secure,
+              isSecure,
               ts
           );
           processes.put(id, process);

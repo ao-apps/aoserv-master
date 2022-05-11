@@ -27,8 +27,8 @@ import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.email.SmtpRelayType;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -42,13 +42,20 @@ import java.util.Set;
 public class SmtpRelayType_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.EMAIL_SMTP_RELAY_TYPES);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.EMAIL_SMTP_RELAY_TYPES);
   }
 
   @Override
-  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTablePublic(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

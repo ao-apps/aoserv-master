@@ -30,8 +30,8 @@ import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.logging.ProcessTimer;
 import com.aoapps.lang.Strings;
 import com.aoapps.tlds.TopLevelDomain;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.MasterDatabase;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import java.sql.Timestamp;
 import java.text.DateFormat;
@@ -81,7 +81,7 @@ public class TopLevelDomainService implements MasterService {
     public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
       try {
         try (
-          ProcessTimer timer = new ProcessTimer(
+            ProcessTimer timer = new ProcessTimer(
                 logger,
                 getClass().getName(),
                 "runCronJob",
@@ -91,7 +91,7 @@ public class TopLevelDomainService implements MasterService {
                 24L * 60 * 60 * 1000 // 24 hours
             )
             ) {
-          MasterServer.executorService.submit(timer);
+          AoservMaster.executorService.submit(timer);
 
           // Get the current TopLevelDomains snapshot
           TopLevelDomain.Snapshot snapshot = TopLevelDomain.getSnapshot();
@@ -142,7 +142,7 @@ public class TopLevelDomainService implements MasterService {
                         + "  SELECT label FROM \"TopLevelDomain_import\"\n"
                         + ")");
                 // Delete old entries where case changed
-                int delete_for_update = conn.update(
+                int deleteForUpdate = conn.update(
                     "DELETE FROM \"com.aoapps.tlds\".\"TopLevelDomain\" WHERE label::text NOT IN (\n"
                         + "  SELECT label::text FROM \"TopLevelDomain_import\"\n"
                         + ")");
@@ -171,18 +171,18 @@ public class TopLevelDomainService implements MasterService {
                     snapshot.getLastUpdateSuccessful(),
                     new Timestamp(snapshot.getLastSuccessfulUpdateTime()),
                     Strings.join(snapshot.getComments(), "\n"),
-                    inserted - delete_for_update,
-                    delete_for_update,
+                    inserted - deleteForUpdate,
+                    deleteForUpdate,
                     deleted
                 );
-                Level level = inserted != 0 || delete_for_update != 0 || deleted != 0 ? Level.INFO : Level.FINE;
+                Level level = inserted != 0 || deleteForUpdate != 0 || deleted != 0 ? Level.INFO : Level.FINE;
                 if (logger.isLoggable(level)) {
                   logger.log(
                       level,
                       "Database modified from self-updating Java API update dated \""
                           + DateFormat.getDateTimeInstance().format(lastUpdatedTimestamp)
-                          + "\": inserted=" + (inserted - delete_for_update)
-                          + ", updated=" + delete_for_update
+                          + "\": inserted=" + (inserted - deleteForUpdate)
+                          + ", updated=" + deleteForUpdate
                           + ", deleted=" + deleted
                   );
                 }

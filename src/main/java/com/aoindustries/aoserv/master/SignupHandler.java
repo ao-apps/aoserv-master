@@ -61,35 +61,35 @@ public final class SignupHandler {
       RequestSource source,
       InvalidateList invalidateList,
       Account.Name account,
-      InetAddress ip_address,
-      int package_definition,
-      String business_name,
-      String business_phone,
-      String business_fax,
-      String business_address1,
-      String business_address2,
-      String business_city,
-      String business_state,
-      String business_country,
-      String business_zip,
-      String ba_name,
-      String ba_title,
-      String ba_work_phone,
-      String ba_cell_phone,
-      String ba_home_phone,
-      String ba_fax,
-      String ba_email,
-      String ba_address1,
-      String ba_address2,
-      String ba_city,
-      String ba_state,
-      String ba_country,
-      String ba_zip,
+      InetAddress ipAddress,
+      int packageDefinition,
+      String businessName,
+      String businessPhone,
+      String businessFax,
+      String businessAddress1,
+      String businessAddress2,
+      String businessCity,
+      String businessState,
+      String businessCountry,
+      String businessZip,
+      String baName,
+      String baTitle,
+      String baWorkPhone,
+      String baCellPhone,
+      String baHomePhone,
+      String baFax,
+      String baEmail,
+      String baAddress1,
+      String baAddress2,
+      String baCity,
+      String baState,
+      String baCountry,
+      String baZip,
       User.Name administrator_user_name,
-      String billing_contact,
-      String billing_email,
-      boolean billing_use_monthly,
-      boolean billing_pay_one_year,
+      String billingContact,
+      String billingEmail,
+      boolean billingUseMonthly,
+      boolean billingPayOneYear,
       // Encrypted values
       int from,
       int recipient,
@@ -99,7 +99,7 @@ public final class SignupHandler {
   ) throws IOException, SQLException {
     // Security checks
     AccountHandler.checkAccessAccount(conn, source, "addRequest", account);
-    PackageHandler.checkAccessPackageDefinition(conn, source, "addRequest", package_definition);
+    PackageHandler.checkAccessPackageDefinition(conn, source, "addRequest", packageDefinition);
     PaymentHandler.checkAccessEncryptionKey(conn, source, "addRequest", from);
     PaymentHandler.checkAccessEncryptionKey(conn, source, "addRequest", recipient);
 
@@ -107,35 +107,35 @@ public final class SignupHandler {
     int requestId = conn.updateInt(
         "INSERT INTO signup.\"Request\" VALUES (default,?,now(),?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,null,null) RETURNING id",
         account.toString(),
-        ip_address.toString(),
-        package_definition,
-        business_name,
-        business_phone,
-        business_fax,
-        business_address1,
-        business_address2,
-        business_city,
-        business_state,
-        business_country,
-        business_zip,
-        ba_name,
-        ba_title,
-        ba_work_phone,
-        ba_cell_phone,
-        ba_home_phone,
-        ba_fax,
-        ba_email,
-        ba_address1,
-        ba_address2,
-        ba_city,
-        ba_state,
-        ba_country,
-        ba_zip,
+        ipAddress.toString(),
+        packageDefinition,
+        businessName,
+        businessPhone,
+        businessFax,
+        businessAddress1,
+        businessAddress2,
+        businessCity,
+        businessState,
+        businessCountry,
+        businessZip,
+        baName,
+        baTitle,
+        baWorkPhone,
+        baCellPhone,
+        baHomePhone,
+        baFax,
+        baEmail,
+        baAddress1,
+        baAddress2,
+        baCity,
+        baState,
+        baCountry,
+        baZip,
         administrator_user_name.toString(),
-        billing_contact,
-        billing_email,
-        billing_use_monthly,
-        billing_pay_one_year,
+        billingContact,
+        billingEmail,
+        billingUseMonthly,
+        billingPayOneYear,
         ciphertext,
         from,
         recipient
@@ -153,14 +153,14 @@ public final class SignupHandler {
           pstmt.executeUpdate();
         }
       } catch (Error | RuntimeException | SQLException e) {
-        ErrorPrinter.addSQL(e, pstmt);
+        ErrorPrinter.addSql(e, pstmt);
         throw e;
       }
     }
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUESTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
-    invalidateList.addTable(conn, Table.TableID.SIGNUP_REQUEST_OPTIONS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.SIGNUP_REQUESTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.SIGNUP_REQUEST_OPTIONS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
 
     return requestId;
   }
@@ -195,19 +195,19 @@ public final class SignupHandler {
                     if (conn.update("delete from signup.\"Request\" where completed_time is not null and (now()::date-completed_time::date)>31") > 0) {
                       invalidateList.addTable(
                           conn,
-                          Table.TableID.SIGNUP_REQUESTS,
+                          Table.TableId.SIGNUP_REQUESTS,
                           InvalidateList.allAccounts,
                           InvalidateList.allHosts,
                           false
                       );
                       invalidateList.addTable(
                           conn,
-                          Table.TableID.SIGNUP_REQUEST_OPTIONS,
+                          Table.TableId.SIGNUP_REQUEST_OPTIONS,
                           InvalidateList.allAccounts,
                           InvalidateList.allHosts,
                           false
                       );
-                      MasterServer.invalidateTables(conn, invalidateList, null);
+                      AoservMaster.invalidateTables(conn, invalidateList, null);
                     }
                     conn.commit();
                   }

@@ -29,8 +29,8 @@ import com.aoindustries.aoserv.client.billing.Package;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -44,13 +44,21 @@ import java.util.Set;
 public class Package_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.PACKAGES);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.PACKAGES);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -62,8 +70,17 @@ public class Package_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   }
 
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -85,8 +102,15 @@ public class Package_GetTableHandler extends TableHandler.GetTableHandlerByRole 
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

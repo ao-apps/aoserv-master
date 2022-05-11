@@ -30,8 +30,8 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Action;
 import com.aoindustries.aoserv.client.ticket.Status;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.TicketHandler;
@@ -47,13 +47,21 @@ import java.util.Set;
 public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.TICKET_ACTIONS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.TICKET_ACTIONS);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -86,15 +94,30 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   }
 
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
     if (TicketHandler.isTicketAdmin(conn, source)) {
       // If a ticket admin, can see all ticket.Action
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -143,7 +166,7 @@ public class Action_GetTableHandler extends TableHandler.GetTableHandlerByRole {
       );
     } else {
       // Can only see non-admin types and statuses
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,

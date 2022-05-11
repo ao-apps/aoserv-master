@@ -67,7 +67,6 @@ public final class VirtualDisk {
             && primaryWeight == other.primaryWeight
             && secondaryDiskType == other.secondaryDiskType
             && secondaryWeight == other.secondaryWeight
-            && device.equals(other.device)
-    ;
+            && device.equals(other.device);
   }
 }

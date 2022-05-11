@@ -60,8 +60,8 @@ public final class InvalidateList {
   private static final Logger logger = Logger.getLogger(InvalidateList.class.getName());
 
   /** Copy once to avoid repeated copies. */
-  private static final Table.TableID[] tableIDs = Table.TableID.values();
-  // TODO: Unused 2018-11-18: private static final int numTables = tableIDs.length;
+  private static final Table.TableId[] tableIds = Table.TableId.values();
+  // TODO: Unused 2018-11-18: private static final int numTables = tableIds.length;
 
   // TODO: Unused 2018-11-18: private static final String[] tableNames=new String[numTables];
 
@@ -71,8 +71,8 @@ public final class InvalidateList {
   public static final List<Account.Name> allAccounts = Collections.unmodifiableList(new ArrayList<>());
   public static final IntList allHosts = new IntArrayList();
 
-  private final Map<Table.TableID, List<Integer>> hostLists = new EnumMap<>(Table.TableID.class);
-  private final Map<Table.TableID, List<Account.Name>> accountLists = new EnumMap<>(Table.TableID.class);
+  private final Map<Table.TableId, List<Integer>> hostLists = new EnumMap<>(Table.TableId.class);
+  private final Map<Table.TableId, List<Account.Name>> accountLists = new EnumMap<>(Table.TableId.class);
 
   /**
    * Resets back to default state.
@@ -84,14 +84,14 @@ public final class InvalidateList {
 
   public void addTable(
       DatabaseAccess db,
-      Table.TableID tableID,
+      Table.TableId tableId,
       Account.Name account,
       int host,
       boolean recurse
   ) throws IOException, SQLException {
     addTable(
         db,
-        tableID,
+        tableId,
         getAccountCollection(account),
         getHostCollection(host),
         recurse
@@ -100,14 +100,14 @@ public final class InvalidateList {
 
   public void addTable(
       DatabaseAccess db,
-      Table.TableID tableID,
+      Table.TableId tableId,
       Collection<Account.Name> accounts,
       int host,
       boolean recurse
   ) throws IOException, SQLException {
     addTable(
         db,
-        tableID,
+        tableId,
         accounts,
         getHostCollection(host),
         recurse
@@ -116,14 +116,14 @@ public final class InvalidateList {
 
   public void addTable(
       DatabaseAccess db,
-      Table.TableID tableID,
+      Table.TableId tableId,
       Account.Name account,
       IntCollection hosts,
       boolean recurse
   ) throws IOException, SQLException {
     addTable(
         db,
-        tableID,
+        tableId,
         getAccountCollection(account),
         hosts,
         recurse
@@ -132,31 +132,31 @@ public final class InvalidateList {
 
   public void addTable(
       DatabaseAccess db,
-      Table.TableID tableID,
+      Table.TableId tableId,
       Collection<Account.Name> accounts,
       IntCollection hosts,
       boolean recurse
   ) throws IOException, SQLException {
     // TODO: Unused 2018-11-18:
-    //if (tableNames[tableID.ordinal()] == null) {
-    //  tableNames[tableID.ordinal()]=TableHandler.getTableName(conn, tableID);
+    //if (tableNames[tableId.ordinal()] == null) {
+    //  tableNames[tableId.ordinal()] = TableHandler.getTableName(conn, tableId);
     //}
 
     // Add to the account lists
     if (accounts == null || accounts == allAccounts) {
-      accountLists.put(tableID, allAccounts);
+      accountLists.put(tableId, allAccounts);
     } else {
       if (!accounts.isEmpty()) {
-        List<Account.Name> SV = accountLists.get(tableID);
+        List<Account.Name> accountList = accountLists.get(tableId);
         // TODO: Just use HashSet here
-        if (SV == null) {
-          accountLists.put(tableID, SV = new SortedArrayList<>());
+        if (accountList == null) {
+          accountLists.put(tableId, accountList = new SortedArrayList<>());
         }
         for (Account.Name account : accounts) {
           if (account == null) {
             logger.log(Level.WARNING, null, new RuntimeException("Warning: account is null"));
-          } else if (!SV.contains(account)) {
-            SV.add(account);
+          } else if (!accountList.contains(account)) {
+            accountList.add(account);
           }
         }
       }
@@ -164,12 +164,12 @@ public final class InvalidateList {
 
     // Add to the host lists
     if (hosts == null || hosts == allHosts) {
-      hostLists.put(tableID, allHosts);
+      hostLists.put(tableId, allHosts);
     } else if (!hosts.isEmpty()) {
-      List<Integer> sv = hostLists.get(tableID);
+      List<Integer> sv = hostLists.get(tableId);
       // TODO: Just use HashSet here
       if (sv == null) {
-        hostLists.put(tableID, sv = new SortedArrayList<>());
+        hostLists.put(tableId, sv = new SortedArrayList<>());
       }
       for (Integer id : hosts) {
         if (id == null) {
@@ -182,155 +182,157 @@ public final class InvalidateList {
 
     // Recursively invalidate those tables who's filters might have been effected
     if (recurse) {
-      switch (tableID) {
-        case AO_SERVERS :
-          addTable(db, Table.TableID.FIREWALLD_ZONES,       accounts, hosts, true);
-          addTable(db, Table.TableID.LINUX_SERVER_ACCOUNTS, accounts, hosts, true);
-          addTable(db, Table.TableID.LINUX_SERVER_GROUPS,   accounts, hosts, true);
-          addTable(db, Table.TableID.MYSQL_SERVERS,         accounts, hosts, true);
-          addTable(db, Table.TableID.POSTGRES_SERVERS,      accounts, hosts, true);
+      switch (tableId) {
+        case AO_SERVERS:
+          addTable(db, Table.TableId.FIREWALLD_ZONES,       accounts, hosts, true);
+          addTable(db, Table.TableId.LINUX_SERVER_ACCOUNTS, accounts, hosts, true);
+          addTable(db, Table.TableId.LINUX_SERVER_GROUPS,   accounts, hosts, true);
+          addTable(db, Table.TableId.MYSQL_SERVERS,         accounts, hosts, true);
+          addTable(db, Table.TableId.POSTGRES_SERVERS,      accounts, hosts, true);
           break;
-        case BUSINESS_SERVERS :
-          addTable(db, Table.TableID.SERVERS, accounts, hosts, true);
+        case BUSINESS_SERVERS:
+          addTable(db, Table.TableId.SERVERS, accounts, hosts, true);
           break;
-        case BUSINESSES :
-          addTable(db, Table.TableID.BUSINESS_PROFILES, accounts, hosts, true);
+        case BUSINESSES:
+          addTable(db, Table.TableId.BUSINESS_PROFILES, accounts, hosts, true);
           break;
-        case CYRUS_IMAPD_BINDS :
-          addTable(db, Table.TableID.CYRUS_IMAPD_SERVERS, accounts, hosts, false);
+        case CYRUS_IMAPD_BINDS:
+          addTable(db, Table.TableId.CYRUS_IMAPD_SERVERS, accounts, hosts, false);
           break;
-        case CYRUS_IMAPD_SERVERS :
-          addTable(db, Table.TableID.CYRUS_IMAPD_BINDS, accounts, hosts, false);
+        case CYRUS_IMAPD_SERVERS:
+          addTable(db, Table.TableId.CYRUS_IMAPD_BINDS, accounts, hosts, false);
           break;
-        case EMAIL_DOMAINS :
-          addTable(db, Table.TableID.EMAIL_ADDRESSES,   accounts, hosts, true);
-          addTable(db, Table.TableID.MAJORDOMO_SERVERS, accounts, hosts, true);
+        case EMAIL_DOMAINS:
+          addTable(db, Table.TableId.EMAIL_ADDRESSES,   accounts, hosts, true);
+          addTable(db, Table.TableId.MAJORDOMO_SERVERS, accounts, hosts, true);
           break;
-        case FAILOVER_FILE_REPLICATIONS :
-          addTable(db, Table.TableID.SERVERS,      accounts, hosts, true);
-          addTable(db, Table.TableID.NET_DEVICES,  accounts, hosts, true);
-          addTable(db, Table.TableID.IP_ADDRESSES, accounts, hosts, true);
-          addTable(db, Table.TableID.NET_BINDS,    accounts, hosts, true);
+        case FAILOVER_FILE_REPLICATIONS:
+          addTable(db, Table.TableId.SERVERS,      accounts, hosts, true);
+          addTable(db, Table.TableId.NET_DEVICES,  accounts, hosts, true);
+          addTable(db, Table.TableId.IP_ADDRESSES, accounts, hosts, true);
+          addTable(db, Table.TableId.NET_BINDS,    accounts, hosts, true);
           break;
         case IP_REPUTATION_LIMITER_SETS:
           // Sets are only visible when used by at least one limiter in the same server farm
-          addTable(db, Table.TableID.IP_REPUTATION_SETS,         accounts, hosts, true);
-          addTable(db, Table.TableID.IP_REPUTATION_SET_HOSTS,    accounts, hosts, true);
-          addTable(db, Table.TableID.IP_REPUTATION_SET_NETWORKS, accounts, hosts, true);
+          addTable(db, Table.TableId.IP_REPUTATION_SETS,         accounts, hosts, true);
+          addTable(db, Table.TableId.IP_REPUTATION_SET_HOSTS,    accounts, hosts, true);
+          addTable(db, Table.TableId.IP_REPUTATION_SET_NETWORKS, accounts, hosts, true);
           break;
-        case HTTPD_BINDS :
-          addTable(db, Table.TableID.IP_ADDRESSES, accounts, hosts, true);
-          addTable(db, Table.TableID.NET_BINDS,    accounts, hosts, false);
+        case HTTPD_BINDS:
+          addTable(db, Table.TableId.IP_ADDRESSES, accounts, hosts, true);
+          addTable(db, Table.TableId.NET_BINDS,    accounts, hosts, false);
           break;
-        case HTTPD_SITE_BINDS :
-          addTable(db, Table.TableID.HTTPD_BINDS,             accounts, hosts, true);
-          addTable(db, Table.TableID.HTTPD_SITE_BIND_HEADERS, accounts, hosts, false);
-          addTable(db, Table.TableID.RewriteRule,             accounts, hosts, false);
+        case HTTPD_SITE_BINDS:
+          addTable(db, Table.TableId.HTTPD_BINDS,             accounts, hosts, true);
+          addTable(db, Table.TableId.HTTPD_SITE_BIND_HEADERS, accounts, hosts, false);
+          addTable(db, Table.TableId.RewriteRule,             accounts, hosts, false);
           break;
-        case HTTPD_TOMCAT_SITES :
-          addTable(db, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounts, hosts, false);
+        case HTTPD_TOMCAT_SITES:
+          addTable(db, Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS, accounts, hosts, false);
           break;
-        case IP_ADDRESSES :
-          addTable(db, Table.TableID.IpAddressMonitoring, accounts, hosts, false);
+        case IP_ADDRESSES:
+          addTable(db, Table.TableId.IpAddressMonitoring, accounts, hosts, false);
           break;
-        case LINUX_ACCOUNTS :
-          addTable(db, Table.TableID.FTP_GUEST_USERS, accounts, hosts, true);
-          addTable(db, Table.TableID.USERNAMES,       accounts, hosts, true);
+        case LINUX_ACCOUNTS:
+          addTable(db, Table.TableId.FTP_GUEST_USERS, accounts, hosts, true);
+          addTable(db, Table.TableId.USERNAMES,       accounts, hosts, true);
           break;
-        case LINUX_SERVER_ACCOUNTS :
-          addTable(db, Table.TableID.LINUX_ACCOUNTS,       accounts, hosts, true);
-          addTable(db, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, hosts, true);
+        case LINUX_SERVER_ACCOUNTS:
+          addTable(db, Table.TableId.LINUX_ACCOUNTS,       accounts, hosts, true);
+          addTable(db, Table.TableId.LINUX_GROUP_ACCOUNTS, accounts, hosts, true);
           break;
-        case LINUX_SERVER_GROUPS :
-          addTable(db, Table.TableID.EMAIL_LISTS,          accounts, hosts, true);
-          addTable(db, Table.TableID.LINUX_GROUPS,         accounts, hosts, true);
-          addTable(db, Table.TableID.LINUX_GROUP_ACCOUNTS, accounts, hosts, true);
+        case LINUX_SERVER_GROUPS:
+          addTable(db, Table.TableId.EMAIL_LISTS,          accounts, hosts, true);
+          addTable(db, Table.TableId.LINUX_GROUPS,         accounts, hosts, true);
+          addTable(db, Table.TableId.LINUX_GROUP_ACCOUNTS, accounts, hosts, true);
           break;
-        case MAJORDOMO_SERVERS :
-          addTable(db, Table.TableID.MAJORDOMO_LISTS, accounts, hosts, true);
+        case MAJORDOMO_SERVERS:
+          addTable(db, Table.TableId.MAJORDOMO_LISTS, accounts, hosts, true);
           break;
-        case MYSQL_SERVER_USERS :
-          addTable(db, Table.TableID.MYSQL_USERS, accounts, hosts, true);
+        case MYSQL_SERVER_USERS:
+          addTable(db, Table.TableId.MYSQL_USERS, accounts, hosts, true);
           break;
-        case MYSQL_SERVERS :
-          addTable(db, Table.TableID.NET_BINDS,          accounts, hosts, true);
-          addTable(db, Table.TableID.MYSQL_DATABASES,    accounts, hosts, true);
-          addTable(db, Table.TableID.MYSQL_SERVER_USERS, accounts, hosts, true);
+        case MYSQL_SERVERS:
+          addTable(db, Table.TableId.NET_BINDS,          accounts, hosts, true);
+          addTable(db, Table.TableId.MYSQL_DATABASES,    accounts, hosts, true);
+          addTable(db, Table.TableId.MYSQL_SERVER_USERS, accounts, hosts, true);
           break;
-        case NET_BINDS :
-          addTable(db, Table.TableID.HTTPD_BINDS,              accounts, hosts, false);
-          addTable(db, Table.TableID.NET_BIND_FIREWALLD_ZONES, accounts, hosts, false);
+        case NET_BINDS:
+          addTable(db, Table.TableId.HTTPD_BINDS,              accounts, hosts, false);
+          addTable(db, Table.TableId.NET_BIND_FIREWALLD_ZONES, accounts, hosts, false);
           break;
-        case NET_BIND_FIREWALLD_ZONES :
+        case NET_BIND_FIREWALLD_ZONES:
           // Presence of "public" firewalld zone determines compatibility "open_firewall" for clients
           // version <= 1.80.2
-          addTable(db, Table.TableID.NET_BINDS, accounts, hosts, false);
+          addTable(db, Table.TableId.NET_BINDS, accounts, hosts, false);
           break;
-        case NET_DEVICES :
-          addTable(db, Table.TableID.IP_ADDRESSES, accounts, hosts, true);
+        case NET_DEVICES:
+          addTable(db, Table.TableId.IP_ADDRESSES, accounts, hosts, true);
           break;
-        case NOTICE_LOG :
-          addTable(db, Table.TableID.NoticeLogBalance, accounts, hosts, false);
+        case NOTICE_LOG:
+          addTable(db, Table.TableId.NoticeLogBalance, accounts, hosts, false);
           break;
-        case NoticeLogBalance :
+        case NoticeLogBalance:
           // Added for compatibility "balance" for pre-1.83.0 clients
-          addTable(db, Table.TableID.NOTICE_LOG, accounts, hosts, false);
+          addTable(db, Table.TableId.NOTICE_LOG, accounts, hosts, false);
           break;
-        case PACKAGE_DEFINITIONS :
-          addTable(db, Table.TableID.PACKAGE_DEFINITION_LIMITS, accounts, hosts, true);
+        case PACKAGE_DEFINITIONS:
+          addTable(db, Table.TableId.PACKAGE_DEFINITION_LIMITS, accounts, hosts, true);
           break;
-        case PACKAGES :
-          addTable(db, Table.TableID.PACKAGE_DEFINITIONS, accounts, hosts, true);
+        case PACKAGES:
+          addTable(db, Table.TableId.PACKAGE_DEFINITIONS, accounts, hosts, true);
           break;
-        case POSTGRES_SERVER_USERS :
-          addTable(db, Table.TableID.POSTGRES_USERS, accounts, hosts, true);
+        case POSTGRES_SERVER_USERS:
+          addTable(db, Table.TableId.POSTGRES_USERS, accounts, hosts, true);
           break;
-        case POSTGRES_SERVERS :
-          addTable(db, Table.TableID.NET_BINDS,             accounts, hosts, true);
-          addTable(db, Table.TableID.POSTGRES_DATABASES,    accounts, hosts, true);
-          addTable(db, Table.TableID.POSTGRES_SERVER_USERS, accounts, hosts, true);
+        case POSTGRES_SERVERS:
+          addTable(db, Table.TableId.NET_BINDS,             accounts, hosts, true);
+          addTable(db, Table.TableId.POSTGRES_DATABASES,    accounts, hosts, true);
+          addTable(db, Table.TableId.POSTGRES_SERVER_USERS, accounts, hosts, true);
           break;
-        case SENDMAIL_BINDS :
-          addTable(db, Table.TableID.SENDMAIL_SERVERS, accounts, hosts, false);
+        case SENDMAIL_BINDS:
+          addTable(db, Table.TableId.SENDMAIL_SERVERS, accounts, hosts, false);
           break;
-        case SENDMAIL_SERVERS :
-          addTable(db, Table.TableID.SENDMAIL_BINDS, accounts, hosts, false);
+        case SENDMAIL_SERVERS:
+          addTable(db, Table.TableId.SENDMAIL_BINDS, accounts, hosts, false);
           break;
-        case SERVERS :
-          addTable(db, Table.TableID.AO_SERVERS,      accounts, hosts, true);
-          addTable(db, Table.TableID.IP_ADDRESSES,    accounts, hosts, true);
-          addTable(db, Table.TableID.NET_DEVICES,     accounts, hosts, true);
-          addTable(db, Table.TableID.VIRTUAL_SERVERS, accounts, hosts, true);
+        case SERVERS:
+          addTable(db, Table.TableId.AO_SERVERS,      accounts, hosts, true);
+          addTable(db, Table.TableId.IP_ADDRESSES,    accounts, hosts, true);
+          addTable(db, Table.TableId.NET_DEVICES,     accounts, hosts, true);
+          addTable(db, Table.TableId.VIRTUAL_SERVERS, accounts, hosts, true);
           break;
-        case SSL_CERTIFICATES :
-          addTable(db, Table.TableID.SSL_CERTIFICATE_NAMES,      accounts, hosts, false);
-          addTable(db, Table.TableID.SSL_CERTIFICATE_OTHER_USES, accounts, hosts, false);
+        case SSL_CERTIFICATES:
+          addTable(db, Table.TableId.SSL_CERTIFICATE_NAMES,      accounts, hosts, false);
+          addTable(db, Table.TableId.SSL_CERTIFICATE_OTHER_USES, accounts, hosts, false);
           break;
-        case USERNAMES :
-          addTable(db, Table.TableID.BUSINESS_ADMINISTRATORS, accounts, hosts, true);
+        case USERNAMES:
+          addTable(db, Table.TableId.BUSINESS_ADMINISTRATORS, accounts, hosts, true);
           break;
-        case VIRTUAL_SERVERS :
-          addTable(db, Table.TableID.VIRTUAL_DISKS, accounts, hosts, true);
+        case VIRTUAL_SERVERS:
+          addTable(db, Table.TableId.VIRTUAL_DISKS, accounts, hosts, true);
           break;
-        case WhoisHistoryAccount :
-          addTable(db, Table.TableID.WhoisHistory, accounts, hosts, false);
+        case WhoisHistoryAccount:
+          addTable(db, Table.TableId.WhoisHistory, accounts, hosts, false);
           break;
+        default:
+          // fall-through
       }
     }
   }
 
-  public List<Account.Name> getAffectedAccounts(Table.TableID tableID) {
-    List<Account.Name> SV = accountLists.get(tableID);
-    if (SV != null || hostLists.containsKey(tableID)) {
-      return (SV == null) ? allAccounts : SV;
+  public List<Account.Name> getAffectedAccounts(Table.TableId tableId) {
+    List<Account.Name> accountList = accountLists.get(tableId);
+    if (accountList != null || hostLists.containsKey(tableId)) {
+      return (accountList == null) ? allAccounts : accountList;
     } else {
       return null;
     }
   }
 
-  public List<Integer> getAffectedHosts(Table.TableID tableID) {
-    List<Integer> sv = hostLists.get(tableID);
-    if (sv != null || accountLists.containsKey(tableID)) {
+  public List<Integer> getAffectedHosts(Table.TableId tableId) {
+    List<Integer> sv = hostLists.get(tableId);
+    if (sv != null || accountLists.containsKey(tableId)) {
       return (sv == null) ? allHosts : sv;
     } else {
       return null;
@@ -338,33 +340,33 @@ public final class InvalidateList {
   }
 
   public void invalidateMasterCaches() {
-    for (Table.TableID tableID : tableIDs) {
-      if (hostLists.containsKey(tableID) || accountLists.containsKey(tableID)) {
-        AccountHandler.invalidateTable(tableID);
-        CvsHandler.invalidateTable(tableID);
-        DaemonHandler.invalidateTable(tableID);
+    for (Table.TableId tableId : tableIds) {
+      if (hostLists.containsKey(tableId) || accountLists.containsKey(tableId)) {
+        AccountHandler.invalidateTable(tableId);
+        CvsHandler.invalidateTable(tableId);
+        DaemonHandler.invalidateTable(tableId);
         // TODO: Have each service register to receive invalidation signals
         try {
-          MasterServer.getService(DnsService.class).invalidateTable(tableID);
+          AoservMaster.getService(DnsService.class).invalidateTable(tableId);
         } catch (NoServiceException e) {
           // OK when running batch credit card processing from command line
         }
-        EmailHandler.invalidateTable(tableID);
-        WebHandler.invalidateTable(tableID);
-        LinuxAccountHandler.invalidateTable(tableID);
-        MasterServer.invalidateTable(tableID);
-        MysqlHandler.invalidateTable(tableID);
-        PackageHandler.invalidateTable(tableID);
-        PostgresqlHandler.invalidateTable(tableID);
-        NetHostHandler.invalidateTable(tableID);
-        TableHandler.invalidateTable(tableID);
-        AccountUserHandler.invalidateTable(tableID);
+        EmailHandler.invalidateTable(tableId);
+        WebHandler.invalidateTable(tableId);
+        LinuxAccountHandler.invalidateTable(tableId);
+        AoservMaster.invalidateTable(tableId);
+        MysqlHandler.invalidateTable(tableId);
+        PackageHandler.invalidateTable(tableId);
+        PostgresqlHandler.invalidateTable(tableId);
+        NetHostHandler.invalidateTable(tableId);
+        TableHandler.invalidateTable(tableId);
+        AccountUserHandler.invalidateTable(tableId);
       }
     }
   }
 
-  public boolean isInvalid(Table.TableID tableID) {
-    return hostLists.containsKey(tableID) || accountLists.containsKey(tableID);
+  public boolean isInvalid(Table.TableId tableId) {
+    return hostLists.containsKey(tableId) || accountLists.containsKey(tableId);
   }
 
   public static Collection<Account.Name> getAccountCollection(Account.Name ... accounts) {
@@ -381,7 +383,9 @@ public final class InvalidateList {
       return new IntArrayList(0);
     }
     IntCollection coll = new IntArrayList(hosts.length);
-    for (int host : hosts) coll.add(host);
+    for (int host : hosts) {
+      coll.add(host);
+    }
     return coll;
   }
 }

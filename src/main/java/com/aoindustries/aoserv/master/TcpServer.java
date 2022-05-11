@@ -32,17 +32,18 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * The <code>TCPServer</code> accepts connections from an <code>SimpleAOClient</code>.
+ * The <code>TcpServer</code> accepts connections from an <code>TcpConnector</code>.
  * Once the connection is accepted and authenticated, the server carries out all actions requested
  * by the client while providing the necessary security checks and data filters.
  * <p>
  * This server is completely threaded to handle multiple, simultaneous clients.
  * </p>
+ *
  * @author  AO Industries, Inc.
  */
-public class TCPServer extends MasterServer implements Runnable {
+public class TcpServer extends AoservMaster implements Runnable {
 
-  private static final Logger logger = Logger.getLogger(TCPServer.class.getName());
+  private static final Logger logger = Logger.getLogger(TcpServer.class.getName());
 
   /**
    * The protocol of this server.
@@ -55,9 +56,9 @@ public class TCPServer extends MasterServer implements Runnable {
   protected Thread thread;
 
   /**
-   * Creates a new, running <code>AOServServer</code>.
+   * Creates a new, running <code>AoservMaster</code>.
    */
-  TCPServer(String serverBind, int serverPort) {
+  TcpServer(String serverBind, int serverPort) {
     super(serverBind, serverPort);
   }
 
@@ -93,8 +94,7 @@ public class TCPServer extends MasterServer implements Runnable {
     return
         address[0] == localAddress[0]
             && address[1] == localAddress[1]
-            && address[2] == localAddress[2]
-    ;
+            && address[2] == localAddress[2];
   }
 
   @Override

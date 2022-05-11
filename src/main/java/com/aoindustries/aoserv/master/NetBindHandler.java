@@ -72,7 +72,7 @@ public final class NetBindHandler {
       throw new SQLException("Unable to find in table net.AppProtocol: " + appProtocol);
     }
 
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu == null) {
       // Must be a user service
       if (
@@ -213,7 +213,7 @@ public final class NetBindHandler {
     Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BINDS,
+        Table.TableId.NET_BINDS,
         business,
         host,
         false
@@ -232,7 +232,7 @@ public final class NetBindHandler {
       }
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_BIND_FIREWALLD_ZONES,
+          Table.TableId.NET_BIND_FIREWALLD_ZONES,
           business,
           host,
           false
@@ -287,7 +287,7 @@ public final class NetBindHandler {
     }
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BINDS,
+        Table.TableId.NET_BINDS,
         PackageHandler.getAccountForPackage(conn, packageName),
         host,
         false
@@ -367,7 +367,7 @@ public final class NetBindHandler {
     if (conn.update("delete from net.\"TcpRedirect\" where net_bind=?", bind) > 0) {
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_TCP_REDIRECTS,
+          Table.TableId.NET_TCP_REDIRECTS,
           business,
           host,
           false
@@ -377,7 +377,7 @@ public final class NetBindHandler {
     if (conn.update("delete from ftp.\"PrivateServer\" where net_bind=?", bind) > 0) {
       invalidateList.addTable(
           conn,
-          Table.TableID.PRIVATE_FTP_SERVERS,
+          Table.TableId.PRIVATE_FTP_SERVERS,
           business,
           host,
           false
@@ -387,14 +387,14 @@ public final class NetBindHandler {
     conn.update("delete from net.\"Bind\" where id=?", bind);
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BINDS,
+        Table.TableId.NET_BINDS,
         business,
         host,
         false
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BIND_FIREWALLD_ZONES,
+        Table.TableId.NET_BIND_FIREWALLD_ZONES,
         business,
         host,
         false
@@ -470,14 +470,14 @@ public final class NetBindHandler {
       Account.Name business = getAccountForBind(conn, bind);
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_BINDS,
+          Table.TableId.NET_BINDS,
           business,
           host,
           false
       );
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_BIND_FIREWALLD_ZONES,
+          Table.TableId.NET_BIND_FIREWALLD_ZONES,
           business,
           host,
           false
@@ -497,7 +497,7 @@ public final class NetBindHandler {
     conn.update("update net.\"Bind\" set monitoring_enabled=? where id=?", monitoringEnabled, bind);
 
     invalidateList.addTable(conn,
-        Table.TableID.NET_BINDS,
+        Table.TableId.NET_BINDS,
         getAccountForBind(conn, bind),
         getHostForBind(conn, bind),
         false
@@ -541,14 +541,14 @@ public final class NetBindHandler {
         Account.Name business = getAccountForBind(conn, bind);
         invalidateList.addTable(
             conn,
-            Table.TableID.NET_BINDS,
+            Table.TableId.NET_BINDS,
             business,
             host,
             false
         );
         invalidateList.addTable(
             conn,
-            Table.TableID.NET_BIND_FIREWALLD_ZONES,
+            Table.TableId.NET_BIND_FIREWALLD_ZONES,
             business,
             host,
             false
@@ -567,14 +567,14 @@ public final class NetBindHandler {
         Account.Name business = getAccountForBind(conn, bind);
         invalidateList.addTable(
             conn,
-            Table.TableID.NET_BINDS,
+            Table.TableId.NET_BINDS,
             business,
             host,
             false
         );
         invalidateList.addTable(
             conn,
-            Table.TableID.NET_BIND_FIREWALLD_ZONES,
+            Table.TableId.NET_BIND_FIREWALLD_ZONES,
             business,
             host,
             false

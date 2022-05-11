@@ -30,8 +30,8 @@ import com.aoindustries.aoserv.client.backup.BackupReport;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -83,17 +83,26 @@ public final class BackupReportHandler {
   public static class GetObject implements TableHandler.GetObjectHandler {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.BACKUP_REPORTS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.BACKUP_REPORTS);
     }
 
     @Override
-    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    @SuppressWarnings("deprecation")
+    public void getObject(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableInput in,
+        StreamableOutput out,
+        Table.TableId tableId,
+        User masterUser,
+        UserHost[] masterServers
+    ) throws IOException, SQLException {
       int backupReport = in.readCompressedInt();
       if (masterUser != null) {
         assert masterServers != null;
         if (masterServers.length == 0) {
-          MasterServer.writeObject(
+          AoservMaster.writeObject(
               conn,
               source,
               out,
@@ -102,7 +111,7 @@ public final class BackupReportHandler {
               backupReport
           );
         } else {
-          MasterServer.writeObject(
+          AoservMaster.writeObject(
               conn,
               source,
               out,
@@ -114,7 +123,7 @@ public final class BackupReportHandler {
           );
         }
       } else {
-        MasterServer.writeObject(
+        AoservMaster.writeObject(
             conn,
             source,
             out,
@@ -131,13 +140,21 @@ public final class BackupReportHandler {
   public static class GetTable extends TableHandler.GetTableHandlerByRole {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.BACKUP_REPORTS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.BACKUP_REPORTS);
     }
 
     @Override
-    protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-      MasterServer.writeObjects(
+    @SuppressWarnings("deprecation")
+    protected void getTableMaster(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId,
+        User masterUser
+    ) throws IOException, SQLException {
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -149,8 +166,17 @@ public final class BackupReportHandler {
     }
 
     @Override
-    protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-      MasterServer.writeObjects(
+    @SuppressWarnings("deprecation")
+    protected void getTableDaemon(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId,
+        User masterUser,
+        UserHost[] masterServers
+    ) throws IOException, SQLException {
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -163,8 +189,15 @@ public final class BackupReportHandler {
     }
 
     @Override
-    protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-      MasterServer.writeObjects(
+    @SuppressWarnings("deprecation")
+    protected void getTableAdministrator(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId
+    ) throws IOException, SQLException {
+      AoservMaster.writeObjects(
           conn,
           source,
           out,

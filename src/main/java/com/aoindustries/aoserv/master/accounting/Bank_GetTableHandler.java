@@ -28,8 +28,8 @@ import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.accounting.Bank;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -42,13 +42,21 @@ import java.util.Set;
 public class Bank_GetTableHandler implements GetTableHandlerAccountingOnly {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.BANKS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.BANKS);
   }
 
   @Override
-  public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  public void getTableAccounting(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

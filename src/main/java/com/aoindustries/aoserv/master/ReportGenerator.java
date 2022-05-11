@@ -109,7 +109,7 @@ public final class ReportGenerator implements CronJob {
   public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
     try {
       try (
-        ProcessTimer timer = new ProcessTimer(
+          ProcessTimer timer = new ProcessTimer(
               logger,
               ReportGenerator.class.getName(),
               "runCronJob",
@@ -119,7 +119,7 @@ public final class ReportGenerator implements CronJob {
               TIMER_REMINDER_INTERVAL
           )
           ) {
-        MasterServer.executorService.submit(timer);
+        AoservMaster.executorService.submit(timer);
 
         // Start the transaction
         try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
@@ -142,11 +142,11 @@ public final class ReportGenerator implements CronJob {
             Map<Integer, Map<Integer, TempBackupReport>> stats = new HashMap<>();
 
             /* TODO: Implement as calls to the aoserv daemons to get the quota reports
-            String currentSQL = null;
+            String currentSql = null;
             try (Statement stmt = conn.getConnection(true).createStatement()) {
               // First, count up the total number of files per host and per package
               conn.incrementQueryCount();
-              try (ResultSet results = stmt.executeQuery(currentSQL = "select server, package, count(*) from file_backups group by server, package")) {
+              try (ResultSet results = stmt.executeQuery(currentSql = "select server, package, count(*) from file_backups group by server, package")) {
                 while (results.next()) {
                   int host=results.getInt(1);
                   int packageNum=results.getInt(2);
@@ -170,7 +170,7 @@ public final class ReportGenerator implements CronJob {
               conn.incrementQueryCount();
               try (
                 ResultSet results = stmt.executeQuery(
-                  currentSQL =
+                  currentSql =
                     "select\n"
                   + "  fb.server,\n"
                   + "  fb.package,\n"
@@ -253,7 +253,7 @@ public final class ReportGenerator implements CronJob {
                 }
               }
             } catch (Error | RuntimeException | SQLException e) {
-              ErrorPrinter.addSQL(e, currentSQL);
+              ErrorPrinter.addSql(e, currentSql);
               throw e;
             }*/
 
@@ -275,16 +275,16 @@ public final class ReportGenerator implements CronJob {
                 }
                 pstmt.executeBatch();
               } catch (Error | RuntimeException | SQLException e) {
-                ErrorPrinter.addSQL(e, pstmt);
+                ErrorPrinter.addSql(e, pstmt);
                 throw e;
               }
             }
 
             // Invalidate the table
-            invalidateList.addTable(conn, Table.TableID.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+            invalidateList.addTable(conn, Table.TableId.BACKUP_REPORTS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
           }
           conn.commit();
-          MasterServer.invalidateTables(conn, invalidateList, null);
+          AoservMaster.invalidateTables(conn, invalidateList, null);
         }
       }
     } catch (ThreadDeath td) {

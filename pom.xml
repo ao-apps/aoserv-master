@@ -29,7 +29,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <relativePath>../../oss/parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.89.0-POST-SNAPSHOT</version>
+  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.90.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <properties>
@@ -157,20 +157,13 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
             Exclusion seems to not work as documented at https://docs.openrewrite.org/reference/rewrite-maven-plugin
             Disabling fail instead:
           <exclusions>
+            <exclude>**/com/aoindustries/aoserv/master/AoservMaster.java</exclude>
             <exclude>**/com/aoindustries/aoserv/master/ClusterHandler.java</exclude>
-            <exclude>**/com/aoindustries/aoserv/master/MasterServer.java</exclude>
             <exclude>**/com/aoindustries/aoserv/master/TableHandler.java</exclude>
             <exclude>**/com/aoindustries/aoserv/master/billing/WhoisHistoryService.java</exclude>
           </exclusions>
           -->
           <failOnDryRunResults>false</failOnDryRunResults>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId><artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <!-- TODO: Clean-up Checkstyle -->
-          <failOnViolation>false</failOnViolation>
         </configuration>
       </plugin>
       <plugin>
@@ -404,7 +397,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId><version>1.90.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
       </dependency>
       <dependency>
-        <groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId><version>1.89.0${POST-SNAPSHOT}</version>
+        <groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId><version>1.90.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
       </dependency>
       <dependency>
         <groupId>com.aoindustries</groupId><artifactId>aoserv-schema</artifactId><version>1.90.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version><classifier>sql</classifier>

@@ -31,9 +31,9 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.AoservProtocol;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.BankAccountHandler;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -70,15 +70,24 @@ public final class BankTransactionHandler {
   public static class GetObject implements TableHandler.GetObjectHandler {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.BANK_TRANSACTIONS);
     }
 
     @Override
-    public void getObject(DatabaseConnection conn, RequestSource source, StreamableInput in, StreamableOutput out, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+    @SuppressWarnings("deprecation")
+    public void getObject(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableInput in,
+        StreamableOutput out,
+        Table.TableId tableId,
+        User masterUser,
+        UserHost[] masterServers
+    ) throws IOException, SQLException {
       int bankTransaction = in.readCompressedInt();
       if (BankAccountHandler.isBankAccounting(conn, source)) {
-        MasterServer.writeObject(
+        AoservMaster.writeObject(
             conn,
             source,
             out,
@@ -97,13 +106,21 @@ public final class BankTransactionHandler {
   public static class GetTable implements GetTableHandlerAccountingOnly {
 
     @Override
-    public Set<Table.TableID> getTableIds() {
-      return EnumSet.of(Table.TableID.BANK_TRANSACTIONS);
+    public Set<Table.TableId> getTableIds() {
+      return EnumSet.of(Table.TableId.BANK_TRANSACTIONS);
     }
 
     @Override
-    public void getTableAccounting(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-      MasterServer.writeObjects(
+    @SuppressWarnings("deprecation")
+    public void getTableAccounting(
+        DatabaseConnection conn,
+        RequestSource source,
+        StreamableOutput out,
+        boolean provideProgress,
+        Table.TableId tableId,
+        User masterUser
+    ) throws IOException, SQLException {
+      AoservMaster.writeObjects(
           conn,
           source,
           out,

@@ -30,8 +30,8 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.payment.Payment;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -46,8 +46,8 @@ import java.util.Set;
 public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermissionByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.CREDIT_CARD_TRANSACTIONS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.CREDIT_CARD_TRANSACTIONS);
   }
 
   @Override
@@ -56,8 +56,16 @@ public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermiss
   }
 
   @Override
-  protected void getTableMasterHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMasterHasPermission(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -69,13 +77,28 @@ public class Payment_GetTableHandler extends TableHandler.GetTableHandlerPermiss
   }
 
   @Override
-  protected void getTableDaemonHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+  protected void getTableDaemonHasPermission(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
   }
 
   @Override
-  protected void getTableAdministratorHasPermission(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministratorHasPermission(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

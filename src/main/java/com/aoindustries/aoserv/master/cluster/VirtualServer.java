@@ -725,9 +725,13 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     }
     // By Disk Extents
     long totalExtents = 0;
-    for (VirtualDisk virtualDisk : virtualDisks) totalExtents += virtualDisk.extents;
+    for (VirtualDisk virtualDisk : virtualDisks) {
+      totalExtents += virtualDisk.extents;
+    }
     long otherTotalExtents = 0;
-    for (VirtualDisk virtualDisk : other.virtualDisks) otherTotalExtents += virtualDisk.extents;
+    for (VirtualDisk virtualDisk : other.virtualDisks) {
+      otherTotalExtents += virtualDisk.extents;
+    }
     if (totalExtents < otherTotalExtents) {
       return -1;
     }

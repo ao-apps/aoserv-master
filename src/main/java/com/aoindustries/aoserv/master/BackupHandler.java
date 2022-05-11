@@ -26,7 +26,7 @@ package com.aoindustries.aoserv.master;
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoindustries.aoserv.client.linux.PosixPath;
 import com.aoindustries.aoserv.client.schema.Table;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Level;
@@ -83,7 +83,7 @@ public final class BackupHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FILE_BACKUP_SETTINGS,
+        Table.TableId.FILE_BACKUP_SETTINGS,
         PackageHandler.getAccountForPackage(conn, packageNum),
         host,
         false
@@ -117,7 +117,7 @@ public final class BackupHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FILE_BACKUP_SETTINGS,
+        Table.TableId.FILE_BACKUP_SETTINGS,
         PackageHandler.getAccountForPackage(conn, packageNum),
         host,
         false
@@ -168,7 +168,7 @@ public final class BackupHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.FILE_BACKUP_SETTINGS,
+        Table.TableId.FILE_BACKUP_SETTINGS,
         PackageHandler.getAccountForPackage(conn, packageNum),
         host,
         false
@@ -200,7 +200,7 @@ public final class BackupHandler {
     if (DaemonHandler.isDaemonAvailable(linuxServer)) {
       PosixPath path = getPathForBackupPartition(conn, backupPartition);
       try {
-        AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+        AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
         conn.close(); // Don't hold database connection while connecting to the daemon
         return daemonConnector.getDiskDeviceTotalSize(path);
       } catch (IOException | SQLException err) {
@@ -223,7 +223,7 @@ public final class BackupHandler {
     if (DaemonHandler.isDaemonAvailable(linuxServer)) {
       PosixPath path = getPathForBackupPartition(conn, backupPartition);
       try {
-        AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+        AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
         conn.close(); // Don't hold database connection while connecting to the daemon
         return daemonConnector.getDiskDeviceUsedSize(path);
       } catch (IOException | SQLException err) {

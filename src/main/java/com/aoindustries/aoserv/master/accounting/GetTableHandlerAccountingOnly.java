@@ -28,8 +28,8 @@ import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.BankAccountHandler;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -43,7 +43,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 
   /**
    * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
-   * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableID, com.aoindustries.aoserv.client.master.User)}.
+   * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableId, com.aoindustries.aoserv.client.master.User)}.
    * Otherwise, writes an empty table.
    *
    * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)
@@ -54,14 +54,14 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
       RequestSource source,
       StreamableOutput out,
       boolean provideProgress,
-      Table.TableID tableID,
+      Table.TableId tableId,
       User masterUser,
       UserHost[] masterServers
   ) throws IOException, SQLException {
     if (BankAccountHandler.isBankAccounting(conn, source)) {
-      getTableAccounting(conn, source, out, provideProgress, tableID, masterUser);
+      getTableAccounting(conn, source, out, provideProgress, tableId, masterUser);
     } else {
-      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+      AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
     }
   }
 
@@ -76,7 +76,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
       RequestSource source,
       StreamableOutput out,
       boolean provideProgress,
-      Table.TableID tableID,
+      Table.TableId tableId,
       User masterUser
   ) throws IOException, SQLException;
 }

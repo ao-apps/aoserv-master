@@ -53,7 +53,7 @@ import com.aoindustries.aoserv.client.web.tomcat.JkProtocol;
 import com.aoindustries.aoserv.client.web.tomcat.PrivateTomcatSite;
 import com.aoindustries.aoserv.client.web.tomcat.SharedTomcat;
 import com.aoindustries.aoserv.client.web.tomcat.Version;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import com.aoindustries.aoserv.master.dns.DnsService;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -166,7 +166,7 @@ public final class WebHandler {
     }
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_WORKERS,
+        Table.TableId.HTTPD_WORKERS,
         NetBindHandler.getAccountForBind(conn, bind),
         linusServer,
         false
@@ -185,7 +185,7 @@ public final class WebHandler {
     if (isVirtualHostDisabled(conn, virtualHost)) {
       throw new SQLException("Unable to add VirtualHostName, VirtualHost disabled: " + virtualHost);
     }
-    MasterServer.checkAccessHostname(conn, source, "addVirtualHostName", hostname.toString());
+    AoservMaster.checkAccessHostname(conn, source, "addVirtualHostName", hostname.toString());
 
     int virtualHostName = conn.updateInt(
         "INSERT INTO\n"
@@ -203,7 +203,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITE_URLS,
+        Table.TableId.HTTPD_SITE_URLS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -226,16 +226,15 @@ public final class WebHandler {
               + " is not allowed to access httpd_shared_tomcat: action='"
               + action
               + "', id="
-              + sharedTomcat
-      ;
+              + sharedTomcat;
       throw new SQLException(message);
     }
   }
 
   public static boolean canAccessSite(DatabaseConnection conn, RequestSource source, int site) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         return NetHostHandler.canAccessHost(conn, source, getLinuxServerForSite(conn, site));
       } else {
         return true;
@@ -246,9 +245,9 @@ public final class WebHandler {
   }
 
   public static void checkAccessHttpdServer(DatabaseConnection conn, RequestSource source, String action, int httpdServer) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForHttpdServer(conn, httpdServer));
       }
     } else {
@@ -257,9 +256,9 @@ public final class WebHandler {
   }
 
   public static void checkAccessSite(DatabaseConnection conn, RequestSource source, String action, int site) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     if (mu != null) {
-      if (MasterServer.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
+      if (AoservMaster.getUserHosts(conn, source.getCurrentAdministrator()).length != 0) {
         NetHostHandler.checkAccessHost(conn, source, action, getLinuxServerForSite(conn, site));
       }
     } else {
@@ -274,7 +273,7 @@ public final class WebHandler {
   ) throws IOException, SQLException {
     checkAccessHttpdServer(conn, source, "getHttpdServerConcurrency", httpdServer);
 
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(
         conn,
         getLinuxServerForHttpdServer(conn, httpdServer)
     );
@@ -370,7 +369,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+        Table.TableId.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -470,7 +469,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_CONTEXTS,
+        Table.TableId.HTTPD_TOMCAT_CONTEXTS,
         account,
         linuxServer,
         false
@@ -496,7 +495,7 @@ public final class WebHandler {
           tomcatSite,
           checkJkMountPath(path + "/servlet/*")
       );
-      invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
     } else {
       boolean enableCgi = conn.queryBoolean("select enable_cgi from web.\"Site\" where id=?", tomcatSite);
       if (enableCgi) {
@@ -505,7 +504,7 @@ public final class WebHandler {
             tomcatSite,
             checkJkMountPath(path + "/cgi-bin/*")
         );
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
       }
     }
 
@@ -563,7 +562,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
+        Table.TableId.HTTPD_TOMCAT_DATA_SOURCES,
         getAccountForSite(conn, tomcat_site),
         getLinuxServerForSite(conn, tomcat_site),
         false
@@ -608,7 +607,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_PARAMETERS,
+        Table.TableId.HTTPD_TOMCAT_PARAMETERS,
         getAccountForSite(conn, tomcat_site),
         getLinuxServerForSite(conn, tomcat_site),
         false
@@ -636,7 +635,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+        Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
         getAccountForSite(conn, tomcatSite),
         getLinuxServerForSite(conn, tomcatSite),
         false
@@ -658,7 +657,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+        Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
         getAccountForSite(conn, tomcatSite),
         getLinuxServerForSite(conn, tomcatSite),
         false
@@ -730,8 +729,8 @@ public final class WebHandler {
         slashPos = docBaseStr.length();
       }
       String tomcatName = docBaseStr.substring(httpdSharedTomcatsDir.toString().length() + 1, slashPos);
-      int groupLSA = conn.queryInt("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", tomcatName, linuxServer);
-      LinuxAccountHandler.checkAccessUserServer(conn, source, "addCvsRepository", groupLSA);
+      int groupUser = conn.queryInt("select linux_server_account from \"web.tomcat\".\"SharedTomcat\" where name=? and ao_server=?", tomcatName, linuxServer);
+      LinuxAccountHandler.checkAccessUserServer(conn, source, "addCvsRepository", groupUser);
     } else {
       // Allow the example directories
       List<PosixPath> tomcats = conn.queryList(
@@ -791,7 +790,7 @@ public final class WebHandler {
       int ipAddress,
       DomainName primaryHttpHostname,
       DomainName[] altHttpHostnames,
-      int jBossVersion,
+      int jbossVersion,
       int phpVersion,
       boolean enableCgi,
       boolean enableSsi,
@@ -799,7 +798,7 @@ public final class WebHandler {
       boolean enableIndexes,
       boolean enableFollowSymlinks
   ) throws IOException, SQLException {
-    return addHttpdJVMSite(
+    return addHttpdJvmSite(
         "addJbossSite",
         conn,
         source,
@@ -815,7 +814,7 @@ public final class WebHandler {
         primaryHttpHostname,
         altHttpHostnames,
         "jboss",
-        jBossVersion,
+        jbossVersion,
         -1,
         "",
         phpVersion,
@@ -827,7 +826,7 @@ public final class WebHandler {
     );
   }
 
-  private static int addHttpdJVMSite(
+  private static int addHttpdJvmSite(
       String methodName,
       DatabaseConnection conn,
       RequestSource source,
@@ -843,7 +842,7 @@ public final class WebHandler {
       DomainName primaryHttpHostname,
       DomainName[] altHttpHostnames,
       String siteType,
-      int jBossVersion,
+      int jbossVersion,
       int tomcatVersion,
       String sharedTomcatName,
       int phpVersion,
@@ -889,7 +888,7 @@ public final class WebHandler {
       if (tomcatVersion != -1) {
         throw new SQLException("TomcatVersion cannot be supplied for a JBoss site: " + tomcatVersion);
       }
-      tomcatVersion = conn.queryInt("select tomcat_version from \"web.jboss\".\"Version\" where version=?", jBossVersion);
+      tomcatVersion = conn.queryInt("select tomcat_version from \"web.jboss\".\"Version\" where version=?", jbossVersion);
     } else if ("tomcat_shared".equals(siteType)) {
       // Get shared Tomcat id
       sharedTomcatPkey = conn.queryInt(
@@ -899,8 +898,10 @@ public final class WebHandler {
       );
 
       // Check for ties between jvm and site in linux.GroupUser
-      String sharedTomcatUsername = conn.queryString("select lsa.username from \"web.tomcat\".\"SharedTomcat\" hst, linux.\"UserServer\" lsa where hst.linux_server_account = lsa.id and hst.id=?", sharedTomcatPkey);
-      String sharedTomcatLinuxGroup = conn.queryString("select lsg.name from \"web.tomcat\".\"SharedTomcat\" hst, linux.\"GroupServer\" lsg where hst.linux_server_group = lsg.id and hst.id=?", sharedTomcatPkey);
+      String sharedTomcat_username = conn.queryString("select lsa.username from \"web.tomcat\".\"SharedTomcat\" hst, linux.\"UserServer\" lsa"
+          + " where hst.linux_server_account = lsa.id and hst.id=?", sharedTomcatPkey);
+      String sharedTomcat_linuxGroup = conn.queryString("select lsg.name from \"web.tomcat\".\"SharedTomcat\" hst, linux.\"GroupServer\" lsg"
+          + " where hst.linux_server_group = lsg.id and hst.id=?", sharedTomcatPkey);
       boolean hasAccess = conn.queryBoolean(
           "select (\n"
               + "  select\n"
@@ -915,12 +916,12 @@ public final class WebHandler {
               + "      or \"operatingSystemVersion\"=?\n"
               + "    )\n"
               + ") is not null",
-          sharedTomcatLinuxGroup,
+          sharedTomcat_linuxGroup,
           user,
           osv
       );
       if (!hasAccess) {
-        throw new SQLException("linux.User (" + user + ") does not have access to linux.Group (" + sharedTomcatLinuxGroup + ")");
+        throw new SQLException("linux.User (" + user + ") does not have access to linux.Group (" + sharedTomcat_linuxGroup + ")");
       }
       hasAccess = conn.queryBoolean(
           "select (\n"
@@ -937,7 +938,7 @@ public final class WebHandler {
               + "    )\n"
               + ") is not null",
           group,
-          sharedTomcatUsername,
+          sharedTomcat_username,
           osv
       );
       if (!hasAccess) {
@@ -949,11 +950,10 @@ public final class WebHandler {
       }
       tomcatVersion = conn.queryInt("select version from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcatPkey);
     }
-    String tomcatVersionStr = conn.queryString("select version from distribution.\"SoftwareVersion\" where id=?", tomcatVersion);
-    boolean isTomcat4 =
+    final String tomcatVersionStr = conn.queryString("select version from distribution.\"SoftwareVersion\" where id=?", tomcatVersion);
+    final boolean isTomcat4 =
         !tomcatVersionStr.equals(Version.VERSION_3_1)
-            && !tomcatVersionStr.equals(Version.VERSION_3_2_4)
-    ;
+            && !tomcatVersionStr.equals(Version.VERSION_3_2_4);
     if (ipAddress != -1) {
       IpAddressHandler.checkAccessIpAddress(conn, source, methodName, ipAddress);
       // The IP must be on the provided server
@@ -987,41 +987,41 @@ public final class WebHandler {
 
     PackageHandler.checkPackageAccessHost(conn, source, methodName, packageName, linuxServer);
 
-    Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
+    final Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
 
-    Port httpPort;
+    final Port httpPort;
     try {
       httpPort = Port.valueOf(80, com.aoapps.net.Protocol.TCP);
     } catch (ValidationException e) {
       throw new SQLException(e);
     }
 
-    List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
-//    DomainName testURL;
-//    try {
-//      testURL = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForLinuxServer(conn, linuxServer));
-//    } catch (ValidationException e) {
-//      throw new SQLException(e);
-//    }
-//    DNSHandler.addDNSRecord(
-//      conn,
-//      invalidateList,
-//      testURL,
-//      IPAddressHandler.getInetAddressForIPAddress(conn, ipAddress),
-//      tlds
-//    );
+    final List<DomainName> tlds = AoservMaster.getService(DnsService.class).getTopLevelDomains(conn);
+    //DomainName testUrl;
+    //try {
+    //  testUrl = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForLinuxServer(conn, linuxServer));
+    //} catch (ValidationException e) {
+    //  throw new SQLException(e);
+    //}
+    //DNSHandler.addDnsRecord(
+    //  conn,
+    //  invalidateList,
+    //  testUrl,
+    //  IpAddressHandler.getInetAddressForIpAddress(conn, ipAddress),
+    //  tlds
+    //);
 
     // Finish up the security checks with the Connection
-    MasterServer.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
+    AoservMaster.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
     for (DomainName altHttpHostname : altHttpHostnames) {
-      MasterServer.checkAccessHostname(conn, source, methodName, altHttpHostname.toString(), tlds);
+      AoservMaster.checkAccessHostname(conn, source, methodName, altHttpHostname.toString(), tlds);
     }
 
     // Create and/or get the HttpdBind info
-    int httpNetBind = getHttpdBind(conn, invalidateList, packageName, linuxServer, ipAddress, httpPort, AppProtocol.HTTP);
+    final int httpNetBind = getHttpdBind(conn, invalidateList, packageName, linuxServer, ipAddress, httpPort, AppProtocol.HTTP);
 
     // Create the Site
-    int httpdSitePKey = conn.updateInt(
+    final int site_id = conn.updateInt(
         "INSERT INTO web.\"Site\" (\n"
             + "  ao_server,\n"
             + "  \"name\",\n"
@@ -1062,15 +1062,15 @@ public final class WebHandler {
         enableIndexes,
         enableFollowSymlinks
     );
-    invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_SITES, account, linuxServer, false);
 
     // Create the Site
     conn.update(
         "INSERT INTO \"web.tomcat\".\"Site\" (httpd_site, version) VALUES (?,?)",
-        httpdSitePKey,
+        site_id,
         tomcatVersion
     );
-    invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SITES, account, linuxServer, false);
 
     // OperatingSystem settings
     PosixPath httpdSitesDir = OperatingSystemVersion.getHttpdSitesDirectory(osv);
@@ -1102,10 +1102,10 @@ public final class WebHandler {
             + "  " + Context.DEFAULT_WORK_DIR + ",\n"
             + "  " + Context.DEFAULT_SERVER_XML_CONFIGURED + "\n"
             + ")",
-        httpdSitePKey,
+        site_id,
         docBase
     );
-    invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
 
     if (!isTomcat4) {
       conn.update(
@@ -1128,20 +1128,20 @@ public final class WebHandler {
               + "  " + Context.DEFAULT_WORK_DIR + ",\n"
               + "  " + Context.DEFAULT_SERVER_XML_CONFIGURED + "\n"
               + ")",
-          httpdSitePKey,
+          site_id,
           conn.queryString("select install_dir from \"web.tomcat\".\"Version\" where version=?", tomcatVersion) + "/webapps/examples"
       );
-      invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
     }
 
     if ("jboss".equals(siteType)) {
       // Create the Site
-      int wildcardIP = IpAddressHandler.getWildcardIpAddress(conn);
+      int wildcardIp = IpAddressHandler.getWildcardIpAddress(conn);
       int jnpBind = NetBindHandler.allocateBind(
           conn,
           invalidateList,
           linuxServer,
-          wildcardIP,
+          wildcardIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.JNP,
           packageName,
@@ -1151,7 +1151,7 @@ public final class WebHandler {
           conn,
           invalidateList,
           linuxServer,
-          wildcardIP,
+          wildcardIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.WEBSERVER,
           packageName,
@@ -1161,7 +1161,7 @@ public final class WebHandler {
           conn,
           invalidateList,
           linuxServer,
-          wildcardIP,
+          wildcardIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.RMI,
           packageName,
@@ -1171,7 +1171,7 @@ public final class WebHandler {
           conn,
           invalidateList,
           linuxServer,
-          wildcardIP,
+          wildcardIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.HYPERSONIC,
           packageName,
@@ -1181,7 +1181,7 @@ public final class WebHandler {
           conn,
           invalidateList,
           linuxServer,
-          wildcardIP,
+          wildcardIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.JMX,
           packageName,
@@ -1189,8 +1189,8 @@ public final class WebHandler {
       );
       try (PreparedStatement pstmt = conn.getConnection().prepareStatement("insert into \"web.jboss\".\"Site\" values(?,?,?,?,?,?,?)")) {
         try {
-          pstmt.setInt(1, httpdSitePKey);
-          pstmt.setInt(2, jBossVersion);
+          pstmt.setInt(1, site_id);
+          pstmt.setInt(2, jbossVersion);
           pstmt.setInt(3, jnpBind);
           pstmt.setInt(4, webserverBind);
           pstmt.setInt(5, rmiBind);
@@ -1198,19 +1198,19 @@ public final class WebHandler {
           pstmt.setInt(7, jmxBind);
           pstmt.executeUpdate();
         } catch (Error | RuntimeException | SQLException e) {
-          ErrorPrinter.addSQL(e, pstmt);
+          ErrorPrinter.addSql(e, pstmt);
           throw e;
         }
       }
-      invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_JBOSS_SITES, account, linuxServer, false);
     } else if ("tomcat_shared".equals(siteType)) {
       // Create the SharedTomcatSite
       conn.update(
           "insert into \"web.tomcat\".\"SharedTomcatSite\" values(?,?)",
-          httpdSitePKey,
+          site_id,
           sharedTomcatPkey
       );
-      invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
     } else if ("tomcat_standard".equals(siteType)) {
       // Create the PrivateTomcatSite
       if (isTomcat4) {
@@ -1226,24 +1226,24 @@ public final class WebHandler {
         );
         conn.update(
             "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, tomcat4_shutdown_port, tomcat4_shutdown_key, max_post_size) values(?,?,?,?)",
-            httpdSitePKey,
+            site_id,
             shutdownPort,
-            new Identifier(MasterServer.getSecureRandom()).toString(),
+            new Identifier(AoservMaster.getSecureRandom()).toString(),
             PrivateTomcatSite.DEFAULT_MAX_POST_SIZE
         );
       } else {
         conn.update(
             "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, max_post_size) values(?,?)",
-            httpdSitePKey,
+            site_id,
             SharedTomcat.DEFAULT_MAX_POST_SIZE
         );
       }
-      invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
     }
 
     if (!isTomcat4 || !"tomcat_shared".equals(siteType)) {
       // Allocate a Bind for the worker
-      int netBindPKey = NetBindHandler.allocateBind(
+      int netBind_id = NetBindHandler.allocateBind(
           conn,
           invalidateList,
           linuxServer,
@@ -1257,93 +1257,93 @@ public final class WebHandler {
       addTomcatWorker(
           conn,
           invalidateList,
-          netBindPKey,
-          httpdSitePKey
+          netBind_id,
+          site_id
       );
     }
 
     // Create the HTTP VirtualHost
     String siteLogsDir = OperatingSystemVersion.getHttpdSiteLogsDirectory(osv).toString();
-    int httpSiteBindPKey = conn.updateInt(
+    int virtualHost_id = conn.updateInt(
         "INSERT INTO web.\"VirtualHost\" (httpd_site, httpd_bind, access_log, error_log) VALUES (?,?,?,?) RETURNING id",
-        httpdSitePKey,
+        site_id,
         httpNetBind,
         siteLogsDir + '/' + siteName + "/http/access_log",
         siteLogsDir + '/' + siteName + "/http/error_log"
     );
-    invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_BINDS, account, linuxServer, false);
 
     conn.update(
         "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,true)",
-        httpSiteBindPKey,
+        virtualHost_id,
         primaryHttpHostname
     );
     for (DomainName altHttpHostname : altHttpHostnames) {
       conn.update(
           "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
-          httpSiteBindPKey,
+          virtualHost_id,
           altHttpHostname
       );
     }
-//    conn.update(
-//      "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
-//      httpSiteBindPKey,
-//      testURL
-//    );
-    invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, account, linuxServer, false);
+    //conn.update(
+    //  "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
+    //  httpSiteBindPKey,
+    //  testUrl
+    //);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_URLS, account, linuxServer, false);
 
     // Initial HttpdTomcatSiteJkMounts
     if (useApache) {
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/j_security_check")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/servlet/*")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.do")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.jsp")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.jspa")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.jspx")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.vm")
       );
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*.xml")
       );
     } else {
       conn.update(
           "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,TRUE)",
-          httpdSitePKey,
+          site_id,
           checkJkMountPath("/*")
       );
       if (enableCgi) {
         conn.update(
             "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,?,FALSE)",
-            httpdSitePKey,
+            site_id,
             checkJkMountPath("/cgi-bin/*")
         );
       }
@@ -1367,13 +1367,13 @@ public final class WebHandler {
       if (hasPhp) {
         conn.update(
             "insert into \"web.tomcat\".\"JkMount\" (httpd_tomcat_site, path, mount) values (?,'/*.php',FALSE)",
-            httpdSitePKey
+            site_id
         );
       }
     }
-    invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS, account, linuxServer, false);
 
-    return httpdSitePKey;
+    return site_id;
   }
 
   public static int addSharedTomcat(
@@ -1415,20 +1415,19 @@ public final class WebHandler {
     String versionStr = conn.queryString("select version from distribution.\"SoftwareVersion\" where id=?", version);
     boolean isTomcat4 =
         !versionStr.equals(Version.VERSION_3_1)
-            && !versionStr.equals(Version.VERSION_3_2_4)
-    ;
+            && !versionStr.equals(Version.VERSION_3_2_4);
 
     int sharedTomcat;
     if (isTomcat4) {
       Account.Name packageName = LinuxAccountHandler.getPackageForGroup(conn, group);
-      int loopbackIP = IpAddressHandler.getLoopbackIpAddress(conn, linuxServer);
+      int loopbackIp = IpAddressHandler.getLoopbackIpAddress(conn, linuxServer);
 
       // Allocate a Bind for the worker
-      int hwBindPKey = NetBindHandler.allocateBind(
+      int hwBindId = NetBindHandler.allocateBind(
           conn,
           invalidateList,
           linuxServer,
-          loopbackIP,
+          loopbackIp,
           com.aoapps.net.Protocol.TCP,
           JkProtocol.AJP13,
           packageName,
@@ -1439,16 +1438,16 @@ public final class WebHandler {
       addTomcatWorker(
           conn,
           invalidateList,
-          hwBindPKey,
+          hwBindId,
           -1
       );
 
       // Allocate the shutdown port
-      int shutdownBindPKey = NetBindHandler.allocateBind(
+      int shutdownBindId = NetBindHandler.allocateBind(
           conn,
           invalidateList,
           linuxServer,
-          loopbackIP,
+          loopbackIp,
           com.aoapps.net.Protocol.TCP,
           AppProtocol.TOMCAT4_SHUTDOWN,
           packageName,
@@ -1484,9 +1483,9 @@ public final class WebHandler {
           version,
           userServer,
           groupServer,
-          hwBindPKey,
-          shutdownBindPKey,
-          new Identifier(MasterServer.getSecureRandom()).toString(),
+          hwBindId,
+          shutdownBindId,
+          new Identifier(AoservMaster.getSecureRandom()).toString(),
           SharedTomcat.DEFAULT_MAX_POST_SIZE
       );
     } else {
@@ -1519,7 +1518,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         AccountUserHandler.getAccountForUser(conn, user),
         linuxServer,
         false
@@ -1552,7 +1551,7 @@ public final class WebHandler {
       boolean enableIndexes,
       boolean enableFollowSymlinks
   ) throws IOException, SQLException {
-    return addHttpdJVMSite(
+    return addHttpdJvmSite(
         "addSharedTomcatSite",
         conn,
         source,
@@ -1605,7 +1604,7 @@ public final class WebHandler {
       boolean enableIndexes,
       boolean enableFollowSymlinks
   ) throws IOException, SQLException {
-    return addHttpdJVMSite(
+    return addHttpdJvmSite(
         "addPrivateTomcatSite",
         conn,
         source,
@@ -1655,7 +1654,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -1691,7 +1690,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -1721,7 +1720,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITE_BINDS,
+        Table.TableId.HTTPD_SITE_BINDS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -1757,7 +1756,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         PackageHandler.getAccountForPackage(conn, pk),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -1793,7 +1792,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         PackageHandler.getAccountForPackage(conn, pk),
         getLinuxServerForSite(conn, site),
         false
@@ -1825,7 +1824,7 @@ public final class WebHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITE_BINDS,
+        Table.TableId.HTTPD_SITE_BINDS,
         getAccountForSite(conn, hs),
         getLinuxServerForSite(conn, hs),
         false
@@ -1842,8 +1841,8 @@ public final class WebHandler {
     sorted.addAll(names);
 
     // OperatingSystem settings
-    PosixPath httpdSharedTomcatsDirCentOS5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-    PosixPath httpdSharedTomcatsDirCentOS7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+    PosixPath httpdSharedTomcatsDirCentos5 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+    PosixPath httpdSharedTomcatsDirCentos7 = OperatingSystemVersion.getHttpdSharedTomcatsDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
     // Find one that is not used
     String goodOne = null;
@@ -1853,11 +1852,11 @@ public final class WebHandler {
         throw new SQLException("Invalid shared Tomcat name: " + name);
       }
       if (!sorted.contains(name)) {
-        PosixPath wwwgroupDirCentOS5;
-        PosixPath wwwgroupDirCentOS7;
+        PosixPath wwwgroupDirCentos5;
+        PosixPath wwwgroupDirCentos7;
         try {
-          wwwgroupDirCentOS5 = PosixPath.valueOf(httpdSharedTomcatsDirCentOS5 + "/" + name);
-          wwwgroupDirCentOS7 = PosixPath.valueOf(httpdSharedTomcatsDirCentOS7 + "/" + name);
+          wwwgroupDirCentos5 = PosixPath.valueOf(httpdSharedTomcatsDirCentos5 + "/" + name);
+          wwwgroupDirCentos7 = PosixPath.valueOf(httpdSharedTomcatsDirCentos7 + "/" + name);
         } catch (ValidationException e) {
           throw new SQLException(e);
         }
@@ -1870,13 +1869,13 @@ public final class WebHandler {
                     + "  linux.\"UserServer\"\n"
                     + "where\n"
                     + "  home=?\n"
-                    + "  or substring(home from 1 for " + (wwwgroupDirCentOS5.toString().length() + 1) + ")=?\n"
+                    + "  or substring(home from 1 for " + (wwwgroupDirCentos5.toString().length() + 1) + ")=?\n"
                     + "  or home=?\n"
-                    + "  or substring(home from 1 for " + (wwwgroupDirCentOS7.toString().length() + 1) + ")=?",
-                wwwgroupDirCentOS5,
-                wwwgroupDirCentOS5 + "/",
-                wwwgroupDirCentOS7,
-                wwwgroupDirCentOS7 + "/"
+                    + "  or substring(home from 1 for " + (wwwgroupDirCentos7.toString().length() + 1) + ")=?",
+                wwwgroupDirCentos5,
+                wwwgroupDirCentos5 + "/",
+                wwwgroupDirCentos7,
+                wwwgroupDirCentos7 + "/"
             ) == 0
                 // Must also not be found in account.User.username
                 && conn.queryInt("select count(*) from account.\"User\" where username=?", name) == 0
@@ -1910,8 +1909,8 @@ public final class WebHandler {
     sorted.addAll(names);
 
     // OperatingSystem settings
-    PosixPath httpdSitesDirCentOS5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
-    PosixPath httpdSitesDirCentOS7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
+    PosixPath httpdSitesDirCentos5 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_5_I686_AND_X86_64);
+    PosixPath httpdSitesDirCentos7 = OperatingSystemVersion.getHttpdSitesDirectory(OperatingSystemVersion.CENTOS_7_X86_64);
 
     // Find one that is not used
     String goodOne = null;
@@ -1922,11 +1921,11 @@ public final class WebHandler {
       }
       if (!sorted.contains(name)) {
         // Must also not be found in linux.UserServer.home on CentOS 5 or CentOS 7
-        PosixPath wwwDirCentOS5;
-        PosixPath wwwDirCentOS7;
+        PosixPath wwwDirCentos5;
+        PosixPath wwwDirCentos7;
         try {
-          wwwDirCentOS5 = PosixPath.valueOf(httpdSitesDirCentOS5 + "/" + name);
-          wwwDirCentOS7 = PosixPath.valueOf(httpdSitesDirCentOS7 + "/" + name);
+          wwwDirCentos5 = PosixPath.valueOf(httpdSitesDirCentos5 + "/" + name);
+          wwwDirCentos7 = PosixPath.valueOf(httpdSitesDirCentos7 + "/" + name);
         } catch (ValidationException e) {
           throw new SQLException(e);
         }
@@ -1937,13 +1936,13 @@ public final class WebHandler {
                 + "  linux.\"UserServer\"\n"
                 + "where\n"
                 + "  home=?\n"
-                + "  or substring(home from 1 for " + (wwwDirCentOS5.toString().length() + 1) + ")=?\n"
+                + "  or substring(home from 1 for " + (wwwDirCentos5.toString().length() + 1) + ")=?\n"
                 + "  or home=?\n"
-                + "  or substring(home from 1 for " + (wwwDirCentOS7.toString().length() + 1) + ")=?",
-            wwwDirCentOS5,
-            wwwDirCentOS5 + "/",
-            wwwDirCentOS7,
-            wwwDirCentOS7 + "/"
+                + "  or substring(home from 1 for " + (wwwDirCentos7.toString().length() + 1) + ")=?",
+            wwwDirCentos5,
+            wwwDirCentos5 + "/",
+            wwwDirCentos7,
+            wwwDirCentos7 + "/"
         );
         if (count == 0) {
           goodOne = name;
@@ -2183,16 +2182,16 @@ public final class WebHandler {
     ).initializeHttpdSitePasswdFile(sitePKey, username, encPassword);
   }*/
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.HTTPD_SHARED_TOMCATS) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.HTTPD_SHARED_TOMCATS) {
       synchronized (WebHandler.class) {
         disabledSharedTomcats.clear();
       }
-    } else if (tableID == Table.TableID.HTTPD_SITE_BINDS) {
+    } else if (tableId == Table.TableId.HTTPD_SITE_BINDS) {
       synchronized (WebHandler.class) {
         disabledVirtualHosts.clear();
       }
-    } else if (tableID == Table.TableID.HTTPD_SITES) {
+    } else if (tableId == Table.TableId.HTTPD_SITES) {
       synchronized (WebHandler.class) {
         disabledSites.clear();
       }
@@ -2247,14 +2246,14 @@ public final class WebHandler {
   }
 
   /**
-   * Starts up a Java VM
+   * Starts up a Java VM.
    */
-  public static String startJVM(
+  public static String startJvm(
       DatabaseConnection conn,
       RequestSource source,
       int tomcatSite
   ) throws IOException, SQLException {
-    checkAccessSite(conn, source, "startJVM", tomcatSite);
+    checkAccessSite(conn, source, "startJvm", tomcatSite);
     if (isSiteDisabled(conn, tomcatSite)) {
       throw new SQLException("Unable to start JVM, Site disabled: " + tomcatSite);
     }
@@ -2263,20 +2262,20 @@ public final class WebHandler {
     int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
     // Contact the daemon and start the JVM
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
-    return daemonConnector.startJVM(tomcatSite);
+    return daemonConnector.startJvm(tomcatSite);
   }
 
   /**
-   * Stops up a Java VM
+   * Stops up a Java VM.
    */
-  public static String stopJVM(
+  public static String stopJvm(
       DatabaseConnection conn,
       RequestSource source,
       int tomcatSite
   ) throws IOException, SQLException {
-    checkAccessSite(conn, source, "stopJVM", tomcatSite);
+    checkAccessSite(conn, source, "stopJvm", tomcatSite);
     // Can only stop the daemon if can access the shared linux account
     if (conn.queryBoolean("select (select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?) is not null", tomcatSite)) {
       int userServer = conn.queryInt(
@@ -2290,16 +2289,16 @@ public final class WebHandler {
               + "  and htss.httpd_shared_tomcat=hst.id",
           tomcatSite
       );
-      LinuxAccountHandler.checkAccessUserServer(conn, source, "stopJVM", userServer);
+      LinuxAccountHandler.checkAccessUserServer(conn, source, "stopJvm", userServer);
     }
 
     // Get the server and siteName for the site
     int linuxServer = getLinuxServerForSite(conn, tomcatSite);
 
     // Contact the daemon and start the JVM
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
-    return daemonConnector.stopJVM(tomcatSite);
+    return daemonConnector.stopJvm(tomcatSite);
   }
 
   /**
@@ -2312,7 +2311,7 @@ public final class WebHandler {
   ) throws IOException, SQLException {
     NetHostHandler.checkAccessHost(conn, source, "waitForHttpdSiteRebuild", linuxServer);
     NetHostHandler.waitForInvalidates(linuxServer);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.waitForHttpdSiteRebuild();
   }
@@ -2329,7 +2328,7 @@ public final class WebHandler {
     // First, find the net_bind
     int netBind;
     try (
-      PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+        PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
             "select id, app_protocol from net.\"Bind\" where server=? and \"ipAddress\"=? and port=?::\"com.aoapps.net\".\"Port\" and net_protocol=?::\"com.aoapps.net\".\"Protocol\""
         )
         ) {
@@ -2363,7 +2362,7 @@ public final class WebHandler {
           }
         }
       } catch (Error | RuntimeException | SQLException e) {
-        ErrorPrinter.addSQL(e, pstmt);
+        ErrorPrinter.addSql(e, pstmt);
         throw e;
       }
     }
@@ -2382,7 +2381,7 @@ public final class WebHandler {
       Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_BINDS,
+          Table.TableId.NET_BINDS,
           business,
           linuxServer,
           false
@@ -2399,7 +2398,7 @@ public final class WebHandler {
       );
       invalidateList.addTable(
           conn,
-          Table.TableID.NET_BIND_FIREWALLD_ZONES,
+          Table.TableId.NET_BIND_FIREWALLD_ZONES,
           business,
           linuxServer,
           false
@@ -2427,7 +2426,7 @@ public final class WebHandler {
       int lowestId = -1;
       int lowestCount = Integer.MAX_VALUE;
       try (
-        PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+          PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
               "select\n"
                   + "  hs.id,\n"
                   + "  (\n"
@@ -2470,7 +2469,7 @@ public final class WebHandler {
             }
           }
         } catch (Error | RuntimeException | SQLException e) {
-          ErrorPrinter.addSQL(e, pstmt);
+          ErrorPrinter.addSql(e, pstmt);
           throw e;
         }
       }
@@ -2488,21 +2487,21 @@ public final class WebHandler {
     Account.Name business = PackageHandler.getAccountForPackage(conn, packageName);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_BINDS,
+        Table.TableId.HTTPD_BINDS,
         business,
         linuxServer,
         false
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BINDS,
+        Table.TableId.NET_BINDS,
         business,
         linuxServer,
         false
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.NET_BIND_FIREWALLD_ZONES,
+        Table.TableId.NET_BIND_FIREWALLD_ZONES,
         business,
         linuxServer,
         false
@@ -2527,16 +2526,16 @@ public final class WebHandler {
       InvalidateList invalidateList,
       int sharedTomcat
   ) throws IOException, SQLException {
-    Account.Name account = getAccountForSharedTomcat(conn, sharedTomcat);
-    int linuxServer = getLinuxServerForSharedTomcat(conn, sharedTomcat);
+    final Account.Name account = getAccountForSharedTomcat(conn, sharedTomcat);
+    final int linuxServer = getLinuxServerForSharedTomcat(conn, sharedTomcat);
 
-    int tomcat4Worker = conn.queryInt("select coalesce(tomcat4_worker, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
-    int tomcat4ShutdownPort = conn.queryInt("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
+    final int tomcat4Worker = conn.queryInt("select coalesce(tomcat4_worker, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
+    final int tomcat4ShutdownPort = conn.queryInt("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
 
     conn.update("delete from \"web.tomcat\".\"SharedTomcat\" where id=?", sharedTomcat);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         account,
         linuxServer,
         false
@@ -2544,17 +2543,17 @@ public final class WebHandler {
 
     if (tomcat4Worker != -1) {
       conn.update("delete from \"web.tomcat\".\"Worker\" where bind=?", tomcat4Worker);
-      invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_WORKERS, account, linuxServer, false);
 
       conn.update("delete from net.\"Bind\" where id=?", tomcat4Worker);
-      invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
-      invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.NET_BINDS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
     }
 
     if (tomcat4ShutdownPort != -1) {
       conn.update("delete from net.\"Bind\" where id=?", tomcat4ShutdownPort);
-      invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
-      invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.NET_BINDS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
     }
   }
 
@@ -2643,32 +2642,32 @@ public final class WebHandler {
 
     // web.Location
     if (conn.update("delete from web.\"Location\" where httpd_site=?", site) > 0) {
-      invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_AUTHENTICATED_LOCATIONS, account, linuxServer, false);
     }
 
     // web.VirtualHost
     IntList httpdSiteBinds = conn.queryIntList("select id from web.\"VirtualHost\" where httpd_site=?", site);
     if (!httpdSiteBinds.isEmpty()) {
-      DnsService dnsService = MasterServer.getService(DnsService.class);
-      List<DomainName> tlds = dnsService.getDNSTLDs(conn);
+      DnsService dnsService = AoservMaster.getService(DnsService.class);
+      List<DomainName> tlds = dnsService.getTopLevelDomains(conn);
       SortedIntArrayList httpdBinds = new SortedIntArrayList();
       for (int c = 0; c < httpdSiteBinds.size(); c++) {
         int httpdSiteBind = httpdSiteBinds.getInt(c);
 
         // web.VirtualHostName
-        IntList httpdSiteURLs = conn.queryIntList("select id from web.\"VirtualHostName\" where httpd_site_bind=?", httpdSiteBind);
-        for (int d = 0; d < httpdSiteURLs.size(); d++) {
-          int httpdSiteURL = httpdSiteURLs.getInt(d);
+        IntList virtualHostNames = conn.queryIntList("select id from web.\"VirtualHostName\" where httpd_site_bind=?", httpdSiteBind);
+        for (int d = 0; d < virtualHostNames.size(); d++) {
+          int httpdSiteUrl = virtualHostNames.getInt(d);
 
           // dns.Record
           DomainName hostname = conn.queryObject(
               ObjectFactories.domainNameFactory,
               "select hostname from web.\"VirtualHostName\" where id=?",
-              httpdSiteURL
+              httpdSiteUrl
           );
-          conn.update("delete from web.\"VirtualHostName\" where id=?", httpdSiteURL);
-          invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_URLS, account, linuxServer, false);
-          dnsService.removeUnusedDNSRecord(conn, invalidateList, hostname, tlds);
+          conn.update("delete from web.\"VirtualHostName\" where id=?", httpdSiteUrl);
+          invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_URLS, account, linuxServer, false);
+          dnsService.removeUnusedDnsRecord(conn, invalidateList, hostname, tlds);
         }
 
         int hb = conn.queryInt("select httpd_bind from web.\"VirtualHost\" where id=?", httpdSiteBind);
@@ -2677,9 +2676,9 @@ public final class WebHandler {
         }
       }
       conn.update("delete from web.\"VirtualHost\" where httpd_site=?", site);
-      invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BINDS, account, linuxServer, false);
-      invalidateList.addTable(conn, Table.TableID.HTTPD_SITE_BIND_HEADERS, account, linuxServer, false);
-      invalidateList.addTable(conn, Table.TableID.RewriteRule, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_BINDS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_BIND_HEADERS, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.RewriteRule, account, linuxServer, false);
 
       for (int c = 0; c < httpdBinds.size(); c++) {
         int httpdBind = httpdBinds.getInt(c);
@@ -2727,7 +2726,7 @@ public final class WebHandler {
         for (int c = 0; c < htdss.size(); c++) {
           conn.update("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", htdss.getInt(c));
         }
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_DATA_SOURCES, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_DATA_SOURCES, account, linuxServer, false);
       }
 
       // web.tomcat.ContextParameter
@@ -2736,7 +2735,7 @@ public final class WebHandler {
         for (int c = 0; c < htps.size(); c++) {
           conn.update("delete from \"web.tomcat\".\"ContextParameter\" where id=?", htps.getInt(c));
         }
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_PARAMETERS, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_PARAMETERS, account, linuxServer, false);
       }
 
       // web.tomcat.Context
@@ -2745,7 +2744,7 @@ public final class WebHandler {
         for (int c = 0; c < htcs.size(); c++) {
           conn.update("delete from \"web.tomcat\".\"Context\" where id=?", htcs.getInt(c));
         }
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_CONTEXTS, account, linuxServer, false);
       }
 
       // web.tomcat.Worker
@@ -2756,12 +2755,12 @@ public final class WebHandler {
           conn.update("delete from \"web.tomcat\".\"Worker\" where bind=?", bind);
           NetBindHandler.removeBind(conn, invalidateList, bind);
         }
-        invalidateList.addTable(conn, Table.TableID.HTTPD_WORKERS, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_WORKERS, account, linuxServer, false);
       }
 
       // web.tomcat.SharedTomcatSite
       if (conn.update("delete from \"web.tomcat\".\"SharedTomcatSite\" where tomcat_site=?", site) > 0) {
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SHARED_SITES, account, linuxServer, false);
       }
 
       // web.tomcat.PrivateTomcatSite
@@ -2769,26 +2768,26 @@ public final class WebHandler {
         int tomcat4ShutdownPort = conn.queryInt("select coalesce(tomcat4_shutdown_port, -1) from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", site);
 
         conn.update("delete from \"web.tomcat\".\"PrivateTomcatSite\" where tomcat_site=?", site);
-        invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_STD_SITES, account, linuxServer, false);
 
         if (tomcat4ShutdownPort != -1) {
           conn.update("delete from net.\"Bind\" where id=?", tomcat4ShutdownPort);
-          invalidateList.addTable(conn, Table.TableID.NET_BINDS, account, linuxServer, false);
-          invalidateList.addTable(conn, Table.TableID.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
+          invalidateList.addTable(conn, Table.TableId.NET_BINDS, account, linuxServer, false);
+          invalidateList.addTable(conn, Table.TableId.NET_BIND_FIREWALLD_ZONES, account, linuxServer, false);
         }
       }
 
       // web.jboss.Site
       if (conn.queryBoolean("select (select tomcat_site from \"web.jboss\".\"Site\" where tomcat_site=? limit 1) is not null", site)) {
         // net.Bind
-        int jnp_bind = conn.queryInt("select jnp_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
-        int webserver_bind = conn.queryInt("select webserver_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
-        int rmi_bind = conn.queryInt("select rmi_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
-        int hypersonic_bind = conn.queryInt("select hypersonic_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
-        int jmx_bind = conn.queryInt("select jmx_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+        final int jnp_bind = conn.queryInt("select jnp_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+        final int webserver_bind = conn.queryInt("select webserver_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+        final int rmi_bind = conn.queryInt("select rmi_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+        final int hypersonic_bind = conn.queryInt("select hypersonic_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
+        final int jmx_bind = conn.queryInt("select jmx_bind from \"web.jboss\".\"Site\" where tomcat_site=?", site);
 
         conn.update("delete from \"web.jboss\".\"Site\" where tomcat_site=?", site);
-        invalidateList.addTable(conn, Table.TableID.HTTPD_JBOSS_SITES, account, linuxServer, false);
+        invalidateList.addTable(conn, Table.TableId.HTTPD_JBOSS_SITES, account, linuxServer, false);
         NetBindHandler.removeBind(conn, invalidateList, jnp_bind);
         NetBindHandler.removeBind(conn, invalidateList, webserver_bind);
         NetBindHandler.removeBind(conn, invalidateList, rmi_bind);
@@ -2797,17 +2796,17 @@ public final class WebHandler {
       }
 
       conn.update("delete from \"web.tomcat\".\"Site\" where httpd_site=?", site);
-      invalidateList.addTable(conn, Table.TableID.HTTPD_TOMCAT_SITES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_TOMCAT_SITES, account, linuxServer, false);
     }
 
     // web.StaticSite
     if (conn.update("delete from web.\"StaticSite\" where httpd_site=?", site) != 0) {
-      invalidateList.addTable(conn, Table.TableID.HTTPD_STATIC_SITES, account, linuxServer, false);
+      invalidateList.addTable(conn, Table.TableId.HTTPD_STATIC_SITES, account, linuxServer, false);
     }
 
     // web.Site
     conn.update("delete from web.\"Site\" where id=?", site);
-    invalidateList.addTable(conn, Table.TableID.HTTPD_SITES, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_SITES, account, linuxServer, false);
   }
 
   public static void removeHttpdServer(DatabaseConnection conn, InvalidateList invalidateList, int httpdServer) throws IOException, SQLException {
@@ -2816,7 +2815,7 @@ public final class WebHandler {
 
     // web.Site
     conn.update("delete from web.\"HttpdServer\" where id=?", httpdServer);
-    invalidateList.addTable(conn, Table.TableID.HTTPD_SERVERS, account, linuxServer, false);
+    invalidateList.addTable(conn, Table.TableId.HTTPD_SERVERS, account, linuxServer, false);
   }
 
   public static void removeLocation(
@@ -2834,7 +2833,7 @@ public final class WebHandler {
     conn.update("delete from web.\"Location\" where id=?", location);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+        Table.TableId.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
         account,
         linuxServer,
         false
@@ -2869,7 +2868,7 @@ public final class WebHandler {
 
     conn.update("delete from web.\"VirtualHostName\" where id=?", virtualHostName);
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_URLS,
+        Table.TableId.HTTPD_SITE_URLS,
         getAccountForSite(conn, hs),
         getLinuxServerForSite(conn, hs),
         false
@@ -2895,7 +2894,7 @@ public final class WebHandler {
     if (conn.update("delete from \"web.tomcat\".\"ContextDataSource\" where tomcat_context=?", context) > 0) {
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
+          Table.TableId.HTTPD_TOMCAT_DATA_SOURCES,
           account,
           linuxServer,
           false
@@ -2905,7 +2904,7 @@ public final class WebHandler {
     if (conn.update("delete from \"web.tomcat\".\"ContextParameter\" where tomcat_context=?", context) > 0) {
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_TOMCAT_PARAMETERS,
+          Table.TableId.HTTPD_TOMCAT_PARAMETERS,
           account,
           linuxServer,
           false
@@ -2915,7 +2914,7 @@ public final class WebHandler {
     conn.update("delete from \"web.tomcat\".\"Context\" where id=?", context);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_CONTEXTS,
+        Table.TableId.HTTPD_TOMCAT_CONTEXTS,
         account,
         linuxServer,
         false
@@ -2931,7 +2930,7 @@ public final class WebHandler {
     ) {
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+          Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
           account,
           linuxServer,
           false
@@ -2955,7 +2954,7 @@ public final class WebHandler {
     conn.update("delete from \"web.tomcat\".\"ContextDataSource\" where id=?", contextDataSource);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
+        Table.TableId.HTTPD_TOMCAT_DATA_SOURCES,
         account,
         linuxServer,
         false
@@ -2978,7 +2977,7 @@ public final class WebHandler {
     conn.update("delete from \"web.tomcat\".\"ContextParameter\" where id=?", contextParameter);
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_PARAMETERS,
+        Table.TableId.HTTPD_TOMCAT_PARAMETERS,
         account,
         linuxServer,
         false
@@ -3022,7 +3021,7 @@ public final class WebHandler {
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_DATA_SOURCES,
+        Table.TableId.HTTPD_TOMCAT_DATA_SOURCES,
         account,
         linuxServer,
         false
@@ -3056,7 +3055,7 @@ public final class WebHandler {
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_PARAMETERS,
+        Table.TableId.HTTPD_TOMCAT_PARAMETERS,
         account,
         linuxServer,
         false
@@ -3072,7 +3071,7 @@ public final class WebHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to restart Apache on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.restartApache();
   }
@@ -3097,7 +3096,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -3121,31 +3120,31 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
     );
   }
 
-  public static void setSharedTomcatUnpackWARs(
+  public static void setSharedTomcatUnpackWars(
       DatabaseConnection conn,
       RequestSource source,
       InvalidateList invalidateList,
       int sharedTomcat,
-      boolean unpackWARs
+      boolean unpackWars
   ) throws IOException, SQLException {
-    checkAccessSharedTomcat(conn, source, "setSharedTomcatUnpackWARs", sharedTomcat);
+    checkAccessSharedTomcat(conn, source, "setSharedTomcatUnpackWars", sharedTomcat);
 
     // Update the database
     conn.update(
         "update \"web.tomcat\".\"SharedTomcat\" set unpack_wars=? where id=?",
-        unpackWARs,
+        unpackWars,
         sharedTomcat
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -3169,7 +3168,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -3193,7 +3192,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         getLinuxServerForSharedTomcat(conn, sharedTomcat),
         false
@@ -3279,13 +3278,13 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SHARED_TOMCATS,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         linuxServer,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_SITES,
+        Table.TableId.HTTPD_TOMCAT_SITES,
         InvalidateList.allAccounts, // TODO: Could be more selective here
         linuxServer,
         false
@@ -3373,7 +3372,7 @@ public final class WebHandler {
     }
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
+        Table.TableId.HTTPD_SITE_AUTHENTICATED_LOCATIONS,
         getAccountForSite(conn, httpd_site),
         getLinuxServerForSite(conn, httpd_site),
         false
@@ -3401,7 +3400,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_BINDS,
+        Table.TableId.HTTPD_SITE_BINDS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3429,7 +3428,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_BINDS,
+        Table.TableId.HTTPD_SITE_BINDS,
         getAccountForSite(conn, hs),
         getLinuxServerForSite(conn, hs),
         false
@@ -3461,7 +3460,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_BINDS,
+        Table.TableId.HTTPD_SITE_BINDS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3488,7 +3487,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3516,7 +3515,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3574,7 +3573,7 @@ public final class WebHandler {
       Account.Name account = getAccountForSite(conn, site);
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_SITES,
+          Table.TableId.HTTPD_SITES,
           account,
           linuxServer,
           false
@@ -3626,7 +3625,7 @@ public final class WebHandler {
           );
           invalidateList.addTable(
               conn,
-              Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+              Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
               account,
               linuxServer,
               false
@@ -3642,7 +3641,7 @@ public final class WebHandler {
         ) {
           invalidateList.addTable(
               conn,
-              Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+              Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
               account,
               linuxServer,
               false
@@ -3679,7 +3678,7 @@ public final class WebHandler {
       int linuxServer = getLinuxServerForSite(conn, site);
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_SITES,
+          Table.TableId.HTTPD_SITES,
           account,
           linuxServer,
           false
@@ -3706,7 +3705,7 @@ public final class WebHandler {
       }
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+          Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
           account,
           linuxServer,
           false
@@ -3731,7 +3730,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3755,7 +3754,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3779,7 +3778,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3803,7 +3802,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3827,7 +3826,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3851,7 +3850,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3875,7 +3874,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3899,7 +3898,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -3923,7 +3922,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITES,
+        Table.TableId.HTTPD_SITES,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -4015,7 +4014,7 @@ public final class WebHandler {
 
         pstmt.executeUpdate();
       } catch (Error | RuntimeException | SQLException e) {
-        ErrorPrinter.addSQL(e, pstmt);
+        ErrorPrinter.addSql(e, pstmt);
         throw e;
       }
     }
@@ -4035,7 +4034,7 @@ public final class WebHandler {
     ) {
       invalidateList.addTable(
           conn,
-          Table.TableID.HTTPD_TOMCAT_SITE_JK_MOUNTS,
+          Table.TableId.HTTPD_TOMCAT_SITE_JK_MOUNTS,
           account,
           linuxServer,
           false
@@ -4044,7 +4043,7 @@ public final class WebHandler {
 
     invalidateList.addTable(
         conn,
-        Table.TableID.HTTPD_TOMCAT_CONTEXTS,
+        Table.TableId.HTTPD_TOMCAT_CONTEXTS,
         account,
         linuxServer,
         false
@@ -4075,26 +4074,26 @@ public final class WebHandler {
       throw new SQLException("Unexpected updateCount: " + updateCount);
     }
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_STD_SITES,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
         getAccountForSite(conn, privateTomcatSite),
         getLinuxServerForSite(conn, privateTomcatSite),
         false
     );
   }
 
-  public static void setPrivateTomcatSiteUnpackWARs(
+  public static void setPrivateTomcatSiteUnpackWars(
       DatabaseConnection conn,
       RequestSource source,
       InvalidateList invalidateList,
       int privateTomcatSite,
-      boolean unpackWARs
+      boolean unpackWars
   ) throws IOException, SQLException {
-    checkAccessSite(conn, source, "setPrivateTomcatSiteUnpackWARs", privateTomcatSite);
+    checkAccessSite(conn, source, "setPrivateTomcatSiteUnpackWars", privateTomcatSite);
 
     // Update the database
     int updateCount = conn.update(
         "update \"web.tomcat\".\"PrivateTomcatSite\" set unpack_wars=? where tomcat_site=?",
-        unpackWARs,
+        unpackWars,
         privateTomcatSite
     );
     if (updateCount == 0) {
@@ -4104,7 +4103,7 @@ public final class WebHandler {
       throw new SQLException("Unexpected updateCount: " + updateCount);
     }
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_STD_SITES,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
         getAccountForSite(conn, privateTomcatSite),
         getLinuxServerForSite(conn, privateTomcatSite),
         false
@@ -4133,7 +4132,7 @@ public final class WebHandler {
       throw new SQLException("Unexpected updateCount: " + updateCount);
     }
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_STD_SITES,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
         getAccountForSite(conn, privateTomcatSite),
         getLinuxServerForSite(conn, privateTomcatSite),
         false
@@ -4162,7 +4161,7 @@ public final class WebHandler {
       throw new SQLException("Unexpected updateCount: " + updateCount);
     }
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_STD_SITES,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
         getAccountForSite(conn, privateTomcatSite),
         getLinuxServerForSite(conn, privateTomcatSite),
         false
@@ -4230,7 +4229,7 @@ public final class WebHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_SITES,
+        Table.TableId.HTTPD_TOMCAT_SITES,
         getAccountForSite(conn, privateTomcatSite),
         linuxServer,
         false
@@ -4250,7 +4249,7 @@ public final class WebHandler {
     conn.update("update web.\"VirtualHostName\" set is_primary=false where is_primary and httpd_site_bind=?", virtualHost);
     conn.update("update web.\"VirtualHostName\" set is_primary=true where id=? and httpd_site_bind=?", virtualHostName, virtualHost);
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_SITE_URLS,
+        Table.TableId.HTTPD_SITE_URLS,
         getAccountForSite(conn, site),
         getLinuxServerForSite(conn, site),
         false
@@ -4279,7 +4278,7 @@ public final class WebHandler {
       throw new SQLException("Unexpected updateCount: " + updateCount);
     }
     invalidateList.addTable(conn,
-        Table.TableID.HTTPD_TOMCAT_SITES,
+        Table.TableId.HTTPD_TOMCAT_SITES,
         getAccountForSite(conn, tomcatSite),
         getLinuxServerForSite(conn, tomcatSite),
         false
@@ -4295,7 +4294,7 @@ public final class WebHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to start Apache on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.startApache();
   }
@@ -4309,12 +4308,12 @@ public final class WebHandler {
     if (!canControl) {
       throw new SQLException("Not allowed to stop Apache on " + linuxServer);
     }
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn, linuxServer);
     conn.close(); // Don't hold database connection while connecting to the daemon
     daemonConnector.stopApache();
   }
 
-  public static void getAWStatsFile(
+  public static void getAwstatsFile(
       DatabaseConnection conn,
       RequestSource source,
       int site,
@@ -4322,13 +4321,13 @@ public final class WebHandler {
       String queryString,
       StreamableOutput out
   ) throws IOException, SQLException {
-    checkAccessSite(conn, source, "getAWStatsFile", site);
+    checkAccessSite(conn, source, "getAwstatsFile", site);
 
     String siteName = getNameForSite(conn, site);
-    AOServDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
+    AoservDaemonConnector daemonConnector = DaemonHandler.getDaemonConnector(conn,
         getLinuxServerForSite(conn, site)
     );
     conn.close(); // Don't hold database connection while connecting to the daemon
-    daemonConnector.getAWStatsFile(siteName, path, queryString, out);
+    daemonConnector.getAwstatsFile(siteName, path, queryString, out);
   }
 }

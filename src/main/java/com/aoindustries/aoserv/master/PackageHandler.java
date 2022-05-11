@@ -96,8 +96,7 @@ public final class PackageHandler {
               + " is not allowed to access package: action='"
               + action
               + ", name="
-              + packageName
-      ;
+              + packageName;
       throw new SQLException(message);
     }
   }
@@ -110,8 +109,7 @@ public final class PackageHandler {
               + " is not allowed to access package: action='"
               + action
               + ", id="
-              + packageId
-      ;
+              + packageId;
       throw new SQLException(message);
     }
   }
@@ -124,8 +122,7 @@ public final class PackageHandler {
               + " is not allowed to access package: action='"
               + action
               + ", id="
-              + packageDefinition
-      ;
+              + packageDefinition;
       throw new SQLException(message);
     }
   }
@@ -192,7 +189,7 @@ public final class PackageHandler {
     );
 
     // Notify all clients of the update
-    invalidateList.addTable(conn, Table.TableID.PACKAGES, account, InvalidateList.allHosts, false);
+    invalidateList.addTable(conn, Table.TableId.PACKAGES, account, InvalidateList.allHosts, false);
 
     return packageId;
   }
@@ -257,7 +254,7 @@ public final class PackageHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -303,7 +300,7 @@ public final class PackageHandler {
       throw new SQLException("Unable to generate new version for copy PackageDefinition: " + packageDefinition);
     }
 
-    int newPKey = conn.updateInt(
+    int newId = conn.updateInt(
         "INSERT INTO billing.\"PackageDefinition\" (\n"
             + "  accounting,\n"
             + "  category,\n"
@@ -361,7 +358,7 @@ public final class PackageHandler {
             + "  billing.\"PackageDefinitionLimit\"\n"
             + "where\n"
             + "  package_definition=?",
-        newPKey,
+        newId,
         packageDefinition
     );
 
@@ -369,20 +366,20 @@ public final class PackageHandler {
     IntList servers = AccountHandler.getHostsForAccount(conn, account);
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         account,
         servers,
         false
     );
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        Table.TableId.PACKAGE_DEFINITION_LIMITS,
         account,
         servers,
         false
     );
 
-    return newPKey;
+    return newId;
   }
 
   public static void updatePackageDefinition(
@@ -444,7 +441,7 @@ public final class PackageHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -515,7 +512,7 @@ public final class PackageHandler {
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGES,
+        Table.TableId.PACKAGES,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -547,7 +544,7 @@ public final class PackageHandler {
     // Notify all clients of the update
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGES,
+        Table.TableId.PACKAGES,
         account,
         AccountHandler.getHostsForAccount(conn, account),
         false
@@ -584,8 +581,8 @@ public final class PackageHandler {
     return conn.queryInt("select coalesce(disable_log, -1) from billing.\"Package\" where name=?", packageName);
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.PACKAGES) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.PACKAGES) {
       synchronized (PackageHandler.class) {
         disabledPackages.clear();
       }
@@ -667,8 +664,7 @@ public final class PackageHandler {
               + host
               + ": action='"
               + action
-              + "'"
-      ;
+              + "'";
       throw new SQLException(message);
     }
   }
@@ -773,13 +769,13 @@ public final class PackageHandler {
     );
 
     invalidateList.addTable(conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         getAccountForPackageDefinition(conn, packageDefinition),
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         getAccountsForPackageDefinition(conn, packageDefinition),
         InvalidateList.allHosts,
         false
@@ -792,10 +788,10 @@ public final class PackageHandler {
       InvalidateList invalidateList,
       int packageDefinition,
       String[] resources,
-      int[] soft_limits,
-      int[] hard_limits,
+      int[] softLimits,
+      int[] hardLimits,
       Money[] additionalRates,
-      String[] additional_transaction_types
+      String[] additionalTransactionTypes
   ) throws IOException, SQLException {
     checkAccessPackageDefinition(conn, source, "setPackageDefinitionLimits", packageDefinition);
     // Must not be approved to be edited
@@ -829,22 +825,22 @@ public final class PackageHandler {
               + ")",
           packageDefinition,
           resources[c],
-          soft_limits[c] == -1 ? Null.INTEGER : soft_limits[c],
-          hard_limits[c] == -1 ? Null.INTEGER : hard_limits[c],
+          softLimits[c] == -1 ? Null.INTEGER : softLimits[c],
+          hardLimits[c] == -1 ? Null.INTEGER : hardLimits[c],
           additionalRate == null ? null : additionalRate.getCurrency().getCurrencyCode(),
           additionalRate == null ? Null.NUMERIC : additionalRate.getValue(),
-          additional_transaction_types[c]
+          additionalTransactionTypes[c]
       );
     }
 
     invalidateList.addTable(conn,
-        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        Table.TableId.PACKAGE_DEFINITION_LIMITS,
         getAccountForPackageDefinition(conn, packageDefinition),
         InvalidateList.allHosts,
         false
     );
     invalidateList.addTable(conn,
-        Table.TableID.PACKAGE_DEFINITION_LIMITS,
+        Table.TableId.PACKAGE_DEFINITION_LIMITS,
         getAccountsForPackageDefinition(conn, packageDefinition),
         InvalidateList.allHosts,
         false
@@ -874,7 +870,7 @@ public final class PackageHandler {
     if (conn.update("delete from billing.\"PackageDefinitionLimit\" where package_definition=?", packageDefinition) > 0) {
       invalidateList.addTable(
           conn,
-          Table.TableID.PACKAGE_DEFINITION_LIMITS,
+          Table.TableId.PACKAGE_DEFINITION_LIMITS,
           account,
           servers,
           false
@@ -884,7 +880,7 @@ public final class PackageHandler {
     conn.update("delete from billing.\"PackageDefinition\" where id=?", packageDefinition);
     invalidateList.addTable(
         conn,
-        Table.TableID.PACKAGE_DEFINITIONS,
+        Table.TableId.PACKAGE_DEFINITIONS,
         account,
         servers,
         false

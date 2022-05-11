@@ -23,6 +23,9 @@
 
 package com.aoindustries.aoserv.master.net.monitoring;
 
+import static com.aoindustries.aoserv.master.TableHandler.BU2_PARENTS_JOIN;
+import static com.aoindustries.aoserv.master.TableHandler.PK3_BU2_PARENTS_WHERE;
+
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.account.Account;
@@ -31,12 +34,10 @@ import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.net.monitoring.IpAddressMonitoring;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
-import static com.aoindustries.aoserv.master.TableHandler.BU2_PARENTS_JOIN;
-import static com.aoindustries.aoserv.master.TableHandler.PK3_BU2_PARENTS_WHERE;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.EnumSet;
@@ -48,13 +49,21 @@ import java.util.Set;
 public class IpAddressMonitoring_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.IpAddressMonitoring);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.IpAddressMonitoring);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -70,8 +79,17 @@ public class IpAddressMonitoring_GetTableHandler extends TableHandler.GetTableHa
   }
 
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -120,9 +138,16 @@ public class IpAddressMonitoring_GetTableHandler extends TableHandler.GetTableHa
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    MasterServer.writeObjects(
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

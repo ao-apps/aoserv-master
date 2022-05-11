@@ -26,8 +26,8 @@ package com.aoindustries.aoserv.master.schema;
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -41,13 +41,20 @@ import java.util.Set;
 public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.SCHEMA_TABLES);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.SCHEMA_TABLES);
   }
 
   @Override
-  protected void getTablePublic(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTablePublic(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -88,7 +95,7 @@ public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
     /*
     List<Table> clientTables=new ArrayList<>();
     try (
-      PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
+        PreparedStatement pstmt = conn.getConnection(true).prepareStatement(
         "select\n"
         + "  st.id,\n"
         + "  st.\"name\",\n"
@@ -123,13 +130,13 @@ public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
         pstmt.setString(1, source.getProtocolVersion().getVersion());
 
         try (ResultSet results = pstmt.executeQuery()) {
-          int clientTableID=0;
-          Table tempST=new Table();
+          int clientTableId = 0;
+          Table tempST = new Table();
           while (results.next()) {
             tempST.init(results);
             clientTables.add(
               new Table(
-                clientTableID++,
+                clientTableId++,
                 tempST.getName(),
                 tempST.getSinceVersion_version(),
                 tempST.getLastVersion_version(),
@@ -141,11 +148,11 @@ public class Table_GetTableHandler extends TableHandler.GetTableHandlerPublic {
           }
         }
       } catch (Error | RuntimeException | SQLException e) {
-        ErrorPrinter.addSQL(e, pstmt);
+        ErrorPrinter.addSql(e, pstmt);
         throw e;
       }
     }
-    MasterServer.writeObjects(
+    AoservMaster.writeObjects(
       source,
       out,
       provideProgress,

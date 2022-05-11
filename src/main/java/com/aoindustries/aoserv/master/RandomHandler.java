@@ -27,7 +27,7 @@ import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.hodgepodge.io.FifoFile;
 import com.aoapps.hodgepodge.io.FifoFileInputStream;
 import com.aoapps.hodgepodge.io.FifoFileOutputStream;
-import com.aoindustries.aoserv.client.AOServConnector;
+import com.aoindustries.aoserv.client.AoservConnector;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import java.io.EOFException;
@@ -52,7 +52,7 @@ public final class RandomHandler {
   public static FifoFile getFifoFile() throws IOException {
     synchronized (RandomHandler.class) {
       if (fifoFile == null) {
-        fifoFile = new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AOServConnector.MASTER_ENTROPY_POOL_SIZE);
+        fifoFile = new FifoFile(MasterConfiguration.getEntropyPoolFilePath(), AoservConnector.MASTER_ENTROPY_POOL_SIZE);
       }
       return fifoFile;
     }
@@ -62,14 +62,14 @@ public final class RandomHandler {
     boolean isAllowed = false;
 
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
-    User mu = MasterServer.getUser(conn, currentAdministrator);
+    User mu = AoservMaster.getUser(conn, currentAdministrator);
     if (mu != null) {
-      UserHost[] masterServers = MasterServer.getUserHosts(conn, currentAdministrator);
+      UserHost[] masterServers = AoservMaster.getUserHosts(conn, currentAdministrator);
       if (masterServers.length == 0) {
         isAllowed = true;
       } else {
         for (UserHost masterServer : masterServers) {
-          if (NetHostHandler.isLinuxServer(conn, masterServer.getServerPKey())) {
+          if (NetHostHandler.isLinuxServer(conn, masterServer.getServerPkey())) {
             isAllowed = true;
             break;
           }

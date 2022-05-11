@@ -34,7 +34,7 @@ import com.aoapps.hodgepodge.util.Tuple3;
 import com.aoapps.lang.Throwables;
 import com.aoindustries.aoserv.client.linux.Server;
 import com.aoindustries.aoserv.client.master.User;
-import com.aoindustries.aoserv.daemon.client.AOServDaemonConnector;
+import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -79,7 +79,7 @@ public final class ClusterHandler implements CronJob {
         started = true;
         System.out.println("Done");
         // Run immediately to populate mapping on start-up
-        MasterServer.executorService.submit(ClusterHandler::updateMappings);
+        AoservMaster.executorService.submit(ClusterHandler::updateMappings);
       }
     }
   }
@@ -89,7 +89,7 @@ public final class ClusterHandler implements CronJob {
   }
 
   /**
-   * Runs every minute
+   * Runs every minute.
    */
   private static final Schedule schedule = (int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) -> true;
 
@@ -232,12 +232,11 @@ public final class ClusterHandler implements CronJob {
           physicalServers.add(entry.getKey());
         }
       }
-      // None found
       if (physicalServers.isEmpty()) {
+        // None found
         throw new ClusterException("Virtual server #" + virtualServer + " secondary not found on any physical server");
-      }
-      // If there is only one secondary, use it if not auto
-      else if (physicalServers.size() == 1) {
+      } else if (physicalServers.size() == 1) {
+        // If there is only one secondary, use it if not auto
         Integer physicalServer1 = physicalServers.iterator().next();
         Set<Integer> autoMappings1 = autoMappings.get(physicalServer1);
         boolean auto = autoMappings1 != null && autoMappings1.contains(virtualServer);
@@ -245,9 +244,8 @@ public final class ClusterHandler implements CronJob {
           throw new ClusterException("Virtual server #" + virtualServer + " secondary only found on physical server with auto start link: " + physicalServer1);
         }
         return physicalServer1;
-      }
-      // If two, choose the one that is not auto-start
-      else if (physicalServers.size() == 2) {
+      } else if (physicalServers.size() == 2) {
+        // If two, choose the one that is not auto-start
         Iterator<Integer> iter = physicalServers.iterator();
         Integer physicalServer1 = iter.next();
         Integer physicalServer2 = iter.next();
@@ -275,9 +273,8 @@ public final class ClusterHandler implements CronJob {
             throw new ClusterException("Virtual server #" + virtualServer + " auto start link not found on either physical server: " + physicalServer1 + " or " + physicalServer2);
           }
         }
-      }
-      // Error if more than two
-      else {
+      } else {
+        // Error if more than two
         throw new ClusterException("Virtual server #" + virtualServer + " secondary found on more than two physical servers: " + physicalServers);
       }
     }
@@ -290,7 +287,7 @@ public final class ClusterHandler implements CronJob {
     synchronized (updateMappingsLock) {
       try {
         try (
-          ProcessTimer timer = new ProcessTimer(
+            ProcessTimer timer = new ProcessTimer(
                 logger,
                 ClusterHandler.class.getName(),
                 "runCronJob",
@@ -300,7 +297,7 @@ public final class ClusterHandler implements CronJob {
                 TIMER_REMINDER_INTERVAL
             )
             ) {
-          MasterServer.executorService.submit(timer);
+          AoservMaster.executorService.submit(timer);
 
           // Query the servers in parallel
           final MasterDatabase database = MasterDatabase.getDatabase();
@@ -309,13 +306,13 @@ public final class ClusterHandler implements CronJob {
           for (final Integer xenPhysicalServer : xenPhysicalServers) {
             futures.put(
                 xenPhysicalServer,
-                MasterServer.executorService.submit(() -> {
+                AoservMaster.executorService.submit(() -> {
                   // Try up to ten times
-                  final int ATTEMPTS = 10;
-                  for (int c = 0; c < ATTEMPTS; c++) {
+                  final int attempts = 10;
+                  for (int c = 0; c < attempts; c++) {
                     try {
                       final int rootPackagePkey = PackageHandler.getIdForPackage(database, AccountHandler.getRootAccount());
-                      AOServDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
+                      AoservDaemonConnector daemonConnnector = DaemonHandler.getDaemonConnector(database, xenPhysicalServer);
                       // Get the DRBD states
                       List<Server.DrbdReport> drbdReports = Server.parseDrbdReport(daemonConnnector.getDrbdReport());
                       Set<Integer> primaryMapping = AoCollections.newHashSet(drbdReports.size());
@@ -376,7 +373,7 @@ public final class ClusterHandler implements CronJob {
                     } catch (ThreadDeath td) {
                       throw td;
                     } catch (Throwable t) {
-                      if (c == (ATTEMPTS - 1) && Thread.currentThread().isInterrupted()) {
+                      if (c == (attempts - 1) && Thread.currentThread().isInterrupted()) {
                         throw t;
                       }
                       logger.log(Level.SEVERE, null, t);
@@ -389,7 +386,7 @@ public final class ClusterHandler implements CronJob {
                       }
                     }
                   }
-                  throw new AssertionError("Exception should have been thrown when c == " + (ATTEMPTS - 1) + " or thread interrupted");
+                  throw new AssertionError("Exception should have been thrown when c == " + (attempts - 1) + " or thread interrupted");
                 })
             );
           }
@@ -428,7 +425,7 @@ public final class ClusterHandler implements CronJob {
   }
 
   public static boolean isClusterAdmin(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.isClusterAdmin();
   }
 

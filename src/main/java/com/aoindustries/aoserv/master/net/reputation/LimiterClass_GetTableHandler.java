@@ -29,8 +29,8 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.net.reputation.LimiterClass;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import java.io.IOException;
@@ -45,16 +45,24 @@ import java.util.Set;
 public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.IP_REPUTATION_LIMITER_LIMITS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.IP_REPUTATION_LIMITER_LIMITS);
   }
 
   /**
    * Admin may access all limiters.
    */
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -72,9 +80,18 @@ public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerBy
    * @see  User#isRouter()
    */
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
+  @SuppressWarnings("deprecation")
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
     if (masterUser.isRouter()) {
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -95,7 +112,7 @@ public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerBy
           source.getCurrentAdministrator()
       );
     } else {
-      MasterServer.writeObjects(source, out, provideProgress, Collections.emptyList());
+      AoservMaster.writeObjects(source, out, provideProgress, Collections.emptyList());
     }
   }
 
@@ -103,8 +120,15 @@ public class LimiterClass_GetTableHandler extends TableHandler.GetTableHandlerBy
    * Regular user may access the limiters for servers they have direct access to.
    */
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,

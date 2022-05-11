@@ -33,8 +33,8 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.pki.CertificateName;
 import com.aoindustries.aoserv.client.schema.Table;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.MasterService;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
@@ -63,13 +63,21 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
   public TableHandler.GetTableHandler startGetTableHandler() {
     return new TableHandler.GetTableHandlerByRole() {
       @Override
-      public Set<Table.TableID> getTableIds() {
-        return EnumSet.of(Table.TableID.SSL_CERTIFICATE_NAMES);
+      public Set<Table.TableId> getTableIds() {
+        return EnumSet.of(Table.TableId.SSL_CERTIFICATE_NAMES);
       }
 
       @Override
-      protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-        MasterServer.writeObjects(
+      @SuppressWarnings("deprecation")
+      protected void getTableMaster(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId,
+          User masterUser
+      ) throws IOException, SQLException {
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -81,8 +89,17 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
       }
 
       @Override
-      protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-        MasterServer.writeObjects(
+      @SuppressWarnings("deprecation")
+      protected void getTableDaemon(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId,
+          User masterUser,
+          UserHost[] masterServers
+      ) throws IOException, SQLException {
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -102,8 +119,15 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
       }
 
       @Override
-      protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
-        MasterServer.writeObjects(
+      @SuppressWarnings("deprecation")
+      protected void getTableAdministrator(
+          DatabaseConnection conn,
+          RequestSource source,
+          StreamableOutput out,
+          boolean provideProgress,
+          Table.TableId tableId
+      ) throws IOException, SQLException {
+        AoservMaster.writeObjects(
             conn,
             source,
             out,
@@ -139,7 +163,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
   // <editor-fold desc="WhoisHistoryDomainLocator" defaultstate="collapsed">
   @Override
   public Map<DomainName, Set<Account.Name>> getWhoisHistoryDomains(DatabaseConnection conn) throws IOException, SQLException {
-    List<DomainName> tlds = MasterServer.getService(DnsService.class).getDNSTLDs(conn);
+    List<DomainName> tlds = AoservMaster.getService(DnsService.class).getTopLevelDomains(conn);
     return conn.queryCall(
         results -> {
           try {
@@ -149,7 +173,7 @@ public class CertificateNameService implements MasterService, WhoisHistoryDomain
               Account.Name account = Account.Name.valueOf(results.getString(2));
               DomainName registrableDomain;
               try {
-                registrableDomain = ZoneTable.getHostTLD(domain, tlds);
+                registrableDomain = ZoneTable.getHostTld(domain, tlds);
               } catch (IllegalArgumentException err) {
                 logger.log(Level.WARNING, "Cannot find TLD, continuing verbatim", err);
                 registrableDomain = domain;

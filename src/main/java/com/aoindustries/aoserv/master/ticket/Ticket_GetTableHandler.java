@@ -31,8 +31,8 @@ import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.client.ticket.Status;
 import com.aoindustries.aoserv.client.ticket.Ticket;
 import com.aoindustries.aoserv.client.ticket.TicketType;
+import com.aoindustries.aoserv.master.AoservMaster;
 import com.aoindustries.aoserv.master.CursorMode;
-import com.aoindustries.aoserv.master.MasterServer;
 import com.aoindustries.aoserv.master.RequestSource;
 import com.aoindustries.aoserv.master.TableHandler;
 import com.aoindustries.aoserv.master.TicketHandler;
@@ -47,13 +47,21 @@ import java.util.Set;
 public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
 
   @Override
-  public Set<Table.TableID> getTableIds() {
-    return EnumSet.of(Table.TableID.TICKETS);
+  public Set<Table.TableId> getTableIds() {
+    return EnumSet.of(Table.TableId.TICKETS);
   }
 
   @Override
-  protected void getTableMaster(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser) throws IOException, SQLException {
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableMaster(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser
+  ) throws IOException, SQLException {
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -84,9 +92,18 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   }
 
   @Override
-  protected void getTableDaemon(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID, User masterUser, UserHost[] masterServers) throws IOException, SQLException {
-    // AOServDaemon only needs access to its own open logs ticket.Ticket
-    MasterServer.writeObjects(
+  @SuppressWarnings("deprecation")
+  protected void getTableDaemon(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId,
+      User masterUser,
+      UserHost[] masterServers
+  ) throws IOException, SQLException {
+    // AoservDaemon only needs access to its own open logs ticket.Ticket
+    AoservMaster.writeObjects(
         conn,
         source,
         out,
@@ -132,9 +149,16 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
   }
 
   @Override
-  protected void getTableAdministrator(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableID tableID) throws IOException, SQLException {
+  @SuppressWarnings("deprecation")
+  protected void getTableAdministrator(
+      DatabaseConnection conn,
+      RequestSource source,
+      StreamableOutput out,
+      boolean provideProgress,
+      Table.TableId tableId
+  ) throws IOException, SQLException {
     if (TicketHandler.isTicketAdmin(conn, source)) {
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -178,7 +202,7 @@ public class Ticket_GetTableHandler extends TableHandler.GetTableHandlerByRole {
           source.getCurrentAdministrator()
       );
     } else {
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,

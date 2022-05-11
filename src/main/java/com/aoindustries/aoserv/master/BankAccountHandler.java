@@ -58,6 +58,7 @@ public final class BankAccountHandler {
   /**
    * Gets all transactions for one account.
    */
+  @SuppressWarnings("deprecation")
   public static void getTransactionsForAccount(
       DatabaseConnection conn,
       RequestSource source,
@@ -67,7 +68,7 @@ public final class BankAccountHandler {
   ) throws IOException, SQLException {
     if (isBankAccounting(conn, source)) {
       // TODO: release conn before writing to out
-      MasterServer.writeObjects(
+      AoservMaster.writeObjects(
           conn,
           source,
           out,
@@ -80,7 +81,7 @@ public final class BankAccountHandler {
     } else {
       List<BankTransaction> emptyList = Collections.emptyList();
       conn.close(); // Don't hold database connection while writing response
-      MasterServer.writeObjects(source, out, provideProgress, emptyList);
+      AoservMaster.writeObjects(source, out, provideProgress, emptyList);
     }
   }
 
@@ -92,12 +93,12 @@ public final class BankAccountHandler {
 
   // TODO: Move to an AccountingHandler or BillingHandler
   public static boolean isAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.canAccessAccounting();
   }
 
   public static boolean isBankAccounting(DatabaseConnection conn, RequestSource source) throws IOException, SQLException {
-    User mu = MasterServer.getUser(conn, source.getCurrentAdministrator());
+    User mu = AoservMaster.getUser(conn, source.getCurrentAdministrator());
     return mu != null && mu.canAccessBankAccount();
   }
 }

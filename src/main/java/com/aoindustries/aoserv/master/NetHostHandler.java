@@ -83,7 +83,7 @@ public final class NetHostHandler {
       throw new SQLException("Not allowed to add_backup_server: "+source.getUsername());
     }
 
-    MasterServer.checkAccessHostname(conn, source, "addBackupServer", hostname);
+    AoservMaster.checkAccessHostname(conn, source, "addBackupServer", hostname);
 
     String farm_owner=conn.queryString(
       "select\n"
@@ -132,7 +132,7 @@ public final class NetHostHandler {
       description,
       os_version
     );
-    invalidateList.addTable(conn, Table.TableID.SERVERS, account, InvalidateList.allServers, false);
+    invalidateList.addTable(conn, Table.TableId.SERVERS, account, InvalidateList.allServers, false);
 
     // Build a stack of parents, adding each business_server
     Stack<String> bus=new Stack<>();
@@ -173,9 +173,9 @@ public final class NetHostHandler {
       null
     );
     conn.update("insert into master.\"User\" values(?,true,false,false,false,false,false,false)", username);
-    invalidateList.addTable(conn, Table.TableID.MASTER_USERS, packageAccount, InvalidateList.allServers, false);
+    invalidateList.addTable(conn, Table.TableId.MASTER_USERS, packageAccount, InvalidateList.allServers, false);
     conn.update("insert into master.\"UserHost\"(username, server) values(?,?)", username, host);
-    invalidateList.addTable(conn, Table.TableID.MASTER_SERVERS, packageAccount, InvalidateList.allServers, false);
+    invalidateList.addTable(conn, Table.TableId.MASTER_SERVERS, packageAccount, InvalidateList.allServers, false);
     AccountHandler.setAdministratorPassword(conn, source, invalidateList, username, password);
 
     return host;
@@ -189,8 +189,7 @@ public final class NetHostHandler {
         +" is not allowed to access server: action='"
         +action
         +", hostname="
-        +server
-      ;
+        +server;
       UserHost.reportSecurityMessage(source, message);
       throw new SQLException(message);
     }
@@ -204,8 +203,7 @@ public final class NetHostHandler {
               + " is not allowed to access server: action='"
               + action
               + ", server.id="
-              + host
-      ;
+              + host;
       throw new SQLException(message);
     }
   }
@@ -231,12 +229,12 @@ public final class NetHostHandler {
       List<Integer> sv = userHosts.get(currentAdministrator);
       if (sv == null) {
         sv = new SortedIntArrayList();
-        User mu = MasterServer.getUser(db, currentAdministrator);
+        User mu = AoservMaster.getUser(db, currentAdministrator);
         if (mu != null) {
-          UserHost[] masterServers = MasterServer.getUserHosts(db, currentAdministrator);
+          UserHost[] masterServers = AoservMaster.getUserHosts(db, currentAdministrator);
           if (masterServers.length != 0) {
             for (UserHost masterServer : masterServers) {
-              sv.add(masterServer.getServerPKey());
+              sv.add(masterServer.getServerPkey());
             }
           } else {
             sv.addAll(db.queryIntList("select id from net.\"Host\""));
@@ -395,20 +393,20 @@ public final class NetHostHandler {
     }
   }
 
-  public static void invalidateTable(Table.TableID tableID) {
-    if (tableID == Table.TableID.AO_SERVERS) {
+  public static void invalidateTable(Table.TableId tableId) {
+    if (tableId == Table.TableId.AO_SERVERS) {
       synchronized (linuxServers) {
         linuxServers.clear();
       }
-    } else if (tableID == Table.TableID.BUSINESS_SERVERS) {
+    } else if (tableId == Table.TableId.BUSINESS_SERVERS) {
       synchronized (NetHostHandler.class) {
         userHosts = null;
       }
-    } else if (tableID == Table.TableID.MASTER_SERVERS) {
+    } else if (tableId == Table.TableId.MASTER_SERVERS) {
       synchronized (NetHostHandler.class) {
         userHosts = null;
       }
-    } else if (tableID == Table.TableID.SERVERS) {
+    } else if (tableId == Table.TableId.SERVERS) {
       synchronized (failoverServers) {
         failoverServers.clear();
       }
@@ -421,7 +419,7 @@ public final class NetHostHandler {
       synchronized (hostsForLinuxServerHostnames) {
         hostsForLinuxServerHostnames.clear();
       }
-    } else if (tableID == Table.TableID.SERVER_FARMS) {
+    } else if (tableId == Table.TableId.SERVER_FARMS) {
       // Do nothing
     }
   }
@@ -429,12 +427,12 @@ public final class NetHostHandler {
   private static final Object invalidateSyncLock = new Object();
 
   /**
-   * HashMap(server)->HashMap(Long(id))->RequestSource
+   * HashMap(server)->HashMap(Long(id))->RequestSource.
    */
   private static final Map<Integer, Map<Long, RequestSource>> invalidateSyncEntries = new HashMap<>();
 
   /**
-   * HashMap(Host)->Long(lastID)
+   * HashMap(Host)->Long(lastId).
    */
   private static final Map<Integer, Long> lastIDs = new HashMap<>();
 
@@ -478,7 +476,7 @@ public final class NetHostHandler {
     synchronized (invalidateSyncLock) {
       Long l = lastIDs.get(s);
       if (l != null) {
-        long lastID = l;
+        long lastId = l;
         Map<Long, RequestSource> ids = invalidateSyncEntries.get(s);
         if (ids != null) {
           // Wait until the most recent ID and all previous IDs have been completed, but do
@@ -488,29 +486,29 @@ public final class NetHostHandler {
           while (!Thread.currentThread().isInterrupted()) {
             long maxWait = startTime + 60000 - System.currentTimeMillis();
             if (maxWait > 0 && maxWait <= 60000) {
-              LongList closedIDs = null;
+              LongList closedIds = null;
               Iterator<Long> iter = ids.keySet().iterator();
               boolean foundOlder = false;
               while (iter.hasNext()) {
                 Long idLong = iter.next();
                 RequestSource source = ids.get(idLong);
                 if (source.isClosed()) {
-                  if (closedIDs == null) {
-                    closedIDs = new LongArrayList();
+                  if (closedIds == null) {
+                    closedIds = new LongArrayList();
                   }
-                  closedIDs.add(idLong);
+                  closedIds.add(idLong);
                 } else {
                   long id = idLong;
-                  if (id <= lastID) {
+                  if (id <= lastId) {
                     foundOlder = true;
                     break;
                   }
                 }
               }
-              if (closedIDs != null) {
-                int size = closedIDs.size();
+              if (closedIds != null) {
+                int size = closedIds.size();
                 for (int c = 0; c < size; c++) {
-                  ids.remove(closedIDs.get(c));
+                  ids.remove(closedIds.get(c));
                 }
               }
               if (foundOlder) {
