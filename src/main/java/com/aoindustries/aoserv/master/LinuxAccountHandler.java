@@ -664,6 +664,7 @@ public final class LinuxAccountHandler {
                 || (group.equals(Group.CDROM)           && gid == 11)
                 || (group.equals(Group.MAIL)            && gid == 12)
                 || (group.equals(Group.MAN)             && gid == 15)
+                || (group.equals(Group.OPROFILE)        && gid == 16)
                 || (group.equals(Group.DIALOUT)         && gid == 18)
                 || (group.equals(Group.FLOPPY)          && gid == 19)
                 || (group.equals(Group.GAMES)           && gid == 20)
@@ -694,6 +695,9 @@ public final class LinuxAccountHandler {
                 || (group.equals(Group.BIRD)            && gid == 95)
                 || (group.equals(Group.NOBODY)          && gid == 99)
                 || (group.equals(Group.USERS)           && gid == 100)
+                || (group.equals(Group.STAPUSR)         && gid == 156)
+                || (group.equals(Group.STAPSYS)         && gid == 157)
+                || (group.equals(Group.STAPDEV)         && gid == 158)
                 || (group.equals(Group.AVAHI_AUTOIPD)   && gid == 170)
                 || (group.equals(Group.DHCPD)           && gid == 177)
                 || (group.equals(Group.SYSTEMD_JOURNAL) && gid == 190)
@@ -827,6 +831,7 @@ public final class LinuxAccountHandler {
           addCentos7SystemUser(User.OPERATOR,                         11, Group.ROOT,                 "operator",                                                        "/root",                         Shell.NOLOGIN,  null);
           addCentos7SystemUser(User.GAMES,                            12, Group.USERS,                "games",                                                           "/usr/games",                    Shell.NOLOGIN,  null);
           addCentos7SystemUser(User.FTP,                              14, Group.FTP,                  "FTP User",                                                        "/var/ftp",                      Shell.NOLOGIN,  null);
+          addCentos7SystemUser(User.OPROFILE,                         16, Group.OPROFILE,             "Special user account to be used by OProfile",                     "/var/lib/oprofile",             Shell.NOLOGIN,  null);
           addCentos7SystemUser(User.NAMED,                            25, Group.NAMED,                "Named",                                                           "/var/named",                    Shell.NOLOGIN,  null);
           addCentos7SystemUser(User.POSTGRES,                         26, Group.POSTGRES,             "PostgreSQL Server",                                               "/var/lib/pgsql",                Shell.BASH,     null);
           addCentos7SystemUser(User.RPCUSER,                          29, Group.RPCUSER,              "RPC Service User",                                                "/var/lib/nfs",                  Shell.NOLOGIN,  null);

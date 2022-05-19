@@ -29,7 +29,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <relativePath>../../../oss/parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.90.0-POST-SNAPSHOT</version>
+  <groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.91.0-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <properties>
