@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2022-05-19T17:29:15-05:00"
+    dateModified="2022-05-19T19:47:01-05:00"
   >
     <c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
       <changelog:release
@@ -49,18 +49,28 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         scmUrl="@{project.scm.url}"
       >
         <!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
-        <ul>
-          <li>
-            New system groups <code>stapusr</code>, <code>stapsys</code>, and <code>stapdev</code> for 
-            <ao:a href="https://sourceware.org/systemtap/">SystemTap</ao:a>.
-          </li>
-          <li>
-            New system group and user <code>oprofile</code> for
-            <ao:a href="https://oprofile.sourceforge.io/docs/">OProfile</ao:a>.
-          </li>
-        </ul>
       </changelog:release>
     </c:if>
+
+    <changelog:release
+      projectName="@{documented.name}"
+      version="1.91.0"
+      datePublished="2022-05-19T19:47:01-05:00"
+      groupId="@{project.groupId}"
+      artifactId="@{documented.artifactId}"
+      scmUrl="@{project.scm.url}"
+    >
+      <ul>
+        <li>
+          New system groups <code>stapusr</code>, <code>stapsys</code>, and <code>stapdev</code> for 
+          <ao:a href="https://sourceware.org/systemtap/">SystemTap</ao:a>.
+        </li>
+        <li>
+          New system group and user <code>oprofile</code> for
+          <ao:a href="https://oprofile.sourceforge.io/docs/">OProfile</ao:a>.
+        </li>
+      </ul>
+    </changelog:release>
 
     <changelog:release
       projectName="@{documented.name}"
