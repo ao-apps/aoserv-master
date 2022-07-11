@@ -39,5 +39,10 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <ignoreVersion type="regex">.*\.jre[67]</ignoreVersion>
       </ignoreVersions>
     </rule>
+    <rule groupId="com.stripe" artifactId="stripe-java" comparisonMethod="maven">
+      <ignoreVersions>
+        <ignoreVersion type="regex">.*-beta\.[0-9]+</ignoreVersion>
+      </ignoreVersions>
+    </rule>
   </rules>
 </ruleset>
