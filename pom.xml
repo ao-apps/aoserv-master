@@ -29,7 +29,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <relativePath>../../oss/parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.91.7-SNAPSHOT</version>
+  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.91.7</version>
   <packaging>bundle</packaging>
 
   <properties>
@@ -83,7 +83,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <connection>scm:git:git://github.com/ao-apps/aoserv-master.git</connection>
     <developerConnection>scm:git:git@github.com:ao-apps/aoserv-master.git</developerConnection>
     <url>https://github.com/ao-apps/aoserv-master</url>
-    <tag>HEAD</tag>
+    <tag>aoserv-master-1.91.7</tag>
   </scm>
 
   <issueManagement>
