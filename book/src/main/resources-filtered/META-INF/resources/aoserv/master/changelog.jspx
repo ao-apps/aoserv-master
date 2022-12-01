@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2022-11-25T12:56:05-06:00"
+    dateModified="2022-12-01T09:32:50-06:00"
   >
     <c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
       <changelog:release
@@ -49,6 +49,9 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         scmUrl="@{project.scm.url}"
       >
         <!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
+        <ul>
+          <li>Added underscore to set of allowed characters in DNS CNAME entries.</li>
+        </ul>
       </changelog:release>
     </c:if>
 
