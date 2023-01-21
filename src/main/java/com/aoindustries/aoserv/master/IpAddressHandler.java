@@ -30,7 +30,6 @@ import com.aoapps.net.InetAddress;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.dns.Zone;
 import com.aoindustries.aoserv.client.master.User;
-import com.aoindustries.aoserv.client.net.DeviceId;
 import com.aoindustries.aoserv.client.net.IpAddress;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.master.dns.DnsService;
@@ -124,10 +123,10 @@ public final class IpAddressHandler {
     Account.Name account = getAccountForIpAddress(conn, ipAddress);
 
     // Update net.IpAddress
+    // TODO: Query in a way that does not assume the deviceId value in any way, such as with a join on the two tables
     int toDevice = conn.queryInt(
-        "select id from net.\"Device\" where server=? and \"deviceId\"=?",
-        toHost,
-        DeviceId.ETH0
+        "select id from net.\"Device\" where server=? and \"deviceId\" IN ('eth0', 'enX0')",
+        toHost
     );
     conn.update(
         "update net.\"IpAddress\" set device=? where id=?",
