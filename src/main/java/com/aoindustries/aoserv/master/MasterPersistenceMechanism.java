@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -26,6 +26,7 @@ package com.aoindustries.aoserv.master;
 import com.aoapps.dbc.DatabaseConnection;
 import com.aoapps.dbc.ObjectFactory;
 import com.aoapps.lang.i18n.Money;
+import com.aoapps.lang.security.acl.Group;
 import com.aoapps.lang.validation.ValidationException;
 import com.aoapps.payments.AuthorizationResult;
 import com.aoapps.payments.CaptureResult;
@@ -303,8 +304,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
   }
 
   @Override
-  @SuppressWarnings("deprecation")
-  public String insertTransaction(Principal principal, java.security.acl.Group group, Transaction transaction) throws SQLException {
+  public String insertTransaction(Principal principal, Group group, Transaction transaction) throws SQLException {
     try {
       //String providerId = transaction.getProviderId();
       TransactionRequest transactionRequest = transaction.getTransactionRequest();
