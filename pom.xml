@@ -429,7 +429,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
       </dependency>
       <!-- Runtime Direct -->
       <dependency>
-        <groupId>com.aoapps</groupId><artifactId>ao-payments-all</artifactId><version>3.0.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
+        <groupId>com.aoapps</groupId><artifactId>ao-payments-all</artifactId><version>3.0.0${POST-SNAPSHOT}</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><version>42.5.3</version>
