@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2023-02-10T02:45:59Z"
+    dateModified="2023-02-26T14:03:56Z"
   >
     <c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
       <changelog:release
@@ -230,7 +230,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
       <ul>
         <li>
           <p>
-            Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
+            Upgraded to current version of <ao:a href="https://central.sonatype.com/search?namespace=com.stripe&q=a%3Astripe-java/20.30.0/jar">com.stripe:stripe-java:jar:20.30.0</ao:a>,
             which uses <ao:a href="https://stripe.com/docs/upgrades#2020-08-27">Stripe API version 2020-08-27</ao:a>.
           </p>
           <p>
@@ -283,7 +283,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
           accessing slave servers.  Previously, only the default settings were used on slaves.
         </li>
         <li>
-          Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.32.0/jar">com.stripe:stripe-java:jar:19.32.0</ao:a>,
+          Upgraded to current version of <ao:a href="https://central.sonatype.com/search?namespace=com.stripe&q=a%3Astripe-java/19.32.0/jar">com.stripe:stripe-java:jar:19.32.0</ao:a>,
           which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
         </li>
       </ul>
@@ -321,7 +321,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     >
       <ul>
         <li>
-          Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.27.0/jar">com.stripe:stripe-java:jar:19.27.0</ao:a>,
+          Upgraded to current version of <ao:a href="https://central.sonatype.com/search?namespace=com.stripe&q=a%3Astripe-java/19.27.0/jar">com.stripe:stripe-java:jar:19.27.0</ao:a>,
           which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
         </li>
         <li>Updated dependencies.</li>
@@ -339,7 +339,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
       <ul>
         <li>Fixed <code>add_business_profile</code> database insert that relied the special AO PostgreSQL JDBC driver.</li>
         <li>
-          Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.23.0/jar">com.stripe:stripe-java:jar:19.23.0</ao:a>,
+          Upgraded to current version of <ao:a href="https://central.sonatype.com/search?namespace=com.stripe&q=a%3Astripe-java/19.23.0/jar">com.stripe:stripe-java:jar:19.23.0</ao:a>,
           which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
         </li>
       </ul>
@@ -357,7 +357,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <li>Fixed <code>add_email_forwarding</code> database insert that relied the special AO PostgreSQL JDBC driver.</li>
         <li>Updated PostgreSQL JDBC Drivers to 42.2.14.</li>
         <li>
-          Upgraded to current version of <ao:a href="https://search.maven.org/artifact/com.stripe/stripe-java/19.21.0/jar">com.stripe:stripe-java:jar:19.21.0</ao:a>,
+          Upgraded to current version of <ao:a href="https://central.sonatype.com/search?namespace=com.stripe&q=a%3Astripe-java/19.21.0/jar">com.stripe:stripe-java:jar:19.21.0</ao:a>,
           which continues to use <ao:a href="https://stripe.com/docs/upgrades#2020-03-02">Stripe API version 2020-03-02</ao:a>.
         </li>
       </ul>
