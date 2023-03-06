@@ -451,7 +451,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <groupId>com.paypal</groupId><artifactId>payflow</artifactId><version>v440</version>
       </dependency>
       <dependency>
-        <groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>22.10.0</version>
+        <groupId>com.stripe</groupId><artifactId>stripe-java</artifactId><version>22.11.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
