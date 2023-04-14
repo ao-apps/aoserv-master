@@ -21,7 +21,7 @@ Master server for the [AOServ Platform](https://aoindustries.com/aoserv/).
 * [Project Home](https://aoindustries.com/aoserv/master/)
 * [Changelog](https://aoindustries.com/aoserv/master/changelog)
 * [API Docs](https://aoindustries.com/aoserv/master/apidocs/)
-* [Maven Central Repository](https://central.sonatype.com/search?namespace=com.aoindustries&q=a%3Aaoserv-master)
+* [Maven Central Repository](https://central.sonatype.com/artifact/com.aoindustries/aoserv-master)
 * [GitHub](https://github.com/ao-apps/aoserv-master)
 
 ## Contact Us
