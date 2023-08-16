@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2023-04-14T16:43:04Z"
+    dateModified="2023-08-16T00:44:08Z"
   >
     <c:if test="${fn:endsWith('@{project.version}', '-SNAPSHOT') and !fn:endsWith('@{project.version}', '-POST-SNAPSHOT')}">
       <changelog:release
@@ -49,15 +49,25 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         scmUrl="@{project.scm.url}"
       >
         <!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
-        <ul>
-          <li>Added underscore to set of allowed characters in DNS CNAME entries.</li>
-          <li>
-            New interface <code><ao:a href="https://oss.aoapps.com/lang/apidocs/com.aoapps.lang/com/aoapps/lang/security/acl/Group.html">Group</ao:a></code>
-            for compatibility with <code>java.security.acl.Group</code> removed since Java 14.
-          </li>
-        </ul>
       </changelog:release>
     </c:if>
+
+    <changelog:release
+      projectName="@{documented.name}"
+      version="1.91.8"
+      datePublished="2023-08-16T00:44:08Z"
+      groupId="@{project.groupId}"
+      artifactId="@{documented.artifactId}"
+      scmUrl="@{project.scm.url}"
+    >
+      <ul>
+        <li>Added underscore to set of allowed characters in DNS CNAME entries.</li>
+        <li>
+          New interface <code><ao:a href="https://oss.aoapps.com/lang/apidocs/com.aoapps.lang/com/aoapps/lang/security/acl/Group.html">Group</ao:a></code>
+          for compatibility with <code>java.security.acl.Group</code> removed since Java 14.
+        </li>
+      </ul>
+    </changelog:release>
 
     <changelog:release
       projectName="@{documented.name}"
