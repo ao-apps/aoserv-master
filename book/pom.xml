@@ -29,11 +29,11 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <relativePath>../../../oss/parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.91.8-SNAPSHOT</version>
+  <groupId>com.aoindustries</groupId><artifactId>aoserv-master-book</artifactId><version>1.91.8</version>
   <packaging>bundle</packaging>
 
   <properties>
-    <project.build.outputTimestamp>2023-02-08T21:06:04Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2023-08-16T00:52:11Z</project.build.outputTimestamp>
     <module.name>com.aoindustries.aoserv.master.book</module.name>
     <!-- These values are copied from the project being documented -->
     <documented.artifactId>aoserv-master</documented.artifactId>
@@ -81,7 +81,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <connection>scm:git:git://github.com/ao-apps/aoserv-master.git</connection>
     <developerConnection>scm:git:git@github.com:ao-apps/aoserv-master.git</developerConnection>
     <url>https://github.com/ao-apps/aoserv-master</url>
-    <tag>HEAD</tag>
+    <tag>aoserv-master-book-1.91.8</tag>
   </scm>
 
   <issueManagement>
