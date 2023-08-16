@@ -29,11 +29,11 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <relativePath>../../oss/parent/pom.xml</relativePath>
   </parent>
 
-  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.91.8</version>
+  <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.91.8-POST-SNAPSHOT</version>
   <packaging>bundle</packaging>
 
   <properties>
-    <project.build.outputTimestamp>2023-08-16T00:42:08Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2023-08-16T00:44:11Z</project.build.outputTimestamp>
     <module.name>com.aoindustries.aoserv.master</module.name>
     <javadoc.breadcrumbs><![CDATA[<a target="${javadoc.target}" href="https://aoindustries.com/aoserv/">AOServ</a>
 / <a target="${javadoc.target}" href="${project.url}">Master</a>]]></javadoc.breadcrumbs>
@@ -82,7 +82,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <connection>scm:git:git://github.com/ao-apps/aoserv-master.git</connection>
     <developerConnection>scm:git:git@github.com:ao-apps/aoserv-master.git</developerConnection>
     <url>https://github.com/ao-apps/aoserv-master</url>
-    <tag>aoserv-master-1.91.8</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <issueManagement>
