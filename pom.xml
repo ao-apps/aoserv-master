@@ -30,7 +30,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
   </parent>
 
   <groupId>com.aoindustries</groupId><artifactId>aoserv-master</artifactId><version>1.91.8-POST-SNAPSHOT</version>
-  <packaging>bundle</packaging>
+  <packaging>jar</packaging>
 
   <properties>
     <module.name>com.aoindustries.aoserv.master</module.name>
