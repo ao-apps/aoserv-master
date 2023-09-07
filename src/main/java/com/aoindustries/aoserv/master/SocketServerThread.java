@@ -253,7 +253,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 + host
                 + ":"
                 + socket.getPort()
-                + "->"
+                + "→"
                 + socket.getLocalAddress().getHostAddress()
                 + ":"
                 + socket.getLocalPort()

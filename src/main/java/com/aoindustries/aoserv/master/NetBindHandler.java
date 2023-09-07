@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -123,7 +123,7 @@ public final class NetBindHandler {
                 port.getProtocol().name()
             )
         ) {
-          throw new SQLException("Bind already in use: " + host + "->" + inetAddress.toBracketedString() + ":" + port);
+          throw new SQLException("Bind already in use: " + host + "→" + inetAddress.toBracketedString() + ":" + port);
         }
       } else if (inetAddress.isLoopback()) {
         // Loopback must be unique per server and not have wildcard
@@ -153,7 +153,7 @@ public final class NetBindHandler {
                 port.getProtocol().name()
             )
         ) {
-          throw new SQLException("Bind already in use: " + host + "->" + inetAddress.toBracketedString() + ":" + port);
+          throw new SQLException("Bind already in use: " + host + "→" + inetAddress.toBracketedString() + ":" + port);
         }
       } else {
         // Make sure that this port is not already allocated within the server on this IP or the wildcard
@@ -183,7 +183,7 @@ public final class NetBindHandler {
                 port.getProtocol().name()
             )
         ) {
-          throw new SQLException("Bind already in use: " + host + "->" + inetAddress.toBracketedString() + ":" + port);
+          throw new SQLException("Bind already in use: " + host + "→" + inetAddress.toBracketedString() + ":" + port);
         }
       }
 
