@@ -38,6 +38,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <module.name>com.aoindustries.aoserv.master</module.name>
     <javadoc.breadcrumbs><![CDATA[<a target="${javadoc.target}" href="https://aoindustries.com/aoserv/">AOServ</a>
 / <a target="${javadoc.target}" href="${project.url}">Master</a>]]></javadoc.breadcrumbs>
+        
     <description.html><![CDATA[Master server for the <a target="${javadoc.target}" href="https://aoindustries.com/aoserv/">AOServ Platform</a>.]]></description.html>
     <!-- SonarQube -->
     <sonar.projectKey>com.aoapps.platform:aoapps-master<!-- TODO: ${project.groupId}:${project.artifactId} --></sonar.projectKey>
