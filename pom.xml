@@ -46,8 +46,6 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <sonar.coverage.exclusions>**.*</sonar.coverage.exclusions>
     <!-- Dependencies -->
     <commons-lang3.version>3.13.0</commons-lang3.version>
-    <!-- TODO: Remove once moved to platform.aoapps.com -->
-    <google.analytics.trackingId>UA-86871646-1</google.analytics.trackingId>
     <!-- com.aoindustries is on original Sonatype Nexus Repository Manager -->
     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
   </properties>
