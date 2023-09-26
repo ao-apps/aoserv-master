@@ -44,8 +44,6 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     <sonar.projectKey>com.aoapps.platform:aoapps-master<!-- TODO: ${project.groupId}:${project.artifactId} --></sonar.projectKey>
     <!-- TODO: Implement tests -->
     <sonar.coverage.exclusions>**.*</sonar.coverage.exclusions>
-    <!-- Dependencies -->
-    <commons-lang3.version>3.13.0</commons-lang3.version>
     <!-- com.aoindustries is on original Sonatype Nexus Repository Manager -->
     <nexusUrl>https://oss.sonatype.org/</nexusUrl>
   </properties>
@@ -307,7 +305,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
                   <location>${project.build.directory}/offlineLinks/com.aoindustries/aoserv-daemon-client</location>
                 </offlineLink>
                 <offlineLink>
-                  <url>https://javadoc.io/doc/org.apache.commons/commons-lang3/${commons-lang3.version}/</url>
+                  <url>https://javadoc.io/doc/org.apache.commons/commons-lang3/${org.apache.commons:commons-lang3:jar.version}/</url>
                   <location>${project.build.directory}/offlineLinks/org.apache.commons/commons-lang3</location>
                 </offlineLink>
               </offlineLinks>
@@ -381,7 +379,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>${commons-lang3.version}</version>
+        <groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId><version>3.13.0</version>
       </dependency>
       <!-- Transitive -->
       <dependency>
