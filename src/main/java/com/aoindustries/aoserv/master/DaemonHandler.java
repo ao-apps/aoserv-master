@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -108,7 +108,7 @@ public final class DaemonHandler {
     if (ip.isUnspecified()) {
       ip = database.queryObject(
           ObjectFactories.inetAddressFactory,
-          "select\n"
+          "select (select\n"
               + "  host(ia.\"inetAddress\")\n"
               + "from\n"
               + "  linux.\"Server\" ao,\n"
@@ -124,7 +124,7 @@ public final class DaemonHandler {
               + "  and ao2.\"daemonDeviceId\"=nd.\"deviceId\"\n"
               + "  and nd.id=ia.device\n"
               + "  and not ia.\"isAlias\"\n"
-              + "limit 1",
+              + "limit 1) as \"inetAddressAllowNull\"",
           linuxServer
       );
       if (ip == null) {

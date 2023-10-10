@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2023-10-10T02:04:41Z"
+    dateModified="2023-10-10T16:14:36Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -62,6 +62,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
             Enabled control over Tomcat <ao:a href="https://tomcat.apache.org/tomcat-9.0-doc/config/host.html#Common_Attributes"><code>undeployOldVersions</code></ao:a>
             setting in support of parallel deployments.
           </li>
+          <li>Throw more meaningful exception when daemon IP address not found for Server.</li>
         </ul>
       </changelog:release>
     </c:if>
