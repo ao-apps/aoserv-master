@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1225,16 +1225,18 @@ public final class WebHandler {
             MINIMUM_AUTO_PORT_NUMBER
         );
         conn.update(
-            "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, tomcat4_shutdown_port, tomcat4_shutdown_key, max_post_size) values(?,?,?,?)",
+            "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, tomcat4_shutdown_port, tomcat4_shutdown_key, \"maxParameterCount\", max_post_size) values(?,?,?,?,?)",
             site_id,
             shutdownPort,
             new Identifier(AoservMaster.getSecureRandom()).toString(),
+            PrivateTomcatSite.DEFAULT_MAX_PARAMETER_COUNT,
             PrivateTomcatSite.DEFAULT_MAX_POST_SIZE
         );
       } else {
         conn.update(
-            "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, max_post_size) values(?,?)",
+            "insert into \"web.tomcat\".\"PrivateTomcatSite\" (tomcat_site, \"maxParameterCount\", max_post_size) values(?,?,?)",
             site_id,
+            SharedTomcat.DEFAULT_MAX_PARAMETER_COUNT,
             SharedTomcat.DEFAULT_MAX_POST_SIZE
         );
       }
@@ -1466,6 +1468,7 @@ public final class WebHandler {
               + "  tomcat4_worker,\n"
               + "  tomcat4_shutdown_port,\n"
               + "  tomcat4_shutdown_key,\n"
+              + "  \"maxParameterCount\",\n"
               + "  max_post_size\n"
               + ") VALUES(\n"
               + "  ?,\n" // name
@@ -1476,6 +1479,7 @@ public final class WebHandler {
               + "  ?,\n" // tomcat4_worker
               + "  ?,\n" // tomcat4_shutdown_port
               + "  ?,\n" // tomcat4_shutdown_key
+              + "  ?,\n" // maxParameterCount
               + "  ?\n"  // max_post_size
               + ") RETURNING id",
           name,
@@ -1486,6 +1490,7 @@ public final class WebHandler {
           hwBindId,
           shutdownBindId,
           new Identifier(AoservMaster.getSecureRandom()).toString(),
+          SharedTomcat.DEFAULT_MAX_PARAMETER_COUNT,
           SharedTomcat.DEFAULT_MAX_POST_SIZE
       );
     } else {
@@ -1498,6 +1503,7 @@ public final class WebHandler {
               + "  version,\n"
               + "  linux_server_account,\n"
               + "  linux_server_group,\n"
+              + "  \"maxParameterCount\",\n"
               + "  max_post_size\n"
               + ") VALUES(\n"
               + "  ?,\n" // name
@@ -1505,6 +1511,7 @@ public final class WebHandler {
               + "  ?,\n" // version
               + "  ?,\n" // linux_server_account
               + "  ?,\n" // linux_server_group
+              + "  ?,\n" // maxParameterCount
               + "  ?\n"  // max_post_size
               + ") RETURNING id",
           name,
@@ -1512,6 +1519,7 @@ public final class WebHandler {
           version,
           userServer,
           groupServer,
+          SharedTomcat.DEFAULT_MAX_PARAMETER_COUNT,
           SharedTomcat.DEFAULT_MAX_POST_SIZE
       );
     }
@@ -3103,6 +3111,30 @@ public final class WebHandler {
     );
   }
 
+  public static void setSharedTomcatMaxParameterCount(
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int sharedTomcat,
+      int maxParameterCount
+  ) throws IOException, SQLException {
+    checkAccessSharedTomcat(conn, source, "setSharedTomcatMaxParameterCount", sharedTomcat);
+
+    // Update the database
+    conn.update(
+        "update \"web.tomcat\".\"SharedTomcat\" set \"maxParameterCount\"=? where id=?",
+        maxParameterCount == -1 ? DatabaseAccess.Null.INTEGER : maxParameterCount,
+        sharedTomcat
+    );
+
+    invalidateList.addTable(conn,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
+        getAccountForSharedTomcat(conn, sharedTomcat),
+        getLinuxServerForSharedTomcat(conn, sharedTomcat),
+        false
+    );
+  }
+
   public static void setSharedTomcatMaxPostSize(
       DatabaseConnection conn,
       RequestSource source,
@@ -3164,6 +3196,30 @@ public final class WebHandler {
     conn.update(
         "update \"web.tomcat\".\"SharedTomcat\" set auto_deploy=? where id=?",
         autoDeploy,
+        sharedTomcat
+    );
+
+    invalidateList.addTable(conn,
+        Table.TableId.HTTPD_SHARED_TOMCATS,
+        getAccountForSharedTomcat(conn, sharedTomcat),
+        getLinuxServerForSharedTomcat(conn, sharedTomcat),
+        false
+    );
+  }
+
+  public static void setSharedTomcatUndeployOldVersions(
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int sharedTomcat,
+      boolean undeployOldVersions
+  ) throws IOException, SQLException {
+    checkAccessSharedTomcat(conn, source, "setSharedTomcatUndeployOldVersions", sharedTomcat);
+
+    // Update the database
+    conn.update(
+        "update \"web.tomcat\".\"SharedTomcat\" set \"undeployOldVersions\"=? where id=?",
+        undeployOldVersions,
         sharedTomcat
     );
 
@@ -4052,6 +4108,35 @@ public final class WebHandler {
     return context;
   }
 
+  public static void setPrivateTomcatSiteMaxParameterCount(
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int privateTomcatSite,
+      int maxParameterCount
+  ) throws IOException, SQLException {
+    checkAccessSite(conn, source, "setPrivateTomcatSiteMaxParameterCount", privateTomcatSite);
+
+    // Update the database
+    int updateCount = conn.update(
+        "update \"web.tomcat\".\"PrivateTomcatSite\" set \"maxParameterCount\"=? where tomcat_site=?",
+        maxParameterCount == -1 ? DatabaseAccess.Null.INTEGER : maxParameterCount,
+        privateTomcatSite
+    );
+    if (updateCount == 0) {
+      throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
+    }
+    if (updateCount != 1) {
+      throw new SQLException("Unexpected updateCount: " + updateCount);
+    }
+    invalidateList.addTable(conn,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
+        getAccountForSite(conn, privateTomcatSite),
+        getLinuxServerForSite(conn, privateTomcatSite),
+        false
+    );
+  }
+
   public static void setPrivateTomcatSiteMaxPostSize(
       DatabaseConnection conn,
       RequestSource source,
@@ -4123,6 +4208,35 @@ public final class WebHandler {
     int updateCount = conn.update(
         "update \"web.tomcat\".\"PrivateTomcatSite\" set auto_deploy=? where tomcat_site=?",
         autoDeploy,
+        privateTomcatSite
+    );
+    if (updateCount == 0) {
+      throw new SQLException("Not a PrivateTomcatSite: #" + privateTomcatSite);
+    }
+    if (updateCount != 1) {
+      throw new SQLException("Unexpected updateCount: " + updateCount);
+    }
+    invalidateList.addTable(conn,
+        Table.TableId.HTTPD_TOMCAT_STD_SITES,
+        getAccountForSite(conn, privateTomcatSite),
+        getLinuxServerForSite(conn, privateTomcatSite),
+        false
+    );
+  }
+
+  public static void setPrivateTomcatSiteUndeployOldVersions(
+      DatabaseConnection conn,
+      RequestSource source,
+      InvalidateList invalidateList,
+      int privateTomcatSite,
+      boolean undeployOldVersions
+  ) throws IOException, SQLException {
+    checkAccessSite(conn, source, "setPrivateTomcatSiteUndeployOldVersions", privateTomcatSite);
+
+    // Update the database
+    int updateCount = conn.update(
+        "update \"web.tomcat\".\"PrivateTomcatSite\" set \"undeployOldVersions\"=? where tomcat_site=?",
+        undeployOldVersions,
         privateTomcatSite
     );
     if (updateCount == 0) {

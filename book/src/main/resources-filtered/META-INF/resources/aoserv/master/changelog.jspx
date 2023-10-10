@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2023-08-16T00:44:08Z"
+    dateModified="2023-10-10T02:04:41Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -54,6 +54,15 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         scmUrl="@{project.scm.url}"
       >
         <!-- TODO: Create database-only layer from schema via https://cayenne.apache.org/ ? -->
+        <ul>
+          <li>
+            Enabled control over Tomcat <ao:a href="https://tomcat.apache.org/tomcat-9.0-doc/config/host.html#Common_Attributes"><code>maxParameterCount</code></ao:a>.
+          </li>
+          <li>
+            Enabled control over Tomcat <ao:a href="https://tomcat.apache.org/tomcat-9.0-doc/config/host.html#Common_Attributes"><code>undeployOldVersions</code></ao:a>
+            setting in support of parallel deployments.
+          </li>
+        </ul>
       </changelog:release>
     </c:if>
 

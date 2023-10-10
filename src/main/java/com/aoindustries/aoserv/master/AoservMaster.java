@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -7454,6 +7454,25 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
+                case web_tomcat_SharedTomcat_maxParameterCount_set: {
+                  int sharedTomcat = in.readCompressedInt();
+                  int maxParameterCount = in.readInt();
+                  process.setCommand(
+                      Command.web_tomcat_SharedTomcat_maxParameterCount_set,
+                      sharedTomcat,
+                      maxParameterCount
+                  );
+                  WebHandler.setSharedTomcatMaxParameterCount(
+                      conn,
+                      source,
+                      invalidateList,
+                      sharedTomcat,
+                      maxParameterCount
+                  );
+                  resp = Response.DONE;
+                  sendInvalidateList = true;
+                  break;
+                }
                 case SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE: {
                   int sharedTomcat = in.readCompressedInt();
                   int maxPostSize = in.readInt();
@@ -7506,6 +7525,25 @@ public abstract class AoservMaster {
                       invalidateList,
                       sharedTomcat,
                       autoDeploy
+                  );
+                  resp = Response.DONE;
+                  sendInvalidateList = true;
+                  break;
+                }
+                case web_tomcat_SharedTomcat_undeployOldVersions_set: {
+                  int sharedTomcat = in.readCompressedInt();
+                  boolean undeployOldVersions = in.readBoolean();
+                  process.setCommand(
+                      Command.web_tomcat_SharedTomcat_undeployOldVersions_set,
+                      sharedTomcat,
+                      undeployOldVersions
+                  );
+                  WebHandler.setSharedTomcatUndeployOldVersions(
+                      conn,
+                      source,
+                      invalidateList,
+                      sharedTomcat,
+                      undeployOldVersions
                   );
                   resp = Response.DONE;
                   sendInvalidateList = true;
@@ -7984,6 +8022,25 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
+                case web_tomcat_PrivateTomcatSite_maxParameterCount_set: {
+                  int privateTomcatSite = in.readCompressedInt();
+                  int maxParameterCount = in.readInt();
+                  process.setCommand(
+                      Command.web_tomcat_PrivateTomcatSite_maxParameterCount_set,
+                      privateTomcatSite,
+                      maxParameterCount
+                  );
+                  WebHandler.setPrivateTomcatSiteMaxParameterCount(
+                      conn,
+                      source,
+                      invalidateList,
+                      privateTomcatSite,
+                      maxParameterCount
+                  );
+                  resp = Response.DONE;
+                  sendInvalidateList = true;
+                  break;
+                }
                 case SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE: {
                   int privateTomcatSite = in.readCompressedInt();
                   int maxPostSize = in.readInt();
@@ -8036,6 +8093,25 @@ public abstract class AoservMaster {
                       invalidateList,
                       privateTomcatSite,
                       autoDeploy
+                  );
+                  resp = Response.DONE;
+                  sendInvalidateList = true;
+                  break;
+                }
+                case web_tomcat_PrivateTomcatSite_undeployOldVersions_set: {
+                  int privateTomcatSite = in.readCompressedInt();
+                  boolean undeployOldVersions = in.readBoolean();
+                  process.setCommand(
+                      Command.web_tomcat_PrivateTomcatSite_undeployOldVersions_set,
+                      privateTomcatSite,
+                      undeployOldVersions
+                  );
+                  WebHandler.setPrivateTomcatSiteUndeployOldVersions(
+                      conn,
+                      source,
+                      invalidateList,
+                      privateTomcatSite,
+                      undeployOldVersions
                   );
                   resp = Response.DONE;
                   sendInvalidateList = true;
