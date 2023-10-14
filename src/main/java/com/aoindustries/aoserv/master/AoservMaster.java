@@ -31,6 +31,7 @@ import com.aoapps.collections.PolymorphicMultimap;
 import com.aoapps.collections.SortedArrayList;
 import com.aoapps.dbc.DatabaseAccess;
 import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.dbc.ExtraRowException;
 import com.aoapps.dbc.NoRowException;
 import com.aoapps.hodgepodge.io.stream.StreamableInput;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
@@ -11160,10 +11161,10 @@ public abstract class AoservMaster {
   /**
    * The query must result in precisely one row.
    * If zero rows, {@link NoRowException} is thrown.
-   * If more than one row, an {@link SQLException} is thrown.
+   * If more than one row, an {@link ExtraRowException} is thrown.
    *
    * @throws NoRowException when no rows are in the result set
-   * @throws SQLException when more than one row is in the result set
+   * @throws ExtraRowException when more than one row is in the result set
    */
   public static void writePenniesCheckBusiness(
       DatabaseConnection conn,
@@ -11175,7 +11176,7 @@ public abstract class AoservMaster {
       String param1,
       String param2,
       Timestamp param3
-  ) throws IOException, NoRowException, SQLException {
+  ) throws IOException, NoRowException, ExtraRowException, SQLException {
     AccountHandler.checkAccessAccount(conn, source, action, account);
     try (PreparedStatement pstmt = conn.getConnection(true).prepareStatement(sql)) {
       try {
@@ -11186,7 +11187,7 @@ public abstract class AoservMaster {
           if (results.next()) {
             int pennies = SQLUtility.parseDecimal2(results.getString(1));
             if (results.next()) {
-              throw new SQLException("More than one row in result set");
+              throw new ExtraRowException(results);
             }
             out.writeByte(AoservProtocol.DONE);
             out.writeCompressedInt(pennies);
@@ -11204,10 +11205,10 @@ public abstract class AoservMaster {
   /**
    * The query must result in precisely one row.
    * If zero rows, {@link NoRowException} is thrown.
-   * If more than one row, an {@link SQLException} is thrown.
+   * If more than one row, an {@link ExtraRowException} is thrown.
    *
    * @throws NoRowException when no rows are in the result set
-   * @throws SQLException when more than one row is in the result set
+   * @throws ExtraRowException when more than one row is in the result set
    */
   public static void writePenniesCheckBusiness(
       DatabaseConnection conn,
@@ -11218,7 +11219,7 @@ public abstract class AoservMaster {
       String sql,
       String param1,
       String param2
-  ) throws IOException, NoRowException, SQLException {
+  ) throws IOException, NoRowException, ExtraRowException, SQLException {
     AccountHandler.checkAccessAccount(conn, source, action, account);
     try (PreparedStatement pstmt = conn.getConnection(true).prepareStatement(sql)) {
       try {
@@ -11228,7 +11229,7 @@ public abstract class AoservMaster {
           if (results.next()) {
             int pennies = SQLUtility.parseDecimal2(results.getString(1));
             if (results.next()) {
-              throw new SQLException("More than one row in result set");
+              throw new ExtraRowException(results);
             }
             out.writeByte(AoservProtocol.DONE);
             out.writeCompressedInt(pennies);

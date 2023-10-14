@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -29,6 +29,7 @@ import com.aoapps.cron.CronJob;
 import com.aoapps.cron.Schedule;
 import com.aoapps.dbc.DatabaseAccess;
 import com.aoapps.dbc.DatabaseConnection;
+import com.aoapps.dbc.ExtraRowException;
 import com.aoapps.dbc.NoRowException;
 import com.aoapps.hodgepodge.io.stream.StreamableOutput;
 import com.aoapps.hodgepodge.logging.ProcessTimer;
@@ -490,7 +491,11 @@ public final class WhoisHistoryService implements MasterService {
           return conn.queryCall(
               results -> {
                 if (results.next()) {
-                  return new Tuple2<>(results.getString(1), results.getString(2));
+                  Tuple2<String, String> t = new Tuple2<>(results.getString(1), results.getString(2));
+                  if (results.next()) {
+                    throw new ExtraRowException(results);
+                  }
+                  return t;
                 } else {
                   throw new NoRowException();
                 }
@@ -509,7 +514,11 @@ public final class WhoisHistoryService implements MasterService {
           return conn.queryCall(
               results -> {
                 if (results.next()) {
-                  return new Tuple2<>(results.getString(1), results.getString(2));
+                  Tuple2<String, String> t = new Tuple2<>(results.getString(1), results.getString(2));
+                  if (results.next()) {
+                    throw new ExtraRowException(results);
+                  }
+                  return t;
                 } else {
                   throw new NoRowException();
                 }
@@ -527,7 +536,11 @@ public final class WhoisHistoryService implements MasterService {
         return conn.queryCall(
             results -> {
               if (results.next()) {
-                return new Tuple2<>(results.getString(1), results.getString(2));
+                Tuple2<String, String> t = new Tuple2<>(results.getString(1), results.getString(2));
+                if (results.next()) {
+                  throw new ExtraRowException(results);
+                }
+                return t;
               } else {
                 throw new NoRowException();
               }
@@ -557,7 +570,11 @@ public final class WhoisHistoryService implements MasterService {
         return conn.queryCall(
             results -> {
               if (results.next()) {
-                return new Tuple2<>(results.getString(1), results.getString(2));
+                Tuple2<String, String> t = new Tuple2<>(results.getString(1), results.getString(2));
+                if (results.next()) {
+                  throw new ExtraRowException(results);
+                }
+                return t;
               } else {
                 throw new NoRowException();
               }
