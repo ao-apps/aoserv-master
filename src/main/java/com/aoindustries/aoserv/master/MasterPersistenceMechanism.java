@@ -36,7 +36,6 @@ import com.aoapps.payments.TokenizedCreditCard;
 import com.aoapps.payments.Transaction;
 import com.aoapps.payments.TransactionRequest;
 import com.aoapps.payments.TransactionResult;
-import com.aoapps.sql.Connections;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.account.Administrator;
 import java.io.IOException;
@@ -162,8 +161,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
     } catch (NumberFormatException e) {
       return null;
     }
-    return conn.queryObject(
-        Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+    return conn.queryObjectOptional(
         creditCardObjectFactory,
         "SELECT\n"
             + COLUMNS + "\n"
@@ -177,7 +175,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
             + "  cc.accounting,\n"
             + "  cc.created",
         creditCard
-    );
+    ).orElse(null);
   }
 
   @Override

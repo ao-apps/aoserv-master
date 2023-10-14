@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2012, 2013, 2014, 2015, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2012, 2013, 2014, 2015, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -86,7 +86,7 @@ public final class VirtualServerHandler {
     }
     // TODO: Must not be a disabled server
     // Must be a virtual server with VNC enabled
-    String vncPassword = conn.queryString("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
+    String vncPassword = conn.queryStringNullable("select vnc_password from infrastructure.\"VirtualServer\" where server=?", virtualServer);
     if (vncPassword == null) {
       throw new SQLException("Virtual server VNC is disabled: " + virtualServer);
     }

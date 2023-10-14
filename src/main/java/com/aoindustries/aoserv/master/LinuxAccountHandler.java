@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -30,7 +30,6 @@ import com.aoapps.lang.Throwables;
 import com.aoapps.lang.util.ErrorPrinter;
 import com.aoapps.lang.util.InternUtils;
 import com.aoapps.lang.validation.ValidationException;
-import com.aoapps.sql.Connections;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.distribution.OperatingSystemVersion;
 import com.aoindustries.aoserv.client.email.SpamAssassinMode;
@@ -594,13 +593,12 @@ public final class LinuxAccountHandler {
    * or {@code null} if the gid is not allocated to the server.
    */
   public static Group.Name getGroupByGid(DatabaseConnection conn, int linuxServer, int gid) throws SQLException {
-    return conn.queryObject(
-        Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+    return conn.queryObjectOptional(
         ObjectFactories.groupNameFactory,
         "select name from linux.\"GroupServer\" where ao_server=? and gid=?",
         linuxServer,
         gid
-    );
+    ).orElse(null);
   }
 
   /**
@@ -608,13 +606,12 @@ public final class LinuxAccountHandler {
    * or {@code null} if the uid is not allocated to the server.
    */
   public static com.aoindustries.aoserv.client.linux.User.Name getUserByUid(DatabaseConnection conn, int linuxServer, int uid) throws SQLException {
-    return conn.queryObject(
-        Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+    return conn.queryObjectOptional(
         ObjectFactories.linuxUserNameFactory,
         "select username from linux.\"UserServer\" where ao_server=? and uid=?",
         linuxServer,
         uid
-    );
+    ).orElse(null);
   }
 
   public static int addSystemGroup(
@@ -1326,7 +1323,7 @@ public final class LinuxAccountHandler {
     if (name.equals(User.MAIL)) {
       throw new SQLException("Not allowed to get the autoresponder content for User named '" + User.MAIL + '\'');
     }
-    PosixPath path = conn.queryObject(
+    PosixPath path = conn.queryObjectNullable(
         ObjectFactories.posixPathFactory,
         "select autoresponder_path from linux.\"UserServer\" where id=?",
         userServer

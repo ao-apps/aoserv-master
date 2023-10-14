@@ -52,7 +52,6 @@ import com.aoapps.security.HashedPassword;
 import com.aoapps.security.Identifier;
 import com.aoapps.security.Password;
 import com.aoapps.security.UnprotectedPassword;
-import com.aoapps.sql.Connections;
 import com.aoapps.sql.SQLStreamables;
 import com.aoapps.sql.SQLUtility;
 import com.aoindustries.aoserv.client.AoservObject;
@@ -10782,11 +10781,10 @@ public abstract class AoservMaster {
 
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
 
-    String existingZone = conn.queryString(
-        Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+    String existingZone = conn.queryStringOptional(
         "select zone from dns.\"Zone\" where zone=?",
         zone
-    );
+    ).orElse(null);
     if (existingZone != null && !AoservMaster.getService(DnsService.class).canAccessDnsZone(conn, source, existingZone)) {
       throw new SQLException("Access to this hostname forbidden: Exists in dns.Zone: " + hostname);
     }

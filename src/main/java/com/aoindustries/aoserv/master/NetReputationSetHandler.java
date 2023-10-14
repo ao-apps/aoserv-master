@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2012, 2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2012, 2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -24,7 +24,6 @@
 package com.aoindustries.aoserv.master;
 
 import com.aoapps.dbc.DatabaseConnection;
-import com.aoapps.sql.Connections;
 import com.aoindustries.aoserv.client.account.Account;
 import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
@@ -242,8 +241,7 @@ public final class NetReputationSetHandler {
         Set.ConfidenceType confidence = addRep.getConfidence();
         Set.ReputationType reputationType = addRep.getReputationType();
         short score = addRep.getScore();
-        Host dbHost = conn.queryObject(
-            Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+        Host dbHost = conn.queryObjectOptional(
             result -> {
               @SuppressWarnings("deprecation")
               Host obj = new Host();
@@ -253,7 +251,7 @@ public final class NetReputationSetHandler {
             "select * from \"net.reputation\".\"Host\" where \"set\"=? and host=?",
             ipReputationSet,
             host
-        );
+        ).orElse(null);
         int positiveChange = 0;
         if (dbHost == null) {
           // Add new
@@ -334,8 +332,7 @@ public final class NetReputationSetHandler {
         if (positiveChange > 0) {
           // Update network when positive change applied
           int network = getNetwork(host, networkPrefix);
-          Network dbNetwork = conn.queryObject(
-              Connections.DEFAULT_TRANSACTION_ISOLATION, true, false,
+          Network dbNetwork = conn.queryObjectOptional(
               result -> {
                 @SuppressWarnings("deprecation")
                 Network obj = new Network();
@@ -345,7 +342,7 @@ public final class NetReputationSetHandler {
               "select * from \"net.reputation\".\"Network\" where \"set\"=? and network=?",
               ipReputationSet,
               network
-          );
+          ).orElse(null);
           if (dbNetwork == null) {
             // Add new
             int networkCounter = positiveChange;

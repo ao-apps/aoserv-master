@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -320,7 +320,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int ticket
   ) throws IOException, SQLException {
     checkAccessTicket(conn, source, "getTicketDetails", ticket);
-    return conn.queryString("select details from ticket.\"Ticket\" where id=?", ticket);
+    return conn.queryStringNullable("select details from ticket.\"Ticket\" where id=?", ticket);
   }
 
   public static String getTicketRawEmail(
@@ -329,7 +329,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int ticket
   ) throws IOException, SQLException {
     checkAccessTicket(conn, source, "getTicketRawEmail", ticket);
-    return conn.queryString("select raw_email from ticket.\"Ticket\" where id=?", ticket);
+    return conn.queryStringNullable("select raw_email from ticket.\"Ticket\" where id=?", ticket);
   }
 
   public static String getTicketInternalNotes(
@@ -351,7 +351,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int action
   ) throws IOException, SQLException {
     checkAccessAction(conn, source, "getActionOldValue", action);
-    return conn.queryString("select old_value from ticket.\"Action\" where id=?", action);
+    return conn.queryStringNullable("select old_value from ticket.\"Action\" where id=?", action);
   }
 
   public static String getActionNewValue(
@@ -360,7 +360,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int action
   ) throws IOException, SQLException {
     checkAccessAction(conn, source, "getActionNewValue", action);
-    return conn.queryString("select new_value from ticket.\"Action\" where id=?", action);
+    return conn.queryStringNullable("select new_value from ticket.\"Action\" where id=?", action);
   }
 
   public static String getActionDetails(
@@ -369,7 +369,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int action
   ) throws IOException, SQLException {
     checkAccessAction(conn, source, "getActionDetails", action);
-    return conn.queryString("select details from ticket.\"Action\" where id=?", action);
+    return conn.queryStringNullable("select details from ticket.\"Action\" where id=?", action);
   }
 
   public static String getActionRawEmail(
@@ -378,7 +378,7 @@ public final class TicketHandler /*implements Runnable*/ {
       int action
   ) throws IOException, SQLException {
     checkAccessAction(conn, source, "getActionRawEmail", action);
-    return conn.queryString("select raw_email from ticket.\"Action\" where id=?", action);
+    return conn.queryStringNullable("select raw_email from ticket.\"Action\" where id=?", action);
   }
 
   // </editor-fold>
@@ -464,7 +464,7 @@ public final class TicketHandler /*implements Runnable*/ {
     if (!isTicketAdmin(conn, source)) {
       throw new SQLException("Only ticket administrators may change the administrative priority.");
     }
-    String oldValue=conn.queryString("select admin_priority from ticket.\"Ticket\" where id=?", ticket);
+    String oldValue=conn.queryStringNullable("select admin_priority from ticket.\"Ticket\" where id=?", ticket);
 
     conn.update("update ticket.\"Ticket\" set admin_priority=? where id=?", priority, ticket);
 
@@ -516,7 +516,7 @@ public final class TicketHandler /*implements Runnable*/ {
     if (!isTicketAdmin(conn, source)) {
       throw new SQLException("Only ticket administrators may assign ticket.Ticket.");
     }
-    String oldValue=conn.queryString("select assigned_to from ticket.\"Ticket\" where id=?", ticket);
+    String oldValue=conn.queryStringNullable("select assigned_to from ticket.\"Ticket\" where id=?", ticket);
 
     conn.update("update ticket.\"Ticket\" set assigned_to=? where id=?", assignedTo, ticket);
 

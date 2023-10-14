@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1360,7 +1360,7 @@ public final class EmailHandler {
     Account.Name packageName = getPackageForSmtpRelay(conn, smtpRelay);
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     int linuxServer = getLinuxServerForSmtpRelay(conn, smtpRelay);
-    Timestamp expiration = conn.queryTimestamp("select expiration from email.\"SmtpRelay\" where id=?", smtpRelay);
+    Timestamp expiration = conn.queryTimestampNullable("select expiration from email.\"SmtpRelay\" where id=?", smtpRelay);
     long exp = expiration == null ? -1 : expiration.getTime();
     long min = minDuration == -1 ? -1 : (System.currentTimeMillis() + minDuration); // TODO: Timestamp nanosecond precision
     conn.update(
