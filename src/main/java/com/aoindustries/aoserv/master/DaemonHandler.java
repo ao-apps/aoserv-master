@@ -80,7 +80,7 @@ public final class DaemonHandler {
   }
 
   public static HostAddress getDaemonConnectAddress(DatabaseAccess database, int linuxServer) throws IOException, SQLException {
-    HostAddress address = database.queryObject(
+    HostAddress address = database.queryObjectNullable(
         ObjectFactories.hostAddressFactory,
         "select daemon_connect_address from linux.\"Server\" where server=?",
         linuxServer
@@ -88,7 +88,7 @@ public final class DaemonHandler {
     if (address != null) {
       return address;
     }
-    InetAddress ip = database.queryObject(
+    InetAddress ip = database.queryObjectOptional(
         ObjectFactories.inetAddressFactory,
         "select\n"
             + "  host(ia.\"inetAddress\")\n"
@@ -101,14 +101,11 @@ public final class DaemonHandler {
             + "  and ao.daemon_connect_bind=nb.id\n"
             + "  and nb.\"ipAddress\"=ia.id",
         linuxServer
-    );
-    if (ip == null) {
-      throw new SQLException("Unable to find daemon IP address for Server: " + linuxServer);
-    }
+    ).orElseThrow(() -> new SQLException("Unable to find daemon IP address for Server: " + linuxServer));
     if (ip.isUnspecified()) {
-      ip = database.queryObject(
+      ip = database.queryObjectOptional(
           ObjectFactories.inetAddressFactory,
-          "select (select\n"
+          "select\n"
               + "  host(ia.\"inetAddress\")\n"
               + "from\n"
               + "  linux.\"Server\" ao,\n"
@@ -124,12 +121,9 @@ public final class DaemonHandler {
               + "  and ao2.\"daemonDeviceId\"=nd.\"deviceId\"\n"
               + "  and nd.id=ia.device\n"
               + "  and not ia.\"isAlias\"\n"
-              + "limit 1) as \"inetAddressAllowNull\"",
+              + "limit 1",
           linuxServer
-      );
-      if (ip == null) {
-        throw new SQLException("Unable to find daemon IP address for Server: " + linuxServer);
-      }
+      ).orElseThrow(() -> new SQLException("Unable to find daemon IP address for Server: " + linuxServer));
     }
     return HostAddress.valueOf(ip);
   }
