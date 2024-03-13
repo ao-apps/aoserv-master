@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1589,7 +1589,7 @@ public final class LinuxAccountHandler {
       throw new SQLException("linux_group.name=" + group + " is the primary group for " + primaryCount + " Linux " + (primaryCount == 1 ? "account" : "accounts"));
     }
     // Get the values for later use
-    Account.Name account = getAccountForGroup(conn, group);
+    final Account.Name account = getAccountForGroup(conn, group);
     IntList linuxServers = getServersForGroup(conn, group);
     for (int c = 0; c < linuxServers.size(); c++) {
       int linuxServer = linuxServers.getInt(c);
