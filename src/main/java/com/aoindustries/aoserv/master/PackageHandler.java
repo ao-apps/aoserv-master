@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -669,11 +669,11 @@ public final class PackageHandler {
     }
   }
 
+  private static final Map<Integer, Account.Name> packageAccounts = new HashMap<>();
+
   public static Account.Name getAccountForPackage(DatabaseAccess database, Account.Name packageName) throws IOException, SQLException {
     return getAccountForPackage(database, getIdForPackage(database, packageName));
   }
-
-  private static final Map<Integer, Account.Name> packageAccounts = new HashMap<>();
 
   public static Account.Name getAccountForPackage(DatabaseAccess database, int packageId) throws IOException, SQLException {
     Integer i = packageId;
