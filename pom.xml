@@ -445,7 +445,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <groupId>org.checkerframework</groupId><artifactId>checker-qual</artifactId><version>3.43.0</version>
       </dependency>
       <dependency>
-        <groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.10.1</version>
+        <groupId>com.google.code.gson</groupId><artifactId>gson</artifactId><version>2.11.0</version>
       </dependency>
       <dependency>
         <!-- See https://developer.paypal.com/docs/classic/api/nvpsoap-sdks/ -->
