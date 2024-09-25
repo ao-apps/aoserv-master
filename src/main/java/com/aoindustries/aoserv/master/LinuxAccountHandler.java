@@ -52,10 +52,13 @@ import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * The <code>LinuxAccountHandler</code> handles all the accesses to the Linux tables.
@@ -73,6 +76,194 @@ public final class LinuxAccountHandler {
   private static final int
       CENTOS_7_SYS_GID_MIN = 201,
       CENTOS_7_SYS_UID_MIN = 201;
+
+  /** Matches value in /etc/login.defs on Rocky 9. */
+  private static final int
+      ROCKY_9_SYS_GID_MIN = 201,
+      ROCKY_9_SYS_UID_MIN = 201;
+
+  /** See {@link #isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Tuple2<Group.Name, Integer>> CENTOS_7_FIXED_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
+      new Tuple2<>(Group.ROOT, 0),
+      new Tuple2<>(Group.BIN, 1),
+      new Tuple2<>(Group.DAEMON, 2),
+      new Tuple2<>(Group.SYS, 3),
+      new Tuple2<>(Group.ADM, 4),
+      new Tuple2<>(Group.TTY, 5),
+      new Tuple2<>(Group.DISK, 6),
+      new Tuple2<>(Group.LP, 7),
+      new Tuple2<>(Group.MEM, 8),
+      new Tuple2<>(Group.KMEM, 9),
+      new Tuple2<>(Group.WHEEL, 10),
+      new Tuple2<>(Group.CDROM, 11),
+      new Tuple2<>(Group.MAIL, 12),
+      new Tuple2<>(Group.MAN, 15),
+      new Tuple2<>(Group.OPROFILE, 16),
+      new Tuple2<>(Group.DIALOUT, 18),
+      new Tuple2<>(Group.FLOPPY, 19),
+      new Tuple2<>(Group.GAMES, 20),
+      new Tuple2<>(Group.UTMP, 22),
+      new Tuple2<>(Group.NAMED, 25),
+      new Tuple2<>(Group.POSTGRES, 26),
+      new Tuple2<>(Group.RPCUSER, 29),
+      new Tuple2<>(Group.MYSQL, 31),
+      new Tuple2<>(Group.RPC, 32),
+      new Tuple2<>(Group.TAPE, 33),
+      new Tuple2<>(Group.UTEMPTER, 35),
+      new Tuple2<>(Group.VIDEO, 39),
+      new Tuple2<>(Group.DIP, 40),
+      new Tuple2<>(Group.MAILNULL, 47),
+      new Tuple2<>(Group.APACHE, 48),
+      new Tuple2<>(Group.FTP, 50),
+      new Tuple2<>(Group.SMMSP, 51),
+      new Tuple2<>(Group.LOCK, 54),
+      new Tuple2<>(Group.TSS, 59),
+      new Tuple2<>(Group.AUDIO, 63),
+      new Tuple2<>(Group.TCPDUMP, 72),
+      new Tuple2<>(Group.SSHD, 74),
+      new Tuple2<>(Group.SASLAUTH, 76),
+      new Tuple2<>(Group.AWSTATS, 78),
+      new Tuple2<>(Group.DBUS, 81),
+      new Tuple2<>(Group.MAILONLY, 83),
+      new Tuple2<>(Group.SCREEN, 84),
+      new Tuple2<>(Group.BIRD, 95),
+      new Tuple2<>(Group.NOBODY, 99),
+      new Tuple2<>(Group.USERS, 100),
+      new Tuple2<>(Group.STAPUSR, 156),
+      new Tuple2<>(Group.STAPSYS, 157),
+      new Tuple2<>(Group.STAPDEV, 158),
+      new Tuple2<>(Group.AVAHI_AUTOIPD, 170),
+      new Tuple2<>(Group.DHCPD, 177),
+      new Tuple2<>(Group.SYSTEMD_JOURNAL, 190),
+      new Tuple2<>(Group.SYSTEMD_NETWORK, 192),
+      new Tuple2<>(Group.NFSNOBODY, 65534)
+  ));
+
+  /** See {@link #isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Tuple2<Group.Name, Integer>> ROCKY_9_FIXED_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
+      new Tuple2<>(Group.ROOT, 0),
+      new Tuple2<>(Group.BIN, 1),
+      new Tuple2<>(Group.DAEMON, 2),
+      new Tuple2<>(Group.SYS, 3),
+      new Tuple2<>(Group.ADM, 4),
+      new Tuple2<>(Group.TTY, 5),
+      new Tuple2<>(Group.DISK, 6),
+      new Tuple2<>(Group.LP, 7),
+      new Tuple2<>(Group.MEM, 8),
+      new Tuple2<>(Group.KMEM, 9),
+      new Tuple2<>(Group.WHEEL, 10),
+      new Tuple2<>(Group.CDROM, 11),
+      new Tuple2<>(Group.MAIL, 12),
+      new Tuple2<>(Group.MAN, 15),
+      new Tuple2<>(Group.DIALOUT, 18),
+      new Tuple2<>(Group.FLOPPY, 19),
+      new Tuple2<>(Group.GAMES, 20),
+      new Tuple2<>(Group.UTMP, 22),
+      new Tuple2<>(Group.NAMED, 25),
+      new Tuple2<>(Group.POSTGRES, 26),
+      new Tuple2<>(Group.RPCUSER, 29),
+      new Tuple2<>(Group.MYSQL, 31),
+      new Tuple2<>(Group.RPC, 32),
+      new Tuple2<>(Group.TAPE, 33),
+      new Tuple2<>(Group.UTEMPTER, 35),
+      new Tuple2<>(Group.KVM, 36),
+      new Tuple2<>(Group.VIDEO, 39),
+      new Tuple2<>(Group.APACHE, 48),
+      new Tuple2<>(Group.FTP, 50),
+      new Tuple2<>(Group.LOCK, 54),
+      new Tuple2<>(Group.TSS, 59),
+      new Tuple2<>(Group.AUDIO, 63),
+      new Tuple2<>(Group.TCPDUMP, 72),
+      new Tuple2<>(Group.SSHD, 74),
+      new Tuple2<>(Group.SASLAUTH, 76),
+      new Tuple2<>(Group.AWSTATS, 78),
+      new Tuple2<>(Group.DBUS, 81),
+      new Tuple2<>(Group.SCREEN, 84),
+      new Tuple2<>(Group.USERS, 100),
+      new Tuple2<>(Group.RTKIT, 172),
+      new Tuple2<>(Group.DHCPD, 177),
+      new Tuple2<>(Group.SYSTEMD_JOURNAL, 190),
+      new Tuple2<>(Group.NOBODY, 65534)
+  ));
+
+  /** See {@link #isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Group.Name> CENTOS_7_DYNAMIC_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
+      Group.AOSERV_JILTER,
+      Group.AOSERV_MASTER,
+      Group.AOSERV_XEN_MIGRATION,
+      Group.CGRED,
+      Group.CHRONY,
+      Group.CLAMSCAN,
+      Group.CLAMUPDATE,
+      Group.INPUT,
+      Group.JENKINS,
+      Group.MEMCACHED,
+      Group.NGINX,
+      Group.POLKITD,
+      Group.REDIS,
+      Group.SSH_KEYS,
+      Group.SYSTEMD_BUS_PROXY,
+      Group.SYSTEMD_NETWORK,
+      Group.UNBOUND,
+      Group.VIRUSGROUP
+  ));
+
+  /** See {@link #isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Group.Name> ROCKY_9_DYNAMIC_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
+      Group.AOSERV_JILTER,
+      Group.AOSERV_MASTER,
+      Group.CHRONY,
+      Group.CLAMSCAN,
+      Group.CLAMUPDATE,
+      Group.FLATPAK,
+      Group.GEOCLUE,
+      Group.INPUT,
+      Group.JENKINS,
+      Group.MEMCACHED,
+      Group.NGINX,
+      Group.PIPEWIRE,
+      Group.POLKITD,
+      Group.RENDER,
+      Group.SGX,
+      Group.SSH_KEYS,
+      Group.SSSD,
+      Group.SYSTEMD_COREDUMP,
+      Group.SYSTEMD_OOM,
+      Group.UNBOUND,
+      Group.VIRUSGROUP
+  ));
+
+  /** See {@link #isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Group.Name> CENTOS_7_REGULAR_USER_GROUPS = new HashSet<>(Arrays.asList(
+      Group.AOADMIN,
+      // AOServ Schema
+      Group.ACCOUNTING,
+      Group.BILLING,
+      Group.DISTRIBUTION,
+      Group.INFRASTRUCTURE,
+      Group.MANAGEMENT,
+      Group.MONITORING,
+      Group.RESELLER,
+      // Amazon EC2 cloud-init
+      Group.CENTOS,
+      // SonarQube
+      Group.SONARQUBE
+  ));
+
+  /** See {@link #isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  private static final Set<Group.Name> ROCKY_9_REGULAR_USER_GROUPS = new HashSet<>(Arrays.asList(
+      Group.AOADMIN,
+      // AOServ Schema
+      Group.ACCOUNTING,
+      Group.BILLING,
+      Group.DISTRIBUTION,
+      Group.INFRASTRUCTURE,
+      Group.MANAGEMENT,
+      Group.MONITORING,
+      Group.RESELLER,
+      // SonarQube
+      Group.SONARQUBE
+  ));
 
   /** Default sudo setting for newly added "aoadmin" system users. */
   private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD:ALL";
@@ -614,6 +805,53 @@ public final class LinuxAccountHandler {
     ).orElse(null);
   }
 
+  /**
+   * Determines if is a fixed GID type of system group.
+   */
+  private static boolean isFixedSystemGroup(int osv, Group.Name group, int gid) throws SQLException {
+    if (osv == OperatingSystemVersion.CENTOS_7_X86_64) {
+      return CENTOS_7_FIXED_SYSTEM_GROUPS.contains(new Tuple2<>(group, gid));
+    } else if (osv == OperatingSystemVersion.ROCKY_9_X86_64) {
+      return ROCKY_9_FIXED_SYSTEM_GROUPS.contains(new Tuple2<>(group, gid));
+    } else {
+      throw new SQLException("Unexpected operating system #" + osv);
+    }
+  }
+
+  /**
+   * Determines if is a dynamic GID type of system group.
+   */
+  private static boolean isDynamicSystemGroup(int osv, int gidMin, Group.Name group, int gid) throws SQLException {
+    if (osv == OperatingSystemVersion.CENTOS_7_X86_64) {
+      return gid >= CENTOS_7_SYS_GID_MIN
+          && gid < gidMin
+          && CENTOS_7_DYNAMIC_SYSTEM_GROUPS.contains(group);
+    } else if (osv == OperatingSystemVersion.ROCKY_9_X86_64) {
+      return gid >= ROCKY_9_SYS_GID_MIN
+          && gid < gidMin
+          && ROCKY_9_DYNAMIC_SYSTEM_GROUPS.contains(group);
+    } else {
+      throw new SQLException("Unexpected operating system #" + osv);
+    }
+  }
+
+  /**
+   * Determines if is a regular user group.
+   */
+  private static boolean isRegularUserGroup(int osv, int gidMin, int gidMax, Group.Name group, int gid) throws SQLException {
+    if (osv == OperatingSystemVersion.CENTOS_7_X86_64) {
+      return gid >= gidMin
+          && gid <= gidMax
+          && CENTOS_7_REGULAR_USER_GROUPS.contains(group);
+    } else if (osv == OperatingSystemVersion.ROCKY_9_X86_64) {
+      return gid >= gidMin
+          && gid <= gidMax
+          && ROCKY_9_REGULAR_USER_GROUPS.contains(group);
+    } else {
+      throw new SQLException("Unexpected operating system #" + osv);
+    }
+  }
+
   public static int addSystemGroup(
       DatabaseConnection conn,
       RequestSource source,
@@ -644,107 +882,12 @@ public final class LinuxAccountHandler {
     // Must be one of the expected patterns for the servers operating system version
     int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
     if (
-        osv == OperatingSystemVersion.CENTOS_7_X86_64
-            && (
-            // Fixed group ids
-            (group.equals(Group.ROOT)            && gid == 0)
-                || (group.equals(Group.BIN)             && gid == 1)
-                || (group.equals(Group.DAEMON)          && gid == 2)
-                || (group.equals(Group.SYS)             && gid == 3)
-                || (group.equals(Group.ADM)             && gid == 4)
-                || (group.equals(Group.TTY)             && gid == 5)
-                || (group.equals(Group.DISK)            && gid == 6)
-                || (group.equals(Group.LP)              && gid == 7)
-                || (group.equals(Group.MEM)             && gid == 8)
-                || (group.equals(Group.KMEM)            && gid == 9)
-                || (group.equals(Group.WHEEL)           && gid == 10)
-                || (group.equals(Group.CDROM)           && gid == 11)
-                || (group.equals(Group.MAIL)            && gid == 12)
-                || (group.equals(Group.MAN)             && gid == 15)
-                || (group.equals(Group.OPROFILE)        && gid == 16)
-                || (group.equals(Group.DIALOUT)         && gid == 18)
-                || (group.equals(Group.FLOPPY)          && gid == 19)
-                || (group.equals(Group.GAMES)           && gid == 20)
-                || (group.equals(Group.UTMP)            && gid == 22)
-                || (group.equals(Group.NAMED)           && gid == 25)
-                || (group.equals(Group.POSTGRES)        && gid == 26)
-                || (group.equals(Group.RPCUSER)         && gid == 29)
-                || (group.equals(Group.MYSQL)           && gid == 31)
-                || (group.equals(Group.RPC)             && gid == 32)
-                || (group.equals(Group.TAPE)            && gid == 33)
-                || (group.equals(Group.UTEMPTER)        && gid == 35)
-                || (group.equals(Group.VIDEO)           && gid == 39)
-                || (group.equals(Group.DIP)             && gid == 40)
-                || (group.equals(Group.MAILNULL)        && gid == 47)
-                || (group.equals(Group.APACHE)          && gid == 48)
-                || (group.equals(Group.FTP)             && gid == 50)
-                || (group.equals(Group.SMMSP)           && gid == 51)
-                || (group.equals(Group.LOCK)            && gid == 54)
-                || (group.equals(Group.TSS)             && gid == 59)
-                || (group.equals(Group.AUDIO)           && gid == 63)
-                || (group.equals(Group.TCPDUMP)         && gid == 72)
-                || (group.equals(Group.SSHD)            && gid == 74)
-                || (group.equals(Group.SASLAUTH)        && gid == 76)
-                || (group.equals(Group.AWSTATS)         && gid == 78)
-                || (group.equals(Group.DBUS)            && gid == 81)
-                || (group.equals(Group.MAILONLY)        && gid == 83)
-                || (group.equals(Group.SCREEN)          && gid == 84)
-                || (group.equals(Group.BIRD)            && gid == 95)
-                || (group.equals(Group.NOBODY)          && gid == 99)
-                || (group.equals(Group.USERS)           && gid == 100)
-                || (group.equals(Group.STAPUSR)         && gid == 156)
-                || (group.equals(Group.STAPSYS)         && gid == 157)
-                || (group.equals(Group.STAPDEV)         && gid == 158)
-                || (group.equals(Group.AVAHI_AUTOIPD)   && gid == 170)
-                || (group.equals(Group.DHCPD)           && gid == 177)
-                || (group.equals(Group.SYSTEMD_JOURNAL) && gid == 190)
-                || (group.equals(Group.SYSTEMD_NETWORK) && gid == 192)
-                || (group.equals(Group.NFSNOBODY)       && gid == 65534)
-                || (
-                // System groups in range 201 through gidMin - 1
-                gid >= CENTOS_7_SYS_GID_MIN
-                    && gid < gidMin
-                    && (
-                    group.equals(Group.AOSERV_JILTER)
-                        || group.equals(Group.AOSERV_MASTER)
-                        || group.equals(Group.AOSERV_XEN_MIGRATION)
-                        || group.equals(Group.CGRED)
-                        || group.equals(Group.CHRONY)
-                        || group.equals(Group.CLAMSCAN)
-                        || group.equals(Group.CLAMUPDATE)
-                        || group.equals(Group.INPUT)
-                        || group.equals(Group.JENKINS)
-                        || group.equals(Group.MEMCACHED)
-                        || group.equals(Group.NGINX)
-                        || group.equals(Group.POLKITD)
-                        || group.equals(Group.REDIS)
-                        || group.equals(Group.SSH_KEYS)
-                        || group.equals(Group.SYSTEMD_BUS_PROXY)
-                        || group.equals(Group.SYSTEMD_NETWORK)
-                        || group.equals(Group.UNBOUND)
-                        || group.equals(Group.VIRUSGROUP)
-                )
-            ) || (
-                // Regular user groups in range gidMin through Group.GID_MAX
-                gid >= gidMin
-                    && gid <= gidMax
-                    && (
-                    group.equals(Group.AOADMIN)
-                        // AOServ Schema
-                        || group.equals(Group.ACCOUNTING)
-                        || group.equals(Group.BILLING)
-                        || group.equals(Group.DISTRIBUTION)
-                        || group.equals(Group.INFRASTRUCTURE)
-                        || group.equals(Group.MANAGEMENT)
-                        || group.equals(Group.MONITORING)
-                        || group.equals(Group.RESELLER)
-                        // Amazon EC2 cloud-init
-                        || group.equals(Group.CENTOS)
-                        // SonarQube
-                        || group.equals(Group.SONARQUBE)
-                )
-            )
-        )
+        // Fixed group ids
+        isFixedSystemGroup(osv, group, gid)
+        // System groups in range 201 through gidMin - 1
+        || isDynamicSystemGroup(osv, gidMin, group, gid)
+        // Regular user groups in range gidMin through Group.GID_MAX
+        || isRegularUserGroup(osv, gidMin, gidMax, group, gid)
     ) {
       int groupServer = conn.updateInt(
           "INSERT INTO\n"
@@ -781,11 +924,17 @@ public final class LinuxAccountHandler {
     static final int ANY_USER_UID = -2;
 
     /**
-     * The set of allowed system group patterns for CentOS 7.
+     * The set of allowed system user patterns for CentOS 7.
      */
-    private static final Map<com.aoindustries.aoserv.client.linux.User.Name, SystemUser> centos7SystemUsers = new HashMap<>();
+    private static final Map<com.aoindustries.aoserv.client.linux.User.Name, SystemUser> CENTOS_7_SYSTEM_USERS = new HashMap<>();
 
-    private static void addCentos7SystemUser(
+    /**
+     * The set of allowed system user patterns for Rocky 9.
+     */
+    private static final Map<com.aoindustries.aoserv.client.linux.User.Name, SystemUser> ROCKY_9_SYSTEM_USERS = new HashMap<>();
+
+    private static void addSystemUser(
+        Map<com.aoindustries.aoserv.client.linux.User.Name, SystemUser> systemUsers,
         com.aoindustries.aoserv.client.linux.User.Name user,
         int uid,
         Group.Name group,
@@ -795,10 +944,9 @@ public final class LinuxAccountHandler {
         String sudo
     ) throws ValidationException {
       if (
-          centos7SystemUsers.put(
+          systemUsers.put(
               user,
               new SystemUser(
-                  user,
                   uid,
                   group,
                   InternUtils.intern(Gecos.valueOf(fullName)), null, null, null,
@@ -816,66 +964,137 @@ public final class LinuxAccountHandler {
       try {
         try {
           // TODO: We should probably have a database table instead of this hard-coded list, same for system groups
-          addCentos7SystemUser(User.ROOT,                              0, Group.ROOT,                 "root",                                                            "/root",                         Shell.BASH,     null);
-          addCentos7SystemUser(User.BIN,                               1, Group.BIN,                  "bin",                                                             "/bin",                          Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.DAEMON,                            2, Group.DAEMON,               "daemon",                                                          "/sbin",                         Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.ADM,                               3, Group.ADM,                  "adm",                                                             "/var/adm",                      Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.LP,                                4, Group.LP,                   "lp",                                                              "/var/spool/lpd",                Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SYNC,                              5, Group.ROOT,                 "sync",                                                            "/sbin",                         Shell.SYNC,     null);
-          addCentos7SystemUser(User.SHUTDOWN,                          6, Group.ROOT,                 "shutdown",                                                        "/sbin",                         Shell.SHUTDOWN, null);
-          addCentos7SystemUser(User.HALT,                              7, Group.ROOT,                 "halt",                                                            "/sbin",                         Shell.HALT,     null);
-          addCentos7SystemUser(User.MAIL,                              8, Group.MAIL,                 "mail",                                                            "/var/spool/mail",               Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.OPERATOR,                         11, Group.ROOT,                 "operator",                                                        "/root",                         Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.GAMES,                            12, Group.USERS,                "games",                                                           "/usr/games",                    Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.FTP,                              14, Group.FTP,                  "FTP User",                                                        "/var/ftp",                      Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.OPROFILE,                         16, Group.OPROFILE,             "Special user account to be used by OProfile",                     "/var/lib/oprofile",             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.NAMED,                            25, Group.NAMED,                "Named",                                                           "/var/named",                    Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.POSTGRES,                         26, Group.POSTGRES,             "PostgreSQL Server",                                               "/var/lib/pgsql",                Shell.BASH,     null);
-          addCentos7SystemUser(User.RPCUSER,                          29, Group.RPCUSER,              "RPC Service User",                                                "/var/lib/nfs",                  Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.MYSQL,                            31, Group.MYSQL,                "MySQL server",                                                    "/var/lib/mysql",                Shell.BASH,     null);
-          addCentos7SystemUser(User.RPC,                              32, Group.RPC,                  "Rpcbind Daemon",                                                  "/var/lib/rpcbind",              Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.MAILNULL,                         47, Group.MAILNULL,             null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.APACHE,                           48, Group.APACHE,               "Apache",                                                          "/usr/share/httpd",              Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SMMSP,                            51, Group.SMMSP,                null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.TSS,                              59, Group.TSS,                  "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null",                     Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.TCPDUMP,                          72, Group.TCPDUMP,              null,                                                              "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SSHD,                             74, Group.SSHD,                 "Privilege-separated SSH",                                         "/var/empty/sshd",               Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.CYRUS,                            76, Group.MAIL,                 "Cyrus IMAP Server",                                               "/var/lib/imap",                 Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.BIRD,                             95, Group.BIRD,                 "BIRD Internet Routing Daemon",                                    "/var/opt/bird",                 Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.NOBODY,                           99, Group.NOBODY,               "Nobody",                                                          "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.AVAHI_AUTOIPD,                   170, Group.AVAHI_AUTOIPD,        "Avahi IPv4LL Stack",                                              "/var/lib/avahi-autoipd",        Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SYSTEMD_NETWORK,                 192, Group.SYSTEMD_NETWORK,      "systemd Network Management",                                      "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.NFSNOBODY,                     65534, Group.NFSNOBODY,            "Anonymous NFS User",                                              "/var/lib/nfs",                  Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.AOSERV_JILTER,        ANY_SYSTEM_UID, Group.AOSERV_JILTER,        "AOServ Jilter",                                                   "/var/opt/aoserv-jilter",        Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.AOSERV_MASTER,        ANY_SYSTEM_UID, Group.AOSERV_MASTER,        "AOServ Master",                                                   "/var/opt/aoserv-master",        Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.CHRONY,               ANY_SYSTEM_UID, Group.CHRONY,               null,                                                              "/var/lib/chrony",               Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
-          addCentos7SystemUser(User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.REDIS,                ANY_SYSTEM_UID, Group.REDIS,                "Redis Database Server",                                           "/var/lib/redis",                Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SASLAUTH,             ANY_SYSTEM_UID, Group.SASLAUTH,             "Saslauthd user",                                                  "/run/saslauthd",                Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.SYSTEMD_BUS_PROXY,    ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY,    "systemd Bus Proxy",                                               "/",                             Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.UNBOUND,              ANY_SYSTEM_UID, Group.UNBOUND,              "Unbound DNS resolver",                                            "/etc/unbound",                  Shell.NOLOGIN,  null);
-          addCentos7SystemUser(User.AOADMIN,              ANY_USER_UID,   Group.AOADMIN,              "AO Industries Administrator",                                     "/home/aoadmin",                 Shell.BASH,     AOADMIN_SUDO);
-          addCentos7SystemUser(User.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, Group.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",                                            "/var/opt/aoserv-xen-migration", Shell.BASH,     AOSERV_XEN_MIGRATION_SUDO);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.ROOT,                              0, Group.ROOT,                 "root",                                                            "/root",                         Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.ROOT,                              0, Group.ROOT,                 "root",                                                            "/root",                         Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.BIN,                               1, Group.BIN,                  "bin",                                                             "/bin",                          Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.BIN,                               1, Group.BIN,                  "bin",                                                             "/bin",                          Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.DAEMON,                            2, Group.DAEMON,               "daemon",                                                          "/sbin",                         Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DAEMON,                            2, Group.DAEMON,               "daemon",                                                          "/sbin",                         Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.ADM,                               3, Group.ADM,                  "adm",                                                             "/var/adm",                      Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.ADM,                               3, Group.ADM,                  "adm",                                                             "/var/adm",                      Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.LP,                                4, Group.LP,                   "lp",                                                              "/var/spool/lpd",                Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.LP,                                4, Group.LP,                   "lp",                                                              "/var/spool/lpd",                Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SYNC,                              5, Group.ROOT,                 "sync",                                                            "/sbin",                         Shell.SYNC,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SYNC,                              5, Group.ROOT,                 "sync",                                                            "/sbin",                         Shell.SYNC,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SHUTDOWN,                          6, Group.ROOT,                 "shutdown",                                                        "/sbin",                         Shell.SHUTDOWN, null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SHUTDOWN,                          6, Group.ROOT,                 "shutdown",                                                        "/sbin",                         Shell.SHUTDOWN, null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.HALT,                              7, Group.ROOT,                 "halt",                                                            "/sbin",                         Shell.HALT,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.HALT,                              7, Group.ROOT,                 "halt",                                                            "/sbin",                         Shell.HALT,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MAIL,                              8, Group.MAIL,                 "mail",                                                            "/var/spool/mail",               Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MAIL,                              8, Group.MAIL,                 "mail",                                                            "/var/spool/mail",               Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.OPERATOR,                         11, Group.ROOT,                 "operator",                                                        "/root",                         Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.OPERATOR,                         11, Group.ROOT,                 "operator",                                                        "/root",                         Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.GAMES,                            12, Group.USERS,                "games",                                                           "/usr/games",                    Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.GAMES,                            12, Group.USERS,                "games",                                                           "/usr/games",                    Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.FTP,                              14, Group.FTP,                  "FTP User",                                                        "/var/ftp",                      Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.FTP,                              14, Group.FTP,                  "FTP User",                                                        "/var/ftp",                      Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.OPROFILE,                         16, Group.OPROFILE,             "Special user account to be used by OProfile",                     "/var/lib/oprofile",             Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.OPROFILE
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.NAMED,                            25, Group.NAMED,                "Named",                                                           "/var/named",                    Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.NAMED,                            25, Group.NAMED,                "Named",                                                           "/var/named",                    Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.POSTGRES,                         26, Group.POSTGRES,             "PostgreSQL Server",                                               "/var/lib/pgsql",                Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.POSTGRES,                         26, Group.POSTGRES,             "PostgreSQL Server",                                               "/var/lib/pgsql",                Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.RPCUSER,                          29, Group.RPCUSER,              "RPC Service User",                                                "/var/lib/nfs",                  Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RPCUSER,                          29, Group.RPCUSER,              "RPC Service User",                                                "/var/lib/nfs",                  Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MYSQL,                            31, Group.MYSQL,                "MySQL server",                                                    "/var/lib/mysql",                Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MYSQL,                            31, Group.MYSQL,                "MySQL server",                                                    "/var/lib/mysql",                Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.RPC,                              32, Group.RPC,                  "Rpcbind Daemon",                                                  "/var/lib/rpcbind",              Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RPC,                              32, Group.RPC,                  "Rpcbind Daemon",                                                  "/var/lib/rpcbind",              Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MAILNULL,                         47, Group.MAILNULL,             null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.MAILNULL
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.APACHE,                           48, Group.APACHE,               "Apache",                                                          "/usr/share/httpd",              Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.APACHE,                           48, Group.APACHE,               "Apache",                                                          "/usr/share/httpd",              Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SMMSP,                            51, Group.SMMSP,                null,                                                              "/var/spool/mqueue",             Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.SMMSP
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.TSS,                              59, Group.TSS,                  "Account used by the trousers package to sandbox the tcsd daemon", "/dev/null",                     Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.TSS,                              59, Group.TSS,                  "Account used for TPM access",                                     "/dev/null",                     Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.TCPDUMP,                          72, Group.TCPDUMP,              null,                                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.TCPDUMP,                          72, Group.TCPDUMP,              null,                                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SSHD,                             74, Group.SSHD,                 "Privilege-separated SSH",                                         "/var/empty/sshd",               Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SSHD,                             74, Group.SSHD,                 "Privilege-separated SSH",                                         "/usr/share/empty.sshd",         Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CYRUS,                            76, Group.MAIL,                 "Cyrus IMAP Server",                                               "/var/lib/imap",                 Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.CYRUS
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.BIRD,                             95, Group.BIRD,                 "BIRD Internet Routing Daemon",                                    "/var/opt/bird",                 Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.BIRD
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.NOBODY,                           99, Group.NOBODY,               "Nobody",                                                          "/",                             Shell.NOLOGIN,  null);
+          // Renumbered to 65534 in Rocky 9:   User.NOBODY
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AVAHI_AUTOIPD,                   170, Group.AVAHI_AUTOIPD,        "Avahi IPv4LL Stack",                                              "/var/lib/avahi-autoipd",        Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.AVAHI_AUTOIPD
+          // Not in CentOS 7:                  User.RTKIT
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RTKIT,                           172, Group.RTKIT,                "RealtimeKit",                                                     "/proc",                         Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SYSTEMD_NETWORK,                 192, Group.SYSTEMD_NETWORK,      "systemd Network Management",                                      "/",                             Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.SYSTEMD_NETWORK
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.NFSNOBODY,                     65534, Group.NFSNOBODY,            "Anonymous NFS User",                                              "/var/lib/nfs",                  Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.NOBODY,                        65534, Group.NOBODY,               "Kernel Overflow User",                                            "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AOSERV_JILTER,        ANY_SYSTEM_UID, Group.AOSERV_JILTER,        "AOServ Jilter",                                                   "/var/opt/aoserv-jilter",        Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AOSERV_JILTER,        ANY_SYSTEM_UID, Group.AOSERV_JILTER,        "AOServ Jilter",                                                   "/var/opt/aoserv-jilter",        Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AOSERV_MASTER,        ANY_SYSTEM_UID, Group.AOSERV_MASTER,        "AOServ Master",                                                   "/var/opt/aoserv-master",        Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AOSERV_MASTER,        ANY_SYSTEM_UID, Group.AOSERV_MASTER,        "AOServ Master",                                                   "/var/opt/aoserv-master",        Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CHRONY,               ANY_SYSTEM_UID, Group.CHRONY,               null,                                                              "/var/lib/chrony",               Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CHRONY,               ANY_SYSTEM_UID, Group.CHRONY,               null,                                                              "/var/lib/chrony",               Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
+          // Not in CentOS 7:                  User.FLATPAK
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.FLATPAK,              ANY_SYSTEM_UID, Group.FLATPAK,              "User for flatpak system helper",                                  "/",                             Shell.NOLOGIN,  null);
+          // Not in CentOS 7:                  User.GEOCLUE
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.GEOCLUE,              ANY_SYSTEM_UID, Group.GEOCLUE,              "User for geoclue",                                                "/var/lib/geoclue",              Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
+          // Not in CentOS 7:                  User.PIPEWIRE
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.PIPEWIRE,             ANY_SYSTEM_UID, Group.PIPEWIRE,             "PipeWire System Daemon",                                          "/var/run/pipewire",             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.REDIS,                ANY_SYSTEM_UID, Group.REDIS,                "Redis Database Server",                                           "/var/lib/redis",                Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.REDIS
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SASLAUTH,             ANY_SYSTEM_UID, Group.SASLAUTH,             "Saslauthd user",                                                  "/run/saslauthd",                Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SASLAUTH,             ANY_SYSTEM_UID, Group.SASLAUTH,             "Saslauthd user",                                                  "/run/saslauthd",                Shell.NOLOGIN,  null);
+          // Not in CentOS 7:                  User.SSSD
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SSSD,                 ANY_SYSTEM_UID, Group.SSSD,                 "User for sssd",                                                   "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SYSTEMD_BUS_PROXY,    ANY_SYSTEM_UID, Group.SYSTEMD_BUS_PROXY,    "systemd Bus Proxy",                                               "/",                             Shell.NOLOGIN,  null);
+          // Not in Rocky 9:                   User.SYSTEMD_BUS_PROXY
+          // Not in CentOS 7:                  User.SYSTEMD_COREDUMP
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SYSTEMD_COREDUMP,     ANY_SYSTEM_UID, Group.SYSTEMD_COREDUMP,     "systemd Core Dumper",                                             "/",                             Shell.NOLOGIN,  null);
+          // Not in CentOS 7:                  User.SYSTEMD_OOM
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SYSTEMD_OOM,          ANY_SYSTEM_UID, Group.SYSTEMD_OOM,          "systemd Userspace OOM Killer",                                    "/",                             Shell.USR_SBIN_NOLOGIN, null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.UNBOUND,              ANY_SYSTEM_UID, Group.UNBOUND,              "Unbound DNS resolver",                                            "/etc/unbound",                  Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.UNBOUND,              ANY_SYSTEM_UID, Group.UNBOUND,              "Unbound DNS resolver",                                            "/etc/unbound",                  Shell.NOLOGIN,  null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AOADMIN,              ANY_USER_UID,   Group.AOADMIN,              "AO Industries Administrator",                                     "/home/aoadmin",                 Shell.BASH,     AOADMIN_SUDO);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AOADMIN,              ANY_USER_UID,   Group.AOADMIN,              "AO Industries Administrator",                                     "/home/aoadmin",                 Shell.BASH,     AOADMIN_SUDO);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.AOSERV_XEN_MIGRATION, ANY_SYSTEM_UID, Group.AOSERV_XEN_MIGRATION, "AOServ Xen Migration",                                            "/var/opt/aoserv-xen-migration", Shell.BASH,     AOSERV_XEN_MIGRATION_SUDO);
+          // Not in Rocky 9:                   User.AOSERV_XEN_MIGRATION
           // AOServ Schema:
-          addCentos7SystemUser(User.ACCOUNTING,           ANY_USER_UID,   Group.ACCOUNTING,           "masterdb access",                                                 "/home/accounting",              Shell.BASH,     null);
-          addCentos7SystemUser(User.BILLING,              ANY_USER_UID,   Group.BILLING,              "masterdb access",                                                 "/home/billing",                 Shell.BASH,     null);
-          addCentos7SystemUser(User.DISTRIBUTION,         ANY_USER_UID,   Group.DISTRIBUTION,         "masterdb access",                                                 "/home/distribution",            Shell.BASH,     null);
-          addCentos7SystemUser(User.INFRASTRUCTURE,       ANY_USER_UID,   Group.INFRASTRUCTURE,       "masterdb access",                                                 "/home/infrastructure",          Shell.BASH,     null);
-          addCentos7SystemUser(User.MANAGEMENT,           ANY_USER_UID,   Group.MANAGEMENT,           "masterdb access",                                                 "/home/management",              Shell.BASH,     null);
-          addCentos7SystemUser(User.MONITORING,           ANY_USER_UID,   Group.MONITORING,           "masterdb access",                                                 "/home/monitoring",              Shell.BASH,     null);
-          addCentos7SystemUser(User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.ACCOUNTING,           ANY_USER_UID,   Group.ACCOUNTING,           "masterdb access",                                                 "/home/accounting",              Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.ACCOUNTING,           ANY_USER_UID,   Group.ACCOUNTING,           "masterdb access",                                                 "/home/accounting",              Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.BILLING,              ANY_USER_UID,   Group.BILLING,              "masterdb access",                                                 "/home/billing",                 Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.BILLING,              ANY_USER_UID,   Group.BILLING,              "masterdb access",                                                 "/home/billing",                 Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.DISTRIBUTION,         ANY_USER_UID,   Group.DISTRIBUTION,         "masterdb access",                                                 "/home/distribution",            Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DISTRIBUTION,         ANY_USER_UID,   Group.DISTRIBUTION,         "masterdb access",                                                 "/home/distribution",            Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.INFRASTRUCTURE,       ANY_USER_UID,   Group.INFRASTRUCTURE,       "masterdb access",                                                 "/home/infrastructure",          Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.INFRASTRUCTURE,       ANY_USER_UID,   Group.INFRASTRUCTURE,       "masterdb access",                                                 "/home/infrastructure",          Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MANAGEMENT,           ANY_USER_UID,   Group.MANAGEMENT,           "masterdb access",                                                 "/home/management",              Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MANAGEMENT,           ANY_USER_UID,   Group.MANAGEMENT,           "masterdb access",                                                 "/home/management",              Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.MONITORING,           ANY_USER_UID,   Group.MONITORING,           "masterdb access",                                                 "/home/monitoring",              Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MONITORING,           ANY_USER_UID,   Group.MONITORING,           "masterdb access",                                                 "/home/monitoring",              Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
           // Amazon EC2 cloud-init
-          addCentos7SystemUser(User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CENTOS_SUDO);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CENTOS_SUDO);
+          // Not in Rocky 9:                   User.CENTOS
           // SonarQube
-          addCentos7SystemUser(User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
         } catch (ValidationException e) {
           throw new AssertionError("These hard-coded values are valid", e);
         }
@@ -885,7 +1104,6 @@ public final class LinuxAccountHandler {
       }
     }
 
-    final com.aoindustries.aoserv.client.linux.User.Name user;
     final int uid;
     final Group.Name group;
     final Gecos fullName;
@@ -897,7 +1115,6 @@ public final class LinuxAccountHandler {
     final String sudo;
 
     SystemUser(
-        com.aoindustries.aoserv.client.linux.User.Name user,
         int uid,
         Group.Name group,
         Gecos fullName,
@@ -908,7 +1125,6 @@ public final class LinuxAccountHandler {
         PosixPath shell,
         String sudo
     ) {
-      this.user = user;
       this.uid = uid;
       this.group = group;
       this.fullName = fullName;
@@ -918,6 +1134,29 @@ public final class LinuxAccountHandler {
       this.home = home;
       this.shell = shell;
       this.sudo = sudo;
+    }
+  }
+
+  private static SystemUser getSystemUser(
+      int osv,
+      com.aoindustries.aoserv.client.linux.User.Name user
+  ) throws SQLException {
+    if (osv == OperatingSystemVersion.CENTOS_7_X86_64) {
+      return SystemUser.CENTOS_7_SYSTEM_USERS.get(user);
+    } else if (osv == OperatingSystemVersion.ROCKY_9_X86_64) {
+      return SystemUser.ROCKY_9_SYSTEM_USERS.get(user);
+    } else {
+      throw new SQLException("Unexpected operating system #" + osv);
+    }
+  }
+
+  private static int getSysUidMin(int osv) throws SQLException {
+    if (osv == OperatingSystemVersion.CENTOS_7_X86_64) {
+      return CENTOS_7_SYS_UID_MIN;
+    } else if (osv == OperatingSystemVersion.ROCKY_9_X86_64) {
+      return ROCKY_9_SYS_UID_MIN;
+    } else {
+      throw new SQLException("Unexpected operating system #" + osv);
     }
   }
 
@@ -962,14 +1201,11 @@ public final class LinuxAccountHandler {
     }
     // Must be one of the expected patterns for the servers operating system version
     int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
-    SystemUser systemUser;
-    if (
-        osv == OperatingSystemVersion.CENTOS_7_X86_64
-            && (systemUser = SystemUser.centos7SystemUsers.get(user)) != null
-    ) {
+    SystemUser systemUser = getSystemUser(osv, user);
+    if (systemUser != null) {
       if (systemUser.uid == SystemUser.ANY_SYSTEM_UID) {
         // System users in range 201 through uidMin - 1
-        if (uid < CENTOS_7_SYS_UID_MIN || uid >= uidMin) {
+        if (uid < getSysUidMin(osv) || uid >= uidMin) {
           throw new SQLException("Invalid system uid: " + uid);
         }
       } else if (systemUser.uid == SystemUser.ANY_USER_UID) {
