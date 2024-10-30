@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -399,45 +399,47 @@ public final class TableHandler {
     User masterUser = AoservMaster.getUser(conn, currentAdministrator);
     UserHost[] masterServers = masterUser == null ? null : AoservMaster.getUserHosts(conn, currentAdministrator);
     switch (tableId) {
-      case DISTRO_FILES: {
-        if (masterUser != null) {
-          assert masterServers != null;
-          if (masterServers.length == 0) {
-            if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107) <= 0) {
-              return 0;
+      case DISTRO_FILES:
+        {
+          if (masterUser != null) {
+            assert masterServers != null;
+            if (masterServers.length == 0) {
+              if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_107) <= 0) {
+                return 0;
+              } else {
+                return conn.queryInt(
+                    "select count(*) from \"distribution.management\".\"DistroFile\""
+                );
+              }
             } else {
-              return conn.queryInt(
-                  "select count(*) from \"distribution.management\".\"DistroFile\""
-              );
+              // Restrict to the operating system versions accessible to this user
+              IntList osVersions = getOperatingSystemVersions(conn, source);
+              if (osVersions.isEmpty()) {
+                return 0;
+              }
+              StringBuilder sql = new StringBuilder();
+              sql.append("select count(*) from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
+              for (int c = 0; c < osVersions.size(); c++) {
+                if (c > 0) {
+                  sql.append(',');
+                }
+                sql.append(osVersions.getInt(c));
+              }
+              sql.append(')');
+              return conn.queryInt(sql.toString());
             }
           } else {
-            // Restrict to the operating system versions accessible to this user
-            IntList osVersions = getOperatingSystemVersions(conn, source);
-            if (osVersions.isEmpty()) {
-              return 0;
-            }
-            StringBuilder sql = new StringBuilder();
-            sql.append("select count(*) from \"distribution.management\".\"DistroFile\" where operating_system_version in (");
-            for (int c = 0; c < osVersions.size(); c++) {
-              if (c > 0) {
-                sql.append(',');
-              }
-              sql.append(osVersions.getInt(c));
-            }
-            sql.append(')');
-            return conn.queryInt(sql.toString());
+            return 0;
           }
-        } else {
-          return 0;
         }
-      }
-      case TICKETS: {
-        if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43) <= 0) {
-          // For backwards-compatibility only
-          return 0;
+      case TICKETS:
+        {
+          if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43) <= 0) {
+            // For backwards-compatibility only
+            return 0;
+          }
+          throw new IOException("Unknown table ID: " + tableId); // No longer used as of version 1.44
         }
-        throw new IOException("Unknown table ID: " + tableId); // No longer used as of version 1.44
-      }
       default:
         throw new IOException("Unknown table ID: " + tableId);
     }
@@ -779,106 +781,111 @@ public final class TableHandler {
       String tableName
   ) throws IOException, SQLException {
     switch (tableName) {
-      case "billing.whois_history": {
-        // Dispatch to new name WhoisHistory, which provides compatibility
-        getTable(conn, source, out, provideProgress, Table.TableId.WhoisHistory);
-        break;
-      }
-      case "mysql.mysql_reserved_words": {
-        if (
-            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
-        ) {
-          @SuppressWarnings("deprecation")
-          com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
-          conn.close(); // Don't hold database connection while writing response
-          AoservMaster.writeObjects(
-              source,
-              out,
-              provideProgress,
-              new AbstractList<>() {
-                @Override
-                public AoservWritable get(int index) {
-                  return (out, clientVersion) ->
-                      out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
-                }
-
-                @Override
-                public int size() {
-                  return reservedWords.length;
-                }
-              }
-          );
-          return;
+      case "billing.whois_history":
+        {
+          // Dispatch to new name WhoisHistory, which provides compatibility
+          getTable(conn, source, out, provideProgress, Table.TableId.WhoisHistory);
+          break;
         }
-        // fall-through to empty response
-        break;
-      }
-      case "net.net_protocols": {
-        if (
-            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
-        ) {
-          // Send in lowercase
-          com.aoapps.net.Protocol[] netProtocols = com.aoapps.net.Protocol.values();
-          conn.close(); // Don't hold database connection while writing response
-          AoservMaster.writeObjects(
-              source,
-              out,
-              provideProgress,
-              new AbstractList<>() {
-                @Override
-                public AoservWritable get(int index) {
-                  return (out, clientVersion) ->
-                      out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
-                }
+      case "mysql.mysql_reserved_words":
+        {
+          if (
+              source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                  && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+          ) {
+            @SuppressWarnings("deprecation")
+            com.aoindustries.aoserv.client.mysql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.mysql.Server.ReservedWord.values();
+            conn.close(); // Don't hold database connection while writing response
+            AoservMaster.writeObjects(
+                source,
+                out,
+                provideProgress,
+                new AbstractList<>() {
+                  @Override
+                  public AoservWritable get(int index) {
+                    return (out, clientVersion) ->
+                        out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+                  }
 
-                @Override
-                public int size() {
-                  return netProtocols.length;
+                  @Override
+                  public int size() {
+                    return reservedWords.length;
+                  }
                 }
-              }
-          );
-          return;
+            );
+            return;
+          }
+          // fall-through to empty response
+          break;
         }
-        // fall-through to empty response
-        break;
-      }
-      case "postgresql.postgres_reserved_words": {
-        if (
-            source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
-                && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
-        ) {
-          @SuppressWarnings("deprecation")
-          com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
-          conn.close(); // Don't hold database connection while writing response
-          AoservMaster.writeObjects(
-              source,
-              out,
-              provideProgress,
-              new AbstractList<>() {
-                @Override
-                public AoservWritable get(int index) {
-                  return (out, clientVersion) ->
-                      out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
-                }
+      case "net.net_protocols":
+        {
+          if (
+              source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                  && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+          ) {
+            // Send in lowercase
+            com.aoapps.net.Protocol[] netProtocols = com.aoapps.net.Protocol.values();
+            conn.close(); // Don't hold database connection while writing response
+            AoservMaster.writeObjects(
+                source,
+                out,
+                provideProgress,
+                new AbstractList<>() {
+                  @Override
+                  public AoservWritable get(int index) {
+                    return (out, clientVersion) ->
+                        out.writeUTF(netProtocols[index].name().toLowerCase(Locale.ROOT));
+                  }
 
-                @Override
-                public int size() {
-                  return reservedWords.length;
+                  @Override
+                  public int size() {
+                    return netProtocols.length;
+                  }
                 }
-              }
-          );
-          return;
+            );
+            return;
+          }
+          // fall-through to empty response
+          break;
         }
-        // fall-through to empty response
-        break;
-      }
-      case "web.httpd_site_bind_redirects": {
-        // Dispatch to new name RewriteRule, which provides compatibility
-        getTable(conn, source, out, provideProgress, Table.TableId.RewriteRule);
-        break;
-      }
+      case "postgresql.postgres_reserved_words":
+        {
+          if (
+              source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_0_A_100) >= 0
+                  && source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80) <= 0
+          ) {
+            @SuppressWarnings("deprecation")
+            com.aoindustries.aoserv.client.postgresql.Server.ReservedWord[] reservedWords = com.aoindustries.aoserv.client.postgresql.Server.ReservedWord.values();
+            conn.close(); // Don't hold database connection while writing response
+            AoservMaster.writeObjects(
+                source,
+                out,
+                provideProgress,
+                new AbstractList<>() {
+                  @Override
+                  public AoservWritable get(int index) {
+                    return (out, clientVersion) ->
+                        out.writeUTF(reservedWords[index].name().toLowerCase(Locale.ROOT));
+                  }
+
+                  @Override
+                  public int size() {
+                    return reservedWords.length;
+                  }
+                }
+            );
+            return;
+          }
+          // fall-through to empty response
+          break;
+        }
+      case "web.httpd_site_bind_redirects":
+        {
+          // Dispatch to new name RewriteRule, which provides compatibility
+          getTable(conn, source, out, provideProgress, Table.TableId.RewriteRule);
+          break;
+        }
       default:
         // fall-through to empty response
     }

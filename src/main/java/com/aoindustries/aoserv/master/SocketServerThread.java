@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -124,10 +124,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
   /**
    * Invalidates the listed tables.  Also, if this connector represents a daemon,
    * this invalidate is registered with ServerHandler for invalidation synchronization.
-   * <p>
-   * IDEA: Could reduce signals under high load by combining entries that are not synchronous.
-   *       Could even combine synchronous ones as long as all sync entries were acknowledged in the proper order.
-   * </p>
+   *
+   * <p>IDEA: Could reduce signals under high load by combining entries that are not synchronous.
+   *       Could even combine synchronous ones as long as all sync entries were acknowledged in the proper order.</p>
    */
   @Override
   public void cachesInvalidated(IntList tableList) throws IOException {
@@ -418,95 +417,97 @@ public final class SocketServerThread extends Thread implements RequestSource {
             case VERSION_1_0_A_103:
             case VERSION_1_0_A_102:
             case VERSION_1_0_A_101:
-            case VERSION_1_0_A_100: {
-              DatabaseAccess db = MasterDatabase.getDatabase();
-              String message = AoservMaster.authenticate(
-                  db,
-                  socket.getInetAddress().getHostAddress(),
-                  process.getEffectiveAdministrator_username(),
-                  process.getAuthenticatedAdministrator_username(),
-                  password
-              );
+            case VERSION_1_0_A_100:
+              {
+                DatabaseAccess db = MasterDatabase.getDatabase();
+                String message = AoservMaster.authenticate(
+                    db,
+                    socket.getInetAddress().getHostAddress(),
+                    process.getEffectiveAdministrator_username(),
+                    process.getAuthenticatedAdministrator_username(),
+                    password
+                );
 
-              if (message != null) {
-                //UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
-                out.writeBoolean(false);
-                out.writeUTF(message);
-                out.flush();
-              } else {
-                // Only master users may provide a daemon_server
-                boolean isOk = true;
-                int daemonServer = process.getDaemonServer();
-                if (daemonServer != -1) {
-                  if (AoservMaster.getUser(db, process.getEffectiveAdministrator_username()) == null) {
-                    out.writeBoolean(false);
-                    out.writeUTF("Only master users may register a daemon server.");
-                    out.flush();
-                    isOk = false;
-                  } else {
-                    UserHost[] servers = AoservMaster.getUserHosts(db, process.getEffectiveAdministrator_username());
-                    if (servers.length != 0) {
+                if (message != null) {
+                  //UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
+                  out.writeBoolean(false);
+                  out.writeUTF(message);
+                  out.flush();
+                } else {
+                  // Only master users may provide a daemon_server
+                  boolean isOk = true;
+                  int daemonServer = process.getDaemonServer();
+                  if (daemonServer != -1) {
+                    if (AoservMaster.getUser(db, process.getEffectiveAdministrator_username()) == null) {
+                      out.writeBoolean(false);
+                      out.writeUTF("Only master users may register a daemon server.");
+                      out.flush();
                       isOk = false;
-                      for (UserHost server1 : servers) {
-                        if (server1.getServerPkey() == daemonServer) {
-                          isOk = true;
-                          break;
+                    } else {
+                      UserHost[] servers = AoservMaster.getUserHosts(db, process.getEffectiveAdministrator_username());
+                      if (servers.length != 0) {
+                        isOk = false;
+                        for (UserHost server1 : servers) {
+                          if (server1.getServerPkey() == daemonServer) {
+                            isOk = true;
+                            break;
+                          }
+                        }
+                        if (!isOk) {
+                          out.writeBoolean(false);
+                          out.writeUTF("Master user (" + process.getEffectiveAdministrator_username() + ") not allowed to access server: " + daemonServer);
+                          out.flush();
                         }
                       }
-                      if (!isOk) {
-                        out.writeBoolean(false);
-                        out.writeUTF("Master user (" + process.getEffectiveAdministrator_username() + ") not allowed to access server: " + daemonServer);
-                        out.flush();
+                    }
+                  }
+                  if (isOk) {
+                    out.writeBoolean(true);
+                    if (existingId == null) {
+                      Identifier connectorId = AoservMaster.getNextConnectorId(protocolVersion);
+                      process.setConnectorId(connectorId);
+                      if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
+                        assert connectorId.getHi() == 0;
+                        assert connectorId.getLo() != -1;
+                        out.writeLong(connectorId.getLo());
+                      } else {
+                        SecurityStreamables.writeIdentifier(connectorId, out);
                       }
-                    }
-                  }
-                }
-                if (isOk) {
-                  out.writeBoolean(true);
-                  if (existingId == null) {
-                    Identifier connectorId = AoservMaster.getNextConnectorId(protocolVersion);
-                    process.setConnectorId(connectorId);
-                    if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
-                      assert connectorId.getHi() == 0;
-                      assert connectorId.getLo() != -1;
-                      out.writeLong(connectorId.getLo());
                     } else {
-                      SecurityStreamables.writeIdentifier(connectorId, out);
+                      process.setConnectorId(existingId);
                     }
-                  } else {
-                    process.setConnectorId(existingId);
-                  }
-                  // Command sequence starts at a random value
-                  final long startSeq;
-                  if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
-                    startSeq = AoservMaster.getSecureRandom().nextLong();
-                    out.writeLong(startSeq);
-                  } else {
-                    startSeq = 0;
-                  }
-                  out.flush();
+                    // Command sequence starts at a random value
+                    final long startSeq;
+                    if (protocolVersion.compareTo(AoservProtocol.Version.VERSION_1_80_0) >= 0) {
+                      startSeq = AoservMaster.getSecureRandom().nextLong();
+                      out.writeLong(startSeq);
+                    } else {
+                      startSeq = 0;
+                    }
+                    out.flush();
 
-                  AoservMaster.updateAoservProtocolLastUsed(db, protocolVersion);
+                    AoservMaster.updateAoservProtocolLastUsed(db, protocolVersion);
 
-                  long seq = startSeq;
-                  while (server.handleRequest(this, seq++, in, out, process)) {
-                    // Do nothing in loop
+                    long seq = startSeq;
+                    while (server.handleRequest(this, seq++, in, out, process)) {
+                      // Do nothing in loop
+                    }
                   }
                 }
+                break;
               }
-              break;
-            }
-            default: {
-              out.writeBoolean(false);
-              out.writeUTF(
-                  "Client (" + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + ") requesting AOServ Protocol version "
-                      + protocolVersion
-                      + ", server (" + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + ") supporting versions "
-                      + Strings.join(AoservProtocol.Version.values(), ", ")
-                      + ".  Please upgrade the client code to match the server."
-              );
-              out.flush();
-            }
+            default:
+              {
+                out.writeBoolean(false);
+                out.writeUTF(
+                    "Client (" + socket.getInetAddress().getHostAddress() + ":" + socket.getPort() + ") requesting AOServ Protocol version "
+                        + protocolVersion
+                        + ", server (" + socket.getLocalAddress().getHostAddress() + ":" + socket.getLocalPort() + ") supporting versions "
+                        + Strings.join(AoservProtocol.Version.values(), ", ")
+                        + ".  Please upgrade the client code to match the server."
+                );
+                out.flush();
+              }
           }
         }
       } catch (EOFException err) {

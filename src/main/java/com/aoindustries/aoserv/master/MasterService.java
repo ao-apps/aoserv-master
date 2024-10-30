@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -38,20 +38,17 @@ public interface MasterService {
   /**
    * Once all the services have been loaded and instantiated, they are all
    * started in dependency (TODO: in dependency order?).
-   * <p>
-   * Once the master server has attempted to start each service at least once,
-   * it will then proceed to accept incoming connections.
-   * </p>
-   * <p>
-   * When a service returns from start, without throwing an exception, it is
+   *
+   * <p>Once the master server has attempted to start each service at least once,
+   * it will then proceed to accept incoming connections.</p>
+   *
+   * <p>When a service returns from start, without throwing an exception, it is
    * considerer alive and start will not be called again.  When a service
    * fails to start, by throwing an exception, start will be re-attempted once
-   * per minute indefinitely.
-   * </p>
-   * <p>
-   * There is no timeout on calls to start.  If a service blocks the entire
-   * master server will not start.
-   * </p>
+   * per minute indefinitely.</p>
+   *
+   * <p>There is no timeout on calls to start.  If a service blocks the entire
+   * master server will not start.</p>
    */
   default void start() throws Exception {
     // Do nothing
@@ -72,10 +69,9 @@ public interface MasterService {
    * a handler may provide a {@link TableHandler.GetObjectHandler}.
    * This is registered only after the handler successfully
    * {@link #start() starts}.
-   * <p>
-   * When not null, this is combined into a single list, after the entries
-   * from {@link #startGetObjectHandlers()}.
-   * </p>
+   *
+   * <p>When not null, this is combined into a single list, after the entries
+   * from {@link #startGetObjectHandlers()}.</p>
    */
   default TableHandler.GetObjectHandler startGetObjectHandler() {
     return null;
@@ -96,10 +92,9 @@ public interface MasterService {
    * a handler may provide a {@link TableHandler.GetTableHandler}.
    * This is registered only after the handler successfully
    * {@link #start() starts}.
-   * <p>
-   * When not null, this is combined into a single list, after the entries
-   * from {@link #startGetTableHandlers()}.
-   * </p>
+   *
+   * <p>When not null, this is combined into a single list, after the entries
+   * from {@link #startGetTableHandlers()}.</p>
    */
   default TableHandler.GetTableHandler startGetTableHandler() {
     return null;

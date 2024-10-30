@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -108,13 +108,11 @@ public final class MasterDatabase extends Database {
   //
   ///**
   // * Registers custom {@link PGobject} classes.
-  // * <p>
-  // * TODO:
-  // * TODO: Make a new project extending ao-dbc for this purpose.
-  // * </p>
-  // * <p>
-  // * TODO: Deprecate this once the PostgreSQL drivers support {@link SQLData}.
-  // * </p>
+  // *
+  // * <p>TODO:
+  // * TODO: Make a new project extending ao-dbc for this purpose.</p>
+  // *
+  // * <p>TODO: Deprecate this once the PostgreSQL drivers support {@link SQLData}.</p>
   // */
   //@Override
   //public Connection getConnection(int isolationLevel, boolean readOnly, int maxConnections) throws SQLException {

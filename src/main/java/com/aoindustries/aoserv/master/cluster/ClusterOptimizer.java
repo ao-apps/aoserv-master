@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2009, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2007-2009, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -28,8 +28,8 @@ import com.aoapps.sql.SQLUtility;
 
 /**
  * Finds the optimal mapping of virtual machines to physical resources to balance customer needs and redundant resources.
- * <pre>
- * TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
+ *
+ * <pre>TODO: If two virtual servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: If two servers are interchangeable, don't try both combinations - how? - implications?
  * TODO: Allow to specify that two virtual servers may not use the same primary xen machine (like ns1 and ns4 in California)
  * TODO: Avoid the reprocessing of similar sub-trees to try to convert the NP-hardness to exponential complexity (with lots of RAM used)
@@ -41,8 +41,7 @@ import com.aoapps.sql.SQLUtility;
  *       ...
  *       Require that cores be a power of 2, so easier to map to CPUs consistently.
  * TODO: Change weight to be 1024, so powers of two add up well (like 512+256+64+64+64+32+16+16 equals a full CPU)
- * TODO: If all else fails, integrate this with the aoserv daemon code and run massively parallel processing of subtrees.  (More brute force)
- * </pre>
+ * TODO: If all else fails, integrate this with the aoserv daemon code and run massively parallel processing of subtrees.  (More brute force)</pre>
  *
  * @author  AO Industries, Inc.
  */

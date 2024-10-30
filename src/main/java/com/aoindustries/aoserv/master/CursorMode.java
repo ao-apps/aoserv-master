@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -49,23 +49,19 @@ public enum CursorMode {
   /**
    * Automatic mode currently simply uses {@link #FETCH} when {@code !provideProgress}, otherwise
    * uses {@link #SELECT}.  This matches the old behavior, but much more crafty ideas follow.
-   * <p>
-   * TODO: In automatic mode, the first query for a given table and user is performed
+   *
+   * <p>TODO: In automatic mode, the first query for a given table and user is performed
    * with {@link #FETCH}, while subsequent queries will only use {@link #FETCH}
-   * if the previous query returned more than {@link #AUTO_CURSOR_ABOVE} rows.
-   * </p>
-   * <p>
-   * TODO: The per-(table, user) cache is cleaned in the background when unused for
-   * {@link TableHandler#MAX_ROW_COUNT_CACHE_AGE} milliseconds.
-   * </p>
-   * <p>
-   * TODO: Invalidating schema_tables clears these caches?
-   * </p>
-   * <p>
-   * TODO: Should we query PostgreSQL statistics instead, or in addition (pg_class.reltuples)?
+   * if the previous query returned more than {@link #AUTO_CURSOR_ABOVE} rows.</p>
+   *
+   * <p>TODO: The per-(table, user) cache is cleaned in the background when unused for
+   * {@link TableHandler#MAX_ROW_COUNT_CACHE_AGE} milliseconds.</p>
+   *
+   * <p>TODO: Invalidating schema_tables clears these caches?</p>
+   *
+   * <p>TODO: Should we query PostgreSQL statistics instead, or in addition (pg_class.reltuples)?
    * At least as an upper bound for the first query, where if total rows is low enough,
-   * skip cursor on the first query.  Hint: cache rultuples to bigint.
-   * </p>
+   * skip cursor on the first query.  Hint: cache rultuples to bigint.</p>
    *
    * @see  AoservMaster#writeObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.master.CursorMode, com.aoindustries.aoserv.client.AoservObject, java.lang.String, java.lang.Object...)
    */

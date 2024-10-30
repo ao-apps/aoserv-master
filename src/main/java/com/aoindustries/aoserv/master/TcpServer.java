@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2018, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2018, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -35,9 +35,8 @@ import java.util.logging.Logger;
  * The <code>TcpServer</code> accepts connections from an <code>TcpConnector</code>.
  * Once the connection is accepted and authenticated, the server carries out all actions requested
  * by the client while providing the necessary security checks and data filters.
- * <p>
- * This server is completely threaded to handle multiple, simultaneous clients.
- * </p>
+ *
+ * <p>This server is completely threaded to handle multiple, simultaneous clients.</p>
  *
  * @author  AO Industries, Inc.
  */

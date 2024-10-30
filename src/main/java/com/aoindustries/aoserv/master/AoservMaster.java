@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -124,9 +124,8 @@ import java.util.logging.Logger;
  * The <code>AOServServer</code> accepts connections from an <code>AoservConnector</code>.
  * Once the connection is accepted and authenticated, the server carries out all actions requested
  * by the client while providing the necessary security checks and data filters.
- * <p>
- * This server is completely threaded to handle multiple, simultaneous clients.
- * </p>
+ *
+ * <p>This server is completely threaded to handle multiple, simultaneous clients.</p>
  *
  * @author  AO Industries, Inc.
  */
@@ -281,9 +280,8 @@ public abstract class AoservMaster {
 
   /**
    * A single random number generator is shared by all master resources.
-   * <p>
-   * Note: This is not a {@linkplain SecureRandom#getInstanceStrong() strong instance} to avoid blocking.
-   * </p>
+   *
+   * <p>Note: This is not a {@linkplain SecureRandom#getInstanceStrong() strong instance} to avoid blocking.</p>
    */
   public static SecureRandom getSecureRandom() {
     return secureRandom;
@@ -710,7 +708,8 @@ public abstract class AoservMaster {
               }
 
               switch (taskCode) {
-                case INVALIDATE_TABLE: {
+                case INVALIDATE_TABLE:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
@@ -742,14 +741,16 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case ADD: {
+                case ADD:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
                     throw new IOException("Client table not supported: #" + clientTableId);
                   }
                   switch (tableId) {
-                    case BUSINESS_ADMINISTRATORS: {
+                    case BUSINESS_ADMINISTRATORS:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       String name = in.readUTF().trim();
                       String title = in.readNullUTF();
@@ -816,7 +817,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case BUSINESS_PROFILES: {
+                    case BUSINESS_PROFILES:
+                    {
                       final Account.Name account = Account.Name.valueOf(in.readUTF());
                       final String name = in.readUTF().trim();
                       final boolean isPrivate = in.readBoolean();
@@ -912,7 +914,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case BUSINESS_SERVERS: {
+                    case BUSINESS_SERVERS:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       int host = in.readCompressedInt();
                       if (
@@ -938,7 +941,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case BUSINESSES: {
+                    case BUSINESSES:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       String contractVersion = in.readNullUTF();
                       int defaultServer;
@@ -992,7 +996,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case CREDIT_CARDS: {
+                    case CREDIT_CARDS:
+                    {
                       // If before version 1.29, do not support add call but read the old values anyway
                       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_28) <= 0) {
                         String accounting = in.readUTF();
@@ -1139,7 +1144,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case CREDIT_CARD_TRANSACTIONS: {
+                    case CREDIT_CARD_TRANSACTIONS:
+                    {
                       final String processor = in.readUTF();
                       final Account.Name account = Account.Name.valueOf(in.readUTF());
                       final String groupName = in.readNullUTF();
@@ -1352,7 +1358,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case CVS_REPOSITORIES: {
+                    case CVS_REPOSITORIES:
+                    {
                       int linuxServer = in.readCompressedInt();
                       PosixPath path = PosixPath.valueOf(in.readUTF());
                       int lsa = in.readCompressedInt();
@@ -1381,7 +1388,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case DISABLE_LOG: {
+                    case DISABLE_LOG:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       String disableReason = in.readNullUTF();
                       process.setCommand(
@@ -1401,7 +1409,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case DNS_RECORDS: {
+                    case DNS_RECORDS:
+                    {
                       final String zone        = in.readUTF();
                       final String domain      = in.readUTF().trim();
                       final String type        = in.readUTF();
@@ -1467,7 +1476,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case DNS_ZONES: {
+                    case DNS_ZONES:
+                    {
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
                       String zone = in.readUTF().trim();
                       InetAddress ip = InetAddress.valueOf(in.readUTF());
@@ -1491,7 +1501,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_ADDRESSES: {
+                    case EMAIL_ADDRESSES:
+                    {
                       String address = in.readUTF().trim();
                       int domain = in.readCompressedInt();
                       process.setCommand(
@@ -1511,7 +1522,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_DOMAINS: {
+                    case EMAIL_DOMAINS:
+                    {
                       DomainName domain = DomainName.valueOf(in.readUTF());
                       int linuxServer = in.readCompressedInt();
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -1534,7 +1546,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_FORWARDING: {
+                    case EMAIL_FORWARDING:
+                    {
                       int address = in.readCompressedInt();
                       Email destination = Email.valueOf(in.readUTF());
                       process.setCommand(
@@ -1554,7 +1567,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_LIST_ADDRESSES: {
+                    case EMAIL_LIST_ADDRESSES:
+                    {
                       int address = in.readCompressedInt();
                       int list = in.readCompressedInt();
                       process.setCommand(
@@ -1574,7 +1588,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_LISTS: {
+                    case EMAIL_LISTS:
+                    {
                       PosixPath path = PosixPath.valueOf(in.readUTF());
                       int userServer = in.readCompressedInt();
                       int groupServer = in.readCompressedInt();
@@ -1597,7 +1612,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_PIPE_ADDRESSES: {
+                    case EMAIL_PIPE_ADDRESSES:
+                    {
                       int address = in.readCompressedInt();
                       int pipe = in.readCompressedInt();
                       process.setCommand(
@@ -1617,7 +1633,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_PIPES: {
+                    case EMAIL_PIPES:
+                    {
                       int linuxServer = in.readCompressedInt();
                       String command = in.readUTF();
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -1640,7 +1657,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_SMTP_RELAYS: {
+                    case EMAIL_SMTP_RELAYS:
+                    {
                       process.setPriority(Thread.NORM_PRIORITY + 1);
                       currentThread.setPriority(Thread.NORM_PRIORITY + 1);
 
@@ -1672,7 +1690,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case FAILOVER_FILE_LOG: {
+                    case FAILOVER_FILE_LOG:
+                    {
                       int fileReplication = in.readCompressedInt();
                       long fflStartTime = in.readLong();
                       long endTime = in.readLong();
@@ -1707,7 +1726,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case FILE_BACKUP_SETTINGS: {
+                    case FILE_BACKUP_SETTINGS:
+                    {
                       final int fileReplication = in.readCompressedInt();
                       final String path = in.readUTF();
                       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30) <= 0) {
@@ -1752,7 +1772,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case FTP_GUEST_USERS: {
+                    case FTP_GUEST_USERS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name linuxUser = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ADD_FTP_GUEST_USER,
@@ -1767,7 +1788,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_SHARED_TOMCATS: {
+                    case HTTPD_SHARED_TOMCATS:
+                    {
                       String name = in.readUTF().trim();
                       int linuxServer = in.readCompressedInt();
                       int version = in.readCompressedInt();
@@ -1807,7 +1829,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_JBOSS_SITES: {
+                    case HTTPD_JBOSS_SITES:
+                    {
                       final int linuxServer = in.readCompressedInt();
                       final String siteName = in.readUTF().trim();
                       final Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -1907,7 +1930,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITE_AUTHENTICATED_LOCATIONS: {
+                    case HTTPD_SITE_AUTHENTICATED_LOCATIONS:
+                    {
                       final int httpd_site = in.readCompressedInt();
                       final String path = in.readUTF();
                       final boolean isRegularExpression = in.readBoolean();
@@ -1960,7 +1984,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITE_URLS: {
+                    case HTTPD_SITE_URLS:
+                    {
                       int virtualHost = in.readCompressedInt();
                       DomainName hostname = DomainName.valueOf(in.readUTF());
                       process.setCommand(
@@ -1980,7 +2005,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_CONTEXTS: {
+                    case HTTPD_TOMCAT_CONTEXTS:
+                    {
                       int tomcatSite = in.readCompressedInt();
                       String className = in.readNullUTF();
                       boolean cookies = in.readBoolean();
@@ -2041,7 +2067,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_DATA_SOURCES: {
+                    case HTTPD_TOMCAT_DATA_SOURCES:
+                    {
                       int context = in.readCompressedInt();
                       String name = in.readUTF();
                       String driverClassName = in.readUTF();
@@ -2088,7 +2115,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_PARAMETERS: {
+                    case HTTPD_TOMCAT_PARAMETERS:
+                    {
                       int context = in.readCompressedInt();
                       String name = in.readUTF();
                       String value = in.readUTF();
@@ -2120,7 +2148,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_SITE_JK_MOUNTS: {
+                    case HTTPD_TOMCAT_SITE_JK_MOUNTS:
+                    {
                       int tomcatSite = in.readCompressedInt();
                       String path = in.readUTF();
                       boolean mount = in.readBoolean();
@@ -2143,7 +2172,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_SHARED_SITES: {
+                    case HTTPD_TOMCAT_SHARED_SITES:
+                    {
                       final int linuxServer = in.readCompressedInt();
                       final String siteName = in.readUTF().trim();
                       final Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -2252,7 +2282,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_TOMCAT_STD_SITES: {
+                    case HTTPD_TOMCAT_STD_SITES:
+                    {
                       final int linuxServer = in.readCompressedInt();
                       final String siteName = in.readUTF().trim();
                       final Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -2352,7 +2383,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_ACC_ADDRESSES: {
+                    case LINUX_ACC_ADDRESSES:
+                    {
                       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_31) < 0) {
                         int address = in.readCompressedInt();
                         String username = in.readUTF().trim();
@@ -2377,7 +2409,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_ACCOUNTS: {
+                    case LINUX_ACCOUNTS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       Group.Name primaryGroup = Group.Name.valueOf(in.readUTF());
                       Gecos name;
@@ -2419,7 +2452,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_GROUP_ACCOUNTS: {
+                    case LINUX_GROUP_ACCOUNTS:
+                    {
                       Group.Name group = Group.Name.valueOf(in.readUTF());
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
@@ -2441,7 +2475,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_GROUPS: {
+                    case LINUX_GROUPS:
+                    {
                       Group.Name name = Group.Name.valueOf(in.readUTF());
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
                       String type = in.readUTF().trim();
@@ -2463,7 +2498,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_SERVER_ACCOUNTS: {
+                    case LINUX_SERVER_ACCOUNTS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       int linuxServer = in.readCompressedInt();
                       PosixPath home = PosixPath.valueOf(in.readUTF());
@@ -2487,7 +2523,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_SERVER_GROUPS: {
+                    case LINUX_SERVER_GROUPS:
+                    {
                       Group.Name group = Group.Name.valueOf(in.readUTF());
                       int linuxServer = in.readCompressedInt();
                       process.setCommand(
@@ -2508,7 +2545,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MAJORDOMO_LISTS: {
+                    case MAJORDOMO_LISTS:
+                    {
                       int majordomoServer = in.readCompressedInt();
                       String listName = in.readUTF().trim();
                       process.setCommand(
@@ -2528,7 +2566,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MAJORDOMO_SERVERS: {
+                    case MAJORDOMO_SERVERS:
+                    {
                       int emailDomain = in.readCompressedInt();
                       int lsa = in.readCompressedInt();
                       int lsg = in.readCompressedInt();
@@ -2552,7 +2591,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MYSQL_DATABASES: {
+                    case MYSQL_DATABASES:
+                    {
                       Database.Name name = Database.Name.valueOf(in.readUTF());
                       int mysqlServer = in.readCompressedInt();
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
@@ -2575,7 +2615,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_DB_USERS: {
+                    case MYSQL_DB_USERS:
+                    {
                       final int database = in.readCompressedInt();
                       final int userServer = in.readCompressedInt();
                       final boolean canSelect = in.readBoolean();
@@ -2684,7 +2725,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_SERVER_USERS: {
+                    case MYSQL_SERVER_USERS:
+                    {
                       com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
                       int mysqlServer = in.readCompressedInt();
                       String host = in.readNullUTF();
@@ -2707,7 +2749,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_USERS: {
+                    case MYSQL_USERS:
+                    {
                       com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ADD_MYSQL_USER,
@@ -2722,7 +2765,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case NET_BINDS: {
+                    case NET_BINDS:
+                    {
                       final int host = in.readCompressedInt();
                       final Account.Name packageName = Account.Name.valueOf(in.readUTF());
                       final int ipAddress = in.readCompressedInt();
@@ -2802,7 +2846,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case NOTICE_LOG: {
+                    case NOTICE_LOG:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       String billingContact = in.readUTF().trim();
                       String emailAddress = in.readUTF().trim();
@@ -2839,7 +2884,8 @@ public abstract class AoservMaster {
                       }
                       break;
                     }
-                    case PACKAGES: {
+                    case PACKAGES:
+                    {
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       int packageDefinition;
@@ -2893,7 +2939,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case PACKAGE_DEFINITIONS: {
+                    case PACKAGE_DEFINITIONS:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       String category = in.readUTF().trim();
                       String name = in.readUTF().trim();
@@ -2948,7 +2995,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_DATABASES: {
+                    case POSTGRES_DATABASES:
+                    {
                       com.aoindustries.aoserv.client.postgresql.Database.Name name = com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(in.readUTF());
                       int postgresqlServer = in.readCompressedInt();
                       int datdba = in.readCompressedInt();
@@ -2977,7 +3025,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_SERVER_USERS: {
+                    case POSTGRES_SERVER_USERS:
+                    {
                       com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
                       int postgresqlServer = in.readCompressedInt();
                       process.setCommand(
@@ -2997,7 +3046,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_USERS: {
+                    case POSTGRES_USERS:
+                    {
                       com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ADD_POSTGRES_USER,
@@ -3012,7 +3062,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case SIGNUP_REQUESTS: {
+                    case SIGNUP_REQUESTS:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       InetAddress ipAddress = InetAddress.valueOf(in.readUTF());
                       int packageDefinition = in.readCompressedInt();
@@ -3146,7 +3197,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case SPAM_EMAIL_MESSAGES: {
+                    case SPAM_EMAIL_MESSAGES:
+                    {
                       int smtpRelay = in.readCompressedInt();
                       String message = in.readUTF().trim();
                       process.setCommand(
@@ -3166,7 +3218,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case TICKETS: {
+                    case TICKETS:
+                    {
                       final Account.Name brand;
                       if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_46) >= 0) {
                         brand = Account.Name.valueOf(in.readUTF());
@@ -3264,7 +3317,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case TRANSACTIONS: {
+                    case TRANSACTIONS:
+                    {
                       char timeType;
                       Timestamp time;
                       String commandArg;
@@ -3361,7 +3415,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case USERNAMES: {
+                    case USERNAMES:
+                    {
                       Account.Name packageName = Account.Name.valueOf(in.readUTF());
                       com.aoindustries.aoserv.client.account.User.Name name = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
@@ -3386,7 +3441,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case ADD_BACKUP_SERVER: {
+                case ADD_BACKUP_SERVER:
+                {
                   throw new RuntimeException("TODO: Update add_backup_server");
                   /*
                 String hostname=in.readUTF();
@@ -3436,7 +3492,8 @@ public abstract class AoservMaster {
                 break;
                  */
                 }
-                case ADD_MASTER_ENTROPY: {
+                case ADD_MASTER_ENTROPY:
+                {
                   int numBytes = in.readCompressedInt();
                   boolean useBufferManager = numBytes <= BufferManager.BUFFER_SIZE;
                   byte[] entropy = useBufferManager ? BufferManager.getBytes() : new byte[numBytes];
@@ -3464,7 +3521,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                 }
                   break;
-                /*case BOUNCE_TICKET: {
+                /*case BOUNCE_TICKET:
+                {
                   int ticketId = in.readCompressedInt();
                   String username = in.readUTF().trim();
                   String comments = in.readUTF().trim();
@@ -3481,7 +3539,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case ADD_SYSTEM_GROUP: {
+                case ADD_SYSTEM_GROUP:
+                {
                   int linuxServer = in.readCompressedInt();
                   Group.Name group = Group.Name.valueOf(in.readUTF());
                   int gid = in.readCompressedInt();
@@ -3505,7 +3564,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case ADD_SYSTEM_USER: {
+                case ADD_SYSTEM_USER:
+                {
                   final int linuxServer = in.readCompressedInt();
                   final com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   final int uid = in.readCompressedInt();
@@ -3566,7 +3626,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case CANCEL_BUSINESS: {
+                case CANCEL_BUSINESS:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   String cancelReason = in.readNullUTF();
                   process.setCommand(Command.CANCEL_BUSINESS, account, cancelReason);
@@ -3575,7 +3636,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                   break;
-                /*case CHANGE_TICKET_ADMIN_PRIORITY: {
+                /*case CHANGE_TICKET_ADMIN_PRIORITY:
+                {
                   int ticketId = in.readCompressedInt();
                   String priority = in.readUTF().trim();
                   if (priority.length() == 0) {
@@ -3603,7 +3665,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case CHANGE_TICKET_CLIENT_PRIORITY: {
+                case CHANGE_TICKET_CLIENT_PRIORITY:
+                {
                   int ticketId = in.readCompressedInt();
                   String clientPriority = in.readUTF();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43) <= 0) {
@@ -3626,7 +3689,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_TICKET_SUMMARY: {
+                case SET_TICKET_SUMMARY:
+                {
                   int ticketId = in.readCompressedInt();
                   String summary = in.readUTF();
                   process.setCommand(
@@ -3645,7 +3709,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case ADD_TICKET_ANNOTATION: {
+                case ADD_TICKET_ANNOTATION:
+                {
                   int ticketId = in.readCompressedInt();
                   String summary = in.readUTF();
                   String details = in.readNullLongUTF();
@@ -3667,7 +3732,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case CHANGE_TICKET_TYPE: {
+                case CHANGE_TICKET_TYPE:
+                {
                   int ticketId = in.readCompressedInt();
                   String oldType;
                   String newType;
@@ -3705,7 +3771,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                /*case COMPLETE_TICKET: {
+                /*case COMPLETE_TICKET:
+                {
                   int ticketId = in.readCompressedInt();
                   String username = in.readUTF().trim();
                   String comments = in.readUTF().trim();
@@ -3727,7 +3794,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case CHECK_SSL_CERTIFICATE: {
+                case CHECK_SSL_CERTIFICATE:
+                {
                   int sslCertificate = in.readCompressedInt();
                   boolean allowCached;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_83_0) < 0) {
@@ -3761,7 +3829,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD: {
+                case COMPARE_LINUX_SERVER_ACCOUNT_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readUTF();
                   process.setCommand(
@@ -3782,7 +3851,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case COPY_HOME_DIRECTORY: {
+                case COPY_HOME_DIRECTORY:
+                {
                   int from_userServer = in.readCompressedInt();
                   int to_server = in.readCompressedInt();
                   process.setCommand(
@@ -3803,7 +3873,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case COPY_LINUX_SERVER_ACCOUNT_PASSWORD: {
+                case COPY_LINUX_SERVER_ACCOUNT_PASSWORD:
+                {
                   int from_userServer = in.readCompressedInt();
                   int to_userServer = in.readCompressedInt();
                   process.setCommand(
@@ -3822,7 +3893,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case COPY_PACKAGE_DEFINITION: {
+                case COPY_PACKAGE_DEFINITION:
+                {
                   int packageDefinition = in.readCompressedInt();
                   process.setCommand(
                       "copy_package_definition",
@@ -3840,7 +3912,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case CREDIT_CARD_DECLINED: {
+                case CREDIT_CARD_DECLINED:
+                {
                   int transid = in.readCompressedInt();
                   String reason = in.readUTF().trim();
                   process.setCommand(
@@ -3859,7 +3932,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case CREDIT_CARD_TRANSACTION_SALE_COMPLETED: {
+                case CREDIT_CARD_TRANSACTION_SALE_COMPLETED:
+                {
                   int payment = in.readCompressedInt();
                   String authorizationCommunicationResult = in.readNullUTF();
                   String authorizationProviderErrorCode = in.readNullUTF();
@@ -3981,7 +4055,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case CREDIT_CARD_TRANSACTION_AUTHORIZE_COMPLETED: {
+                case CREDIT_CARD_TRANSACTION_AUTHORIZE_COMPLETED:
+                {
                   int payment = in.readCompressedInt();
                   String authorizationCommunicationResult = in.readNullUTF();
                   String authorizationProviderErrorCode = in.readNullUTF();
@@ -4076,7 +4151,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case DISABLE: {
+                case DISABLE:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
@@ -4084,7 +4160,8 @@ public abstract class AoservMaster {
                   }
                   int disableLog = in.readCompressedInt();
                   switch (tableId) {
-                    case BUSINESSES: {
+                    case BUSINESSES:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_BUSINESS,
@@ -4100,7 +4177,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case BUSINESS_ADMINISTRATORS: {
+                    case BUSINESS_ADMINISTRATORS:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_BUSINESS_ADMINISTRATOR,
@@ -4116,7 +4194,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case CVS_REPOSITORIES: {
+                    case CVS_REPOSITORIES:
+                    {
                       int cvsRepository = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_CVS_REPOSITORY,
@@ -4132,7 +4211,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_LISTS: {
+                    case EMAIL_LISTS:
+                    {
                       int list = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_EMAIL_LIST,
@@ -4148,7 +4228,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_PIPES: {
+                    case EMAIL_PIPES:
+                    {
                       int pipe = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_EMAIL_PIPE,
@@ -4164,7 +4245,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_SMTP_RELAYS: {
+                    case EMAIL_SMTP_RELAYS:
+                    {
                       int smtpRelay = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_EMAIL_SMTP_RELAY,
@@ -4180,7 +4262,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SHARED_TOMCATS: {
+                    case HTTPD_SHARED_TOMCATS:
+                    {
                       int sharedTomcat = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_HTTPD_SHARED_TOMCAT,
@@ -4196,7 +4279,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITES: {
+                    case HTTPD_SITES:
+                    {
                       int site = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_HTTPD_SITE,
@@ -4212,7 +4296,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITE_BINDS: {
+                    case HTTPD_SITE_BINDS:
+                    {
                       int virtualHost = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_HTTPD_SITE_BIND,
@@ -4228,7 +4313,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_ACCOUNTS: {
+                    case LINUX_ACCOUNTS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_LINUX_ACCOUNT,
@@ -4244,7 +4330,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_SERVER_ACCOUNTS: {
+                    case LINUX_SERVER_ACCOUNTS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_LINUX_SERVER_ACCOUNT,
@@ -4260,7 +4347,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_SERVER_USERS: {
+                    case MYSQL_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_MYSQL_SERVER_USER,
@@ -4276,7 +4364,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_USERS: {
+                    case MYSQL_USERS:
+                    {
                       com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_MYSQL_USER,
@@ -4292,7 +4381,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case PACKAGES: {
+                    case PACKAGES:
+                    {
                       Account.Name name = Account.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_PACKAGE,
@@ -4308,7 +4398,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_SERVER_USERS: {
+                    case POSTGRES_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.DISABLE_POSTGRES_SERVER_USER,
@@ -4324,7 +4415,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_USERS: {
+                    case POSTGRES_USERS:
+                    {
                       com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_POSTGRES_USER,
@@ -4340,7 +4432,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case USERNAMES: {
+                    case USERNAMES:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.DISABLE_USERNAME,
@@ -4363,7 +4456,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case DUMP_MYSQL_DATABASE: {
+                case DUMP_MYSQL_DATABASE:
+                {
                   process.setPriority(Thread.NORM_PRIORITY - 1);
                   currentThread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -4390,7 +4484,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case DUMP_POSTGRES_DATABASE: {
+                case DUMP_POSTGRES_DATABASE:
+                {
                   process.setPriority(Thread.NORM_PRIORITY - 1);
                   currentThread.setPriority(Thread.NORM_PRIORITY - 1);
 
@@ -4417,14 +4512,16 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case ENABLE: {
+                case ENABLE:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
                     throw new IOException("Client table not supported: #" + clientTableId);
                   }
                   switch (tableId) {
-                    case BUSINESSES: {
+                    case BUSINESSES:
+                    {
                       Account.Name account = Account.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_BUSINESS,
@@ -4438,7 +4535,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case BUSINESS_ADMINISTRATORS: {
+                    case BUSINESS_ADMINISTRATORS:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_BUSINESS_ADMINISTRATOR,
@@ -4452,7 +4550,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case CVS_REPOSITORIES: {
+                    case CVS_REPOSITORIES:
+                    {
                       int cvsRepository = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_CVS_REPOSITORY,
@@ -4466,7 +4565,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_LISTS: {
+                    case EMAIL_LISTS:
+                    {
                       int list = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_EMAIL_LIST,
@@ -4480,7 +4580,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_PIPES: {
+                    case EMAIL_PIPES:
+                    {
                       int pipe = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_EMAIL_PIPE,
@@ -4494,7 +4595,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case EMAIL_SMTP_RELAYS: {
+                    case EMAIL_SMTP_RELAYS:
+                    {
                       int smtpRelay = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_EMAIL_SMTP_RELAY,
@@ -4508,7 +4610,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SHARED_TOMCATS: {
+                    case HTTPD_SHARED_TOMCATS:
+                    {
                       int sharedTomcat = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_HTTPD_SHARED_TOMCAT,
@@ -4522,7 +4625,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITES: {
+                    case HTTPD_SITES:
+                    {
                       int site = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_HTTPD_SITE,
@@ -4536,7 +4640,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case HTTPD_SITE_BINDS: {
+                    case HTTPD_SITE_BINDS:
+                    {
                       int virtualHost = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_HTTPD_SITE_BIND,
@@ -4550,7 +4655,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_ACCOUNTS: {
+                    case LINUX_ACCOUNTS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_LINUX_ACCOUNT,
@@ -4564,7 +4670,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case LINUX_SERVER_ACCOUNTS: {
+                    case LINUX_SERVER_ACCOUNTS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_LINUX_SERVER_ACCOUNT,
@@ -4578,7 +4685,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_SERVER_USERS: {
+                    case MYSQL_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_MYSQL_SERVER_USER,
@@ -4592,7 +4700,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case MYSQL_USERS: {
+                    case MYSQL_USERS:
+                    {
                       com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_MYSQL_USER,
@@ -4606,7 +4715,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case PACKAGES: {
+                    case PACKAGES:
+                    {
                       Account.Name name = Account.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_PACKAGE,
@@ -4620,7 +4730,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_SERVER_USERS: {
+                    case POSTGRES_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.ENABLE_POSTGRES_SERVER_USER,
@@ -4634,7 +4745,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case POSTGRES_USERS: {
+                    case POSTGRES_USERS:
+                    {
                       com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_POSTGRES_USER,
@@ -4648,7 +4760,8 @@ public abstract class AoservMaster {
                       );
                       break;
                     }
-                    case USERNAMES: {
+                    case USERNAMES:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.ENABLE_USERNAME,
@@ -4669,7 +4782,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case GENERATE_ACCOUNTING_CODE: {
+                case GENERATE_ACCOUNTING_CODE:
+                {
                   Account.Name template = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.GENERATE_ACCOUNTING,
@@ -4686,7 +4800,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GENERATE_MYSQL_DATABASE_NAME: {
+                case GENERATE_MYSQL_DATABASE_NAME:
+                {
                   String templateBase = in.readUTF().trim();
                   String templateAdded = in.readUTF().trim();
                   process.setCommand(
@@ -4706,7 +4821,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GENERATE_PACKAGE_NAME: {
+                case GENERATE_PACKAGE_NAME:
+                {
                   Account.Name template = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.GENERATE_PACKAGE_NAME,
@@ -4723,7 +4839,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GENERATE_POSTGRES_DATABASE_NAME: {
+                case GENERATE_POSTGRES_DATABASE_NAME:
+                {
                   String templateBase = in.readUTF().trim();
                   String templateAdded = in.readUTF().trim();
                   process.setCommand(
@@ -4743,7 +4860,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GENERATE_SHARED_TOMCAT_NAME: {
+                case GENERATE_SHARED_TOMCAT_NAME:
+                {
                   String template = in.readUTF().trim();
                   process.setCommand(
                       Command.GENERATE_SHARED_TOMCAT_NAME,
@@ -4760,7 +4878,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GENERATE_SITE_NAME: {
+                case GENERATE_SITE_NAME:
+                {
                   String template = in.readUTF().trim();
                   process.setCommand(
                       Command.GENERATE_SITE_NAME,
@@ -4777,7 +4896,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_ACCOUNT_BALANCE: {
+                case GET_ACCOUNT_BALANCE:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       "get_account_balance",
@@ -4793,7 +4913,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_ACCOUNT_BALANCE_BEFORE: {
+                case GET_ACCOUNT_BALANCE_BEFORE:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   long before = in.readLong();
                   process.setCommand(
@@ -4812,7 +4933,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_BANK_TRANSACTIONS_ACCOUNT: {
+                case GET_BANK_TRANSACTIONS_ACCOUNT:
+                {
                   boolean provideProgress = in.readBoolean();
                   String account = in.readUTF().trim();
                   process.setCommand(
@@ -4831,7 +4953,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_CONFIRMED_ACCOUNT_BALANCE: {
+                case GET_CONFIRMED_ACCOUNT_BALANCE:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       "get_confirmed_account_balance",
@@ -4847,7 +4970,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_CONFIRMED_ACCOUNT_BALANCE_BEFORE: {
+                case GET_CONFIRMED_ACCOUNT_BALANCE_BEFORE:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   long before = in.readLong();
                   process.setCommand(
@@ -4866,7 +4990,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AUTORESPONDER_CONTENT: {
+                case GET_AUTORESPONDER_CONTENT:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_AUTORESPONDER_CONTENT,
@@ -4883,7 +5008,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AWSTATS_FILE: {
+                case GET_AWSTATS_FILE:
+                {
                   int site = in.readCompressedInt();
                   String path = in.readUTF();
                   String queryString = in.readUTF();
@@ -4905,7 +5031,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_BACKUP_PARTITION_DISK_TOTAL_SIZE: {
+                case GET_BACKUP_PARTITION_DISK_TOTAL_SIZE:
+                {
                   int backupPartition = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_BACKUP_PARTITION_TOTAL_SIZE,
@@ -4922,7 +5049,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_BACKUP_PARTITION_DISK_USED_SIZE: {
+                case GET_BACKUP_PARTITION_DISK_USED_SIZE:
+                {
                   int backupPartition = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_BACKUP_PARTITION_USED_SIZE,
@@ -4939,7 +5067,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_CACHED_ROW_COUNT: {
+                case GET_CACHED_ROW_COUNT:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
@@ -4964,7 +5093,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_CRON_TABLE: {
+                case GET_CRON_TABLE:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_CRON_TABLE,
@@ -4981,7 +5111,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_EMAIL_LIST_ADDRESS_LIST: {
+                case GET_EMAIL_LIST_ADDRESS_LIST:
+                {
                   int list = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_EMAIL_LIST,
@@ -4998,7 +5129,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_FAILOVER_FILE_LOGS_FOR_REPLICATION: {
+                case GET_FAILOVER_FILE_LOGS_FOR_REPLICATION:
+                {
                   int replication = in.readCompressedInt();
                   int maxRows = in.readCompressedInt();
                   FailoverHandler.getFileReplicationLogs(
@@ -5012,7 +5144,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_FAILOVER_FILE_REPLICATION_ACTIVITY: {
+                case GET_FAILOVER_FILE_REPLICATION_ACTIVITY:
+                {
                   int replication = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_FAILOVER_FILE_REPLICATION_ACTIVITY,
@@ -5031,7 +5164,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_HTTPD_SERVER_CONCURRENCY: {
+                case GET_HTTPD_SERVER_CONCURRENCY:
+                {
                   int httpdServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_HTTPD_SERVER_CONCURRENCY,
@@ -5049,7 +5183,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_IMAP_FOLDER_SIZES: {
+                case GET_IMAP_FOLDER_SIZES:
+                {
                   int userServer = in.readCompressedInt();
                   int numFolders = in.readCompressedInt();
                   String[] folderNames = new String[numFolders];
@@ -5074,7 +5209,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_INBOX_ATTRIBUTES: {
+                case GET_INBOX_ATTRIBUTES:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_INBOX_ATTRIBUTES,
@@ -5091,7 +5227,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MAJORDOMO_INFO_FILE: {
+                case GET_MAJORDOMO_INFO_FILE:
+                {
                   int majordomoList = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_MAJORDOMO_INFO_FILE,
@@ -5108,7 +5245,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MAJORDOMO_INTRO_FILE: {
+                case GET_MAJORDOMO_INTRO_FILE:
+                {
                   int majordomoList = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_MAJORDOMO_INTRO_FILE,
@@ -5125,7 +5263,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MASTER_ENTROPY: {
+                case GET_MASTER_ENTROPY:
+                {
                   int numBytes = in.readCompressedInt();
                   process.setCommand(
                       "get_master_entropy",
@@ -5148,7 +5287,8 @@ public abstract class AoservMaster {
                   }
                   break;
                 }
-                case GET_MASTER_ENTROPY_NEEDED: {
+                case GET_MASTER_ENTROPY_NEEDED:
+                {
                   process.setCommand(
                       "get_master_entropy_needed"
                   );
@@ -5159,7 +5299,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MRTG_FILE: {
+                case GET_MRTG_FILE:
+                {
                   int linuxServer = in.readCompressedInt();
                   String filename = in.readUTF().trim();
                   process.setCommand(
@@ -5178,7 +5319,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MYSQL_MASTER_STATUS: {
+                case GET_MYSQL_MASTER_STATUS:
+                {
                   int mysqlServer = in.readCompressedInt();
                   process.setCommand(
                       "get_mysql_master_status",
@@ -5194,7 +5336,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MYSQL_SLAVE_STATUS: {
+                case GET_MYSQL_SLAVE_STATUS:
+                {
                   int failoverMysqlReplication = in.readCompressedInt();
                   process.setCommand(
                       "get_mysql_slave_status",
@@ -5210,7 +5353,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_MYSQL_TABLE_STATUS: {
+                case GET_MYSQL_TABLE_STATUS:
+                {
                   int mysqlDatabase = in.readCompressedInt();
                   int mysqlSlave;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_60) >= 0) {
@@ -5234,7 +5378,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case CHECK_MYSQL_TABLES: {
+                case CHECK_MYSQL_TABLES:
+                {
                   int mysqlDatabase = in.readCompressedInt();
                   int mysqlSlave;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_60) >= 0) {
@@ -5267,7 +5412,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_NET_DEVICE_BONDING_REPORT: {
+                case GET_NET_DEVICE_BONDING_REPORT:
+                {
                   int device = in.readCompressedInt();
                   process.setCommand(
                       "get_net_device_bonding_report",
@@ -5284,7 +5430,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_NET_DEVICE_STATISTICS_REPORT: {
+                case GET_NET_DEVICE_STATISTICS_REPORT:
+                {
                   int device = in.readCompressedInt();
                   process.setCommand(
                       "get_net_device_statistics_report",
@@ -5301,7 +5448,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_3WARE_RAID_REPORT: {
+                case GET_AO_SERVER_3WARE_RAID_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_3ware_raid_report",
@@ -5319,7 +5467,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_MD_STAT_REPORT: {
+                case GET_AO_SERVER_MD_STAT_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_md_stat_report",
@@ -5337,7 +5486,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_MD_MISMATCH_REPORT: {
+                case GET_AO_SERVER_MD_MISMATCH_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_md_mismatch_report",
@@ -5355,7 +5505,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_DRBD_REPORT: {
+                case GET_AO_SERVER_DRBD_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_drbd_report",
@@ -5373,7 +5524,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_LVM_REPORT: {
+                case GET_AO_SERVER_LVM_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_lvm_report",
@@ -5393,7 +5545,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_HDD_TEMP_REPORT: {
+                case GET_AO_SERVER_HDD_TEMP_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_hdd_temp_report",
@@ -5411,7 +5564,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_HDD_MODEL_REPORT: {
+                case GET_AO_SERVER_HDD_MODEL_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_hdd_model_report",
@@ -5429,7 +5583,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_FILESYSTEMS_CSV_REPORT: {
+                case GET_AO_SERVER_FILESYSTEMS_CSV_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_filesystems_csv_report",
@@ -5447,7 +5602,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_LOADAVG_REPORT: {
+                case GET_AO_SERVER_LOADAVG_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_loadavg_report",
@@ -5465,7 +5621,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_MEMINFO_REPORT: {
+                case GET_AO_SERVER_MEMINFO_REPORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_meminfo_report",
@@ -5483,7 +5640,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case AO_SERVER_CHECK_PORT: {
+                case AO_SERVER_CHECK_PORT:
+                {
                   int linuxServer = in.readCompressedInt();
                   InetAddress ipAddress = InetAddress.valueOf(in.readUTF());
                   Port port;
@@ -5526,7 +5684,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case AO_SERVER_CHECK_SMTP_BLACKLIST: {
+                case AO_SERVER_CHECK_SMTP_BLACKLIST:
+                {
                   int linuxServer = in.readCompressedInt();
                   InetAddress sourceIp = InetAddress.valueOf(in.readUTF());
                   InetAddress connectIp = InetAddress.valueOf(in.readUTF());
@@ -5553,7 +5712,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_AO_SERVER_SYSTEM_TIME_MILLIS: {
+                case GET_AO_SERVER_SYSTEM_TIME_MILLIS:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       "get_ao_server_system_time_millis",
@@ -5571,7 +5731,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_UPS_STATUS: {
+                case GET_UPS_STATUS:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_UPS_STATUS,
@@ -5589,7 +5750,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_OBJECT: {
+                case GET_OBJECT:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
@@ -5613,7 +5775,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_ROOT_BUSINESS: {
+                case GET_ROOT_BUSINESS:
+                {
                   process.setCommand(Command.GET_ROOT_BUSINESS);
                   resp = Response.of(
                       AoservProtocol.DONE,
@@ -5622,7 +5785,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_ROW_COUNT: {
+                case GET_ROW_COUNT:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   int count;
@@ -5650,7 +5814,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_SPAM_EMAIL_MESSAGES_FOR_EMAIL_SMTP_RELAY: {
+                case GET_SPAM_EMAIL_MESSAGES_FOR_EMAIL_SMTP_RELAY:
+                {
                   boolean provideProgress = in.readBoolean();
                   int esr = in.readCompressedInt();
                   process.setCommand(
@@ -5669,7 +5834,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TABLE: {
+                case GET_TABLE:
+                {
                   boolean provideProgress = in.readBoolean();
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
@@ -5737,7 +5903,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_DETAILS: {
+                case GET_TICKET_DETAILS:
+                {
                   int ticket = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_details",
@@ -5754,7 +5921,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_RAW_EMAIL: {
+                case GET_TICKET_RAW_EMAIL:
+                {
                   int ticket = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_raw_email",
@@ -5771,7 +5939,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_INTERNAL_NOTES: {
+                case GET_TICKET_INTERNAL_NOTES:
+                {
                   int ticket = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_internal_notes",
@@ -5788,7 +5957,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_ACTION_OLD_VALUE: {
+                case GET_TICKET_ACTION_OLD_VALUE:
+                {
                   int action = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_action_old_value",
@@ -5805,7 +5975,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_ACTION_NEW_VALUE: {
+                case GET_TICKET_ACTION_NEW_VALUE:
+                {
                   int action = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_action_new_value",
@@ -5822,7 +5993,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_ACTION_DETAILS: {
+                case GET_TICKET_ACTION_DETAILS:
+                {
                   int action = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_action_details",
@@ -5839,7 +6011,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TICKET_ACTION_RAW_EMAIL: {
+                case GET_TICKET_ACTION_RAW_EMAIL:
+                {
                   int action = in.readCompressedInt();
                   process.setCommand(
                       "get_ticket_action_raw_email",
@@ -5856,7 +6029,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TRANSACTIONS_BUSINESS: {
+                case GET_TRANSACTIONS_BUSINESS:
+                {
                   boolean provideProgress = in.readBoolean();
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
@@ -5875,7 +6049,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TRANSACTIONS_BUSINESS_ADMINISTRATOR: {
+                case GET_TRANSACTIONS_BUSINESS_ADMINISTRATOR:
+                {
                   boolean provideProgress = in.readBoolean();
                   com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                   process.setCommand(
@@ -5894,7 +6069,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_TRANSACTIONS_SEARCH: {
+                case GET_TRANSACTIONS_SEARCH:
+                {
                   boolean provideProgress = in.readBoolean();
                   @SuppressWarnings("deprecation")
                   TransactionSearchCriteria criteria = new TransactionSearchCriteria();
@@ -5915,7 +6091,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_WHOIS_HISTORY_WHOIS_OUTPUT: {
+                case GET_WHOIS_HISTORY_WHOIS_OUTPUT:
+                {
                   int whoisHistoryAccount = in.readCompressedInt();
                   process.setCommand(
                       "get_whois_history_whois_output",
@@ -5943,7 +6120,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                 }
                   break;
-                /*case HOLD_TICKET: {
+                /*case HOLD_TICKET:
+                {
                   int ticketId = in.readCompressedInt();
                   String comments = in.readUTF().trim();
                   process.setCommand(
@@ -5962,7 +6140,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                /*case INITIALIZE_HTTPD_SITE_PASSWD_FILE: {
+                /*case INITIALIZE_HTTPD_SITE_PASSWD_FILE:
+                {
                   int sitePKey=in.readCompressedInt();
                   String username=in.readUTF().trim();
                   String encPassword=in.readUTF();
@@ -5983,7 +6162,8 @@ public abstract class AoservMaster {
                   sendInvalidateList=false;
                 }
                 break;*/
-                case IS_ACCOUNTING_AVAILABLE: {
+                case IS_ACCOUNTING_AVAILABLE:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.IS_ACCOUNTING_AVAILABLE,
@@ -6000,7 +6180,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET: {
+                case IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET:
+                {
                   com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.IS_BUSINESS_ADMINISTRATOR_PASSWORD_SET,
@@ -6018,7 +6199,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_DNS_ZONE_AVAILABLE: {
+                case IS_DNS_ZONE_AVAILABLE:
+                {
                   String zone = in.readUTF().trim();
                   process.setCommand(
                       Command.IS_DNS_ZONE_AVAILABLE,
@@ -6035,7 +6217,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_EMAIL_DOMAIN_AVAILABLE: {
+                case IS_EMAIL_DOMAIN_AVAILABLE:
+                {
                   int linuxServer = in.readCompressedInt();
                   DomainName domain = DomainName.valueOf(in.readUTF());
                   process.setCommand(
@@ -6056,7 +6239,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_LINUX_GROUP_NAME_AVAILABLE: {
+                case IS_LINUX_GROUP_NAME_AVAILABLE:
+                {
                   Group.Name name = Group.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.IS_LINUX_GROUP_NAME_AVAILABLE,
@@ -6073,7 +6257,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET: {
+                case IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.IS_LINUX_SERVER_ACCOUNT_PASSWORD_SET,
@@ -6090,7 +6275,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL: {
+                case IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.IS_LINUX_SERVER_ACCOUNT_PROCMAIL_MANUAL,
@@ -6124,7 +6310,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_MYSQL_DATABASE_NAME_AVAILABLE: {
+                case IS_MYSQL_DATABASE_NAME_AVAILABLE:
+                {
                   Database.Name name = Database.Name.valueOf(in.readUTF());
                   int mysqlServer = in.readCompressedInt();
                   process.setCommand(
@@ -6149,7 +6336,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_MYSQL_SERVER_USER_PASSWORD_SET: {
+                case IS_MYSQL_SERVER_USER_PASSWORD_SET:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.IS_MYSQL_SERVER_USER_PASSWORD_SET,
@@ -6166,7 +6354,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_PACKAGE_NAME_AVAILABLE: {
+                case IS_PACKAGE_NAME_AVAILABLE:
+                {
                   Account.Name name = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.IS_PACKAGE_NAME_AVAILABLE,
@@ -6183,7 +6372,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                 }
                   break;
-                case IS_POSTGRES_DATABASE_NAME_AVAILABLE: {
+                case IS_POSTGRES_DATABASE_NAME_AVAILABLE:
+                {
                   com.aoindustries.aoserv.client.postgresql.Database.Name name = com.aoindustries.aoserv.client.postgresql.Database.Name.valueOf(in.readUTF());
                   int postgresServer = in.readCompressedInt();
                   process.setCommand(
@@ -6204,7 +6394,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_POSTGRES_SERVER_USER_PASSWORD_SET: {
+                case IS_POSTGRES_SERVER_USER_PASSWORD_SET:
+                {
                   int userServer = in.readCompressedInt();
                   process.setCommand(
                       Command.IS_POSTGRES_SERVER_USER_PASSWORD_SET,
@@ -6221,7 +6412,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_POSTGRES_SERVER_NAME_AVAILABLE: {
+                case IS_POSTGRES_SERVER_NAME_AVAILABLE:
+                {
                   com.aoindustries.aoserv.client.postgresql.Server.Name name = com.aoindustries.aoserv.client.postgresql.Server.Name.valueOf(in.readUTF());
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
@@ -6242,7 +6434,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_SHARED_TOMCAT_NAME_AVAILABLE: {
+                case IS_SHARED_TOMCAT_NAME_AVAILABLE:
+                {
                   String name = in.readUTF().trim();
                   process.setCommand(
                       Command.IS_SHARED_TOMCAT_NAME_AVAILABLE,
@@ -6259,7 +6452,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_USERNAME_AVAILABLE: {
+                case IS_USERNAME_AVAILABLE:
+                {
                   com.aoindustries.aoserv.client.account.User.Name name = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                   process.setCommand(
                       Command.IS_USERNAME_AVAILABLE,
@@ -6276,7 +6470,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case IS_SITE_NAME_AVAILABLE: {
+                case IS_SITE_NAME_AVAILABLE:
+                {
                   String name = in.readUTF().trim();
                   process.setCommand(
                       Command.IS_SITE_NAME_AVAILABLE,
@@ -6293,7 +6488,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                 }
                   break;
-                /*case KILL_TICKET: {
+                /*case KILL_TICKET:
+                {
                   int ticketId = in.readCompressedInt();
                   String username = in.readUTF().trim();
                   String comments = in.readUTF().trim();
@@ -6314,7 +6510,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case MOVE_IP_ADDRESS: {
+                case MOVE_IP_ADDRESS:
+                {
                   int ipAddress = in.readCompressedInt();
                   int toServer = in.readCompressedInt();
                   process.setCommand(
@@ -6333,7 +6530,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                   break;
-                /*case REACTIVATE_TICKET: {
+                /*case REACTIVATE_TICKET:
+                {
                   int ticketId = in.readCompressedInt();
                   String username = in.readUTF().trim();
                   String comments = in.readUTF().trim();
@@ -6355,7 +6553,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case REFRESH_EMAIL_SMTP_RELAY: {
+                case REFRESH_EMAIL_SMTP_RELAY:
+                {
                   process.setPriority(Thread.NORM_PRIORITY + 1);
                   currentThread.setPriority(Thread.NORM_PRIORITY + 1);
 
@@ -6378,14 +6577,16 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case REMOVE: {
+                case REMOVE:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
                     throw new IOException("Client table not supported: #" + clientTableId);
                   }
                   switch (tableId) {
-                    case BLACKHOLE_EMAIL_ADDRESSES: {
+                    case BLACKHOLE_EMAIL_ADDRESSES:
+                    {
                       int address = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_BLACKHOLE_EMAIL_ADDRESS,
@@ -6400,7 +6601,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case BUSINESS_ADMINISTRATORS: {
+                    case BUSINESS_ADMINISTRATORS:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_BUSINESS_ADMINISTRATOR,
@@ -6415,7 +6617,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case BUSINESS_SERVERS: {
+                    case BUSINESS_SERVERS:
+                    {
                       int accountHost = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_BUSINESS_SERVER,
@@ -6430,7 +6633,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case CREDIT_CARDS: {
+                    case CREDIT_CARDS:
+                    {
                       int creditCard = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_CREDIT_CARD,
@@ -6445,7 +6649,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case CVS_REPOSITORIES: {
+                    case CVS_REPOSITORIES:
+                    {
                       int cvsRepository = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_CVS_REPOSITORY,
@@ -6460,7 +6665,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case DNS_RECORDS: {
+                    case DNS_RECORDS:
+                    {
                       int recordId = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_DNS_RECORD,
@@ -6475,7 +6681,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case DNS_ZONES: {
+                    case DNS_ZONES:
+                    {
                       String zone = in.readUTF().trim();
                       process.setCommand(
                           Command.REMOVE_DNS_ZONE,
@@ -6490,7 +6697,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_ADDRESSES: {
+                    case EMAIL_ADDRESSES:
+                    {
                       int address = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_ADDRESS,
@@ -6505,7 +6713,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_DOMAINS: {
+                    case EMAIL_DOMAINS:
+                    {
                       int domain = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_DOMAIN,
@@ -6520,7 +6729,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_FORWARDING: {
+                    case EMAIL_FORWARDING:
+                    {
                       int forwarding = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_FORWARDING,
@@ -6535,7 +6745,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_LIST_ADDRESSES: {
+                    case EMAIL_LIST_ADDRESSES:
+                    {
                       int listAddress = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_LIST_ADDRESS,
@@ -6550,7 +6761,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_LISTS: {
+                    case EMAIL_LISTS:
+                    {
                       int list = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_LIST,
@@ -6565,7 +6777,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_PIPE_ADDRESSES: {
+                    case EMAIL_PIPE_ADDRESSES:
+                    {
                       int pipeAddress = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_PIPE_ADDRESS,
@@ -6580,7 +6793,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_PIPES: {
+                    case EMAIL_PIPES:
+                    {
                       int pipe = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_EMAIL_PIPE,
@@ -6595,7 +6809,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case EMAIL_SMTP_RELAYS: {
+                    case EMAIL_SMTP_RELAYS:
+                    {
                       process.setPriority(Thread.NORM_PRIORITY + 1);
                       currentThread.setPriority(Thread.NORM_PRIORITY + 1);
 
@@ -6613,7 +6828,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case FILE_BACKUP_SETTINGS: {
+                    case FILE_BACKUP_SETTINGS:
+                    {
                       int fileReplicationSetting = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_FILE_BACKUP_SETTING,
@@ -6628,7 +6844,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case FTP_GUEST_USERS: {
+                    case FTP_GUEST_USERS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_FTP_GUEST_USER,
@@ -6643,7 +6860,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_SHARED_TOMCATS: {
+                    case HTTPD_SHARED_TOMCATS:
+                    {
                       int sharedTomcat = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_SHARED_TOMCAT,
@@ -6658,7 +6876,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_SITE_AUTHENTICATED_LOCATIONS: {
+                    case HTTPD_SITE_AUTHENTICATED_LOCATIONS:
+                    {
                       int location = in.readCompressedInt();
                       process.setCommand(
                           "remove_httpd_site_authenticated_location",
@@ -6673,7 +6892,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_SITES: {
+                    case HTTPD_SITES:
+                    {
                       int site = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_SITE,
@@ -6688,7 +6908,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_SITE_URLS: {
+                    case HTTPD_SITE_URLS:
+                    {
                       int virtualHostName = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_SITE_URL,
@@ -6703,7 +6924,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_TOMCAT_CONTEXTS: {
+                    case HTTPD_TOMCAT_CONTEXTS:
+                    {
                       int context = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_TOMCAT_CONTEXT,
@@ -6718,7 +6940,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_TOMCAT_DATA_SOURCES: {
+                    case HTTPD_TOMCAT_DATA_SOURCES:
+                    {
                       int contextDataSource = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_TOMCAT_DATA_SOURCE,
@@ -6733,7 +6956,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_TOMCAT_PARAMETERS: {
+                    case HTTPD_TOMCAT_PARAMETERS:
+                    {
                       int contextParameter = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_TOMCAT_PARAMETER,
@@ -6748,7 +6972,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case HTTPD_TOMCAT_SITE_JK_MOUNTS: {
+                    case HTTPD_TOMCAT_SITE_JK_MOUNTS:
+                    {
                       int jkMount = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_HTTPD_TOMCAT_SITE_JK_MOUNT,
@@ -6763,7 +6988,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_ACC_ADDRESSES: {
+                    case LINUX_ACC_ADDRESSES:
+                    {
                       int inboxAddress = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_LINUX_ACC_ADDRESS,
@@ -6778,7 +7004,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_ACCOUNTS: {
+                    case LINUX_ACCOUNTS:
+                    {
                       com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_LINUX_ACCOUNT,
@@ -6793,7 +7020,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_GROUP_ACCOUNTS: {
+                    case LINUX_GROUP_ACCOUNTS:
+                    {
                       int groupUser = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_LINUX_GROUP_ACCOUNT,
@@ -6808,7 +7036,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_GROUPS: {
+                    case LINUX_GROUPS:
+                    {
                       Group.Name name = Group.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_LINUX_GROUP,
@@ -6823,7 +7052,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_SERVER_ACCOUNTS: {
+                    case LINUX_SERVER_ACCOUNTS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_LINUX_SERVER_ACCOUNT,
@@ -6838,7 +7068,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case LINUX_SERVER_GROUPS: {
+                    case LINUX_SERVER_GROUPS:
+                    {
                       int groupServer = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_LINUX_SERVER_GROUP,
@@ -6853,7 +7084,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MAJORDOMO_SERVERS: {
+                    case MAJORDOMO_SERVERS:
+                    {
                       int domain = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_MAJORDOMO_SERVER,
@@ -6868,7 +7100,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MYSQL_DATABASES: {
+                    case MYSQL_DATABASES:
+                    {
                       int database = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_MYSQL_DATABASE,
@@ -6883,7 +7116,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MYSQL_DB_USERS: {
+                    case MYSQL_DB_USERS:
+                    {
                       int databaseUser = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_MYSQL_DB_USER,
@@ -6898,7 +7132,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MYSQL_SERVER_USERS: {
+                    case MYSQL_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_MYSQL_SERVER_USER,
@@ -6913,7 +7148,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case MYSQL_USERS: {
+                    case MYSQL_USERS:
+                    {
                       com.aoindustries.aoserv.client.mysql.User.Name user = com.aoindustries.aoserv.client.mysql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_MYSQL_USER,
@@ -6928,7 +7164,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case NET_BINDS: {
+                    case NET_BINDS:
+                    {
                       int bind = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_NET_BIND,
@@ -6943,7 +7180,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case PACKAGE_DEFINITIONS: {
+                    case PACKAGE_DEFINITIONS:
+                    {
                       int packageDefinition = in.readCompressedInt();
                       process.setCommand(
                           "remove_package_definition",
@@ -6958,7 +7196,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case POSTGRES_DATABASES: {
+                    case POSTGRES_DATABASES:
+                    {
                       int database = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_POSTGRES_DATABASE,
@@ -6973,7 +7212,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case POSTGRES_SERVER_USERS: {
+                    case POSTGRES_SERVER_USERS:
+                    {
                       int userServer = in.readCompressedInt();
                       process.setCommand(
                           Command.REMOVE_POSTGRES_SERVER_USER,
@@ -6988,7 +7228,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case POSTGRES_USERS: {
+                    case POSTGRES_USERS:
+                    {
                       com.aoindustries.aoserv.client.postgresql.User.Name user = com.aoindustries.aoserv.client.postgresql.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_POSTGRES_USER,
@@ -7003,7 +7244,8 @@ public abstract class AoservMaster {
                       resp = Response.DONE;
                       break;
                     }
-                    case USERNAMES: {
+                    case USERNAMES:
+                    {
                       com.aoindustries.aoserv.client.account.User.Name user = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                       process.setCommand(
                           Command.REMOVE_USERNAME,
@@ -7024,7 +7266,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case REQUEST_REPLICATION_DAEMON_ACCESS: {
+                case REQUEST_REPLICATION_DAEMON_ACCESS:
+                {
                   int fileReplication = in.readCompressedInt();
                   process.setCommand(
                       "request_replication_daemon_access",
@@ -7045,7 +7288,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_APACHE: {
+                case RESTART_APACHE:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.RESTART_APACHE,
@@ -7060,7 +7304,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_CRON: {
+                case RESTART_CRON:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.RESTART_CRON,
@@ -7075,7 +7320,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_MYSQL: {
+                case RESTART_MYSQL:
+                {
                   int mysqlServer = in.readCompressedInt();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
                     throw new IOException(Command.RESTART_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
@@ -7093,7 +7339,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_POSTGRESQL: {
+                case RESTART_POSTGRESQL:
+                {
                   int postgresServer = in.readCompressedInt();
                   process.setCommand(
                       Command.RESTART_POSTGRESQL,
@@ -7108,7 +7355,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_XFS: {
+                case RESTART_XFS:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.RESTART_XFS,
@@ -7123,7 +7371,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case RESTART_XVFB: {
+                case RESTART_XVFB:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.RESTART_XVFB,
@@ -7138,7 +7387,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_AUTORESPONDER: {
+                case SET_AUTORESPONDER:
+                {
                   int userServer = in.readCompressedInt();
                   int from = in.readCompressedInt();
                   String subject = in.readNullUTF();
@@ -7166,7 +7416,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_BUSINESS_ACCOUNTING: {
+                case SET_BUSINESS_ACCOUNTING:
+                {
                   Account.Name oldAccounting = Account.Name.valueOf(in.readUTF());
                   Account.Name newAccounting = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
@@ -7185,7 +7436,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_BUSINESS_ADMINISTRATOR_PASSWORD: {
+                case SET_BUSINESS_ADMINISTRATOR_PASSWORD:
+                {
                   com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                   char[] chars = in.readUTF().toCharArray(); // TODO: Write as char[] so can be zeroed
                   try (UnprotectedPassword password = (chars.length == 0) ? null : new UnprotectedPassword(chars)) {
@@ -7206,7 +7458,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_BUSINESS_ADMINISTRATOR_PROFILE: {
+                case SET_BUSINESS_ADMINISTRATOR_PROFILE:
+                {
                   com.aoindustries.aoserv.client.account.User.Name administrator = com.aoindustries.aoserv.client.account.User.Name.valueOf(in.readUTF());
                   String name = in.readUTF().trim();
                   String title = in.readNullUTF();
@@ -7268,7 +7521,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_CRON_TABLE: {
+                case SET_CRON_TABLE:
+                {
                   int userServer = in.readCompressedInt();
                   String crontab = in.readUTF();
                   process.setCommand(
@@ -7286,7 +7540,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_CVS_REPOSITORY_MODE: {
+                case SET_CVS_REPOSITORY_MODE:
+                {
                   int cvsRepository = in.readCompressedInt();
                   long mode = in.readLong();
                   process.setCommand(
@@ -7305,7 +7560,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_DEFAULT_BUSINESS_SERVER: {
+                case SET_DEFAULT_BUSINESS_SERVER:
+                {
                   int accountHost = in.readCompressedInt();
                   process.setCommand(
                       Command.SET_DEFAULT_BUSINESS_SERVER,
@@ -7321,7 +7577,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_DNS_ZONE_TTL: {
+                case SET_DNS_ZONE_TTL:
+                {
                   String zone = in.readUTF();
                   int ttl = in.readCompressedInt();
                   process.setCommand(
@@ -7340,7 +7597,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_EMAIL_LIST_ADDRESS_LIST: {
+                case SET_EMAIL_LIST_ADDRESS_LIST:
+                {
                   int list = in.readCompressedInt();
                   String addresses = in.readUTF();
                   process.setCommand(
@@ -7358,7 +7616,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_FILE_BACKUP_SETTINGS: {
+                case SET_FILE_BACKUP_SETTINGS:
+                {
                   final int fileReplicationSetting = in.readCompressedInt();
                   final String path = in.readUTF();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_30) <= 0) {
@@ -7399,7 +7658,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_FILE_BACKUP_SETTINGS_ALL_AT_ONCE: {
+                case SET_FILE_BACKUP_SETTINGS_ALL_AT_ONCE:
+                {
                   int replication = in.readCompressedInt();
                   int size = in.readCompressedInt();
                   List<String> paths = new ArrayList<>(size);
@@ -7435,7 +7695,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SHARED_TOMCAT_IS_MANUAL: {
+                case SET_HTTPD_SHARED_TOMCAT_IS_MANUAL:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   boolean isManual = in.readBoolean();
                   process.setCommand(
@@ -7454,7 +7715,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_SharedTomcat_maxParameterCount_set: {
+                case web_tomcat_SharedTomcat_maxParameterCount_set:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   int maxParameterCount = in.readInt();
                   process.setCommand(
@@ -7473,7 +7735,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE: {
+                case SET_HTTPD_SHARED_TOMCAT_MAX_POST_SIZE:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   int maxPostSize = in.readInt();
                   process.setCommand(
@@ -7492,7 +7755,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS: {
+                case SET_HTTPD_SHARED_TOMCAT_UNPACK_WARS:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   boolean unpackWars = in.readBoolean();
                   process.setCommand(
@@ -7511,7 +7775,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY: {
+                case SET_HTTPD_SHARED_TOMCAT_AUTO_DEPLOY:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   boolean autoDeploy = in.readBoolean();
                   process.setCommand(
@@ -7530,7 +7795,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_SharedTomcat_undeployOldVersions_set: {
+                case web_tomcat_SharedTomcat_undeployOldVersions_set:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   boolean undeployOldVersions = in.readBoolean();
                   process.setCommand(
@@ -7549,7 +7815,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_SharedTomcat_tomcatAuthentication_set: {
+                case web_tomcat_SharedTomcat_tomcatAuthentication_set:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   boolean tomcatAuthentication = in.readBoolean();
                   process.setCommand(
@@ -7568,7 +7835,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SHARED_TOMCAT_VERSION: {
+                case SET_HTTPD_SHARED_TOMCAT_VERSION:
+                {
                   int sharedTomcat = in.readCompressedInt();
                   int version = in.readCompressedInt();
                   process.setCommand(
@@ -7587,7 +7855,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES: {
+                case SET_HTTPD_SITE_AUTHENTICATED_LOCATION_ATTRIBUTES:
+                {
                   final int location = in.readCompressedInt();
                   final String path = in.readUTF().trim();
                   final boolean isRegularExpression = in.readBoolean();
@@ -7639,7 +7908,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BIND_IS_MANUAL: {
+                case SET_HTTPD_SITE_BIND_IS_MANUAL:
+                {
                   int virtualHost = in.readCompressedInt();
                   boolean isManual = in.readBoolean();
                   process.setCommand(
@@ -7658,7 +7928,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME: {
+                case SET_HTTPD_SITE_BIND_REDIRECT_TO_PRIMARY_HOSTNAME:
+                {
                   int virtualHost = in.readCompressedInt();
                   boolean redirectToPrimaryHostname = in.readBoolean();
                   process.setCommand(
@@ -7677,7 +7948,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_IS_MANUAL: {
+                case SET_HTTPD_SITE_IS_MANUAL:
+                {
                   int site = in.readCompressedInt();
                   boolean isManual = in.readBoolean();
                   process.setCommand(
@@ -7696,7 +7968,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_SERVER_ADMIN: {
+                case SET_HTTPD_SITE_SERVER_ADMIN:
+                {
                   int site = in.readCompressedInt();
                   Email emailAddress = Email.valueOf(in.readUTF());
                   process.setCommand(
@@ -7715,7 +7988,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_PHP_VERSION: {
+                case SET_HTTPD_SITE_PHP_VERSION:
+                {
                   int site = in.readCompressedInt();
                   int phpVersion = in.readCompressedInt();
                   process.setCommand(
@@ -7734,7 +8008,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_CGI: {
+                case SET_HTTPD_SITE_ENABLE_CGI:
+                {
                   int site = in.readCompressedInt();
                   boolean enableCgi = in.readBoolean();
                   process.setCommand(
@@ -7753,7 +8028,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_SSI: {
+                case SET_HTTPD_SITE_ENABLE_SSI:
+                {
                   int site = in.readCompressedInt();
                   boolean enableSsi = in.readBoolean();
                   process.setCommand(
@@ -7772,7 +8048,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_HTACCESS: {
+                case SET_HTTPD_SITE_ENABLE_HTACCESS:
+                {
                   int site = in.readCompressedInt();
                   boolean enableHtaccess = in.readBoolean();
                   process.setCommand(
@@ -7791,7 +8068,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_INDEXES: {
+                case SET_HTTPD_SITE_ENABLE_INDEXES:
+                {
                   int site = in.readCompressedInt();
                   boolean enableIndexes = in.readBoolean();
                   process.setCommand(
@@ -7810,7 +8088,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS: {
+                case SET_HTTPD_SITE_ENABLE_FOLLOW_SYMLINKS:
+                {
                   int site = in.readCompressedInt();
                   boolean enableFollowSymlinks = in.readBoolean();
                   process.setCommand(
@@ -7829,7 +8108,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP: {
+                case SET_HTTPD_SITE_ENABLE_ANONYMOUS_FTP:
+                {
                   int site = in.readCompressedInt();
                   boolean enableAnonymousFtp = in.readBoolean();
                   process.setCommand(
@@ -7848,7 +8128,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BLOCK_TRACE_TRACK: {
+                case SET_HTTPD_SITE_BLOCK_TRACE_TRACK:
+                {
                   int site = in.readCompressedInt();
                   boolean blockTraceTrack = in.readBoolean();
                   process.setCommand(
@@ -7867,7 +8148,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BLOCK_SCM: {
+                case SET_HTTPD_SITE_BLOCK_SCM:
+                {
                   int site = in.readCompressedInt();
                   boolean blockScm = in.readBoolean();
                   process.setCommand(
@@ -7886,7 +8168,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BLOCK_CORE_DUMPS: {
+                case SET_HTTPD_SITE_BLOCK_CORE_DUMPS:
+                {
                   int site = in.readCompressedInt();
                   boolean blockCoreDumps = in.readBoolean();
                   process.setCommand(
@@ -7905,7 +8188,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS: {
+                case SET_HTTPD_SITE_BLOCK_EDITOR_BACKUPS:
+                {
                   int site = in.readCompressedInt();
                   boolean blockEditorBackups = in.readBoolean();
                   process.setCommand(
@@ -7924,7 +8208,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG: {
+                case SET_HTTPD_SITE_BIND_PREDISABLE_CONFIG:
+                {
                   int virtualHost = in.readCompressedInt();
                   String config = in.readNullUTF();
                   process.setCommand(
@@ -7943,7 +8228,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES: {
+                case SET_HTTPD_TOMCAT_CONTEXT_ATTRIBUTES:
+                {
                   int context = in.readCompressedInt();
                   String className = in.readNullUTF();
                   boolean cookies = in.readBoolean();
@@ -8003,7 +8289,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF: {
+                case SET_HTTPD_TOMCAT_SITE_BLOCK_WEBINF:
+                {
                   int tomcatSite = in.readCompressedInt();
                   boolean blockWebinf = in.readBoolean();
                   process.setCommand(
@@ -8022,7 +8309,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_PrivateTomcatSite_maxParameterCount_set: {
+                case web_tomcat_PrivateTomcatSite_maxParameterCount_set:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   int maxParameterCount = in.readInt();
                   process.setCommand(
@@ -8041,7 +8329,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE: {
+                case SET_HTTPD_TOMCAT_STD_SITE_MAX_POST_SIZE:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   int maxPostSize = in.readInt();
                   process.setCommand(
@@ -8060,7 +8349,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS: {
+                case SET_HTTPD_TOMCAT_STD_SITE_UNPACK_WARS:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   boolean unpackWars = in.readBoolean();
                   process.setCommand(
@@ -8079,7 +8369,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY: {
+                case SET_HTTPD_TOMCAT_STD_SITE_AUTO_DEPLOY:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   boolean autoDeploy = in.readBoolean();
                   process.setCommand(
@@ -8098,7 +8389,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_PrivateTomcatSite_undeployOldVersions_set: {
+                case web_tomcat_PrivateTomcatSite_undeployOldVersions_set:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   boolean undeployOldVersions = in.readBoolean();
                   process.setCommand(
@@ -8117,7 +8409,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case web_tomcat_PrivateTomcatSite_tomcatAuthentication_set: {
+                case web_tomcat_PrivateTomcatSite_tomcatAuthentication_set:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   boolean tomcatAuthentication = in.readBoolean();
                   process.setCommand(
@@ -8136,7 +8429,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_HTTPD_TOMCAT_STD_SITE_VERSION: {
+                case SET_HTTPD_TOMCAT_STD_SITE_VERSION:
+                {
                   int privateTomcatSite = in.readCompressedInt();
                   int version = in.readCompressedInt();
                   process.setCommand(
@@ -8155,7 +8449,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_IP_ADDRESS_DHCP_ADDRESS: {
+                case SET_IP_ADDRESS_DHCP_ADDRESS:
+                {
                   int ipAddress = in.readCompressedInt();
                   InetAddress dhcpAddress = InetAddress.valueOf(in.readUTF());
                   process.setCommand(
@@ -8174,7 +8469,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_IP_ADDRESS_HOSTNAME: {
+                case SET_IP_ADDRESS_HOSTNAME:
+                {
                   int ipAddress = in.readCompressedInt();
                   DomainName hostname = DomainName.valueOf(in.readUTF());
                   process.setCommand(
@@ -8193,7 +8489,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_IP_ADDRESS_MONITORING_ENABLED: {
+                case SET_IP_ADDRESS_MONITORING_ENABLED:
+                {
                   int ipAddress = in.readCompressedInt();
                   boolean enabled = in.readBoolean();
                   process.setCommand(
@@ -8212,7 +8509,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_IP_ADDRESS_PACKAGE: {
+                case SET_IP_ADDRESS_PACKAGE:
+                {
                   int ipAddress = in.readCompressedInt();
                   Account.Name packageName = Account.Name.valueOf(in.readUTF());
                   process.setCommand(
@@ -8231,7 +8529,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case ADD_IP_REPUTATION: {
+                case ADD_IP_REPUTATION:
+                {
                   int ipReputationSet = in.readCompressedInt();
                   int size = in.readCompressedInt();
                   AddReputation[] addReputations = new AddReputation[size];
@@ -8263,7 +8562,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LAST_DISTRO_TIME: {
+                case SET_LAST_DISTRO_TIME:
+                {
                   process.setPriority(Thread.MIN_PRIORITY + 1);
                   currentThread.setPriority(Thread.MIN_PRIORITY + 1);
 
@@ -8290,7 +8590,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_ACCOUNT_HOME_PHONE: {
+                case SET_LINUX_ACCOUNT_HOME_PHONE:
+                {
                   com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   Gecos phone;
                     {
@@ -8313,7 +8614,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_ACCOUNT_NAME: {
+                case SET_LINUX_ACCOUNT_NAME:
+                {
                   com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   Gecos fullName;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) < 0) {
@@ -8338,7 +8640,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_ACCOUNT_OFFICE_LOCATION: {
+                case SET_LINUX_ACCOUNT_OFFICE_LOCATION:
+                {
                   com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   Gecos location;
                     {
@@ -8361,7 +8664,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_ACCOUNT_OFFICE_PHONE: {
+                case SET_LINUX_ACCOUNT_OFFICE_PHONE:
+                {
                   com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   Gecos phone;
                     {
@@ -8384,7 +8688,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_ACCOUNT_SHELL: {
+                case SET_LINUX_ACCOUNT_SHELL:
+                {
                   com.aoindustries.aoserv.client.linux.User.Name user = com.aoindustries.aoserv.client.linux.User.Name.valueOf(in.readUTF());
                   PosixPath shell = PosixPath.valueOf(in.readUTF());
                   process.setCommand(
@@ -8403,7 +8708,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION: {
+                case SET_LINUX_SERVER_ACCOUNT_JUNK_EMAIL_RETENTION:
+                {
                   int userServer = in.readCompressedInt();
                   int days = in.readCompressedInt();
                   process.setCommand(
@@ -8422,7 +8728,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_PASSWORD: {
+                case SET_LINUX_SERVER_ACCOUNT_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readUTF();
                   process.setCommand(
@@ -8441,7 +8748,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_PREDISABLE_PASSWORD: {
+                case SET_LINUX_SERVER_ACCOUNT_PREDISABLE_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readNullUTF();
                   process.setCommand(
@@ -8460,7 +8768,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_EMAIL_SPAMASSASSIN_INTEGRATION_MODE: {
+                case SET_LINUX_SERVER_ACCOUNT_EMAIL_SPAMASSASSIN_INTEGRATION_MODE:
+                {
                   int userServer = in.readCompressedInt();
                   String mode = in.readUTF();
                   process.setCommand(
@@ -8479,7 +8788,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE: {
+                case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_REQUIRED_SCORE:
+                {
                   int userServer = in.readCompressedInt();
                   float requiredScore = in.readFloat();
                   process.setCommand(
@@ -8498,7 +8808,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_DISCARD_SCORE: {
+                case SET_LINUX_SERVER_ACCOUNT_SPAMASSASSIN_DISCARD_SCORE:
+                {
                   int userServer = in.readCompressedInt();
                   int discardScore = in.readCompressedInt();
                   process.setCommand(
@@ -8517,7 +8828,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION: {
+                case SET_LINUX_SERVER_ACCOUNT_TRASH_EMAIL_RETENTION:
+                {
                   int userServer = in.readCompressedInt();
                   int days = in.readCompressedInt();
                   process.setCommand(
@@ -8536,7 +8848,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_LINUX_SERVER_ACCOUNT_USE_INBOX: {
+                case SET_LINUX_SERVER_ACCOUNT_USE_INBOX:
+                {
                   int userServer = in.readCompressedInt();
                   boolean useInbox = in.readBoolean();
                   process.setCommand(
@@ -8555,7 +8868,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_MAJORDOMO_INFO_FILE: {
+                case SET_MAJORDOMO_INFO_FILE:
+                {
                   int majordomoList = in.readCompressedInt();
                   String file = in.readUTF();
                   process.setCommand(
@@ -8573,7 +8887,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_MAJORDOMO_INTRO_FILE: {
+                case SET_MAJORDOMO_INTRO_FILE:
+                {
                   int majordomoList = in.readCompressedInt();
                   String file = in.readUTF();
                   process.setCommand(
@@ -8591,7 +8906,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_MYSQL_SERVER_USER_PASSWORD: {
+                case SET_MYSQL_SERVER_USER_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readNullUTF();
                   process.setCommand(
@@ -8609,7 +8925,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_MYSQL_SERVER_USER_PREDISABLE_PASSWORD: {
+                case SET_MYSQL_SERVER_USER_PREDISABLE_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readNullUTF();
                   process.setCommand(
@@ -8628,7 +8945,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_NET_BIND_FIREWALLD_ZONES: {
+                case SET_NET_BIND_FIREWALLD_ZONES:
+                {
                   int bind = in.readCompressedInt();
                   int numZones = in.readCompressedInt();
                   Set<FirewallZone.Name> firewalldZones = AoCollections.newLinkedHashSet(numZones);
@@ -8660,7 +8978,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_NET_BIND_MONITORING: {
+                case SET_NET_BIND_MONITORING:
+                {
                   int bind = in.readCompressedInt();
                   boolean enabled = in.readBoolean();
                   process.setCommand(
@@ -8680,7 +8999,8 @@ public abstract class AoservMaster {
                 }
                   break;
                 // This exists for compatibility with older clients (versions &lt;= 1.80.2) only.
-                case UNUSED_SET_NET_BIND_OPEN_FIREWALL: {
+                case UNUSED_SET_NET_BIND_OPEN_FIREWALL:
+                {
                   int bind = in.readCompressedInt();
                   boolean openFirewall = in.readBoolean();
                   process.setCommand(
@@ -8699,7 +9019,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_PACKAGE_DEFINITION_ACTIVE: {
+                case SET_PACKAGE_DEFINITION_ACTIVE:
+                {
                   int packageDefinition = in.readCompressedInt();
                   boolean isActive = in.readBoolean();
                   process.setCommand(
@@ -8718,7 +9039,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_PACKAGE_DEFINITION_LIMITS: {
+                case SET_PACKAGE_DEFINITION_LIMITS:
+                {
                   int packageDefinition = in.readCompressedInt();
                   int count = in.readCompressedInt();
                   String[] resources = new String[count];
@@ -8763,7 +9085,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_POSTGRES_SERVER_USER_PASSWORD: {
+                case SET_POSTGRES_SERVER_USER_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readNullUTF();
                   process.setCommand(
@@ -8781,7 +9104,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SET_POSTGRES_SERVER_USER_PREDISABLE_PASSWORD: {
+                case SET_POSTGRES_SERVER_USER_PREDISABLE_PASSWORD:
+                {
                   int userServer = in.readCompressedInt();
                   String password = in.readNullUTF();
                   process.setCommand(
@@ -8800,7 +9124,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_PRIMARY_HTTPD_SITE_URL: {
+                case SET_PRIMARY_HTTPD_SITE_URL:
+                {
                   int virtualHostName = in.readCompressedInt();
                   process.setCommand(
                       Command.SET_PRIMARY_HTTPD_SITE_URL,
@@ -8816,7 +9141,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_PRIMARY_LINUX_GROUP_ACCOUNT: {
+                case SET_PRIMARY_LINUX_GROUP_ACCOUNT:
+                {
                   int groupUser = in.readCompressedInt();
                   process.setCommand(
                       Command.SET_PRIMARY_LINUX_GROUP_ACCOUNT,
@@ -8832,7 +9158,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                   break;
-                /*case SET_TICKET_ASSIGNED_TO: {
+                /*case SET_TICKET_ASSIGNED_TO:
+                {
                   int ticketId = in.readCompressedInt();
                   String assignedTo = in.readUTF().trim();
                   if (assignedTo.length() == 0) {
@@ -8860,7 +9187,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                 }
                 break;*/
-                case SET_TICKET_CONTACT_EMAILS: {
+                case SET_TICKET_CONTACT_EMAILS:
+                {
                   int ticketId = in.readCompressedInt();
                   Set<Email> contactEmails;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_81_22) >= 0) {
@@ -8892,7 +9220,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_TICKET_CONTACT_PHONE_NUMBERS: {
+                case SET_TICKET_CONTACT_PHONE_NUMBERS:
+                {
                   int ticketId = in.readCompressedInt();
                   String contactPhoneNumbers = in.readUTF();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_43) <= 0) {
@@ -8915,7 +9244,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_TICKET_BUSINESS: {
+                case SET_TICKET_BUSINESS:
+                {
                   int ticketId = in.readCompressedInt();
                   Account.Name oldAccounting;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_48) >= 0) {
@@ -8957,7 +9287,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_TICKET_STATUS: {
+                case SET_TICKET_STATUS:
+                {
                   int ticketId = in.readCompressedInt();
                   String oldStatus = in.readUTF();
                   String newStatus = in.readUTF();
@@ -8985,7 +9316,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_TICKET_INTERNAL_NOTES: {
+                case SET_TICKET_INTERNAL_NOTES:
+                {
                   int ticketId = in.readCompressedInt();
                   String oldInternalNotes = in.readLongUTF();
                   String newInternalNotes = in.readLongUTF();
@@ -9010,7 +9342,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case START_APACHE: {
+                case START_APACHE:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.START_APACHE,
@@ -9025,7 +9358,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_CRON: {
+                case START_CRON:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.START_CRON,
@@ -9040,7 +9374,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_DISTRO: {
+                case START_DISTRO:
+                {
                   process.setPriority(Thread.MIN_PRIORITY + 1);
                   currentThread.setPriority(Thread.MIN_PRIORITY + 1);
 
@@ -9061,7 +9396,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_JVM: {
+                case START_JVM:
+                {
                   int tomcatSite = in.readCompressedInt();
                   process.setCommand(
                       Command.START_JVM,
@@ -9079,7 +9415,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_MYSQL: {
+                case START_MYSQL:
+                {
                   int mysqlServer = in.readCompressedInt();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
                     throw new IOException(Command.START_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
@@ -9097,7 +9434,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_POSTGRESQL: {
+                case START_POSTGRESQL:
+                {
                   int postgresServer = in.readCompressedInt();
                   process.setCommand(
                       Command.START_POSTGRESQL,
@@ -9112,7 +9450,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_XFS: {
+                case START_XFS:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.START_XFS,
@@ -9127,7 +9466,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case START_XVFB: {
+                case START_XVFB:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.START_XVFB,
@@ -9142,7 +9482,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_APACHE: {
+                case STOP_APACHE:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_APACHE,
@@ -9157,7 +9498,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_CRON: {
+                case STOP_CRON:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_CRON,
@@ -9172,7 +9514,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_JVM: {
+                case STOP_JVM:
+                {
                   int tomcatSite = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_JVM,
@@ -9190,7 +9533,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_MYSQL: {
+                case STOP_MYSQL:
+                {
                   int mysqlServer = in.readCompressedInt();
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_4) < 0) {
                     throw new IOException(Command.STOP_MYSQL + " call not supported for AOServ Client version < " + AoservProtocol.Version.VERSION_1_4 + ", please upgrade AOServ Client.");
@@ -9208,7 +9552,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_POSTGRESQL: {
+                case STOP_POSTGRESQL:
+                {
                   int postgresServer = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_POSTGRESQL,
@@ -9223,7 +9568,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_XFS: {
+                case STOP_XFS:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_XFS,
@@ -9238,7 +9584,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case STOP_XVFB: {
+                case STOP_XVFB:
+                {
                   int linuxServer = in.readCompressedInt();
                   process.setCommand(
                       Command.STOP_XVFB,
@@ -9253,7 +9600,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                 }
                   break;
-                /*case TICKET_WORK: {
+                /*case TICKET_WORK:
+                {
                   int ticketId = in.readCompressedInt();
                   String username = in.readUTF().trim();
                   String comments = in.readUTF().trim();
@@ -9275,7 +9623,8 @@ public abstract class AoservMaster {
                   sendInvalidateList=true;
                 }
                 break;*/
-                case TRANSACTION_APPROVED: {
+                case TRANSACTION_APPROVED:
+                {
                   int transid = in.readCompressedInt();
                   int creditCardTransaction;
                   String paymentInfo;
@@ -9316,7 +9665,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case TRANSACTION_DECLINED: {
+                case TRANSACTION_DECLINED:
+                {
                   int transid = in.readCompressedInt();
                   int creditCardTransaction;
                   String paymentInfo;
@@ -9351,7 +9701,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case TRANSACTION_HELD: {
+                case TRANSACTION_HELD:
+                {
                   int transid = in.readCompressedInt();
                   int creditCardTransaction = in.readCompressedInt();
                   String paymentInfo;
@@ -9378,7 +9729,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case REACTIVATE_CREDIT_CARD: {
+                case REACTIVATE_CREDIT_CARD:
+                {
                   int creditCard = in.readCompressedInt();
                   process.setCommand(
                       "reactivate_credit_card",
@@ -9394,7 +9746,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_CREDIT_CARD_USE_MONTHLY: {
+                case SET_CREDIT_CARD_USE_MONTHLY:
+                {
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   int creditCard = in.readCompressedInt();
                   process.setCommand(
@@ -9413,7 +9766,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_FAILOVER_FILE_REPLICATION_BIT_RATE: {
+                case SET_FAILOVER_FILE_REPLICATION_BIT_RATE:
+                {
                   int fileReplication = in.readCompressedInt();
                   final Long bitRate;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_61) <= 0) {
@@ -9439,7 +9793,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case SET_FAILOVER_FILE_SCHEDULES: {
+                case SET_FAILOVER_FILE_SCHEDULES:
+                {
                   int replication = in.readCompressedInt();
                   int size = in.readCompressedInt();
                   List<Short> hours = new ArrayList<>(size);
@@ -9465,7 +9820,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_CREDIT_CARD: {
+                case UPDATE_CREDIT_CARD:
+                {
                   final int creditCard = in.readCompressedInt();
                   final String cardInfo;
                   if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_82_0) >= 0) {
@@ -9569,7 +9925,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_CREDIT_CARD_NUMBER_AND_EXPIRATION: {
+                case UPDATE_CREDIT_CARD_NUMBER_AND_EXPIRATION:
+                {
                   int creditCard = in.readCompressedInt();
                   String maskedCardNumber = in.readUTF();
                   Byte expirationMonth;
@@ -9613,7 +9970,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_CREDIT_CARD_EXPIRATION: {
+                case UPDATE_CREDIT_CARD_EXPIRATION:
+                {
                   int creditCard = in.readCompressedInt();
                   Byte expirationMonth;
                   Short expirationYear;
@@ -9645,7 +10003,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_HTTPD_TOMCAT_DATA_SOURCE: {
+                case UPDATE_HTTPD_TOMCAT_DATA_SOURCE:
+                {
                   int contextDataSource = in.readCompressedInt();
                   String name = in.readUTF();
                   String driverClassName = in.readUTF();
@@ -9691,7 +10050,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_HTTPD_TOMCAT_PARAMETER: {
+                case UPDATE_HTTPD_TOMCAT_PARAMETER:
+                {
                   int contextParameter = in.readCompressedInt();
                   String name = in.readUTF();
                   String value = in.readUTF();
@@ -9722,7 +10082,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case UPDATE_PACKAGE_DEFINITION: {
+                case UPDATE_PACKAGE_DEFINITION:
+                {
                   int packageDefinition = in.readCompressedInt();
                   Account.Name account = Account.Name.valueOf(in.readUTF());
                   String category = in.readUTF();
@@ -9779,7 +10140,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = true;
                   break;
                 }
-                case WAIT_FOR_REBUILD: {
+                case WAIT_FOR_REBUILD:
+                {
                   int clientTableId = in.readCompressedInt();
                   Table.TableId tableId = TableHandler.convertFromClientTableId(conn, source, clientTableId);
                   if (tableId == null) {
@@ -9894,7 +10256,8 @@ public abstract class AoservMaster {
                   break;
                 }
                 // <editor-fold desc="Virtual Servers">
-                case REQUEST_VNC_CONSOLE_DAEMON_ACCESS: {
+                case REQUEST_VNC_CONSOLE_DAEMON_ACCESS:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       "request_vnc_console_daemon_access",
@@ -9915,7 +10278,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case VERIFY_VIRTUAL_DISK: {
+                case VERIFY_VIRTUAL_DISK:
+                {
                   int virtualDisk = in.readCompressedInt();
                   process.setCommand(
                       Command.VERIFY_VIRTUAL_DISK,
@@ -9933,7 +10297,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case CREATE_VIRTUAL_SERVER: {
+                case CREATE_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.CREATE_VIRTUAL_SERVER,
@@ -9951,7 +10316,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case REBOOT_VIRTUAL_SERVER: {
+                case REBOOT_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.REBOOT_VIRTUAL_SERVER,
@@ -9969,7 +10335,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case SHUTDOWN_VIRTUAL_SERVER: {
+                case SHUTDOWN_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.SHUTDOWN_VIRTUAL_SERVER,
@@ -9987,7 +10354,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case DESTROY_VIRTUAL_SERVER: {
+                case DESTROY_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.DESTROY_VIRTUAL_SERVER,
@@ -10005,7 +10373,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case PAUSE_VIRTUAL_SERVER: {
+                case PAUSE_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.PAUSE_VIRTUAL_SERVER,
@@ -10023,7 +10392,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case UNPAUSE_VIRTUAL_SERVER: {
+                case UNPAUSE_VIRTUAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.UNPAUSE_VIRTUAL_SERVER,
@@ -10041,7 +10411,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_VIRTUAL_SERVER_STATUS: {
+                case GET_VIRTUAL_SERVER_STATUS:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_VIRTUAL_SERVER_STATUS,
@@ -10059,7 +10430,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_PRIMARY_PHYSICAL_SERVER: {
+                case GET_PRIMARY_PHYSICAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_PRIMARY_PHYSICAL_SERVER,
@@ -10073,7 +10445,8 @@ public abstract class AoservMaster {
                   sendInvalidateList = false;
                   break;
                 }
-                case GET_SECONDARY_PHYSICAL_SERVER: {
+                case GET_SECONDARY_PHYSICAL_SERVER:
+                {
                   int virtualServer = in.readCompressedInt();
                   process.setCommand(
                       Command.GET_SECONDARY_PHYSICAL_SERVER,
@@ -10174,10 +10547,9 @@ public abstract class AoservMaster {
   /**
    * Invalidates a table by notifying all connected clients, except the client
    * that initiated this request.
-   * <p>
-   * TODO: We need a way to convert invalidations of current tables to old table mappings.
-   * This would be the counterpart to {@link TableHandler#getOldTable(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, java.lang.String)}.
-   * </p>
+   *
+   * <p>TODO: We need a way to convert invalidations of current tables to old table mappings.
+   * This would be the counterpart to {@link TableHandler#getOldTable(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, java.lang.String)}.</p>
    */
   public static void invalidateTables(
       DatabaseAccess db,
@@ -10765,9 +11137,8 @@ public abstract class AoservMaster {
    * for a match.  If a match is found with an owner of this source, then access is
    * granted.  If the source is not restricted by either server or business, then
    * access is granted and the previous checks are avoided.
-   * <p>
-   * TODO: What about ending '.' on zones vs DomainName objects here?
-   * </p>
+   *
+   * <p>TODO: What about ending '.' on zones vs DomainName objects here?</p>
    */
   public static void checkAccessHostname(DatabaseConnection conn, RequestSource source, String action, String hostname, List<DomainName> tlds) throws IOException, SQLException {
     String zone = ZoneTable.getZoneForHostname(hostname, tlds);
@@ -11120,9 +11491,8 @@ public abstract class AoservMaster {
    * Calls either {@link #selectObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AoservObject, java.lang.String, java.lang.Object...) selectObjects}
    * or {@link #fetchObjects(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.AoservObject, java.lang.String, java.lang.Object...) fetchObjects}
    * based on the {@link CursorMode}.
-   * <p>
-   * In particular, implements the {@link CursorMode#AUTO} mode for cursor selection.
-   * </p>
+   *
+   * <p>In particular, implements the {@link CursorMode#AUTO} mode for cursor selection.</p>
    *
    * @return  The number of rows written
    *

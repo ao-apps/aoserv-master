@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -41,9 +41,8 @@ import java.util.logging.Logger;
 
 /**
  * Synchronizes the database table from the auto-updating Java API.
- * <p>
- * This is based on TopLevelDomain-import.sql from the ao-tlds project.
- * </p>
+ *
+ * <p>This is based on TopLevelDomain-import.sql from the ao-tlds project.</p>
  *
  * @author  AO Industries, Inc.
  */

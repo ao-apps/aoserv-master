@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -476,9 +476,8 @@ public final class WhoisHistoryService implements MasterService {
 
   /**
    * Gets the whois output and error for the specific billing.WhoisHistory record.
-   * <p>
-   * The same filtering as {@link #startGetTableHandler()}
-   * </p>
+   *
+   * <p>The same filtering as {@link #startGetTableHandler()}</p>
    */
   public Tuple2<String, String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();

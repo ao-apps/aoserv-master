@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -75,31 +75,31 @@ public final class IpAddressHandler {
     try {
       final InetAddress inetAddress = getInetAddressForIpAddress(conn, ipAddress);
       switch (inetAddress.getAddressFamily()) {
-        case INET: {
-          String ip = inetAddress.toString();
-          int pos = ip.lastIndexOf('.');
-          final String octet = ip.substring(pos + 1);
-          int host = getHostForIpAddress(conn, ipAddress);
-          final String net;
-          if (ip.startsWith("66.160.183.")) {
-            net = "net1.";
-          } else if (ip.startsWith("64.62.174.")) {
-            net = "net2.";
-          } else if (ip.startsWith("64.71.144.")) {
-            net = "net3.";
-          } else {
-            net = "";
+        case INET:
+          {
+            String ip = inetAddress.toString();
+            int pos = ip.lastIndexOf('.');
+            final String octet = ip.substring(pos + 1);
+            int host = getHostForIpAddress(conn, ipAddress);
+            final String net;
+            if (ip.startsWith("66.160.183.")) {
+              net = "net1.";
+            } else if (ip.startsWith("64.62.174.")) {
+              net = "net2.";
+            } else if (ip.startsWith("64.71.144.")) {
+              net = "net3.";
+            } else {
+              net = "";
+            }
+            final String farm = NetHostHandler.getFarmForHost(conn, host);
+            String hostname = "unassigned" + octet + "." + net + farm + '.' + Zone.API_ZONE;
+            while (hostname.endsWith(".")) {
+              hostname = hostname.substring(0, hostname.length() - 1);
+            }
+            return DomainName.valueOf(hostname);
           }
-          final String farm = NetHostHandler.getFarmForHost(conn, host);
-          String hostname = "unassigned" + octet + "." + net + farm + '.' + Zone.API_ZONE;
-          while (hostname.endsWith(".")) {
-            hostname = hostname.substring(0, hostname.length() - 1);
-          }
-          return DomainName.valueOf(hostname);
-        }
-        case INET6: {
+        case INET6:
           throw new NotImplementedException();
-        }
         default:
           throw new AssertionError();
       }

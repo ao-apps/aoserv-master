@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -604,18 +604,16 @@ public final class MysqlHandler {
 
   public static void invalidateTable(Table.TableId tableId) {
     switch (tableId) {
-      case MYSQL_SERVER_USERS: {
+      case MYSQL_SERVER_USERS:
         synchronized (MysqlHandler.class) {
           disabledUserServers.clear();
         }
         break;
-      }
-      case MYSQL_USERS: {
+      case MYSQL_USERS:
         synchronized (MysqlHandler.class) {
           disabledUsers.clear();
         }
         break;
-      }
       default:
         // fall-through
     }

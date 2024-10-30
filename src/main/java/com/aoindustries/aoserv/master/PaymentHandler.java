@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -71,10 +71,9 @@ import java.util.logging.Logger;
 
 /**
  * The {@link PaymentHandler} handles all the accesses to the <code>payment.CreditCard</code> table.
- * <p>
- * TODO: Deactivate immediately on expired card
- * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.
- * </p>
+ *
+ * <p>TODO: Deactivate immediately on expired card
+ * TODO: Retry failed cards on the 7th and 14th, then deactivate?  See newly documented account billing policy.</p>
  *
  * @author  AO Industries, Inc.
  */
@@ -1856,72 +1855,76 @@ public final class PaymentHandler /*implements CronJob*/ {
             switch (authorizationResult.getCommunicationResult()) {
               case LOCAL_ERROR:
               case IO_ERROR:
-              case GATEWAY_ERROR: {
-                // Update transaction as failed
-                //     TODO: Deactivate the card if this is the 3rd consecutive failure
-                //     TODO: Notify customer
-                BillingTransactionHandler.transactionDeclined(
-                    conn,
-                    invalidateList,
-                    transid,
-                    Integer.parseInt(transaction.getPersistenceUniqueId()),
-                    tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-                );
-                conn.commit();
-                System.out.println("    Result: Error");
-                break;
-              }
-              case SUCCESS: {
-                // Check approval result
-                switch (authorizationResult.getApprovalResult()) {
-                  case HOLD: {
-                    // Update transaction
-                    BillingTransactionHandler.transactionHeld(
-                        conn,
-                        invalidateList,
-                        transid,
-                        Integer.parseInt(transaction.getPersistenceUniqueId()),
-                        tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-                    );
-                    conn.commit();
-                    System.out.println("    Result: Hold");
-                    System.out.println("    Review Reason: " + authorizationResult.getReviewReason());
-                    break;
-                  }
-                  case DECLINED: {
-                    // Update transaction as declined
-                    //     TODO: Deactivate the card if this is the 3rd consecutive failure
-                    //     TODO: Notify customer
-                    BillingTransactionHandler.transactionDeclined(
-                        conn,
-                        invalidateList,
-                        transid,
-                        Integer.parseInt(transaction.getPersistenceUniqueId()),
-                        tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-                    );
-                    conn.commit();
-                    System.out.println("    Result: Declined");
-                    System.out.println("    Decline Reason: " + authorizationResult.getDeclineReason());
-                    break;
-                  }
-                  case APPROVED: {
-                    // Update transaction as successful
-                    BillingTransactionHandler.transactionApproved(
-                        conn,
-                        invalidateList,
-                        transid,
-                        Integer.parseInt(transaction.getPersistenceUniqueId()),
-                        tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
-                    );
-                    System.out.println("    Result: Approved");
-                    break;
-                  }
-                  default: {
-                    throw new RuntimeException("Unexpected value for authorization approval result: " + authorizationResult.getApprovalResult());
-                  }
+              case GATEWAY_ERROR:
+                {
+                  // Update transaction as failed
+                  //     TODO: Deactivate the card if this is the 3rd consecutive failure
+                  //     TODO: Notify customer
+                  BillingTransactionHandler.transactionDeclined(
+                      conn,
+                      invalidateList,
+                      transid,
+                      Integer.parseInt(transaction.getPersistenceUniqueId()),
+                      tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+                  );
+                  conn.commit();
+                  System.out.println("    Result: Error");
+                  break;
                 }
-                break;
-              }
+              case SUCCESS:
+                {
+                  // Check approval result
+                  switch (authorizationResult.getApprovalResult()) {
+                    case HOLD:
+                      {
+                        // Update transaction
+                        BillingTransactionHandler.transactionHeld(
+                            conn,
+                            invalidateList,
+                            transid,
+                            Integer.parseInt(transaction.getPersistenceUniqueId()),
+                            tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+                        );
+                        conn.commit();
+                        System.out.println("    Result: Hold");
+                        System.out.println("    Review Reason: " + authorizationResult.getReviewReason());
+                        break;
+                      }
+                    case DECLINED:
+                      {
+                        // Update transaction as declined
+                        //     TODO: Deactivate the card if this is the 3rd consecutive failure
+                        //     TODO: Notify customer
+                        BillingTransactionHandler.transactionDeclined(
+                            conn,
+                            invalidateList,
+                            transid,
+                            Integer.parseInt(transaction.getPersistenceUniqueId()),
+                            tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+                        );
+                        conn.commit();
+                        System.out.println("    Result: Declined");
+                        System.out.println("    Decline Reason: " + authorizationResult.getDeclineReason());
+                        break;
+                      }
+                    case APPROVED:
+                      {
+                        // Update transaction as successful
+                        BillingTransactionHandler.transactionApproved(
+                            conn,
+                            invalidateList,
+                            transid,
+                            Integer.parseInt(transaction.getPersistenceUniqueId()),
+                            tokenizedCreditCard == null ? null : CreditCard.getCardNumberDisplay(tokenizedCreditCard.getReplacementMaskedCardNumber())
+                        );
+                        System.out.println("    Result: Approved");
+                        break;
+                      }
+                    default:
+                      throw new RuntimeException("Unexpected value for authorization approval result: " + authorizationResult.getApprovalResult());
+                  }
+                  break;
+                }
               default:
                 throw new RuntimeException("Unexpected value for authorization communication result: " + authorizationResult.getCommunicationResult());
             }

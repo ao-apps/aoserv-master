@@ -30,6 +30,12 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
   <!-- TODO: Complete Javadocs -->
   <suppress checks="(MissingJavadocMethod|MissingJavadocType|SummaryJavadoc)" />
 
+  <!-- TODO: Fix case indentation -->
+  <suppress
+    checks="Indentation"
+    files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]AoservMaster\.java$"
+  />
+
   <!-- We use underscores in service implementation names -->
   <suppress
     checks="TypeName"

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -497,26 +497,21 @@ public final class DnsService implements MasterService {
    * Gets the contents of the <code>dns.TopLevelDomain</code> table.  Please note
    * that these are only our manually configured entries, and do not contain the
    * full list from {@link TopLevelDomain}.
-   * <p>
-   * Also, this is a list of effective top-level domains, for the purposes of
+   *
+   * <p>Also, this is a list of effective top-level domains, for the purposes of
    * domain allocation.  This means it includes things like <code>com.au</code>,
-   * whereas the {@link TopLevelDomain} only includes <code>au</code>.
-   * </p>
-   * <p>
-   * TODO: Automatically maintain this list from the {@link TopLevelDomain} source, with
-   * an "auto" flag.  Add/remove as-needed when auto.
-   * </p>
-   * <p>
-   * TODO: Have a flag "isRegistrable" that enables/disables a domain as being
+   * whereas the {@link TopLevelDomain} only includes <code>au</code>.</p>
+   *
+   * <p>TODO: Automatically maintain this list from the {@link TopLevelDomain} source, with
+   * an "auto" flag.  Add/remove as-needed when auto.</p>
+   *
+   * <p>TODO: Have a flag "isRegistrable" that enables/disables a domain as being
    * allowed for use by clients.  Something marked isRegistrable and auto should never be removed?
-   * Instead of removing auto entries, have a "removed" timestamp showing when it no longer exists?
-   * </p>
-   * <p>
-   * TODO: Allow a comment on each entry, too.
-   * </p>
-   * <p>
-   * TODO: This could replace ForbiddenZones by adding more specific entries, and marking as isRegistrable=false?
-   * </p>
+   * Instead of removing auto entries, have a "removed" timestamp showing when it no longer exists?</p>
+   *
+   * <p>TODO: Allow a comment on each entry, too.</p>
+   *
+   * <p>TODO: This could replace ForbiddenZones by adding more specific entries, and marking as isRegistrable=false?</p>
    */
   public List<DomainName> getTopLevelDomains(DatabaseConnection conn) throws IOException, SQLException {
     synchronized (dnstldLock) {
@@ -702,52 +697,53 @@ public final class DnsService implements MasterService {
       DomainName hostname
   ) throws IOException, SQLException {
     switch (ip.getAddressFamily()) {
-      case INET: {
-        final String netmask;
-        final String ipStr = ip.toString();
-        if (
-            ipStr.startsWith("66.160.183.")
-                || ipStr.startsWith("64.62.174.")
-        ) {
-          netmask = "255.255.255.0";
-        } else if (ipStr.startsWith("64.71.144.")) {
-          netmask = "255.255.255.128";
-        } else {
-          netmask = null;
-        }
-        if (netmask != null) {
-          String arpaZone = Zone.getArpaZoneForIpAddress(ip, netmask);
+      case INET:
+        {
+          final String netmask;
+          final String ipStr = ip.toString();
           if (
-              conn.queryBoolean(
-                  "select (select zone from dns.\"Zone\" where zone=?) is not null",
-                  arpaZone
-              )
+              ipStr.startsWith("66.160.183.")
+                  || ipStr.startsWith("64.62.174.")
           ) {
-            int pos = ipStr.lastIndexOf('.');
-            String oct4 = ipStr.substring(pos + 1);
+            netmask = "255.255.255.0";
+          } else if (ipStr.startsWith("64.71.144.")) {
+            netmask = "255.255.255.128";
+          } else {
+            netmask = null;
+          }
+          if (netmask != null) {
+            String arpaZone = Zone.getArpaZoneForIpAddress(ip, netmask);
             if (
                 conn.queryBoolean(
-                    "select (select id from dns.\"Record\" where \"zone\"=? and \"domain\"=? and \"type\"=? limit 1) is not null",
+                    "select (select zone from dns.\"Zone\" where zone=?) is not null",
+                    arpaZone
+                )
+            ) {
+              int pos = ipStr.lastIndexOf('.');
+              String oct4 = ipStr.substring(pos + 1);
+              if (
+                  conn.queryBoolean(
+                      "select (select id from dns.\"Record\" where \"zone\"=? and \"domain\"=? and \"type\"=? limit 1) is not null",
+                      arpaZone,
+                      oct4,
+                      RecordType.PTR
+                  )
+              ) {
+                updateDnsZoneSerial(conn, invalidateList, arpaZone);
+
+                conn.update(
+                    "update dns.\"Record\" set destination=? where \"zone\"=? and \"domain\"=? and \"type\"=?",
+                    hostname.toString() + '.',
                     arpaZone,
                     oct4,
                     RecordType.PTR
-                )
-            ) {
-              updateDnsZoneSerial(conn, invalidateList, arpaZone);
-
-              conn.update(
-                  "update dns.\"Record\" set destination=? where \"zone\"=? and \"domain\"=? and \"type\"=?",
-                  hostname.toString() + '.',
-                  arpaZone,
-                  oct4,
-                  RecordType.PTR
-              );
-              invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+                );
+                invalidateList.addTable(conn, Table.TableId.DNS_RECORDS, InvalidateList.allAccounts, InvalidateList.allHosts, false);
+              }
             }
           }
+          break;
         }
-        break;
-      }
       case INET6:
         throw new NotImplementedException();
       default:
