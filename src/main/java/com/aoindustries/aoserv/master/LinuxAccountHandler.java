@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -261,6 +261,8 @@ public final class LinuxAccountHandler {
       Group.MANAGEMENT,
       Group.MONITORING,
       Group.RESELLER,
+      // Amazon EC2 cloud-init
+      Group.ROCKY,
       // SonarQube
       Group.SONARQUBE
   ));
@@ -269,7 +271,7 @@ public final class LinuxAccountHandler {
   private static final String AOADMIN_SUDO = "ALL=(ALL) NOPASSWD:ALL";
 
   /** Amazon EC2 cloud-init. */
-  private static final String CENTOS_SUDO = "ALL=(ALL) NOPASSWD:ALL";
+  private static final String CLOUD_INIT_SUDO = "ALL=(ALL) NOPASSWD:ALL";
 
   /** Default sudo setting for newly added "aoserv-xen-migration" system users. */
   private static final String AOSERV_XEN_MIGRATION_SUDO = "ALL=(ALL) NOPASSWD: /usr/sbin/xl -t migrate-receive";
@@ -1025,7 +1027,7 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.AVAHI_AUTOIPD,                   170, Group.AVAHI_AUTOIPD,        "Avahi IPv4LL Stack",                                              "/var/lib/avahi-autoipd",        Shell.NOLOGIN,  null);
           // Not in Rocky 9:                   User.AVAHI_AUTOIPD
           // Not in CentOS 7:                  User.RTKIT
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RTKIT,                           172, Group.RTKIT,                "RealtimeKit",                                                     "/proc",                         Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RTKIT,                           172, Group.RTKIT,                "RealtimeKit",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.SYSTEMD_NETWORK,                 192, Group.SYSTEMD_NETWORK,      "systemd Network Management",                                      "/",                             Shell.NOLOGIN,  null);
@@ -1090,8 +1092,8 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
           // Amazon EC2 cloud-init
-          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CENTOS_SUDO);
-          // Not in Rocky 9:                   User.CENTOS
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CLOUD_INIT_SUDO);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.ROCKY,                ANY_USER_UID,   Group.ROCKY,                "rocky Cloud User",                                                "/home/rocky",                   Shell.BASH,     CLOUD_INIT_SUDO);
           // SonarQube
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
