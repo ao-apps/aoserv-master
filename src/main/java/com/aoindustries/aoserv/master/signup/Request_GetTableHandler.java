@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021, 2022, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -67,7 +67,7 @@ public class Request_GetTableHandler extends TableHandler.GetTableHandlerByRole 
         CursorMode.AUTO,
         new Request(),
         "select\n"
-            + "  id\n"
+            + "  id,\n"
             + "  brand,\n"
             + "  \"time\",\n"
             + "  host(ip_address) as ip_address,\n"
@@ -139,7 +139,7 @@ public class Request_GetTableHandler extends TableHandler.GetTableHandlerByRole 
         CursorMode.AUTO,
         new Request(),
         "select\n"
-            + "  sr.id\n"
+            + "  sr.id,\n"
             + "  sr.brand,\n"
             + "  sr.\"time\",\n"
             + "  host(sr.ip_address) as ip_address,\n"
