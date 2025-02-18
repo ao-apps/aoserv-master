@@ -244,8 +244,6 @@ public final class LinuxAccountHandler {
       Group.MANAGEMENT,
       Group.MONITORING,
       Group.RESELLER,
-      // Amazon EC2 cloud-init
-      Group.CENTOS,
       // SonarQube
       Group.SONARQUBE
   ));
@@ -1092,7 +1090,6 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RESELLER,             ANY_USER_UID,   Group.RESELLER,             "masterdb access",                                                 "/home/reseller",                Shell.BASH,     null);
           // Amazon EC2 cloud-init
-          addSystemUser(CENTOS_7_SYSTEM_USERS, User.CENTOS,               ANY_USER_UID,   Group.CENTOS,               "Cloud User",                                                      "/home/centos",                  Shell.BASH,     CLOUD_INIT_SUDO);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.ROCKY,                ANY_USER_UID,   Group.ROCKY,                "rocky Cloud User",                                                "/home/rocky",                   Shell.BASH,     CLOUD_INIT_SUDO);
           // SonarQube
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
