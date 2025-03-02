@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -273,6 +273,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
           }
 
           switch (protocolVersion) {
+            case VERSION_1_92_1:
             case VERSION_1_92_0:
             case VERSION_1_86_0:
             case VERSION_1_84_13:
