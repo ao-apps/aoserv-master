@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -243,28 +243,28 @@ public final class TableHandler {
    */
   public static int addGetObjectHandler(GetObjectHandler handler) {
     int numTables = 0;
-      {
-        boolean successful = false;
-        java.util.Set<Table.TableId> added = EnumSet.noneOf(Table.TableId.class);
-        try {
-          for (Table.TableId tableId : handler.getTableIds()) {
-            GetObjectHandler existing = getObjectHandlers.putIfAbsent(tableId, handler);
-            if (existing != null) {
-              throw new IllegalStateException("Handler already registered for table " + tableId + ": " + existing);
-            }
-            added.add(tableId);
-            numTables++;
+    {
+      boolean successful = false;
+      java.util.Set<Table.TableId> added = EnumSet.noneOf(Table.TableId.class);
+      try {
+        for (Table.TableId tableId : handler.getTableIds()) {
+          GetObjectHandler existing = getObjectHandlers.putIfAbsent(tableId, handler);
+          if (existing != null) {
+            throw new IllegalStateException("Handler already registered for table " + tableId + ": " + existing);
           }
-          successful = true;
-        } finally {
-          if (!successful) {
-            // Rollback partial
-            for (Table.TableId id : added) {
-              getObjectHandlers.remove(id);
-            }
+          added.add(tableId);
+          numTables++;
+        }
+        successful = true;
+      } finally {
+        if (!successful) {
+          // Rollback partial
+          for (Table.TableId id : added) {
+            getObjectHandlers.remove(id);
           }
         }
       }
+    }
     if (numTables == 0 && logger.isLoggable(Level.WARNING)) {
       logger.log(Level.WARNING, GetObjectHandler.class.getSimpleName() + " did not specify any tables: " + handler);
     }
@@ -472,28 +472,28 @@ public final class TableHandler {
    */
   public static int addGetTableHandler(GetTableHandler handler) {
     int numTables = 0;
-      {
-        boolean successful = false;
-        java.util.Set<Table.TableId> added = EnumSet.noneOf(Table.TableId.class);
-        try {
-          for (Table.TableId tableId : handler.getTableIds()) {
-            GetTableHandler existing = getTableHandlers.putIfAbsent(tableId, handler);
-            if (existing != null) {
-              throw new IllegalStateException("Handler already registered for table " + tableId + ": " + existing);
-            }
-            added.add(tableId);
-            numTables++;
+    {
+      boolean successful = false;
+      java.util.Set<Table.TableId> added = EnumSet.noneOf(Table.TableId.class);
+      try {
+        for (Table.TableId tableId : handler.getTableIds()) {
+          GetTableHandler existing = getTableHandlers.putIfAbsent(tableId, handler);
+          if (existing != null) {
+            throw new IllegalStateException("Handler already registered for table " + tableId + ": " + existing);
           }
-          successful = true;
-        } finally {
-          if (!successful) {
-            // Rollback partial
-            for (Table.TableId id : added) {
-              getTableHandlers.remove(id);
-            }
+          added.add(tableId);
+          numTables++;
+        }
+        successful = true;
+      } finally {
+        if (!successful) {
+          // Rollback partial
+          for (Table.TableId id : added) {
+            getTableHandlers.remove(id);
           }
         }
       }
+    }
     if (numTables == 0 && logger.isLoggable(Level.WARNING)) {
       logger.log(Level.WARNING, GetTableHandler.class.getSimpleName() + " did not specify any tables: " + handler);
     }

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1535,12 +1535,12 @@ public final class PaymentHandler /*implements CronJob*/ {
 
         // Find the last microsecond of the current month - PostgreSQL has microsecond precision
         Timestamp lastMicrosecondOfMonth;
-          {
-            Calendar lastSecondOfTheMonth = (Calendar) beginningOfNextMonth.clone();
-            lastSecondOfTheMonth.add(Calendar.SECOND, -1);
-            lastMicrosecondOfMonth = new Timestamp(lastSecondOfTheMonth.getTimeInMillis());
-            lastMicrosecondOfMonth.setNanos(999999000);
-          }
+        {
+          Calendar lastSecondOfTheMonth = (Calendar) beginningOfNextMonth.clone();
+          lastSecondOfTheMonth.add(Calendar.SECOND, -1);
+          lastMicrosecondOfMonth = new Timestamp(lastSecondOfTheMonth.getTimeInMillis());
+          lastMicrosecondOfMonth.setNanos(999999000);
+        }
 
         // Start the transaction
         try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {

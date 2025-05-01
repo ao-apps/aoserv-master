@@ -872,13 +872,13 @@ public final class LinuxAccountHandler {
     }
     int gidMin = LinuxServerHandler.getGidMin(conn, linuxServer);
     int gidMax = LinuxServerHandler.getGidMax(conn, linuxServer);
-      // The group ID must not already exist on this server
-      {
-        Group.Name existing = getGroupByGid(conn, linuxServer, gid);
-        if (existing != null) {
-          throw new SQLException("Group #" + gid + " already exists on server #" + linuxServer + ": " + existing);
-        }
+    // The group ID must not already exist on this server
+    {
+      Group.Name existing = getGroupByGid(conn, linuxServer, gid);
+      if (existing != null) {
+        throw new SQLException("Group #" + gid + " already exists on server #" + linuxServer + ": " + existing);
       }
+    }
     // Must be one of the expected patterns for the servers operating system version
     int osv = NetHostHandler.getOperatingSystemVersionForHost(conn, linuxServer);
     if (
@@ -1186,13 +1186,13 @@ public final class LinuxAccountHandler {
     }
     int uidMin = LinuxServerHandler.getUidMin(conn, linuxServer);
     int uidMax = LinuxServerHandler.getUidMax(conn, linuxServer);
-      // The user ID must not already exist on this server
-      {
-        com.aoindustries.aoserv.client.linux.User.Name existing = getUserByUid(conn, linuxServer, uid);
-        if (existing != null) {
-          throw new SQLException("User #" + uid + " already exists on server #" + linuxServer + ": " + existing);
-        }
+    // The user ID must not already exist on this server
+    {
+      com.aoindustries.aoserv.client.linux.User.Name existing = getUserByUid(conn, linuxServer, uid);
+      if (existing != null) {
+        throw new SQLException("User #" + uid + " already exists on server #" + linuxServer + ": " + existing);
       }
+    }
     // Get the group name for the requested gid
     Group.Name group = getGroupByGid(conn, linuxServer, gid);
     if (group == null) {

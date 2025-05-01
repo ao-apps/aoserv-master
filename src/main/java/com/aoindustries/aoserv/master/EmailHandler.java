@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -189,15 +189,15 @@ public final class EmailHandler {
       String address,
       int domain
   ) throws IOException, SQLException {
-      {
-        ValidationResult result = Email.validate(
-            address,
-            getNetDomainForDomain(conn, domain)
-        );
-        if (!result.isValid()) {
-          throw new SQLException("Invalid email address: " + result);
-        }
+    {
+      ValidationResult result = Email.validate(
+          address,
+          getNetDomainForDomain(conn, domain)
+      );
+      if (!result.isValid()) {
+        throw new SQLException("Invalid email address: " + result);
       }
+    }
 
     int address_id = conn.updateInt(
         "INSERT INTO email.\"Address\" (address, \"domain\") VALUES (?,?) RETURNING id",
