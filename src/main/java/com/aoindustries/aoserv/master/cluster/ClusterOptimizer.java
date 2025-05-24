@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2009, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
+ * Copyright (C) 2007-2009, 2019, 2020, 2021, 2022, 2024, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -264,13 +264,13 @@ public final class ClusterOptimizer {
               (
                   virtualServer.minimumProcessorType == null
                       || primaryServer.processorType.compareTo(virtualServer.minimumProcessorType) >= 0
-              ) && (
+                ) && (
                   virtualServer.requiredProcessorArchitecture == null
                       || primaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture
-              ) && (
+                ) && (
                   virtualServer.minimumProcessorSpeed == -1
                       || primaryServer.processorSpeed >= virtualServer.minimumProcessorSpeed
-              )
+                )
           ) {
             // Stop processing if primaryServer past capacity on either processor cores or RAM
             final int oldAllocatedProcessorWeight = primaryServer.allocatedProcessorWeight;
@@ -404,10 +404,10 @@ public final class ClusterOptimizer {
               (
                   virtualServer.minimumProcessorType == null
                       || secondaryServer.processorType.compareTo(virtualServer.minimumProcessorType) >= 0
-              ) && (
+                ) && (
                   virtualServer.requiredProcessorArchitecture == null
                       || secondaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture
-              )
+                )
           ) {
             // Make sure secondary has at least total number of cores matching secondary cores.
             // Note: we don't care about weight here - just make it run somewhere when in failover.

@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2019, 2020, 2021, 2022, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1057,13 +1057,13 @@ public final class OriginalClusterOptimizer {
             (
                 virtualServer.minimumProcessorType == null
                     || primaryServer.processorType.compareTo(virtualServer.minimumProcessorType) >= 0
-            ) && (
+              ) && (
                 virtualServer.requiredProcessorArchitecture == null
                     || primaryServer.processorArchitecture == virtualServer.requiredProcessorArchitecture
-            ) && (
+              ) && (
                 virtualServer.minimumProcessorSpeed == -1
                     || primaryServer.processorSpeed >= virtualServer.minimumProcessorSpeed
-            )
+              )
         ) {
           selectedPrimaries[currentVirtualServer] = primaryServerIndex;
           // Stop processing if primaryServer past capacity on either processor cores or RAM

@@ -886,8 +886,8 @@ public final class LinuxAccountHandler {
         isFixedSystemGroup(osv, group, gid)
         // System groups in range 201 through gidMin - 1
         || isDynamicSystemGroup(osv, gidMin, group, gid)
-        // Regular user groups in range gidMin through Group.GID_MAX
-        || isRegularUserGroup(osv, gidMin, gidMax, group, gid)
+          // Regular user groups in range gidMin through Group.GID_MAX
+          || isRegularUserGroup(osv, gidMin, gidMax, group, gid)
     ) {
       int groupServer = conn.updateInt(
           "INSERT INTO\n"

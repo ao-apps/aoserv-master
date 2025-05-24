@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2002-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2002-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -164,7 +164,7 @@ public final class CvsHandler {
           !(
               UserType.USER.equals(type)
                   || UserType.APPLICATION.equals(type)
-          )
+            )
       ) {
         throw new SQLException("CVS repositories must be owned by a linux account of type '" + UserType.USER + "' or '" + UserType.APPLICATION + '\'');
       }

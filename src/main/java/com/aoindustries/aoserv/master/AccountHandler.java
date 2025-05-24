@@ -1997,7 +1997,7 @@ public final class AccountHandler {
             && (
             isAccountCanceled(conn, highestAccounting)
                 || isAccountBillParent(conn, highestAccounting)
-        )
+          )
     ) {
       highestAccounting = getParentAccount(conn, highestAccounting);
     }

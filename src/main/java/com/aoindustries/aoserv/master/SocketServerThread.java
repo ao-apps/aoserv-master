@@ -207,7 +207,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                   "Remote host terminated the handshake".equals(message)
                       // Java 8
                       || "Remote host closed connection during handshake".equals(message)
-              )
+                )
           ) {
             level = Level.SEVERE;
           } else {
@@ -520,7 +520,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 || (
                 !"Connection has been shutdown: javax.net.ssl.SSLException: java.net.SocketException: Connection reset".equals(message)
                     && !"Unrecognized SSL message, plaintext connection?".equals(message)
-            )
+              )
         ) {
           logger.log(Level.SEVERE, null, err);
         } else {
@@ -535,7 +535,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 !message.startsWith("Broken pipe")
                     && !"Connection reset".equals(message)
                     && !message.startsWith("Connection timed out")
-            )
+              )
         ) {
           logger.log(Level.SEVERE, null, err);
         } else {
