@@ -139,6 +139,12 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
               client are used in trusted and restricted environments.
             -->
             <exclude>CVE-2020-21469</exclude>
+            <!--
+              We do not use an bean property values from untrusted sources, so do not expect to be affected by
+              CVE-2025-48734.  Furthermore, we are stuck on commons-beanutils-1.9.4 until commons-validator-1.9.0 is
+              updated to reference the new module name.
+            -->
+            <exclude>CVE-2025-48734</exclude>
           </excludeVulnerabilityIds>
         </configuration>
       </plugin>
