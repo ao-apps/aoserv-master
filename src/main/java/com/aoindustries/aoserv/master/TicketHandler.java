@@ -308,7 +308,7 @@ public final class TicketHandler /*implements Runnable*/ {
     }
     invalidateList.addTable(conn, Table.TableId.TICKETS, brand, InvalidateList.allHosts, false);
     invalidateList.addTable(conn, Table.TableId.TICKETS, reseller, InvalidateList.allHosts, false);
-    //invalidateList.addTable(conn, Table.TableId.ACTIONS, account, null);
+    // invalidateList.addTable(conn, Table.TableId.ACTIONS, account, null);
     return ticket;
   }
 
@@ -1463,7 +1463,7 @@ public final class TicketHandler /*implements Runnable*/ {
       "This is an automagically generated email.  DO NOT REPLY TO THIS MESSAGE.";
     sendEmail(to, "Ticket "+ticket+" was killed.", message, null);
   }*/
-  //}
+  // }
 
   /*
   public static void reactivateTicket(
@@ -1791,273 +1791,273 @@ public final class TicketHandler /*implements Runnable*/ {
             logger
         );
         cronDaemonAdded = true;
-        //thread=new Thread(new TicketHandler());
-        //thread.setPriority(Thread.NORM_PRIORITY-1);
-        //thread.start();
+        // thread=new Thread(new TicketHandler());
+        // thread.setPriority(Thread.NORM_PRIORITY-1);
+        // thread.start();
         System.out.println("Done");
       }
     }
   }
 
-  ///**
-  // * The amount of time sleeping between IMAP folder scans.
-  // */
-  //public static final long
-  //  SLEEP_INTERVAL = 60L * 1000,
-  //  TIMER_MAX_TIME = 15L * 60 * 1000,
-  //  TIMER_REMINDER_INTERVAL = 60L * 60 * 1000;
+  // /**
+  //  * The amount of time sleeping between IMAP folder scans.
+  //  */
+  // public static final long
+  //   SLEEP_INTERVAL = 60L * 1000,
+  //   TIMER_MAX_TIME = 15L * 60 * 1000,
+  //   TIMER_REMINDER_INTERVAL = 60L * 60 * 1000;
   //
-  ///**
-  // * The email part separator.
-  // */
-  //public static final String PART_SEPARATOR="\n----------------------------------------------------------------------------------------------------\n\n";
+  // /**
+  //  * The email part separator.
+  //  */
+  // public static final String PART_SEPARATOR="\n----------------------------------------------------------------------------------------------------\n\n";
   //
-  //public void run() {
-  //  while (!Thread.currentThread().isInterrupted()) {
-  //    try {
-  //      try {
-  //        Thread.sleep(SLEEP_INTERVAL);
-  //      } catch (InterruptedException err) {
-  //        logger.log(Level.WARNING, null, err);
-  //        // Restore the interrupted status
-  //        Thread.currentThread().interrupt();
-  //        break;
-  //      }
-  //      ProcessTimer timer=new ProcessTimer(
-  //        MasterConfiguration.getWarningSmtpServer(),
-  //        MasterConfiguration.getWarningEmailFrom(),
-  //        MasterConfiguration.getWarningEmailTo(),
-  //        "Ticket Handler",
-  //        "Creating ticket.Ticket from IMAP folders",
-  //        TIMER_MAX_TIME,
-  //        TIMER_REMINDER_INTERVAL
-  //      );
-  //      try {
-  //        timer.start();
-  //        // Start the transaction
-  //        try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
-  //          InvalidateList invalidateList = new InvalidateList();
-  //          for (int c=1;c<Integer.MAX_VALUE;c++) {
-  //            String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
-  //            if (hostname == null) {
-  //              break;
-  //            }
-  //            String username=MasterConfiguration.getTicketSource("imap", c, "username");
-  //            String password=MasterConfiguration.getTicketSource("imap", c, "password");
-  //            String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
-  //            String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
-  //            List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
-  //            String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
-  //            if (assign_to != null) {
-  //              assign_to=assign_to.trim();
-  //            }
+  // public void run() {
+  //   while (!Thread.currentThread().isInterrupted()) {
+  //     try {
+  //       try {
+  //         Thread.sleep(SLEEP_INTERVAL);
+  //       } catch (InterruptedException err) {
+  //         logger.log(Level.WARNING, null, err);
+  //         // Restore the interrupted status
+  //         Thread.currentThread().interrupt();
+  //         break;
+  //       }
+  //       ProcessTimer timer=new ProcessTimer(
+  //         MasterConfiguration.getWarningSmtpServer(),
+  //         MasterConfiguration.getWarningEmailFrom(),
+  //         MasterConfiguration.getWarningEmailTo(),
+  //         "Ticket Handler",
+  //         "Creating ticket.Ticket from IMAP folders",
+  //         TIMER_MAX_TIME,
+  //         TIMER_REMINDER_INTERVAL
+  //       );
+  //       try {
+  //         timer.start();
+  //         // Start the transaction
+  //         try (DatabaseConnection conn = MasterDatabase.getDatabase().connect()) {
+  //           InvalidateList invalidateList = new InvalidateList();
+  //           for (int c=1;c<Integer.MAX_VALUE;c++) {
+  //             String hostname=MasterConfiguration.getTicketSource("imap", c, "hostname");
+  //             if (hostname == null) {
+  //               break;
+  //             }
+  //             String username=MasterConfiguration.getTicketSource("imap", c, "username");
+  //             String password=MasterConfiguration.getTicketSource("imap", c, "password");
+  //             String folderName=MasterConfiguration.getTicketSource("imap", c, "folder");
+  //             String archiveFolderName=MasterConfiguration.getTicketSource("imap", c, "archivefolder");
+  //             List<String> ignore_recipients=Strings.splitStringCommaSpace(MasterConfiguration.getTicketSource("imap", c, "ignore_recipients"));
+  //             String assign_to=MasterConfiguration.getTicketSource("imap", c, "assign_to");
+  //             if (assign_to != null) {
+  //               assign_to=assign_to.trim();
+  //             }
   //
-  //            Properties props = new Properties();
-  //            props.put("mail.store.protocol", "imap");
-  //            Session session=Session.getInstance(props, null);
-  //            Store store=session.getStore();
-  //            try {
-  //              store.connect(
-  //                hostname,
-  //                username,
-  //                password
-  //              );
-  //              Folder folder=store.getFolder(folderName);
-  //              if (!folder.exists()) {
-  //                UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
-  //              } else {
-  //                try {
-  //                  folder.open(Folder.READ_WRITE);
-  //                  Message[] messages=folder.getMessages();
-  //                  for (int f=0;f<messages.length;f++) {
-  //                    Message message=messages[f];
-  //                    if (!message.isSet(Flags.Flag.DELETED)) {
-  //                      // The list of emails notified of ticket changes
-  //                      StringBuilder notifyEmails=new StringBuilder();
-  //                      List<String> notifyUsed=new SortedArrayList<>();
+  //             Properties props = new Properties();
+  //             props.put("mail.store.protocol", "imap");
+  //             Session session=Session.getInstance(props, null);
+  //             Store store=session.getStore();
+  //             try {
+  //               store.connect(
+  //                 hostname,
+  //                 username,
+  //                 password
+  //               );
+  //               Folder folder=store.getFolder(folderName);
+  //               if (!folder.exists()) {
+  //                 UserHost.reportWarning(new IOException("Folder does not exist: "+folderName), null);
+  //               } else {
+  //                 try {
+  //                   folder.open(Folder.READ_WRITE);
+  //                   Message[] messages=folder.getMessages();
+  //                   for (int f=0;f<messages.length;f++) {
+  //                     Message message=messages[f];
+  //                     if (!message.isSet(Flags.Flag.DELETED)) {
+  //                       // The list of emails notified of ticket changes
+  //                       StringBuilder notifyEmails=new StringBuilder();
+  //                       List<String> notifyUsed=new SortedArrayList<>();
   //
-  //                      // Get the from addresses
-  //                      Address[] fromAddresses=message.getFrom();
-  //                      List<String> froms=new ArrayList<>(fromAddresses == null ? 0 : fromAddresses.length);
-  //                      if (fromAddresses != null) {
-  //                        for (int d=0;d<fromAddresses.length;d++) {
-  //                          Address addy=fromAddresses[d];
-  //                          String s;
-  //                          if (addy instanceof InternetAddress) {
-  //                            s=((InternetAddress)addy).getAddress().toLowerCase();
-  //                          } else {
-  //                            s = addy.toString().toLowerCase();
-  //                          }
-  //                          froms.add(s);
-  //                          if (!notifyUsed.contains(s)) {
-  //                            if (notifyEmails.length()>0) {
-  //                              notifyEmails.append('\n');
-  //                            }
-  //                            notifyEmails.append(s);
-  //                            notifyUsed.add(s);
-  //                          }
-  //                        }
-  //                      }
-  //                      // Get the to addresses
-  //                      Address[] toAddresses=message.getAllRecipients();
-  //                      List<String> tos=new ArrayList<>(toAddresses == null ? 0 : toAddresses.length);
-  //                      if (toAddresses != null) {
-  //                        for (int d=0;d<toAddresses.length;d++) {
-  //                          Address addy=toAddresses[d];
-  //                          String s;
-  //                          if (addy instanceof InternetAddress) {
-  //                            s=((InternetAddress)addy).getAddress().toLowerCase();
-  //                          } else {
-  //                            s = addy.toString().toLowerCase();
-  //                          }
-  //                          // Skip if in the ignore list
-  //                          boolean ignored=false;
-  //                          for (int e=0;e<ignore_recipients.size();e++) {
-  //                            String ignoredAddy=ignore_recipients.get(e);
-  //                            if (ignoredAddy.equalsIgnoreCase(s)) {
-  //                              ignored=true;
-  //                              break;
-  //                            }
-  //                          }
-  //                          if (!ignored) {
-  //                            tos.add(s);
-  //                            if (!notifyUsed.contains(s)) {
-  //                              if (notifyEmails.length()>0) {
-  //                                notifyEmails.append('\n');
-  //                              }
-  //                              notifyEmails.append(s);
-  //                              notifyUsed.add(s);
-  //                            }
-  //                          }
-  //                        }
-  //                      }
+  //                       // Get the from addresses
+  //                       Address[] fromAddresses=message.getFrom();
+  //                       List<String> froms=new ArrayList<>(fromAddresses == null ? 0 : fromAddresses.length);
+  //                       if (fromAddresses != null) {
+  //                         for (int d=0;d<fromAddresses.length;d++) {
+  //                           Address addy=fromAddresses[d];
+  //                           String s;
+  //                           if (addy instanceof InternetAddress) {
+  //                             s=((InternetAddress)addy).getAddress().toLowerCase();
+  //                           } else {
+  //                             s = addy.toString().toLowerCase();
+  //                           }
+  //                           froms.add(s);
+  //                           if (!notifyUsed.contains(s)) {
+  //                             if (notifyEmails.length()>0) {
+  //                               notifyEmails.append('\n');
+  //                             }
+  //                             notifyEmails.append(s);
+  //                             notifyUsed.add(s);
+  //                           }
+  //                         }
+  //                       }
+  //                       // Get the to addresses
+  //                       Address[] toAddresses=message.getAllRecipients();
+  //                       List<String> tos=new ArrayList<>(toAddresses == null ? 0 : toAddresses.length);
+  //                       if (toAddresses != null) {
+  //                         for (int d=0;d<toAddresses.length;d++) {
+  //                           Address addy=toAddresses[d];
+  //                           String s;
+  //                           if (addy instanceof InternetAddress) {
+  //                             s=((InternetAddress)addy).getAddress().toLowerCase();
+  //                           } else {
+  //                             s = addy.toString().toLowerCase();
+  //                           }
+  //                           // Skip if in the ignore list
+  //                           boolean ignored=false;
+  //                           for (int e=0;e<ignore_recipients.size();e++) {
+  //                             String ignoredAddy=ignore_recipients.get(e);
+  //                             if (ignoredAddy.equalsIgnoreCase(s)) {
+  //                               ignored=true;
+  //                               break;
+  //                             }
+  //                           }
+  //                           if (!ignored) {
+  //                             tos.add(s);
+  //                             if (!notifyUsed.contains(s)) {
+  //                               if (notifyEmails.length()>0) {
+  //                                 notifyEmails.append('\n');
+  //                               }
+  //                               notifyEmails.append(s);
+  //                               notifyUsed.add(s);
+  //                             }
+  //                           }
+  //                         }
+  //                       }
   //
-  //                      // Try to guess the business ownership, but never guess for a cancelled business
-  //                      String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
+  //                       // Try to guess the business ownership, but never guess for a cancelled business
+  //                       String account=AccountHandler.getAccountFromEmailAddresses(conn, froms);
   //
-  //                      String emailBody=getMessageBody(message);
+  //                       String emailBody=getMessageBody(message);
   //
-  //                      // Add ticket
-  //                      addTicket(
-  //                        conn,
-  //                        invalidateList,
-  //                        account,
-  //                        null,
-  //                        TicketType.NONE,
-  //                        emailBody,
-  //                        -1,
-  //                        Priority.NORMAL,
-  //                        Priority.NORMAL,
-  //                        null,
-  //                        assign_to == null || assign_to.length() == 0 ? null : assign_to,
-  //                        notifyEmails.toString(),
-  //                        ""
-  //                      );
+  //                       // Add ticket
+  //                       addTicket(
+  //                         conn,
+  //                         invalidateList,
+  //                         account,
+  //                         null,
+  //                         TicketType.NONE,
+  //                         emailBody,
+  //                         -1,
+  //                         Priority.NORMAL,
+  //                         Priority.NORMAL,
+  //                         null,
+  //                         assign_to == null || assign_to.length() == 0 ? null : assign_to,
+  //                         notifyEmails.toString(),
+  //                         ""
+  //                       );
   //
-  //                      // Commit individual ticket
-  //                      conn.commit();
-  //                    }
-  //                  }
-  //                  // Archive all messages
-  //                  if (archiveFolderName != null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
-  //                    Folder archiveFolder=store.getFolder(archiveFolderName);
-  //                    try {
-  //                      if (!archiveFolder.exists()) {
-  //                        UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
-  //                      } else {
-  //                        folder.copyMessages(messages, archiveFolder);
-  //                      }
-  //                    } finally {
-  //                      if (archiveFolder.isOpen()) {
-  //                        archiveFolder.close(true);
-  //                      }
-  //                    }
-  //                  }
-  //                  // Delete all messages
-  //                  folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
-  //                  folder.expunge();
-  //                } finally {
-  //                  if (folder.isOpen()) {
-  //                    folder.close(true);
-  //                  }
-  //                }
-  //              }
-  //            } finally {
-  //              if (store.isConnected()) {
-  //                store.close();
-  //              }
-  //            }
-  //          }
-  //          conn.commit();
-  //          AoservMaster.invalidateTables(conn, invalidateList, null);
-  //        }
-  //      } finally {
-  //        timer.stop();
-  //      }
-  //    } catch (ThreadDeath td) {
-  //      throw td;
-  //    } catch (Throwable t) {
-  //      logger.log(Level.SEVERE, null, t);
-  //    }
-  //  }
-  //}
+  //                       // Commit individual ticket
+  //                       conn.commit();
+  //                     }
+  //                   }
+  //                   // Archive all messages
+  //                   if (archiveFolderName != null && (archiveFolderName=archiveFolderName.trim()).length()>0) {
+  //                     Folder archiveFolder=store.getFolder(archiveFolderName);
+  //                     try {
+  //                       if (!archiveFolder.exists()) {
+  //                         UserHost.reportWarning(new IOException("Folder does not exist: "+archiveFolderName), null);
+  //                       } else {
+  //                         folder.copyMessages(messages, archiveFolder);
+  //                       }
+  //                     } finally {
+  //                       if (archiveFolder.isOpen()) {
+  //                         archiveFolder.close(true);
+  //                       }
+  //                     }
+  //                   }
+  //                   // Delete all messages
+  //                   folder.setFlags(messages, new Flags(Flags.Flag.DELETED), true);
+  //                   folder.expunge();
+  //                 } finally {
+  //                   if (folder.isOpen()) {
+  //                     folder.close(true);
+  //                   }
+  //                 }
+  //               }
+  //             } finally {
+  //               if (store.isConnected()) {
+  //                 store.close();
+  //               }
+  //             }
+  //           }
+  //           conn.commit();
+  //           AoservMaster.invalidateTables(conn, invalidateList, null);
+  //         }
+  //       } finally {
+  //         timer.stop();
+  //       }
+  //     } catch (ThreadDeath td) {
+  //       throw td;
+  //     } catch (Throwable t) {
+  //       logger.log(Level.SEVERE, null, t);
+  //     }
+  //   }
+  // }
   //
-  //private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
+  // private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
   //
-  ///**
-  // * Gets the String form of the message body.
-  // */
-  //public String getMessageBody(Message message) throws IOException, MessagingException {
-  //  try {
-  //    StringBuilder sb = new StringBuilder();
-  //    Enumeration headers=message.getMatchingHeaders(MATCH_HEADERS);
-  //    while (headers.hasMoreElements()) {
-  //      Header h=(Header)headers.nextElement();
-  //      String name=h.getName();
-  //      String val=h.getValue();
-  //      if (val != null && (val=val.trim()).length()>0) {
-  //        sb.append(name).append(": ").append(val).append('\n');
-  //      }
-  //    }
-  //    if (sb.length()>0) {
-  //      sb.append('\n');
-  //    }
-  //    getMessageBody0(message.getContent(), sb);
-  //    return sb.toString();
-  //  } catch (UnsupportedEncodingException err) {
-  //    logger.log(Level.WARNING, null, err);
-  //    return message.getContent().toString();
-  //  }
-  //}
+  // /**
+  //  * Gets the String form of the message body.
+  //  */
+  // public String getMessageBody(Message message) throws IOException, MessagingException {
+  //   try {
+  //     StringBuilder sb = new StringBuilder();
+  //     Enumeration headers=message.getMatchingHeaders(MATCH_HEADERS);
+  //     while (headers.hasMoreElements()) {
+  //       Header h=(Header)headers.nextElement();
+  //       String name=h.getName();
+  //       String val=h.getValue();
+  //       if (val != null && (val=val.trim()).length()>0) {
+  //         sb.append(name).append(": ").append(val).append('\n');
+  //       }
+  //     }
+  //     if (sb.length()>0) {
+  //       sb.append('\n');
+  //     }
+  //     getMessageBody0(message.getContent(), sb);
+  //     return sb.toString();
+  //   } catch (UnsupportedEncodingException err) {
+  //     logger.log(Level.WARNING, null, err);
+  //     return message.getContent().toString();
+  //   }
+  // }
   //
-  //private void getMessageBody0(Object content, StringBuilder sb) throws IOException, MessagingException {
-  //  if (content instanceof MimeMultipart) {
-  //    MimeMultipart mpart = (MimeMultipart)content;
-  //    int partCount = mpart.getCount();
-  //    for (int i = 0; i<partCount; i++) {
-  //      getMessageBody0(mpart.getBodyPart(i), sb);
-  //    }
-  //  } else if (content instanceof String) {
-  //    if (sb.length()>0) {
-  //      sb.append(PART_SEPARATOR);
-  //    }
-  //    sb.append(Strings.wordWrap((String)content, 100));
-  //  } else if (content instanceof Part) {
-  //    Part part=(Part)content;
-  //    if (part.isMimeType("multipart/*")) {
-  //      getMessageBody0(part.getContent(), sb);
-  //    } else {
-  //      if (sb.length()>0) {
-  //        sb.append(PART_SEPARATOR);
-  //      }
-  //      sb.append(Strings.wordWrap(part.getContent().toString(), 100));
-  //    }
-  //  } else {
-  //    if (sb.length()>0) {
-  //      sb.append(PART_SEPARATOR);
-  //    }
-  //    sb.append(Strings.wordWrap(content.toString(), 100));
-  //  }
-  //}
+  // private void getMessageBody0(Object content, StringBuilder sb) throws IOException, MessagingException {
+  //   if (content instanceof MimeMultipart) {
+  //     MimeMultipart mpart = (MimeMultipart)content;
+  //     int partCount = mpart.getCount();
+  //     for (int i = 0; i<partCount; i++) {
+  //       getMessageBody0(mpart.getBodyPart(i), sb);
+  //     }
+  //   } else if (content instanceof String) {
+  //     if (sb.length()>0) {
+  //       sb.append(PART_SEPARATOR);
+  //     }
+  //     sb.append(Strings.wordWrap((String)content, 100));
+  //   } else if (content instanceof Part) {
+  //     Part part=(Part)content;
+  //     if (part.isMimeType("multipart/*")) {
+  //       getMessageBody0(part.getContent(), sb);
+  //     } else {
+  //       if (sb.length()>0) {
+  //         sb.append(PART_SEPARATOR);
+  //       }
+  //       sb.append(Strings.wordWrap(part.getContent().toString(), 100));
+  //     }
+  //   } else {
+  //     if (sb.length()>0) {
+  //       sb.append(PART_SEPARATOR);
+  //     }
+  //     sb.append(Strings.wordWrap(content.toString(), 100));
+  //   }
+  // }
   // </editor-fold>
 }

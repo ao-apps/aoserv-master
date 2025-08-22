@@ -214,8 +214,8 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  billing.\"Package\" pk,\n"
             + "  account.\"AccountHost\" bs,\n"
             // Allow servers it replicates to
-            //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-            //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+            // + "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+            // + "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
             + "  linux.\"Server\" ao\n"
             + "where\n"
             + "  un.username=?\n"
@@ -224,7 +224,7 @@ public class Server_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  and (\n"
             + "    bs.server=ao.server\n"
             // Allow servers it replicates to
-            //+ "    or bp.ao_server=ao.server\n"
+            // + "    or bp.ao_server=ao.server\n"
             + "  )",
         source.getCurrentAdministrator()
     );

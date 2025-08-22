@@ -66,11 +66,11 @@ public final class FailoverHandler implements CronJob {
       long bytes,
       boolean isSuccessful
   ) throws IOException, SQLException {
-    //String mustring = source.getUsername();
-    //User mu = AoservMaster.getUser(conn, mustring);
-    //if (mu == null) {
-    //  throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
-    //}
+    // String mustring = source.getUsername();
+    // User mu = AoservMaster.getUser(conn, mustring);
+    // if (mu == null) {
+    //   throw new SQLException("User "+mustring+" is not master user and may not access backup.FileReplicationLog.");
+    // }
 
     // The server must be an exact package match to allow adding log entries
     int host = getFromHostForFileReplication(conn, fileReplication);
@@ -79,7 +79,7 @@ public final class FailoverHandler implements CronJob {
     if (!userPackage.equals(serverPackage)) {
       throw new SQLException("userPackage != serverPackage: may only set backup.FileReplicationLog for servers that have the same package as the business_administrator adding the log entry");
     }
-    //ServerHandler.checkAccessServer(conn, source, "addFileReplicationLog", server);
+    // ServerHandler.checkAccessServer(conn, source, "addFileReplicationLog", server);
 
     int fileReplicationLog = conn.updateInt(
         "INSERT INTO\n"
@@ -404,11 +404,11 @@ public final class FailoverHandler implements CronJob {
       int fileReplication
   ) throws IOException, SQLException {
     // Security checks
-    //String username=source.getUsername();
-    //User masterUser=AoservMaster.getUser(conn, username);
-    //if (masterUser == null) {
-    //  throw new SQLException("Only master users allowed to request daemon access.");
-    //}
+    // String username=source.getUsername();
+    // User masterUser=AoservMaster.getUser(conn, username);
+    // if (masterUser == null) {
+    //   throw new SQLException("Only master users allowed to request daemon access.");
+    // }
     // Sometime later we might restrict certain command codes to certain users
 
     // Current user must have the same exact package as the from server
@@ -418,7 +418,7 @@ public final class FailoverHandler implements CronJob {
     if (!userPackage.equals(serverPackage)) {
       throw new SQLException("account.Administrator.username.package != servers.package.name: Not allowed to request daemon access for FAILOVER_FILE_REPLICATION");
     }
-    //ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
+    // ServerHandler.checkAccessServer(conn, source, "requestDaemonAccess", fromServer);
 
     // The to server must match server
     int backupPartition = FailoverHandler.getBackupPartitionForFileReplication(conn, fileReplication);

@@ -2130,40 +2130,40 @@ public final class PaymentHandler /*implements CronJob*/ {
     System.exit(exitStatus);
   }
 
-  ///**
-  // * Runs at 12:12 am on the first day of the month.
-  // */
-  //public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-  //  return
-  //    minute == 12
-  //    && hour == 0
-  //    && dayOfMonth == 1;
-  //}
+  // /**
+  //  * Runs at 12:12 am on the first day of the month.
+  //  */
+  // public boolean isCronJobScheduled(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+  //   return
+  //     minute == 12
+  //     && hour == 0
+  //     && dayOfMonth == 1;
+  // }
   //
-  //public int getCronJobScheduleMode() {
-  //  return CRON_JOB_SCHEDULE_SKIP;
-  //}
+  // public int getCronJobScheduleMode() {
+  //   return CRON_JOB_SCHEDULE_SKIP;
+  // }
   //
-  //public String getCronJobName() {
-  //  return "CreditCardHandler";
-  //}
+  // public String getCronJobName() {
+  //   return "CreditCardHandler";
+  // }
   //
-  //public int getCronJobThreadPriority() {
-  //  return Thread.NORM_PRIORITY+1;
-  //}
+  // public int getCronJobThreadPriority() {
+  //   return Thread.NORM_PRIORITY+1;
+  // }
   //
-  //public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
-  //  // Find last month
-  //  GregorianCalendar gcal = new GregorianCalendar(Type.DATE_TIME_ZONE);
-  //  gcal.set(Calendar.YEAR, year);
-  //  gcal.set(Calendar.MONTH, month-1);
-  //  gcal.set(Calendar.DAY_OF_MONTH, 1);
-  //  gcal.set(Calendar.HOUR_OF_DAY, 0);
-  //  gcal.set(Calendar.MINUTE, 0);
-  //  gcal.set(Calendar.SECOND, 0);
-  //  gcal.set(Calendar.MILLISECOND, 0);
-  //  gcal.add(Calendar.MONTH, -1);
-  //  // Process for last month
-  //  processAutomaticPayments(gcal.get(Calendar.MONTH) + 1, gcal.get(Calendar.YEAR));
-  //}
+  // public void runCronJob(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
+  //   // Find last month
+  //   GregorianCalendar gcal = new GregorianCalendar(Type.DATE_TIME_ZONE);
+  //   gcal.set(Calendar.YEAR, year);
+  //   gcal.set(Calendar.MONTH, month-1);
+  //   gcal.set(Calendar.DAY_OF_MONTH, 1);
+  //   gcal.set(Calendar.HOUR_OF_DAY, 0);
+  //   gcal.set(Calendar.MINUTE, 0);
+  //   gcal.set(Calendar.SECOND, 0);
+  //   gcal.set(Calendar.MILLISECOND, 0);
+  //   gcal.add(Calendar.MONTH, -1);
+  //   // Process for last month
+  //   processAutomaticPayments(gcal.get(Calendar.MONTH) + 1, gcal.get(Calendar.YEAR));
+  // }
 }

@@ -106,7 +106,7 @@ public final class AccountUserHandler {
     // Notify all clients of the update
     Account.Name account = PackageHandler.getAccountForPackage(conn, packageName);
     invalidateList.addTable(conn, Table.TableId.USERNAMES, account, InvalidateList.allHosts, false);
-    //invalidateList.addTable(conn, Table.TableId.PACKAGES, accounting, null);
+    // invalidateList.addTable(conn, Table.TableId.PACKAGES, accounting, null);
   }
 
   public static void disableUser(

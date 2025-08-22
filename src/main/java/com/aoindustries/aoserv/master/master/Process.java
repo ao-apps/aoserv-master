@@ -121,7 +121,7 @@ public class Process extends com.aoindustries.aoserv.client.master.Process {
     return params.toArray(new String[params.size()]);
   }
 
-  public synchronized void setCommand(Object ... command) {
+  public synchronized void setCommand(Object... command) {
     this.command = command;
   }
 

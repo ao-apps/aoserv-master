@@ -997,19 +997,19 @@ public final class WebHandler {
     }
 
     final List<DomainName> tlds = AoservMaster.getService(DnsService.class).getTopLevelDomains(conn);
-    //DomainName testUrl;
-    //try {
-    //  testUrl = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForLinuxServer(conn, linuxServer));
-    //} catch (ValidationException e) {
-    //  throw new SQLException(e);
-    //}
-    //DNSHandler.addDnsRecord(
-    //  conn,
-    //  invalidateList,
-    //  testUrl,
-    //  IpAddressHandler.getInetAddressForIpAddress(conn, ipAddress),
-    //  tlds
-    //);
+    // DomainName testUrl;
+    // try {
+    //   testUrl = DomainName.valueOf(siteName + "." + ServerHandler.getHostnameForLinuxServer(conn, linuxServer));
+    // } catch (ValidationException e) {
+    //   throw new SQLException(e);
+    // }
+    // DNSHandler.addDnsRecord(
+    //   conn,
+    //   invalidateList,
+    //   testUrl,
+    //   IpAddressHandler.getInetAddressForIpAddress(conn, ipAddress),
+    //   tlds
+    // );
 
     // Finish up the security checks with the Connection
     AoservMaster.checkAccessHostname(conn, source, methodName, primaryHttpHostname.toString(), tlds);
@@ -1287,11 +1287,11 @@ public final class WebHandler {
           altHttpHostname
       );
     }
-    //conn.update(
-    //  "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
-    //  httpSiteBindPKey,
-    //  testUrl
-    //);
+    // conn.update(
+    //   "insert into web.\"VirtualHostName\"(httpd_site_bind, hostname, is_primary) values(?,?,false)",
+    //   httpSiteBindPKey,
+    //   testUrl
+    // );
     invalidateList.addTable(conn, Table.TableId.HTTPD_SITE_URLS, account, linuxServer, false);
 
     // Initial HttpdTomcatSiteJkMounts

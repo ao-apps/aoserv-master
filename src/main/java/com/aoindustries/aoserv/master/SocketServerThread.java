@@ -87,9 +87,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
    */
   private AoservProtocol.Version protocolVersion;
 
-  ///**
-  // * The server if this is a connection from a daemon.
-  // */
+  // /**
+  //  * The server if this is a connection from a daemon.
+  //  */
 
   /**
    * The master process.
@@ -430,7 +430,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 );
 
                 if (message != null) {
-                  //UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
+                  // UserHost.reportSecurityMessage(this, message, process.getEffectiveUser().length()>0 && password.length()>0);
                   out.writeBoolean(false);
                   out.writeUTF(message);
                   out.flush();

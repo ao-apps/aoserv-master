@@ -136,14 +136,14 @@ public final class ClusterOptimizer {
           if (d > 0) {
             System.out.print('/');
           }
-          //if (selectedPrimaries[d]<10) {
-          //  System.out.print('0');
-          //}
+          // if (selectedPrimaries[d]<10) {
+          //   System.out.print('0');
+          // }
           System.out.print(virtualServers[d].selectedPrimaryServerIndex);
           System.out.print('.');
-          //if (selectedSecondaries[d]<10) {
-          //  System.out.print('0');
-          //}
+          // if (selectedSecondaries[d]<10) {
+          //   System.out.print('0');
+          // }
           System.out.print(virtualServers[d].selectedSecondaryServerIndex);
         }
         System.out.print(" Mapped " + mapped + ", skipped " + skipped);
@@ -484,8 +484,8 @@ public final class ClusterOptimizer {
           // Make sure has enough extents
           final int oldSecondaryDiskAllocatedExtents = secondaryDisk.allocatedExtents;
           final int newSecondaryDiskAllocatedExtents = oldSecondaryDiskAllocatedExtents + virtualDisk.extents;
-          //System.out.println("oldSecondaryDiskAllocatedExtents="+oldSecondaryDiskAllocatedExtents);
-          //System.out.println("newSecondaryDiskAllocatedExtents="+newSecondaryDiskAllocatedExtents);
+          // System.out.println("oldSecondaryDiskAllocatedExtents="+oldSecondaryDiskAllocatedExtents);
+          // System.out.println("newSecondaryDiskAllocatedExtents="+newSecondaryDiskAllocatedExtents);
           if (secondaryDisk.extents >= newSecondaryDiskAllocatedExtents) {
             final int oldSecondaryDiskAllocatedWeight = secondaryDisk.allocatedWeight;
             final int newSecondaryDiskAllocatedWeight = oldSecondaryDiskAllocatedWeight + virtualDisk.secondaryWeight;

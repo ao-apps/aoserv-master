@@ -122,8 +122,8 @@ public class Rack_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  billing.\"Package\" pk,\n"
             + "  account.\"AccountHost\" bs,\n"
             // Allow servers it replicates to
-            //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-            //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+            // + "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+            // + "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
             + "  infrastructure.\"PhysicalServer\" ps,\n"
             + "  infrastructure.\"Rack\" ra\n"
             + "where\n"
@@ -133,7 +133,7 @@ public class Rack_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  and (\n"
             + "    bs.server=ps.server\n"
             // Allow servers it replicates to
-            //+ "    or bp.ao_server=ps.server\n"
+            // + "    or bp.ao_server=ps.server\n"
             + "  ) and ps.rack=ra.id",
         source.getCurrentAdministrator()
     );

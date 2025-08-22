@@ -184,9 +184,9 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  billing.\"Package\" pk,\n"
             + "  account.\"AccountHost\" bs,\n"
             // Allow failover destinations
-            //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-            //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
-            //+ "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
+            // + "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+            // + "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id\n"
+            // + "  left join linux.\"Server\" bpao on bp.ao_server=bpao.server,\n"
             + "  net.\"Device\" nd\n"
             + "where\n"
             + "  un.username=?\n"
@@ -195,7 +195,7 @@ public class Device_GetTableHandler extends TableHandler.GetTableHandlerByRole {
             + "  and (\n"
             + "    bs.server=nd.server\n"
             // Need distinct above when using this or
-            //+ "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
+            // + "    or (bp.ao_server=nd.ao_server and nd.\"deviceId\"=bpao.\"daemonDeviceId\")\n"
             + "  )",
         source.getCurrentAdministrator()
     );

@@ -662,7 +662,7 @@ public final class LinuxAccountHandler {
     }
 
     // Now allocating unique to entire system for server portability between farms
-    //String farm=ServerHandler.getFarmForServer(conn, linuxServer);
+    // String farm=ServerHandler.getFarmForServer(conn, linuxServer);
     int userServer = conn.updateInt(
         "INSERT INTO\n"
             + "  linux.\"UserServer\"\n"
@@ -752,7 +752,7 @@ public final class LinuxAccountHandler {
     }
 
     // Now allocating unique to entire system for server portability between farms
-    //String farm=ServerHandler.getFarmForServer(conn, linuxServer);
+    // String farm=ServerHandler.getFarmForServer(conn, linuxServer);
     int groupServer = conn.updateInt(
         "INSERT INTO\n"
             + "  linux.\"GroupServer\"\n"
@@ -1379,8 +1379,8 @@ public final class LinuxAccountHandler {
     Tuple2<String, Integer> encPassword = fromDemonConnector.getEncryptedLinuxAccountPassword(from_user);
     toDaemonConnector.setEncryptedLinuxAccountPassword(to_user, encPassword.getElement1(), encPassword.getElement2());
 
-    //Account.Name from_account=UsernameHandler.getAccountForUsername(conn, from_username);
-    //Account.Name to_account=UsernameHandler.getAccountForUsername(conn, to_username);
+    // Account.Name from_account=UsernameHandler.getAccountForUsername(conn, from_username);
+    // Account.Name to_account=UsernameHandler.getAccountForUsername(conn, to_username);
   }
 
   public static void disableUser(

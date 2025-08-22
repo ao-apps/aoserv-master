@@ -138,9 +138,9 @@ public final class InvalidateList {
       boolean recurse
   ) throws IOException, SQLException {
     // TODO: Unused 2018-11-18:
-    //if (tableNames[tableId.ordinal()] == null) {
-    //  tableNames[tableId.ordinal()] = TableHandler.getTableName(conn, tableId);
-    //}
+    // if (tableNames[tableId.ordinal()] == null) {
+    //   tableNames[tableId.ordinal()] = TableHandler.getTableName(conn, tableId);
+    // }
 
     // Add to the account lists
     if (accounts == null || accounts == allAccounts) {
@@ -369,7 +369,7 @@ public final class InvalidateList {
     return hostLists.containsKey(tableId) || accountLists.containsKey(tableId);
   }
 
-  public static Collection<Account.Name> getAccountCollection(Account.Name ... accounts) {
+  public static Collection<Account.Name> getAccountCollection(Account.Name... accounts) {
     if (accounts.length == 0) {
       return Collections.emptyList();
     }
@@ -378,7 +378,7 @@ public final class InvalidateList {
     return coll;
   }
 
-  public static IntCollection getHostCollection(int ... hosts) throws IOException, SQLException {
+  public static IntCollection getHostCollection(int... hosts) throws IOException, SQLException {
     if (hosts.length == 0) {
       return new IntArrayList(0);
     }

@@ -10739,9 +10739,9 @@ public abstract class AoservMaster {
   public static void main(String[] args) {
     try {
       // Configure logging
-      //LogManager logManager = LogManager.getLogManager();
-      //logManager.reset();
-      //logManager.getLogger("").addHandler(TicketLoggingHandler.getHandler(, ));
+      // LogManager logManager = LogManager.getLogManager();
+      // logManager.reset();
+      // logManager.getLogger("").addHandler(TicketLoggingHandler.getHandler(, ));
 
       // Configure the SSL
       String trustStorePath = MasterConfiguration.getSslTruststorePath();
@@ -10942,8 +10942,8 @@ public abstract class AoservMaster {
     // Make one pass counting the rows if providing progress information
     final long progressCount;
     if (provideProgress) {
-      //progressCount = 0;
-      //while (results.next()) progressCount++;
+      // progressCount = 0;
+      // while (results.next()) progressCount++;
       if (results.last()) {
         progressCount = results.getRow();
         results.beforeFirst();
@@ -11315,7 +11315,7 @@ public abstract class AoservMaster {
       StreamableOutput out,
       AoservObject<?, ?> obj,
       String sql,
-      Object ... params
+      Object... params
   ) throws IOException, SQLException {
     AoservProtocol.Version version = source.getProtocolVersion();
     Connection dbConn = conn.getConnection(true);
@@ -11355,7 +11355,7 @@ public abstract class AoservMaster {
       boolean provideProgress,
       AoservObject<?, ?> obj,
       String sql,
-      Object ... params
+      Object... params
   ) throws IOException, SQLException {
     AoservProtocol.Version version = source.getProtocolVersion();
 
@@ -11464,7 +11464,7 @@ public abstract class AoservMaster {
       boolean provideProgress,
       AoservObject<?, ?> obj,
       String sql,
-      Object ... params
+      Object... params
   ) throws IOException, SQLException {
     Connection dbConn = conn.getConnection(true);
     try (
@@ -11508,7 +11508,7 @@ public abstract class AoservMaster {
       CursorMode cursorMode,
       AoservObject<?, ?> obj,
       String sql,
-      Object ... params
+      Object... params
   ) throws IOException, SQLException {
     if (cursorMode == CursorMode.FETCH) {
       return fetchObjects(conn, source, out, provideProgress, obj, sql, params);

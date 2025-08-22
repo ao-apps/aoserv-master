@@ -145,8 +145,8 @@ public class VirtualServer_GetTableHandler extends TableHandler.GetTableHandlerB
             + "  billing.\"Package\" pk,\n"
             + "  account.\"AccountHost\" bs,\n"
             // Allow servers it replicates to
-            //+ "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
-            //+ "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
+            // + "  left join backup.\"FileReplication\" ffr on bs.server=ffr.server\n"
+            // + "  left join backup.\"BackupPartition\" bp on ffr.backup_partition=bp.id,\n"
             + "  infrastructure.\"VirtualServer\" vs\n"
             + "where\n"
             + "  un.username=?\n"
@@ -155,7 +155,7 @@ public class VirtualServer_GetTableHandler extends TableHandler.GetTableHandlerB
             + "  and (\n"
             + "    bs.server=vs.server\n"
             // Allow servers it replicates to
-            //+ "    or bp.ao_server=vs.server\n"
+            // + "    or bp.ao_server=vs.server\n"
             + "  )",
         AoservProtocol.FILTERED,
         source.getCurrentAdministrator()

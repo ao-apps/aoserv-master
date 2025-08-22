@@ -931,8 +931,8 @@ public final class OriginalClusterOptimizer {
      * These are the quick checks that don't need to worry about the actual mappings to specific primary and secondary disk
      * arrays.
      */
-    //System.out.println(servers.size());
-    //System.out.println(virtualServers.size());
+    // System.out.println(servers.size());
+    // System.out.println(virtualServers.size());
     System.out.println("Worst-case permutations: " + (Math.pow(servers.size(), virtualServers.size()) * Math.pow(servers.size() - 1D, virtualServers.size())));
     int[] selectedPrimaries = new int[virtualServers.size()];
     int[] selectedSecondaries = new int[virtualServers.size()];
@@ -961,14 +961,14 @@ public final class OriginalClusterOptimizer {
           if (d > 0) {
             System.out.print('/');
           }
-          //if (selectedPrimaries[d]<10) {
-          //  System.out.print('0');
-          //}
+          // if (selectedPrimaries[d]<10) {
+          //   System.out.print('0');
+          // }
           System.out.print(selectedPrimaries[d]);
           System.out.print('.');
-          //if (selectedSecondaries[d]<10) {
-          //  System.out.print('0');
-          //}
+          // if (selectedSecondaries[d]<10) {
+          //   System.out.print('0');
+          // }
           System.out.print(selectedSecondaries[d]);
         }
         System.out.print(" Mapped " + mapped + ", skipped " + skipped);
@@ -1083,12 +1083,12 @@ public final class OriginalClusterOptimizer {
               boolean needsSecondarySkip = false;
               for (int failedPrimaryServerIndex = 0; failedPrimaryServerIndex < hostsSize; failedPrimaryServerIndex++) {
                 if (failedPrimaryServerIndex != primaryServerIndex) {
-                  //float totalSecondaryVirtualProcessorCores = totalPrimaryServerVirtualProcessorCores;
+                  // float totalSecondaryVirtualProcessorCores = totalPrimaryServerVirtualProcessorCores;
                   long totalSecondaryMinimumRam = totalPrimaryServerMinimumRam;
                   for (int f = 0; f < currentVirtualServer; f++) {
                     if (selectedPrimaries[f] == failedPrimaryServerIndex && selectedSecondaries[f] == primaryServerIndex) {
                       VirtualServer mappedVirtualServer = virtualServers.get(f);
-                      //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
+                      // totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                       totalSecondaryMinimumRam += mappedVirtualServer.minimumSecondaryRam;
                     }
                   }
@@ -1163,24 +1163,24 @@ public final class OriginalClusterOptimizer {
                         if (secondaryServer.processorCores >= virtualServer.minimumProcessorCores) {
                           // Make sure that the combined primary mapping plus secondary CPU cores and RAM do not exceed the total of this machine
                           // for any one primary failure.  The loop represents the failure of each server, one at a time.
-                          //float totalPrimaryVirtualProcessorCores = 0;
+                          // float totalPrimaryVirtualProcessorCores = 0;
                           long totalPrimaryMinimumRam = 0;
                           for (int g = 0; g <= currentVirtualServer; g++) {
                             if (selectedPrimaries[g] == secondaryServerIndex) {
                               VirtualServer mappedVirtualServer = virtualServers.get(g);
-                              //totalPrimaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
+                              // totalPrimaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                               totalPrimaryMinimumRam += mappedVirtualServer.minimumPrimaryRam;
                             }
                           }
                           needsSecondarySkip = false;
                           for (int failedPrimaryIndex = 0; failedPrimaryIndex < hostsSize; failedPrimaryIndex++) {
                             if (failedPrimaryIndex != secondaryServerIndex) {
-                              //float totalSecondaryVirtualProcessorCores = totalPrimaryVirtualProcessorCores;
+                              // float totalSecondaryVirtualProcessorCores = totalPrimaryVirtualProcessorCores;
                               long totalSecondaryMinimumRam = totalPrimaryMinimumRam;
                               for (int h = 0; h <= currentVirtualServer; h++) {
                                 if (selectedPrimaries[h] == failedPrimaryIndex && selectedSecondaries[h] == secondaryServerIndex) {
                                   VirtualServer mappedVirtualServer = virtualServers.get(h);
-                                  //totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
+                                  // totalSecondaryVirtualProcessorCores += mappedVirtualServer.minimumProcessorCores;
                                   totalSecondaryMinimumRam += mappedVirtualServer.minimumSecondaryRam;
                                 }
                               }

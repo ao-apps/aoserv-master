@@ -101,7 +101,7 @@ public class SslServer extends TcpServer {
             try {
               socket.setKeepAlive(true);
               socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
-              //socket.setTcpNoDelay(true);
+              // socket.setTcpNoDelay(true);
               new SocketServerThread(this, socket).start();
             } catch (ThreadDeath td) {
               throw td;

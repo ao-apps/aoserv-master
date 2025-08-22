@@ -211,10 +211,10 @@ public final class IpAddressHandler {
       DomainName hostname
   ) throws IOException, SQLException {
     // Can't set the hostname on a disabled package
-    //String packageName=getPackageForIpAddress(conn, ipAddress);
-    //if (PackageHandler.isPackageDisabled(conn, packageName)) {
-    //  throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
-    //}
+    // String packageName=getPackageForIpAddress(conn, ipAddress);
+    // if (PackageHandler.isPackageDisabled(conn, packageName)) {
+    //   throw new SQLException("Unable to set hostname for an IP address, package disabled: "+packageName);
+    // }
 
     InetAddress ip = getInetAddressForIpAddress(conn, ipAddress);
     if (

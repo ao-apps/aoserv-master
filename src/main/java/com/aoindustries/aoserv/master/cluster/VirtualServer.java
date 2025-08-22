@@ -177,7 +177,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     virtualServers.add(
         new VirtualServer(
             "ns1.aoindustries.com",
-            null, //"xen914-5.fc.lnxhosting.ca",
+            null, // "xen914-5.fc.lnxhosting.ca",
             null,
             256,
             256,
@@ -194,7 +194,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
     virtualServers.add(
         new VirtualServer(
             "ns4.aoindustries.com",
-            null, //"xen917-5.fc.aoindustries.com",
+            null, // "xen917-5.fc.aoindustries.com",
             null,
             256,
             256,

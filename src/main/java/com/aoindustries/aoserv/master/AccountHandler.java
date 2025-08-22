@@ -81,11 +81,11 @@ public final class AccountHandler {
   private static final Map<Account.Name, Boolean> disabledAccounts = new HashMap<>();
 
   public static boolean canAccessAccount(DatabaseAccess db, RequestSource source, Account.Name account) throws IOException, SQLException {
-    //com.aoindustries.aoserv.client.account.User.Name administrator = source.getAdministrator();
+    // com.aoindustries.aoserv.client.account.User.Name administrator = source.getAdministrator();
     return
         getAllowedAccounts(db, source)
             .contains(
-                account //UsernameHandler.getAccountForUser(conn, administrator)
+                account // UsernameHandler.getAccountForUser(conn, administrator)
             );
   }
 

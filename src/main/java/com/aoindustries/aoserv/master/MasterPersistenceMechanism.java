@@ -304,7 +304,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
   @Override
   public String insertTransaction(Principal principal, Group group, Transaction transaction) throws SQLException {
     try {
-      //String providerId = transaction.getProviderId();
+      // String providerId = transaction.getProviderId();
       TransactionRequest transactionRequest = transaction.getTransactionRequest();
       CreditCard creditCard = transaction.getCreditCard();
       // Get the createdBy from the credit card persistence mechanism
@@ -404,7 +404,7 @@ public class MasterPersistenceMechanism implements PersistenceMechanism {
   @Override
   public void saleCompleted(Principal principal, Transaction transaction) throws SQLException {
     try {
-      //String providerId = transaction.getProviderId();
+      // String providerId = transaction.getProviderId();
 
       AuthorizationResult authorizationResult = transaction.getAuthorizationResult();
       TransactionResult.CommunicationResult authorizationCommunicationResult = authorizationResult.getCommunicationResult();
