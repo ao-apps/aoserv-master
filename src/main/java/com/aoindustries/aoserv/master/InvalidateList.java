@@ -76,7 +76,7 @@ public final class InvalidateList {
 
   /**
    * Resets back to default state.
-  */
+   */
   public void reset() {
     hostLists.clear();
     accountLists.clear();
