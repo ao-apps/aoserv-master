@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -1589,7 +1589,7 @@ public final class TicketHandler /*implements Runnable*/ {
   }
 
   public static Account.Name getAccountForTicket(DatabaseConnection conn, int ticket) throws IOException, SQLException {
-    return conn.queryObject(
+    return conn.queryObjectNullable(
         ObjectFactories.accountNameFactory,
         "select accounting from ticket.\"Ticket\" where id=?",
         ticket
