@@ -230,7 +230,9 @@ public final class LinuxAccountHandler {
       Group.SYSTEMD_COREDUMP,
       Group.SYSTEMD_OOM,
       Group.UNBOUND,
-      Group.VIRUSGROUP
+      Group.VIRUSGROUP,
+      // Rocky 9.7
+      Group.PRINTADMIN
   ));
 
   /** See {@link #isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
