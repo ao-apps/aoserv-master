@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -3277,28 +3277,40 @@ public final class WebHandler {
     checkAccessSharedTomcat(conn, source, "setSharedTomcatVersion", sharedTomcat);
 
     // Make sure the version change is acceptable
-    checkUpgradeFrom(
-        conn.queryString(
-            "select\n"
-                + "  tv.version\n"
-                + "from\n"
-                + "  \"web.tomcat\".\"SharedTomcat\" hst\n"
-                + "  inner join distribution.\"SoftwareVersion\" tv on hst.version=tv.id\n"
-                + "where hst.id=?",
-            sharedTomcat
-        )
-    );
-    checkUpgradeTo(
-        conn.queryString(
-            "select\n"
-                + "  tv.version\n"
-                + "from\n"
-                + "  \"web.tomcat\".\"Version\" htv\n"
-                + "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.id\n"
-                + "where htv.version=?",
-            version
-        )
-    );
+    final String fromVersion;
+    final String fromVersionInstallDir;
+    try (var result = conn.querySingleResult(
+        "select\n"
+            + "  tv.version,\n"
+            + "  htv.install_dir\n"
+            + "from\n"
+            + "  \"web.tomcat\".\"SharedTomcat\" hst\n"
+            + "  inner join \"web.tomcat\".\"Version\" htv on hst.version = htv.id\n"
+            + "  inner join distribution.\"SoftwareVersion\" tv on htv.version = tv.id\n"
+            + "where hst.id=?",
+        sharedTomcat
+    )) {
+      fromVersion = result.getString("version");
+      fromVersionInstallDir = result.getString("install_dir");
+    }
+    checkUpgradeFrom(fromVersion);
+
+    final String toVersion;
+    final String toVersionInstallDir;
+    try (var result = conn.querySingleResult(
+        "select\n"
+            + "  tv.version,\n"
+            + "  htv.install_dir\n"
+            + "from\n"
+            + "  \"web.tomcat\".\"Version\" htv\n"
+            + "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.id\n"
+            + "where htv.version=?",
+        version
+    )) {
+      toVersion = result.getString("version");
+      toVersionInstallDir = result.getString("install_dir");
+    }
+    checkUpgradeTo(toVersion);
 
     // Make sure operating system version matches
     int linuxServer = getLinuxServerForSharedTomcat(conn, sharedTomcat);
@@ -3323,28 +3335,57 @@ public final class WebHandler {
         version,
         sharedTomcat
     );
-    // TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-    // TODO: See web.tomcat.Version table
-    conn.update(
+    int sitesUpdated = conn.update(
         "update \"web.tomcat\".\"Site\" set version=? where httpd_site in (\n"
             + "  select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
             + ")",
         version,
         sharedTomcat
     );
+    // Update the context paths to webapps in /opt/apache-tomcat.../webapps/ to the new version
+    int contextsUpdateCount = conn.updateInt(
+        "update \"web.tomcat\".\"Context\" set\n"
+            + "  path = replace(path, ? || '/webapps/', ? || '/webapps/')\n"
+            + "where\n"
+            + "  (\n"
+            + "    starts_with(path, ? || '/webapps/examples'\n"
+            + "    or starts_with(path, ? || '/webapps/manager'\n"
+            + "  )\n"
+            + "  and tomcat_site in (\n"
+            + "    select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat = ?\n"
+            + ")",
+            fromVersionInstallDir,
+            toVersionInstallDir,
+            fromVersionInstallDir,
+            fromVersionInstallDir,
+            sharedTomcat
+    );
 
-    invalidateList.addTable(conn,
+    invalidateList.addTable(
+        conn,
         Table.TableId.HTTPD_SHARED_TOMCATS,
         getAccountForSharedTomcat(conn, sharedTomcat),
         linuxServer,
         false
     );
-    invalidateList.addTable(conn,
-        Table.TableId.HTTPD_TOMCAT_SITES,
-        InvalidateList.allAccounts, // TODO: Could be more selective here
-        linuxServer,
-        false
-    );
+    if (sitesUpdated > 0) {
+      invalidateList.addTable(
+          conn,
+          Table.TableId.HTTPD_TOMCAT_SITES,
+          InvalidateList.allAccounts, // TODO: Could be more selective here
+          linuxServer,
+          false
+      );
+    }
+    if (contextsUpdateCount > 0) {
+      invalidateList.addTable(
+          conn,
+          Table.TableId.HTTPD_TOMCAT_CONTEXTS,
+          InvalidateList.allAccounts, // TODO: Could be more selective here
+          linuxServer,
+          false
+      );
+    }
   }
 
   public static void setLocationAttributes(
@@ -4292,29 +4333,41 @@ public final class WebHandler {
     checkAccessSite(conn, source, "setHttpdTomcatStdSiteVersion", privateTomcatSite);
 
     // Make sure the version change is acceptable
-    checkUpgradeFrom(
-        conn.queryString(
-            "select\n"
-                + "  tv.version\n"
-                + "from\n"
-                + "  \"web.tomcat\".\"PrivateTomcatSite\" htss\n"
-                + "  inner join \"web.tomcat\".\"Site\" hts on htss.tomcat_site=hts.httpd_site\n"
-                + "  inner join distribution.\"SoftwareVersion\" tv on hts.version=tv.id\n"
-                + "where htss.tomcat_site=?",
-            privateTomcatSite
-        )
-    );
-    checkUpgradeTo(
-        conn.queryString(
-            "select\n"
-                + "  tv.version\n"
-                + "from\n"
-                + "  \"web.tomcat\".\"Version\" htv\n"
-                + "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.id\n"
-                + "where htv.version=?",
-            version
-        )
-    );
+    final String fromVersion;
+    final String fromVersionInstallDir;
+    try (var result = conn.querySingleResult(
+        "select\n"
+            + "  tv.version,\n"
+            + "  htv.install_dir\n"
+            + "from\n"
+            + "  \"web.tomcat\".\"PrivateTomcatSite\" htss\n"
+            + "  inner join \"web.tomcat\".\"Site\" hts on htss.tomcat_site = hts.httpd_site\n"
+            + "  inner join \"web.tomcat\".\"Version\" htv on hts.version = htv.id\n"
+            + "  inner join distribution.\"SoftwareVersion\" tv on htv.version = tv.id\n"
+            + "where htss.tomcat_site=?",
+        privateTomcatSite
+    )) {
+      fromVersion = result.getString("version");
+      fromVersionInstallDir = result.getString("install_dir");
+    }
+    checkUpgradeFrom(fromVersion);
+
+    final String toVersion;
+    final String toVersionInstallDir;
+    try (var result = conn.querySingleResult(
+        "select\n"
+            + "  tv.version,\n"
+            + "  htv.install_dir\n"
+            + "from\n"
+            + "  \"web.tomcat\".\"Version\" htv\n"
+            + "  inner join distribution.\"SoftwareVersion\" tv on htv.version=tv.id\n"
+            + "where htv.version=?",
+        version
+    )) {
+      toVersion = result.getString("version");
+      toVersionInstallDir = result.getString("install_dir");
+    }
+    checkUpgradeTo(toVersion);
 
     // Make sure operating system version matches
     int linuxServer = getLinuxServerForSite(conn, privateTomcatSite);
@@ -4334,20 +4387,43 @@ public final class WebHandler {
     // TODO: Check this on add site (both PHP and Tomcat versions)
 
     // Update the database
-    // TODO: Update the context paths to an webapps in /opt/apache-tomcat.../webpaps to the new version
-    // TODO: See web.tomcat.Version table (might shared with the same code above)
     conn.update(
         "update \"web.tomcat\".\"Site\" set version=? where httpd_site=?",
         version,
         privateTomcatSite
     );
+    // Update the context paths to webapps in /opt/apache-tomcat.../webapps/ to the new version
+    int contextsUpdateCount = conn.updateInt(
+        "update \"web.tomcat\".\"Context\" set\n"
+            + "  path = replace(path, ? || '/webapps/', ? || '/webapps/')\n"
+            + "where\n"
+            + "  (\n"
+            + "    starts_with(path, ? || '/webapps/examples'\n"
+            + "    or starts_with(path, ? || '/webapps/manager'\n"
+            + "  )\n"
+            + "  and tomcat_site = ?",
+            fromVersionInstallDir,
+            toVersionInstallDir,
+            fromVersionInstallDir,
+            fromVersionInstallDir,
+            privateTomcatSite
+    );
 
+    Account.Name account = getAccountForSite(conn, privateTomcatSite);
     invalidateList.addTable(conn,
         Table.TableId.HTTPD_TOMCAT_SITES,
-        getAccountForSite(conn, privateTomcatSite),
+        account,
         linuxServer,
         false
     );
+    if (contextsUpdateCount > 0) {
+      invalidateList.addTable(conn,
+          Table.TableId.HTTPD_TOMCAT_CONTEXTS,
+          account,
+          linuxServer,
+          false
+      );
+    }
   }
 
   public static void setPrimaryVirtualHostName(
