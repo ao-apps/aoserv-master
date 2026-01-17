@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2014, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -11326,7 +11326,7 @@ public abstract class AoservMaster {
           if (results.next()) {
             obj.init(results);
             if (results.next()) {
-              throw new SQLException("More than one row in result set");
+              throw new ExtraRowException(results);
             }
             out.writeByte(AoservProtocol.NEXT);
             obj.write(out, version);
