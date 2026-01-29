@@ -82,7 +82,7 @@ public final class LinuxAccountHandler {
       ROCKY_9_SYS_GID_MIN = 201,
       ROCKY_9_SYS_UID_MIN = 201;
 
-  /** See {@link #isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Tuple2<Group.Name, Integer>> CENTOS_7_FIXED_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
       new Tuple2<>(Group.ROOT, 0),
       new Tuple2<>(Group.BIN, 1),
@@ -139,7 +139,7 @@ public final class LinuxAccountHandler {
       new Tuple2<>(Group.NFSNOBODY, 65534)
   ));
 
-  /** See {@link #isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isFixedSystemGroup(int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Tuple2<Group.Name, Integer>> ROCKY_9_FIXED_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
       new Tuple2<>(Group.ROOT, 0),
       new Tuple2<>(Group.BIN, 1),
@@ -187,7 +187,7 @@ public final class LinuxAccountHandler {
       new Tuple2<>(Group.NOBODY, 65534)
   ));
 
-  /** See {@link #isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Group.Name> CENTOS_7_DYNAMIC_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
       Group.AOSERV_JILTER,
       Group.AOSERV_MASTER,
@@ -209,7 +209,7 @@ public final class LinuxAccountHandler {
       Group.VIRUSGROUP
   ));
 
-  /** See {@link #isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isDynamicSystemGroup(int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Group.Name> ROCKY_9_DYNAMIC_SYSTEM_GROUPS = new HashSet<>(Arrays.asList(
       Group.AOSERV_JILTER,
       Group.AOSERV_MASTER,
@@ -235,7 +235,7 @@ public final class LinuxAccountHandler {
       Group.PRINTADMIN
   ));
 
-  /** See {@link #isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Group.Name> CENTOS_7_REGULAR_USER_GROUPS = new HashSet<>(Arrays.asList(
       Group.AOADMIN,
       // AOServ Schema
@@ -250,7 +250,7 @@ public final class LinuxAccountHandler {
       Group.SONARQUBE
   ));
 
-  /** See {@link #isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
+  /** See {@link LinuxAccountHandler#isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
   private static final Set<Group.Name> ROCKY_9_REGULAR_USER_GROUPS = new HashSet<>(Arrays.asList(
       Group.AOADMIN,
       // AOServ Schema

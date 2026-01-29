@@ -477,7 +477,7 @@ public final class WhoisHistoryService implements MasterService {
   /**
    * Gets the whois output and error for the specific billing.WhoisHistory record.
    *
-   * <p>The same filtering as {@link #startGetTableHandler()}</p>
+   * <p>The same filtering as {@link WhoisHistoryService#startGetTableHandler()}</p>
    */
   public Tuple2<String, String> getWhoisHistoryOutput(DatabaseConnection conn, RequestSource source, int whoisHistoryAccount) throws IOException, SQLException {
     com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();

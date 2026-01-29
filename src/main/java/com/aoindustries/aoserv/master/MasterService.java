@@ -58,7 +58,7 @@ public interface MasterService {
    * In order the reduce the number of services listed in /META-INF/services,
    * a handler may provide a set of {@link TableHandler.GetObjectHandler}.
    * These are registered only after the handler successfully
-   * {@link #start() starts}.
+   * {@link MasterService#start() starts}.
    */
   default Iterable<TableHandler.GetObjectHandler> startGetObjectHandlers() {
     return Collections.emptyList();
@@ -68,10 +68,10 @@ public interface MasterService {
    * In order the reduce the number of services listed in /META-INF/services,
    * a handler may provide a {@link TableHandler.GetObjectHandler}.
    * This is registered only after the handler successfully
-   * {@link #start() starts}.
+   * {@link MasterService#start() starts}.
    *
    * <p>When not null, this is combined into a single list, after the entries
-   * from {@link #startGetObjectHandlers()}.</p>
+   * from {@link MasterService#startGetObjectHandlers()}.</p>
    */
   default TableHandler.GetObjectHandler startGetObjectHandler() {
     return null;
@@ -81,7 +81,7 @@ public interface MasterService {
    * In order the reduce the number of services listed in /META-INF/services,
    * a handler may provide a set of {@link TableHandler.GetTableHandler}.
    * These are registered only after the handler successfully
-   * {@link #start() starts}.
+   * {@link MasterService#start() starts}.
    */
   default Iterable<TableHandler.GetTableHandler> startGetTableHandlers() {
     return Collections.emptyList();
@@ -91,10 +91,10 @@ public interface MasterService {
    * In order the reduce the number of services listed in /META-INF/services,
    * a handler may provide a {@link TableHandler.GetTableHandler}.
    * This is registered only after the handler successfully
-   * {@link #start() starts}.
+   * {@link MasterService#start() starts}.
    *
    * <p>When not null, this is combined into a single list, after the entries
-   * from {@link #startGetTableHandlers()}.</p>
+   * from {@link MasterService#startGetTableHandlers()}.</p>
    */
   default TableHandler.GetTableHandler startGetTableHandler() {
     return null;

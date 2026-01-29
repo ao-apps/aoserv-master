@@ -47,12 +47,12 @@ public enum CursorMode {
   FETCH,
 
   /**
-   * Automatic mode currently simply uses {@link #FETCH} when {@code !provideProgress}, otherwise
-   * uses {@link #SELECT}.  This matches the old behavior, but much more crafty ideas follow.
+   * Automatic mode currently simply uses {@link CursorMode#FETCH} when {@code !provideProgress}, otherwise
+   * uses {@link CursorMode#SELECT}.  This matches the old behavior, but much more crafty ideas follow.
    *
    * <p>TODO: In automatic mode, the first query for a given table and user is performed
-   * with {@link #FETCH}, while subsequent queries will only use {@link #FETCH}
-   * if the previous query returned more than {@link #AUTO_CURSOR_ABOVE} rows.</p>
+   * with {@link CursorMode#FETCH}, while subsequent queries will only use {@link CursorMode#FETCH}
+   * if the previous query returned more than {@link CursorMode#AUTO_CURSOR_ABOVE} rows.</p>
    *
    * <p>TODO: The per-(table, user) cache is cleaned in the background when unused for
    * {@link TableHandler#MAX_ROW_COUNT_CACHE_AGE} milliseconds.</p>

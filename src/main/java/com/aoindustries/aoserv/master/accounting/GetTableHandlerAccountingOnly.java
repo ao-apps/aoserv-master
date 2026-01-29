@@ -43,7 +43,7 @@ interface GetTableHandlerAccountingOnly extends TableHandler.GetTableHandler {
 
   /**
    * When is a {@link User master user} and has {@link User#canAccessBankAccount()},
-   * calls {@link #getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableId, com.aoindustries.aoserv.client.master.User)}.
+   * calls {@link GetTableHandlerAccountingOnly#getTableAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource, com.aoapps.hodgepodge.io.stream.StreamableOutput, boolean, com.aoindustries.aoserv.client.schema.Table.TableId, com.aoindustries.aoserv.client.master.User)}.
    * Otherwise, writes an empty table.
    *
    * @see BankAccountHandler#isBankAccounting(com.aoapps.dbc.DatabaseConnection, com.aoindustries.aoserv.master.RequestSource)

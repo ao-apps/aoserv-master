@@ -927,7 +927,7 @@ public final class TableHandler {
   /**
    * Gets the table name, with schema prefixed.
    *
-   * @see  #getTableName(com.aoapps.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableId)
+   * @see  TableHandler#getTableName(com.aoapps.dbc.DatabaseAccess, com.aoindustries.aoserv.client.Table.TableId)
    */
   public static String getTableNameForDbTableId(DatabaseAccess db, Integer dbTableId) throws SQLException {
     synchronized (tableNamesLock) {
@@ -961,7 +961,7 @@ public final class TableHandler {
   /**
    * Gets the table name, with schema prefixed.
    *
-   * @see  #getTableNameForDbTableId(com.aoapps.dbc.DatabaseAccess, java.lang.Integer)
+   * @see  TableHandler#getTableNameForDbTableId(com.aoapps.dbc.DatabaseAccess, java.lang.Integer)
    */
   public static String getTableName(DatabaseAccess db, Table.TableId tableId) throws IOException, SQLException {
     return getTableNameForDbTableId(
