@@ -364,10 +364,10 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.3.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version>
+        <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.3.0${POST-SNAPSHOT}</version>
       </dependency>
       <dependency>
-        <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.3.0-SNAPSHOT<!-- ${POST-SNAPSHOT} --></version><classifier>sql</classifier>
+        <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId><version>3.3.0${POST-SNAPSHOT}</version><classifier>sql</classifier>
         <scope>provided</scope>
       </dependency>
       <dependency>
