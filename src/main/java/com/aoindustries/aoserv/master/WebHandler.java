@@ -3285,7 +3285,7 @@ public final class WebHandler {
             + "  htv.install_dir\n"
             + "from\n"
             + "  \"web.tomcat\".\"SharedTomcat\" hst\n"
-            + "  inner join \"web.tomcat\".\"Version\" htv on hst.version = htv.id\n"
+            + "  inner join \"web.tomcat\".\"Version\" htv on hst.version = htv.version\n"
             + "  inner join distribution.\"SoftwareVersion\" tv on htv.version = tv.id\n"
             + "where hst.id=?",
         sharedTomcat
@@ -3335,25 +3335,25 @@ public final class WebHandler {
         version,
         sharedTomcat
     );
-    int sitesUpdated = conn.update(
+    final int sitesUpdated = conn.update(
         "update \"web.tomcat\".\"Site\" set version=? where httpd_site in (\n"
             + "  select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat=?\n"
             + ")",
         version,
         sharedTomcat
     );
-    // Update the context paths to webapps in /opt/apache-tomcat.../webapps/ to the new version
-    int contextsUpdateCount = conn.updateInt(
+    // Update the context doc_base to webapps in /opt/apache-tomcat.../webapps/ to the new version
+    int contextsUpdateCount = conn.update(
         "update \"web.tomcat\".\"Context\" set\n"
-            + "  path = replace(path, ? || '/webapps/', ? || '/webapps/')\n"
+            + "  doc_base = replace(doc_base, ? || '/webapps/', ? || '/webapps/')\n"
             + "where\n"
             + "  (\n"
-            + "    starts_with(path, ? || '/webapps/examples'\n"
-            + "    or starts_with(path, ? || '/webapps/manager'\n"
+            + "    starts_with(doc_base, ? || '/webapps/examples')\n"
+            + "    or starts_with(doc_base, ? || '/webapps/manager')\n"
             + "  )\n"
             + "  and tomcat_site in (\n"
             + "    select tomcat_site from \"web.tomcat\".\"SharedTomcatSite\" where httpd_shared_tomcat = ?\n"
-            + ")",
+            + "  )",
             fromVersionInstallDir,
             toVersionInstallDir,
             fromVersionInstallDir,
@@ -4342,7 +4342,7 @@ public final class WebHandler {
             + "from\n"
             + "  \"web.tomcat\".\"PrivateTomcatSite\" htss\n"
             + "  inner join \"web.tomcat\".\"Site\" hts on htss.tomcat_site = hts.httpd_site\n"
-            + "  inner join \"web.tomcat\".\"Version\" htv on hts.version = htv.id\n"
+            + "  inner join \"web.tomcat\".\"Version\" htv on hts.version = htv.version\n"
             + "  inner join distribution.\"SoftwareVersion\" tv on htv.version = tv.id\n"
             + "where htss.tomcat_site=?",
         privateTomcatSite
