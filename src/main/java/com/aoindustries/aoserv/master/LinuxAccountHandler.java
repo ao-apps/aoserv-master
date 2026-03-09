@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -200,6 +200,7 @@ public final class LinuxAccountHandler {
       Group.JENKINS,
       Group.MEMCACHED,
       Group.NGINX,
+      Group.OPENDKIM,
       Group.POLKITD,
       Group.REDIS,
       Group.SSH_KEYS,
@@ -1056,6 +1057,8 @@ public final class LinuxAccountHandler {
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
           // Not in CentOS 7:                  User.PIPEWIRE
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.PIPEWIRE,             ANY_SYSTEM_UID, Group.PIPEWIRE,             "PipeWire System Daemon",                                          "/run/pipewire",                 Shell.USR_SBIN_NOLOGIN, null);
+          addSystemUser(CENTOS_7_SYSTEM_USERS, User.OPENDKIM,             ANY_SYSTEM_UID, Group.OPENDKIM,             "OpenDKIM Milter",                                                 "/var/run/opendkim",             Shell.NOLOGIN,  null);
+          // TODO: Rocky 9:                    User.OPENDKIM
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.REDIS,                ANY_SYSTEM_UID, Group.REDIS,                "Redis Database Server",                                           "/var/lib/redis",                Shell.NOLOGIN,  null);

@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2026-01-15T22:52:15Z"
+    dateModified="2026-03-09T01:41:46Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -72,6 +72,10 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
           <li>Added support for HTTP/2 and Brotli compression in Rocky 9.</li>
           <li>Compatibility with <ao:a href="https://oss.aoapps.com/dbc/changelog#release-notes-4.0.0">ao-dbc-4.0.0</ao:a>.</li>
           <li>New system group <code>printadmin</code> for <ao:a href="https://docs.rockylinux.org/release_notes/9_7/">Rocky 9.7</ao:a>.</li>
+          <li>
+            New system group and user <code>opendkim</code> for
+            <ao:a href="http://www.opendkim.org/">OpenDKIM</ao:a>.
+          </li>
         </ul>
       </changelog:release>
     </c:if>
