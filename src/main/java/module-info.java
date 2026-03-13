@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -59,6 +59,7 @@ module com.aoindustries.aoserv.master {
     com.aoindustries.aoserv.master.billing.WhoisHistoryService,
     com.aoindustries.aoserv.master.dns.DnsService,
     com.aoindustries.aoserv.master.dns.ZoneService,
+    com.aoindustries.aoserv.master.email.DkimKeyService,
     com.aoindustries.aoserv.master.email.DomainService,
     com.aoindustries.aoserv.master.pki.CertificateNameService,
     com.aoindustries.aoserv.master.tlds.TopLevelDomainService,
