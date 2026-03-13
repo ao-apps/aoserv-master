@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -204,6 +204,7 @@ public final class InvalidateList {
           break;
         case EMAIL_DOMAINS:
           addTable(db, Table.TableId.EMAIL_ADDRESSES,   accounts, hosts, true);
+          addTable(db, Table.TableId.email_DkimKey,     accounts, hosts, true);
           addTable(db, Table.TableId.MAJORDOMO_SERVERS, accounts, hosts, true);
           break;
         case FAILOVER_FILE_REPLICATIONS:

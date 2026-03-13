@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2026-03-09T06:00:38Z"
+    dateModified="2026-03-13T02:49:56Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -77,6 +77,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
             <ao:a href="http://www.opendkim.org/">OpenDKIM</ao:a>.
           </li>
           <li>Added column <code>net.AppProtocol.isUniquePerHost</code></li>
+          <li>New table <code>email.DkimKey</code></li>
         </ul>
       </changelog:release>
     </c:if>

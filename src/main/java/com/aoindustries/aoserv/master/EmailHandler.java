@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -48,6 +48,7 @@ import com.aoindustries.aoserv.client.master.User;
 import com.aoindustries.aoserv.client.master.UserHost;
 import com.aoindustries.aoserv.client.schema.Table;
 import com.aoindustries.aoserv.daemon.client.AoservDaemonConnector;
+import com.aoindustries.aoserv.master.dns.DnsService;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -1713,10 +1714,12 @@ public final class EmailHandler {
   ) throws IOException, SQLException {
     checkAccessDomain(conn, source, "removeDomain", domain);
 
-    removeDomain(conn, invalidateList, domain);
+    removeDomainNoAcl(conn, invalidateList, domain);
   }
 
-  public static void removeDomain(
+  // TODO: Name all the other method overrides that have optional RequestSource ACL like this with "NoAcl"
+  //       across all of aoserv-master.
+  public static void removeDomainNoAcl(
       DatabaseConnection conn,
       InvalidateList invalidateList,
       int domain
@@ -1799,7 +1802,20 @@ public final class EmailHandler {
       conn.update("delete from email.\"Address\" where id=?", address);
     }
 
-    // Remove the domain from the database
+    // Remove email.DkimKey and any associated dns."Record"
+    IntList dnsRecords = conn.queryIntList("SELECT \"dnsRecord\" FROM email.\"DkimKey\" WHERE \"domain\" = ? AND \"dnsRecord\" IS NOT NULL", domain);
+    int dkimKeyDeleteCount = conn.update("DELETE from email.\"DkimKey\" WHERE \"domain\" = ?", domain);
+    if (dkimKeyDeleteCount > 0) {
+      invalidateList.addTable(conn, Table.TableId.email_DkimKey, account, linuxServer, false);
+    }
+    if (!dnsRecords.isEmpty()) {
+      DnsService dnsService = AoservMaster.getService(DnsService.class);
+      for (int dnsRecord : dnsRecords) {
+        dnsService.removeRecordNoAcl(conn, invalidateList, dnsRecord);
+      }
+    }
+
+    // Remove the domain from the database, invalidation based on ownership of dns.Zone for the dns.Record
     conn.update("delete from email.\"Domain\" where id=?", domain);
 
     // Notify all clients of the update

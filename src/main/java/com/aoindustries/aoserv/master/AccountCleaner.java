@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2003-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2025  AO Industries, Inc.
+ * Copyright (C) 2003-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -414,7 +414,7 @@ public final class AccountCleaner implements CronJob {
                 + "  and (CURRENT_DATE - bu.canceled::date)>" + CANCELED_KEEP_DAYS
         );
         for (int c = 0; c < eds.size(); c++) {
-          EmailHandler.removeDomain(conn, invalidateList, eds.getInt(c));
+          EmailHandler.removeDomainNoAcl(conn, invalidateList, eds.getInt(c));
         }
       }
 

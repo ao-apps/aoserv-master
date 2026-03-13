@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -300,6 +300,17 @@ public final class DnsService implements MasterService {
     // Must be allowed to access this zone record
     checkAccessRecord(conn, source, "removeRecord", recordId);
 
+    removeRecordNoAcl(conn, invalidateList, recordId);
+  }
+
+  /**
+   * Removes a <code>Record</code> without access checks.
+   */
+  public void removeRecordNoAcl(
+      DatabaseConnection conn,
+      InvalidateList invalidateList,
+      int recordId
+  ) throws IOException, SQLException {
     // Get the zone associated with the id
     String zone = getZoneForRecord(conn, recordId);
 
@@ -667,7 +678,7 @@ public final class DnsService implements MasterService {
       String zone
   ) throws IOException, SQLException {
     // Get the old serial
-    long serial = conn.queryLong("select serial from dns.\"Zone\" where zone=?", zone);
+    long serial = conn.queryLong("SELECT serial FROM dns.\"Zone\" WHERE zone = ? FOR UPDATE", zone);
 
     // Check if already today or higher
     long todaySerial = Zone.getCurrentSerial();
@@ -680,7 +691,7 @@ public final class DnsService implements MasterService {
     }
 
     // Place the serial back in the database
-    conn.update("update dns.\"Zone\" set serial=? where zone=?", serial, zone);
+    conn.update("UPDATE dns.\"Zone\" SET serial = ? WHERE zone = ?", serial, zone);
     invalidateList.addTable(conn,
         Table.TableId.DNS_ZONES,
         InvalidateList.allAccounts,

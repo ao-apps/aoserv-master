@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2025  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -126,24 +126,23 @@ public final class TableHandler {
   /**
    * The joins used for the business tree.
    */
-  public static final String BU1_PARENTS_JOIN =
+  public static final String BU1_PARENTS_JOIN_NO_COMMA_NO_NEWLINE =
       "  account.\"Account\" bu1\n"
           + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
           + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
           + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
           + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-          + "  left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + " on bu5.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".accounting,\n";
+          + "  left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + " on bu5.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".accounting";
 
   /**
    * The joins used for the business tree.
    */
-  public static final String BU1_PARENTS_JOIN_NO_COMMA =
-      "  account.\"Account\" bu1\n"
-          + "  left join account.\"Account\" bu2 on bu1.parent=bu2.accounting\n"
-          + "  left join account.\"Account\" bu3 on bu2.parent=bu3.accounting\n"
-          + "  left join account.\"Account\" bu4 on bu3.parent=bu4.accounting\n"
-          + "  left join account.\"Account\" bu5 on bu4.parent=bu5.accounting\n"
-          + "  left join account.\"Account\" bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + " on bu5.parent=bu" + (Account.MAXIMUM_BUSINESS_TREE_DEPTH - 1) + ".accounting\n";
+  public static final String BU1_PARENTS_JOIN_NO_COMMA = BU1_PARENTS_JOIN_NO_COMMA_NO_NEWLINE + '\n';
+
+  /**
+   * The joins used for the business tree.
+   */
+  public static final String BU1_PARENTS_JOIN = BU1_PARENTS_JOIN_NO_COMMA_NO_NEWLINE + ",\n";
 
   /**
    * The joins used for the business tree.
