@@ -121,7 +121,7 @@ public class DkimKeyService implements MasterService {
             CursorMode.AUTO,
             new DkimKey(),
             "SELECT\n"
-                + "  ed.*\n"
+                + "  dk.*\n"
                 + "FROM\n"
                 + "             account.\"User\"    un\n"
                 + "  INNER JOIN billing.\"Package\" pk1 ON un.package     = pk1.name,\n"
