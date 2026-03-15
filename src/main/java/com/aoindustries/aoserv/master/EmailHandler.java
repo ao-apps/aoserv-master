@@ -547,7 +547,7 @@ public final class EmailHandler {
     PackageHandler.checkAccessPackage(conn, source, "addDomain", packageName);
     PackageHandler.checkPackageAccessHost(conn, source, "addDomain", packageName, linuxServer);
 
-    int domain = conn.updateInt("INSERT INTO email.\"Domain\" VALUES (default,?,?,?) RETURNING id", netDomain, linuxServer, packageName);
+    int domain = conn.updateInt("INSERT INTO email.\"Domain\" (\"domain\", ao_server, package) VALUES (?,?,?) RETURNING id", netDomain, linuxServer, packageName);
 
     // Notify all clients of the update
     invalidateList.addTable(
