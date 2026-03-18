@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -36,9 +36,9 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author  AO Industries, Inc.
@@ -67,23 +67,6 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
     );
   }
 
-  private void getTableFiltered(DatabaseConnection conn, RequestSource source, StreamableOutput out, boolean provideProgress, Table.TableId tableId) throws IOException, SQLException {
-    List<Process> processesCopy = Process_Manager.getSnapshot();
-    List<Process> filtered = new ArrayList<>();
-    Iterator<Process> iter = processesCopy.iterator();
-    while (iter.hasNext()) {
-      Process process = iter.next();
-      com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
-      if (
-          effectiveUser != null
-              && AccountUserHandler.canAccessUser(conn, source, effectiveUser)
-      ) {
-        filtered.add(process);
-      }
-    }
-    AoservMaster.writeObjectsSynced(source, out, provideProgress, filtered);
-  }
-
   @Override
   protected void getTableDaemon(
       DatabaseConnection conn,
@@ -94,7 +77,12 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
       User masterUser,
       UserHost[] masterServers
   ) throws IOException, SQLException {
-    getTableFiltered(conn, source, out, provideProgress, tableId);
+    // Filter all connections that match the source admin with the effective user
+    com.aoindustries.aoserv.client.account.User.Name currentAdministrator = source.getCurrentAdministrator();
+    List<Process> filtered = Process_Manager.getSnapshot().stream()
+        .filter(process -> currentAdministrator.equals(process.getEffectiveAdministrator_username()))
+        .collect(Collectors.toList()); // Java 16: toList();
+    AoservMaster.writeObjectsSynced(source, out, provideProgress, filtered);
   }
 
   @Override
@@ -105,6 +93,18 @@ public class Process_GetTableHandler extends TableHandler.GetTableHandlerByRole 
       boolean provideProgress,
       Table.TableId tableId
   ) throws IOException, SQLException {
-    getTableFiltered(conn, source, out, provideProgress, tableId);
+    List<Process> processesCopy = Process_Manager.getSnapshot();
+    List<Process> filtered = new ArrayList<>(processesCopy.size());
+    for (Process process : processesCopy) {
+      // Filter all connections that can access the effective user
+      com.aoindustries.aoserv.client.account.User.Name effectiveUser = process.getEffectiveAdministrator_username();
+      if (
+          effectiveUser != null
+              && AccountUserHandler.canAccessUser(conn, source, effectiveUser)
+      ) {
+        filtered.add(process);
+      }
+    }
+    AoservMaster.writeObjectsSynced(source, out, provideProgress, filtered);
   }
 }

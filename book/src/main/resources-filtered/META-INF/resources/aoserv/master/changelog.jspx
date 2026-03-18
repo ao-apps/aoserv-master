@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2026-03-15T07:12:13Z"
+    dateModified="2026-03-18T07:19:55Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -83,6 +83,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
               <li>Added column <code>email.Domain.dkimDisableReason</code></li>
             </ol>
           </li>
+          <li>Stricter filter applied for <code>master_processes</code> table accessed under "daemon" role.</li>
         </ul>
       </changelog:release>
     </c:if>
