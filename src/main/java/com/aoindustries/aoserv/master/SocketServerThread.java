@@ -273,6 +273,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
           }
 
           switch (protocolVersion) {
+            case VERSION_1_92_2_4_SNAPSHOT:
             case VERSION_1_92_2_3_SNAPSHOT:
             case VERSION_1_92_2_2_SNAPSHOT:
             case VERSION_1_92_2_1_SNAPSHOT:
