@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 aoserv-master - Master server for the AOServ Platform.
-Copyright (C) 2022, 2024  AO Industries, Inc.
+Copyright (C) 2022, 2024, 2026  AO Industries, Inc.
     support@aoindustries.com
     7262 Bull Pen Cir
     Mobile, AL 36695
@@ -44,7 +44,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
 
   <!-- Allowing underscore separators for methods and data that span database joins -->
   <suppress
-    checks="(LocalVariableName|MemberName|MethodName|ParameterName)"
+    checks="(LocalVariableName|GoogleNonConstantFieldName|MethodName|ParameterName)"
     message="'[a-z]([a-z0-9][a-zA-Z0-9]*)?(_[a-z0-9X]([a-z0-9][a-zA-Z0-9]*)?)*'"
   />
 
