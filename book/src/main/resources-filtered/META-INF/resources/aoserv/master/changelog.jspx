@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2026-03-18T07:19:55Z"
+    dateModified="2026-04-18T23:55:00Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -84,6 +84,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
             </ol>
           </li>
           <li>Stricter filter applied for <code>master_processes</code> table accessed under "daemon" role.</li>
+          <li>Added support for <ao:a href="https://www.postgresql.org/docs/16/index.html">PostgreSQL 16</ao:a>.</li>
         </ul>
       </changelog:release>
     </c:if>
