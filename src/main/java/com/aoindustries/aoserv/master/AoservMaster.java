@@ -530,12 +530,6 @@ public abstract class AoservMaster {
       StreamableOutput out,
       Process process
   ) throws IOException, SQLException {
-    // Time is not added for the cache invalidation connection
-    boolean addTime = true;
-
-    // The return value
-    boolean keepOpen = true;
-
     process.commandCompleted();
 
     // Verify client sends matching sequence
@@ -549,8 +543,6 @@ public abstract class AoservMaster {
     if (source.getProtocolVersion().compareTo(AoservProtocol.Version.VERSION_1_80_1) >= 0) {
       out.writeLong(seq); // out is buffered, so no I/O created by writing this early
     }
-    // Continue with task
-    int taskCodeOrdinal = in.readCompressedInt();
     process.commandRunning();
       {
         int conc = concurrency.incrementAndGet();
@@ -565,6 +557,12 @@ public abstract class AoservMaster {
         }
       }
     requestCount.incrementAndGet();
+    // Time is not added for the cache invalidation connection
+    boolean addTime = true;
+    // The return value
+    boolean keepOpen = true;
+    // Continue with task
+    int taskCodeOrdinal = in.readCompressedInt();
     long requestStartTime = System.currentTimeMillis();
     try {
       if (taskCodeOrdinal == -1) {
