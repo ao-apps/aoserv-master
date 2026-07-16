@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -980,7 +980,7 @@ public final class MysqlHandler {
     if (password != null && password.length() == 0) {
       password = com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD;
     }
-    if (Objects.equals(password, com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD)) {
+    if (!Objects.equals(password, com.aoindustries.aoserv.client.mysql.User.NO_PASSWORD)) {
       List<PasswordChecker.Result> results = com.aoindustries.aoserv.client.mysql.User.checkPassword(mu, password);
       if (PasswordChecker.hasResults(results)) {
         throw new SQLException("Invalid password: " + PasswordChecker.getResultsString(results).replace('\n', '|'));
