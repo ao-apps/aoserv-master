@@ -10517,9 +10517,6 @@ public abstract class AoservMaster {
             out.writeByte(AoservProtocol.IO_EXCEPTION);
             out.writeUTF(message == null ? "" : message);
             keepOpen = false; // Close on IOException
-          } catch (ThreadDeath td) {
-            keepOpen = false;
-            throw td;
           } catch (Throwable t) {
             logger.log(Level.SEVERE, null, t);
             keepOpen = false;

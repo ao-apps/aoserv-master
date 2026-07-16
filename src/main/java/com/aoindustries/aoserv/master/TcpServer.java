@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2000-2013, 2018, 2020, 2021, 2022, 2024, 2025  AO Industries, Inc.
+ * Copyright (C) 2000-2013, 2018, 2020, 2021, 2022, 2024, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -113,15 +113,11 @@ public class TcpServer extends AoservMaster implements Runnable {
               socket.setSoLinger(true, AOPool.DEFAULT_SOCKET_SO_LINGER);
               // socket.setTcpNoDelay(true);
               new SocketServerThread(this, socket).start();
-            } catch (ThreadDeath td) {
-              throw td;
             } catch (Throwable t) {
               logger.log(Level.SEVERE, "serverPort=" + serverPort + ". address=" + address, t);
             }
           }
         }
-      } catch (ThreadDeath td) {
-        throw td;
       } catch (Throwable t) {
         logger.log(Level.SEVERE, "serverPort=" + serverPort + ", serverBind=" + serverBind, t);
       }

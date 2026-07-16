@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2025  AO Industries, Inc.
+ * Copyright (C) 2009-2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -370,8 +370,6 @@ public final class ClusterHandler implements CronJob {
                           secondaryMapping,
                           autoMapping
                       );
-                    } catch (ThreadDeath td) {
-                      throw td;
                     } catch (Throwable t) {
                       if (c == (attempts - 1) && Thread.currentThread().isInterrupted()) {
                         throw t;
@@ -400,8 +398,6 @@ public final class ClusterHandler implements CronJob {
               newPrimaryMappings.put(xenPhysicalServer, retVal.getElement1());
               newSecondaryMappings.put(xenPhysicalServer, retVal.getElement2());
               newAutoMappings.put(xenPhysicalServer, retVal.getElement3());
-            } catch (ThreadDeath td) {
-              throw td;
             } catch (InterruptedException e) {
               logger.log(Level.SEVERE, "xenPhysicalServer=" + xenPhysicalServer, e);
               // Restore the interrupted status
@@ -416,8 +412,6 @@ public final class ClusterHandler implements CronJob {
               newAutoMappings
           );
         }
-      } catch (ThreadDeath td) {
-        throw td;
       } catch (Throwable t) {
         logger.log(Level.SEVERE, null, t);
       }

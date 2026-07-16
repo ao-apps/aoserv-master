@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -391,8 +391,6 @@ public final class FailoverHandler implements CronJob {
   public void run(int minute, int hour, int dayOfMonth, int month, int dayOfWeek, int year) {
     try {
       MasterDatabase.getDatabase().update("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
-    } catch (ThreadDeath td) {
-      throw td;
     } catch (Throwable t) {
       logger.log(Level.SEVERE, null, t);
     }

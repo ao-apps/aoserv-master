@@ -124,8 +124,6 @@ public final class AccountCleaner implements CronJob {
         cleanNow(invalidateList);
         AoservMaster.invalidateTables(MasterDatabase.getDatabase(), invalidateList, null);
       }
-    } catch (ThreadDeath td) {
-      throw td;
     } catch (Throwable t) {
       logger.log(Level.SEVERE, null, t);
     }
@@ -884,8 +882,6 @@ public final class AccountCleaner implements CronJob {
           }
         }
       }
-    } catch (ThreadDeath td) {
-      throw td;
     } catch (Throwable t) {
       ErrorPrinter.printStackTraces(t, System.err);
       System.exit(SysExits.getSysExit(t));

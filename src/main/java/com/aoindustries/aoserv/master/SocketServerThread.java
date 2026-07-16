@@ -557,8 +557,6 @@ public final class SocketServerThread extends Thread implements RequestSource {
         } else {
           logger.log(Level.FINE, null, err);
         }
-      } catch (ThreadDeath td) {
-        throw td;
       } catch (Throwable t) {
         logger.log(Level.SEVERE, null, t);
       } finally {

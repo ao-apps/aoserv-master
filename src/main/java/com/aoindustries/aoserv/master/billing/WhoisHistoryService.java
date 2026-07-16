@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -377,8 +377,6 @@ public final class WhoisHistoryService implements MasterService {
                     if (DEBUG) {
                       System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
                     }
-                  } catch (ThreadDeath td) {
-                    throw td;
                   } catch (Throwable t) {
                     logger.log(Level.FINE, null, t);
                     exitStatus = null;
@@ -443,8 +441,6 @@ public final class WhoisHistoryService implements MasterService {
             AoservMaster.invalidateTables(conn, invalidateList, null);
           }
         }
-      } catch (ThreadDeath td) {
-        throw td;
       } catch (Throwable t) {
         logger.log(Level.SEVERE, null, t);
       }
