@@ -104,9 +104,9 @@ public class TcpServer extends AoservMaster implements Runnable {
         synchronized (System.out) {
           System.out.println("Accepting TCP connections on " + address.getHostAddress() + ':' + serverPort);
         }
-        try (ServerSocket SS = new ServerSocket(serverPort, 50, address)) {
+        try (ServerSocket ss = new ServerSocket(serverPort, 50, address)) {
           while (!Thread.currentThread().isInterrupted()) {
-            Socket socket = SS.accept();
+            Socket socket = ss.accept();
             incConnectionCount();
             try {
               socket.setKeepAlive(true);

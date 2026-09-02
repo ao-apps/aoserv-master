@@ -44,7 +44,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
 
   <!-- Allowing underscore separators for methods and data that span database joins -->
   <suppress
-    checks="(LocalVariableName|GoogleNonConstantFieldName|MethodName|ParameterName)"
+    checks="(LocalVariableName|LocalFinalVariableName|GoogleNonConstantFieldName|MethodName|ParameterName)"
     message="'[a-z]([a-z0-9][a-zA-Z0-9]*)?(_[a-z0-9X]([a-z0-9][a-zA-Z0-9]*)?)*'"
   />
 
@@ -77,5 +77,11 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     checks="OverloadMethodsDeclarationOrder"
     files="[/\\]com[/\\]aoindustries[/\\]aoserv[/\\]master[/\\]WebHandler\.java$"
   />
+
+  <!-- Extensively using multiple spaces for vertical alignment -->
+  <suppress checks="SingleSpaceSeparator" />
+
+  <!-- We are keeping old style multi-line comments for now since are so widespread -->
+  <suppress checks="MultilineCommentLeadingAsteriskPresence" />
 
 </suppressions>

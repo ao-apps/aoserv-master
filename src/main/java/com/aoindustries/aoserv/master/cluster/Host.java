@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2019, 2020, 2022  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2019, 2020, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -45,7 +45,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2800,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md0", DiskType.RAID1_7200, 2044),
             new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
         }
@@ -59,7 +59,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         2000,
         8,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/sde1", DiskType.RAID1_7200, 7450),
             new Disk("/dev/sdf1", DiskType.RAID1_7200, 7450),
             new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
@@ -77,7 +77,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2600,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md1", DiskType.RAID1_7200, 7112),
             new Disk("/dev/md2", DiskType.RAID1_7200, 7139),
             new Disk("/dev/md5", DiskType.RAID1_7200, 4769)
@@ -92,7 +92,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         3400,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_7200, 2102),
             new Disk("/dev/md4", DiskType.RAID1_7200, 7112)
         }
@@ -106,7 +106,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2800,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md1", DiskType.RAID1_7200, 3236),
             new Disk("/dev/md2", DiskType.RAID1_7200, 1449)
         }
@@ -120,7 +120,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2800,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md1", DiskType.RAID1_7200, 2044),
             new Disk("/dev/md2", DiskType.RAID1_7200, 3340)
         }
@@ -134,7 +134,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2400,
         4,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
             new Disk("/dev/md4", DiskType.RAID1_7200, 7112),
             new Disk("/dev/md5", DiskType.RAID5_10000, 1093)
@@ -149,7 +149,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         3200,
         8,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_7200, 7450 * 4), // TODO: These are not purchased yet - estimated size
             new Disk("/dev/md4", DiskType.RAID1_7200, 9198),
             new Disk("/dev/md5", DiskType.RAID1_7200, 9198)
@@ -182,7 +182,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.I686,
         2667,
         4,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_7200, 2044),
             new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
         }
@@ -196,7 +196,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         2800,
         4,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
             new Disk("/dev/md4", DiskType.RAID1_7200, 7139)
         }
@@ -210,7 +210,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         2130,
         2,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/md3", DiskType.RAID1_10000, 1851)
         }
     )
@@ -223,7 +223,7 @@ public final class Host implements Comparable<Host> {
         ProcessorArchitecture.X86_64,
         2333,
         8,
-        new Disk[]{
+        new Disk[] {
             new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450 * 2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
             new Disk("/dev/sdb1", DiskType.RAID1_7200, 9536),
             new Disk("/dev/sde1", DiskType.RAID1_7200, 7450 * 2), // TODO: Not purchased yet, estimated size

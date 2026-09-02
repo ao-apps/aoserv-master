@@ -94,9 +94,9 @@ public class SslServer extends TcpServer {
         synchronized (System.out) {
           System.out.println("Accepting SSL connections on " + address.getHostAddress() + ':' + serverPort);
         }
-        try (SSLServerSocket SS = (SSLServerSocket) factory.createServerSocket(serverPort, 50, address)) {
+        try (SSLServerSocket ss = (SSLServerSocket) factory.createServerSocket(serverPort, 50, address)) {
           while (!Thread.currentThread().isInterrupted()) {
-            Socket socket = SS.accept();
+            Socket socket = ss.accept();
             incConnectionCount();
             try {
               socket.setKeepAlive(true);

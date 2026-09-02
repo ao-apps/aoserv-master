@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2020, 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -50,7 +50,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
             }
         )
@@ -67,7 +67,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             31,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
             }
         )
@@ -84,7 +84,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             31,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 62, DiskType.RAID1_7200, 16)
             }
         )
@@ -101,7 +101,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 4480 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 125)
             }
         )
@@ -118,7 +118,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             4,
             500, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500)
             }
         )
@@ -135,7 +135,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             4,
             250, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, 500, DiskType.RAID1_15000, 500) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
             }
         )
@@ -152,7 +152,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             4,
             250, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896 + 896, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 1000)
             }
         )
@@ -169,7 +169,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -186,7 +186,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
             }
         )
@@ -203,7 +203,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 31)
             }
         )
@@ -220,7 +220,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125, // Desire 500,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 250)
             }
         )
@@ -237,7 +237,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             1,
             250, // Desire 1000,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 125)
             }
         )
@@ -254,7 +254,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             1000,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1000, DiskType.RAID1_7200, 250)
             }
         )
@@ -271,7 +271,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             4,
             500,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
             }
         )
@@ -288,7 +288,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125, // Desire 250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62),
                 new VirtualDisk("/dev/xvdb", 8064 + 896 * 2, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 62)
             }
@@ -306,7 +306,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             1000, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
             }
         )
@@ -323,7 +323,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896 + 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -340,7 +340,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125, // Desire 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -357,7 +357,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125, // Desire 250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -374,7 +374,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 3584 + 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -391,7 +391,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -408,7 +408,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             4,
             125, // Desire 250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 4480 + 896 * 2, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Need more space
             }
         )
@@ -425,7 +425,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             1000,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500)
             }
         )
@@ -442,7 +442,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
             }
         )
@@ -459,7 +459,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -476,7 +476,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -493,7 +493,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -510,7 +510,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125)
             }
         )
@@ -527,7 +527,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             125,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 250, DiskType.RAID1_7200, 125) // Desire more space
             }
         )
@@ -544,7 +544,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
             }
         )
@@ -561,7 +561,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
             }
         )
@@ -578,7 +578,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             8,
             750, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 7450 * 2, DiskType.RAID1_7200, 1000, DiskType.RAID1_7200, 500) // TODO: Estimated size
             }
         )
@@ -595,7 +595,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250, // Need 1000
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 500, DiskType.RAID1_7200, 250)
             }
         )
@@ -612,7 +612,7 @@ public final class VirtualServer implements Comparable<VirtualServer> {
             -1,
             2,
             250, // Need 500
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, 125, DiskType.RAID1_7200, 32)
             }
         )

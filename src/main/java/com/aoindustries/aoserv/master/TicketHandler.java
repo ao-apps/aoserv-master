@@ -1998,7 +1998,7 @@ public final class TicketHandler /*implements Runnable*/ {
   //   }
   // }
   //
-  // private static final String[] MATCH_HEADERS=new String[]{"Subject", "Date", "From", "Cc"};
+  // private static final String[] MATCH_HEADERS=new String[] {"Subject", "Date", "From", "Cc"};
   //
   // /**
   //  * Gets the String form of the message body.

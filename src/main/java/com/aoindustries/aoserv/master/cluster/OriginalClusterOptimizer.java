@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2007-2013, 2019, 2020, 2021, 2022, 2025  AO Industries, Inc.
+ * Copyright (C) 2007-2013, 2019, 2020, 2021, 2022, 2025, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -223,7 +223,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2800,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md0", DiskType.RAID1_7200, 2044),
                 new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
             }
@@ -238,7 +238,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             2000,
             8,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/sde1", DiskType.RAID1_7200, 7450),
                 new Disk("/dev/sdf1", DiskType.RAID1_7200, 7450),
                 new Disk("/dev/sdg1", DiskType.RAID1_7200, 7450),
@@ -257,7 +257,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2600,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md1", DiskType.RAID1_7200, 7112),
                 new Disk("/dev/md2", DiskType.RAID1_7200, 7139),
                 new Disk("/dev/md5", DiskType.RAID1_7200, 4769)
@@ -273,7 +273,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             3400,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_7200, 2102),
                 new Disk("/dev/md4", DiskType.RAID1_7200, 7112)
             }
@@ -288,7 +288,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2800,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md1", DiskType.RAID1_7200, 3236),
                 new Disk("/dev/md2", DiskType.RAID1_7200, 1449)
             }
@@ -303,7 +303,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2800,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md1", DiskType.RAID1_7200, 2044),
                 new Disk("/dev/md2", DiskType.RAID1_7200, 3340)
             }
@@ -318,7 +318,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2400,
             4,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
                 new Disk("/dev/md4", DiskType.RAID1_7200, 7112),
                 new Disk("/dev/md5", DiskType.RAID5_10000, 1093)
@@ -334,7 +334,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             3200,
             8,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_7200, 7450 * 4), // TODO: These are not purchased yet - estimated size
                 new Disk("/dev/md4", DiskType.RAID1_7200, 9198),
                 new Disk("/dev/md5", DiskType.RAID1_7200, 9198)
@@ -368,7 +368,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.I686,
             2667,
             4,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_7200, 2044),
                 new Disk("/dev/md4", DiskType.RAID1_7200, 2044)
             }
@@ -383,7 +383,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             2800,
             4,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_7200, 7112),
                 new Disk("/dev/md4", DiskType.RAID1_7200, 7139)
             }
@@ -398,7 +398,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             2130,
             2,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/md3", DiskType.RAID1_10000, 1851)
             }
         )
@@ -412,7 +412,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             2333,
             8,
-            new Disk[]{
+            new Disk[] {
                 new Disk("/dev/sdc1", DiskType.RAID1_7200, 7450 * 2), // TODO: These are not purchased yet.  Estimated size for the 2x500 GB for CARR
                 new Disk("/dev/sdd1", DiskType.RAID1_7200, 8700)  // These are the internal drives - Need separate hot-swap pair
             }
@@ -436,7 +436,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
             }
         )
@@ -450,7 +450,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
             }
         )
@@ -464,7 +464,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
             }
         )
@@ -478,7 +478,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             0.5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 4480, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -492,7 +492,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             1.0f, // 4 * .25
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, .5f)
             }
         )
@@ -506,7 +506,7 @@ public final class OriginalClusterOptimizer {
             null,
             2000,
             3.0f, // 4 * .75 - Need 4 * 1.0
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_15000, .5f, DiskType.RAID1_7200, 1.0f) // Need to be 1792, .5, .5 once ipharos.com is gone - and secondary on 15k
             }
         )
@@ -520,7 +520,7 @@ public final class OriginalClusterOptimizer {
             null,
             2333,
             1.0f, // 4 * .25 - Need 4 * 1.0
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .5f) // Need to be 1792, .5, .5 once ipharos.com is gone
             }
         )
@@ -534,7 +534,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -548,7 +548,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
             }
         )
@@ -562,7 +562,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .0625f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f)
             }
         )
@@ -576,7 +576,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, 1.0f)
             }
         )
@@ -590,7 +590,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             2.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_10000, 1.0f, DiskType.RAID1_7200, .25f)
             }
         )
@@ -604,7 +604,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             3200,
             2.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
                 // new VirtualDisk("/dev/xvdb", 8064, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .03125f) // Was
             }
@@ -619,7 +619,7 @@ public final class OriginalClusterOptimizer {
             ProcessorArchitecture.X86_64,
             3200,
             0.5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f),
                 new VirtualDisk("/dev/xvdb", 8064 + 896 * 4, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
             }
@@ -634,7 +634,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             2.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
             }
         )
@@ -648,7 +648,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             0.5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 // TODO: More disk I/O here
                 new VirtualDisk("/dev/xvda", 896 * 2, DiskType.RAID1_7200, .5f, DiskType.RAID1_7200, .125f)
             }
@@ -663,7 +663,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             0.5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 // TODO: More disk I/O here
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
             }
@@ -678,7 +678,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .125f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -692,7 +692,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 3584 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -706,7 +706,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             0.5f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -720,7 +720,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             1.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 4480 + 896 * 2, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -734,7 +734,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             2.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .25f)
             }
         )
@@ -748,7 +748,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -762,7 +762,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -776,7 +776,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -790,7 +790,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -804,7 +804,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -818,7 +818,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 0.25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -832,7 +832,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 2688 + 896, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .125f)
             }
         )
@@ -846,7 +846,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,
             .25f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 // TODO: More disk +896 here
                 new VirtualDisk("/dev/xvda", 1792 + 896, DiskType.RAID1_7200, 0.125f, DiskType.RAID1_7200, .125f)
             }
@@ -861,7 +861,7 @@ public final class OriginalClusterOptimizer {
             null,
             2333,
             6.0f, // 8 * .75 each - Need 8 * 1.0
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 new VirtualDisk("/dev/xvda", 7450 * 2, DiskType.RAID1_7200, 1.0f, DiskType.RAID1_7200, .5f) // TODO: Estimated size
             }
         )
@@ -875,7 +875,7 @@ public final class OriginalClusterOptimizer {
             null,
             -1,  // TODO: If possible, make this 3200, had solution at -1
             1.0f,
-            new VirtualDisk[]{
+            new VirtualDisk[] {
                 // TODO: More disk I/O here
                 new VirtualDisk("/dev/xvda", 2688, DiskType.RAID1_7200, .25f, DiskType.RAID1_7200, .0625f)
             }
