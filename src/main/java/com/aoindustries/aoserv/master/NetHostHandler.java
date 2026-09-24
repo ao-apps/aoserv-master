@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2001-2013, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -368,10 +368,11 @@ public final class NetHostHandler {
    */
   public static IntList getEnabledXenPhysicalServers(DatabaseAccess database) throws IOException, SQLException {
     return database.queryIntList(
-        "select se.id from net.\"Host\" se inner join infrastructure.\"PhysicalServer\" ps on se.id=ps.server where se.operating_system_version in (?,?,?) and se.monitoring_enabled",
+        "select se.id from net.\"Host\" se inner join infrastructure.\"PhysicalServer\" ps on se.id=ps.server where se.operating_system_version in (?,?,?,?) and se.monitoring_enabled",
         OperatingSystemVersion.CENTOS_5_DOM0_I686,
         OperatingSystemVersion.CENTOS_5_DOM0_X86_64,
-        OperatingSystemVersion.CENTOS_7_DOM0_X86_64
+        OperatingSystemVersion.CENTOS_7_DOM0_X86_64,
+        OperatingSystemVersion.DEBIAN_13_DOM0_X86_64
     );
   }
 
