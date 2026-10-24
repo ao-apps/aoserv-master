@@ -613,7 +613,7 @@ public abstract class AoservMaster {
                         try {
                           source.wait(delay);
                         } catch (InterruptedException err) {
-                          logger.log(Level.WARNING, null, err);
+                          logger.log(Level.WARNING, "TODO: message here", err);
                           // Restore the interrupted status
                           Thread.currentThread().interrupt();
                           break LOOP;
@@ -10498,27 +10498,27 @@ public abstract class AoservMaster {
             }
           } catch (SQLException err) {
             if (logSqlException) {
-              logger.log(Level.SEVERE, null, err);
+              logger.log(Level.SEVERE, "TODO: message here", err);
             }
             String message = err.getMessage();
             out.writeByte(AoservProtocol.SQL_EXCEPTION);
             out.writeUTF(message == null ? "" : message);
           } catch (ValidationException err) {
-            logger.log(Level.SEVERE, null, err);
+            logger.log(Level.SEVERE, "TODO: message here", err);
             String message = err.getMessage();
             out.writeByte(AoservProtocol.IO_EXCEPTION);
             out.writeUTF(message == null ? "" : message);
             keepOpen = false; // Close on ValidationException
           } catch (IOException err) {
             if (logIoException) {
-              logger.log(Level.SEVERE, null, err);
+              logger.log(Level.SEVERE, "TODO: message here", err);
             }
             String message = err.getMessage();
             out.writeByte(AoservProtocol.IO_EXCEPTION);
             out.writeUTF(message == null ? "" : message);
             keepOpen = false; // Close on IOException
           } catch (Throwable t) {
-            logger.log(Level.SEVERE, null, t);
+            logger.log(Level.SEVERE, "TODO: message here", t);
             keepOpen = false;
           } finally {
             if (currentThread.getPriority() != Thread.NORM_PRIORITY) {
@@ -10647,7 +10647,7 @@ public abstract class AoservMaster {
           source.cachesInvalidated(tableList);
         }
       } catch (IOException err) {
-        logger.log(Level.SEVERE, null, err);
+        logger.log(Level.SEVERE, "TODO: message here", err);
       }
     }
   }
@@ -10820,14 +10820,14 @@ public abstract class AoservMaster {
         try {
           Thread.sleep(SERVICE_RETRY_INTERVAL);
         } catch (InterruptedException e) {
-          logger.log(Level.WARNING, null, e);
+          logger.log(Level.WARNING, "TODO: message here", e);
           // Restore the interrupted status
           Thread.currentThread().interrupt();
         }
         failedServices = startServices(failedServices, false, System.out);
       }
     } catch (IOException | IllegalArgumentException err) {
-      logger.log(Level.SEVERE, null, err);
+      logger.log(Level.SEVERE, "TODO: message here", err);
     }
   }
 
@@ -10881,7 +10881,7 @@ public abstract class AoservMaster {
           failedServices.add(serviceAndState);
         }
         out.println(": " + e.toString());
-        logger.log(Level.SEVERE, null, e);
+        logger.log(Level.SEVERE, "TODO: message here", e);
       }
     }
     if (!failedServices.isEmpty()) {

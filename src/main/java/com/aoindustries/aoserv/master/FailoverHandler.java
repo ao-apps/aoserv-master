@@ -392,7 +392,7 @@ public final class FailoverHandler implements CronJob {
     try {
       MasterDatabase.getDatabase().update("delete from backup.\"FileReplicationLog\" where end_time <= (now()-'1 year'::interval)");
     } catch (Throwable t) {
-      logger.log(Level.SEVERE, null, t);
+      logger.log(Level.SEVERE, "TODO: message here", t);
     }
   }
 

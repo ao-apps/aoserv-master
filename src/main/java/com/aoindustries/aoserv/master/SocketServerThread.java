@@ -213,7 +213,7 @@ public final class SocketServerThread extends Thread implements RequestSource {
           } else {
             level = Level.FINE;
           }
-          logger.log(level, null, err);
+          logger.log(level, "TODO: message here", err);
           return;
         }
         process.setAoservProtocol(protocolVersion.getVersion());
@@ -527,9 +527,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
                     && !"Unrecognized SSL message, plaintext connection?".equals(message)
               )
         ) {
-          logger.log(Level.SEVERE, null, err);
+          logger.log(Level.SEVERE, "TODO: message here", err);
         } else {
-          logger.log(Level.FINE, null, err);
+          logger.log(Level.FINE, "TODO: message here", err);
         }
       } catch (SocketException err) {
         String message = err.getMessage();
@@ -542,9 +542,9 @@ public final class SocketServerThread extends Thread implements RequestSource {
                     && !message.startsWith("Connection timed out")
               )
         ) {
-          logger.log(Level.SEVERE, null, err);
+          logger.log(Level.SEVERE, "TODO: message here", err);
         } else {
-          logger.log(Level.FINE, null, err);
+          logger.log(Level.FINE, "TODO: message here", err);
         }
       } catch (IOException err) {
         String message = err.getMessage();
@@ -553,19 +553,19 @@ public final class SocketServerThread extends Thread implements RequestSource {
                 // Broken pipe common for abnormal client disconnects
                 || !message.startsWith("Broken pipe")
         ) {
-          logger.log(Level.SEVERE, null, err);
+          logger.log(Level.SEVERE, "TODO: message here", err);
         } else {
-          logger.log(Level.FINE, null, err);
+          logger.log(Level.FINE, "TODO: message here", err);
         }
       } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       } finally {
         // Close the socket
         try {
           isClosed = true;
           socket.close();
         } catch (IOException err) {
-          logger.log(Level.SEVERE, null, err);
+          logger.log(Level.SEVERE, "TODO: message here", err);
         }
       }
     } finally {

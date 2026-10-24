@@ -288,7 +288,7 @@ public final class ReportGenerator implements CronJob {
         }
       }
     } catch (Throwable t) {
-      logger.log(Level.SEVERE, null, t);
+      logger.log(Level.SEVERE, "TODO: message here", t);
     }
   }
 }

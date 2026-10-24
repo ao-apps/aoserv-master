@@ -378,7 +378,7 @@ public final class WhoisHistoryService implements MasterService {
                       System.out.println(WhoisHistoryService.class.getSimpleName() + ": " + registrableDomain + ": Success");
                     }
                   } catch (Throwable t) {
-                    logger.log(Level.FINE, null, t);
+                    logger.log(Level.FINE, "TODO: message here", t);
                     exitStatus = null;
                     output = "";
                     error = t.toString();
@@ -430,7 +430,7 @@ public final class WhoisHistoryService implements MasterService {
                   Thread.sleep(sleepTime);
                 }
               } catch (InterruptedException e) {
-                logger.log(Level.WARNING, null, e);
+                logger.log(Level.WARNING, "TODO: message here", e);
                 // Restore the interrupted status
                 Thread.currentThread().interrupt();
               }
@@ -442,7 +442,7 @@ public final class WhoisHistoryService implements MasterService {
           }
         }
       } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       }
     }
   };

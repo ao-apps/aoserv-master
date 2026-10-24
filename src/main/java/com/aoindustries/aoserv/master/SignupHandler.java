@@ -212,7 +212,7 @@ public final class SignupHandler {
                     conn.commit();
                   }
                 } catch (Throwable t) {
-                  logger.log(Level.SEVERE, null, t);
+                  logger.log(Level.SEVERE, "TODO: message here", t);
                 }
               }
 

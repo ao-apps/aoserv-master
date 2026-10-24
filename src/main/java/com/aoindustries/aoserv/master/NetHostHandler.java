@@ -516,7 +516,7 @@ public final class NetHostHandler {
                 try {
                   invalidateSyncLock.wait(maxWait);
                 } catch (InterruptedException err) {
-                  logger.log(Level.WARNING, null, err);
+                  logger.log(Level.WARNING, "TODO: message here", err);
                   // Restore the interrupted status
                   Thread.currentThread().interrupt();
                 }

@@ -374,11 +374,11 @@ public final class ClusterHandler implements CronJob {
                       if (c == (attempts - 1) && Thread.currentThread().isInterrupted()) {
                         throw t;
                       }
-                      logger.log(Level.SEVERE, null, t);
+                      logger.log(Level.SEVERE, "TODO: message here", t);
                       try {
                         Thread.sleep(2000);
                       } catch (InterruptedException err) {
-                        logger.log(Level.WARNING, null, err);
+                        logger.log(Level.WARNING, "TODO: message here", err);
                         // Restore the interrupted status
                         Thread.currentThread().interrupt();
                       }
@@ -413,7 +413,7 @@ public final class ClusterHandler implements CronJob {
           );
         }
       } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       }
     }
   }

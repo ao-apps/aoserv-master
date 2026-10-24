@@ -83,7 +83,7 @@ public class SslServer extends TcpServer {
           MasterConfiguration.getSslKeystorePath()
       );
     } catch (IOException err) {
-      logger.log(Level.SEVERE, null, err);
+      logger.log(Level.SEVERE, "TODO: message here", err);
       return;
     }
 
@@ -109,12 +109,12 @@ public class SslServer extends TcpServer {
           }
         }
       } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       }
       try {
         Thread.sleep(15000);
       } catch (InterruptedException err) {
-        logger.log(Level.WARNING, null, err);
+        logger.log(Level.WARNING, "TODO: message here", err);
         // Restore the interrupted status
         Thread.currentThread().interrupt();
       }

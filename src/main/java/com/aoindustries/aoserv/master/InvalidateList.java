@@ -154,7 +154,7 @@ public final class InvalidateList {
         }
         for (Account.Name account : accounts) {
           if (account == null) {
-            logger.log(Level.WARNING, null, new RuntimeException("Warning: account is null"));
+            logger.log(Level.WARNING, "TODO: message here", new RuntimeException("Warning: account is null"));
           } else if (!accountList.contains(account)) {
             accountList.add(account);
           }
@@ -173,7 +173,7 @@ public final class InvalidateList {
       }
       for (Integer id : hosts) {
         if (id == null) {
-          logger.log(Level.WARNING, null, new RuntimeException("Warning: id is null"));
+          logger.log(Level.WARNING, "TODO: message here", new RuntimeException("Warning: id is null"));
         } else if (!sv.contains(id)) {
           sv.add(id);
         }

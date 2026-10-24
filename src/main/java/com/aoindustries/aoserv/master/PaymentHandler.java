@@ -1934,7 +1934,7 @@ public final class PaymentHandler /*implements CronJob*/ {
         }
       }
     } catch (Throwable t) {
-      logger.log(Level.SEVERE, null, t);
+      logger.log(Level.SEVERE, "TODO: message here", t);
     }
   }
 
@@ -2043,7 +2043,7 @@ public final class PaymentHandler /*implements CronJob*/ {
         }
       } catch (Throwable t) {
         // Log failure in ticket
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       }
     }
   };

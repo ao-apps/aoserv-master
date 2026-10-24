@@ -192,7 +192,7 @@ public class TopLevelDomainService implements MasterService {
           }
         }
       } catch (Throwable t) {
-        logger.log(Level.SEVERE, null, t);
+        logger.log(Level.SEVERE, "TODO: message here", t);
       }
     }
   };

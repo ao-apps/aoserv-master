@@ -125,7 +125,7 @@ public final class AccountCleaner implements CronJob {
         AoservMaster.invalidateTables(MasterDatabase.getDatabase(), invalidateList, null);
       }
     } catch (Throwable t) {
-      logger.log(Level.SEVERE, null, t);
+      logger.log(Level.SEVERE, "TODO: message here", t);
     }
   }
 

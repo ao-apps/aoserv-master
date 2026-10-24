@@ -1777,7 +1777,7 @@ public final class TicketHandler /*implements Runnable*/ {
                     AoservMaster.invalidateTables(conn, invalidateList, null);
                   }
                 } catch (Throwable t) {
-                  logger.log(Level.SEVERE, null, t);
+                  logger.log(Level.SEVERE, "TODO: message here", t);
                 }
               }
 
@@ -1816,7 +1816,7 @@ public final class TicketHandler /*implements Runnable*/ {
   //       try {
   //         Thread.sleep(SLEEP_INTERVAL);
   //       } catch (InterruptedException err) {
-  //         logger.log(Level.WARNING, null, err);
+  //         logger.log(Level.WARNING, "TODO: message here", err);
   //         // Restore the interrupted status
   //         Thread.currentThread().interrupt();
   //         break;
@@ -1993,7 +1993,7 @@ public final class TicketHandler /*implements Runnable*/ {
   //         timer.stop();
   //       }
   //     } catch (Throwable t) {
-  //       logger.log(Level.SEVERE, null, t);
+  //       logger.log(Level.SEVERE, "TODO: message here", t);
   //     }
   //   }
   // }
@@ -2021,7 +2021,7 @@ public final class TicketHandler /*implements Runnable*/ {
   //     getMessageBody0(message.getContent(), sb);
   //     return sb.toString();
   //   } catch (UnsupportedEncodingException err) {
-  //     logger.log(Level.WARNING, null, err);
+  //     logger.log(Level.WARNING, "TODO: message here", err);
   //     return message.getContent().toString();
   //   }
   // }

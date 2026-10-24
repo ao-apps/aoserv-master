@@ -1,6 +1,6 @@
 /*
  * aoserv-master - Master server for the AOServ Platform.
- * Copyright (C) 2018, 2019, 2020, 2021, 2022  AO Industries, Inc.
+ * Copyright (C) 2018, 2019, 2020, 2021, 2022, 2026  AO Industries, Inc.
  *     support@aoindustries.com
  *     7262 Bull Pen Cir
  *     Mobile, AL 36695
@@ -159,7 +159,7 @@ public class ServerStat_GetTableHandler extends TableHandler.GetTableHandlerPubl
 
       addStat(objs, ServerStat.UPTIME, Strings.getDecimalTimeLengthString(System.currentTimeMillis() - getStartTime()), "Amount of time the master server has been running");
     } catch (IOException err) {
-      logger.log(Level.SEVERE, null, err);
+      logger.log(Level.SEVERE, "TODO: message here", err);
       String message = err.getMessage();
       out.writeByte(AoservProtocol.IO_EXCEPTION);
       out.writeUTF(message == null ? "" : message);

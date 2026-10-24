@@ -124,7 +124,7 @@ public class TcpServer extends AoservMaster implements Runnable {
       try {
         Thread.sleep(15000);
       } catch (InterruptedException err) {
-        logger.log(Level.WARNING, null, err);
+        logger.log(Level.WARNING, "TODO: message here", err);
         // Restore the interrupted status
         Thread.currentThread().interrupt();
       }
