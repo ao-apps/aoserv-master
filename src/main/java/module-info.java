@@ -21,6 +21,26 @@
  * along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
  */
 module com.aoindustries.aoserv.master {
+  // Direct
+  requires com.aoapps.collections; // <groupId>com.aoapps</groupId><artifactId>ao-collections</artifactId>
+  requires com.aoapps.cron; // <groupId>com.aoapps</groupId><artifactId>ao-cron</artifactId>
+  requires com.aoapps.dbc; // <groupId>com.aoapps</groupId><artifactId>ao-dbc</artifactId>
+  requires com.aoapps.hodgepodge; // <groupId>com.aoapps</groupId><artifactId>ao-hodgepodge</artifactId>
+  requires com.aoapps.lang; // <groupId>com.aoapps</groupId><artifactId>ao-lang</artifactId>
+  requires com.aoapps.net.types; // <groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId>
+  requires com.aoapps.payments.api; // <groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId>
+  requires com.aoapps.security; // <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId>
+  requires com.aoapps.sql; // <groupId>com.aoapps</groupId><artifactId>ao-sql</artifactId>
+  requires com.aoapps.sql.pool; // <groupId>com.aoapps</groupId><artifactId>ao-sql-pool</artifactId>
+  requires com.aoapps.tlds; // <groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId>
+  requires com.aoindustries.aoserv.client; // <groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId>
+  requires com.aoindustries.aoserv.daemon.client; // <groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId>
+  // Non-Java: <groupId>com.aoindustries</groupId><artifactId>aoserv-schema</artifactId><classifier>sql</classifier>
+  requires org.apache.commons.lang3; // <groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId>
+  // Java SE
+  requires java.logging;
+  requires java.sql;
+
   exports com.aoindustries.aoserv.master;
   exports com.aoindustries.aoserv.master.account;
   exports com.aoindustries.aoserv.master.accounting;
@@ -52,9 +72,11 @@ module com.aoindustries.aoserv.master {
   exports com.aoindustries.aoserv.master.web;
   exports com.aoindustries.aoserv.master.web.jboss;
   exports com.aoindustries.aoserv.master.web.tomcat;
+
   uses com.aoindustries.aoserv.master.MasterService;
   uses com.aoindustries.aoserv.master.TableHandler.GetObjectHandler;
   uses com.aoindustries.aoserv.master.TableHandler.GetTableHandler;
+
   provides com.aoindustries.aoserv.master.MasterService with
     com.aoindustries.aoserv.master.billing.WhoisHistoryService,
     com.aoindustries.aoserv.master.dns.DnsService,
@@ -245,23 +267,4 @@ module com.aoindustries.aoserv.master {
     com.aoindustries.aoserv.master.web.tomcat.Version_GetTableHandler,
     com.aoindustries.aoserv.master.web.tomcat.Worker_GetTableHandler,
     com.aoindustries.aoserv.master.web.tomcat.WorkerName_GetTableHandler;
-  // Direct
-  requires com.aoapps.collections; // <groupId>com.aoapps</groupId><artifactId>ao-collections</artifactId>
-  requires com.aoapps.cron; // <groupId>com.aoapps</groupId><artifactId>ao-cron</artifactId>
-  requires com.aoapps.dbc; // <groupId>com.aoapps</groupId><artifactId>ao-dbc</artifactId>
-  requires com.aoapps.hodgepodge; // <groupId>com.aoapps</groupId><artifactId>ao-hodgepodge</artifactId>
-  requires com.aoapps.lang; // <groupId>com.aoapps</groupId><artifactId>ao-lang</artifactId>
-  requires com.aoapps.net.types; // <groupId>com.aoapps</groupId><artifactId>ao-net-types</artifactId>
-  requires com.aoapps.payments.api; // <groupId>com.aoapps</groupId><artifactId>ao-payments-api</artifactId>
-  requires com.aoapps.security; // <groupId>com.aoapps</groupId><artifactId>ao-security</artifactId>
-  requires com.aoapps.sql; // <groupId>com.aoapps</groupId><artifactId>ao-sql</artifactId>
-  requires com.aoapps.sql.pool; // <groupId>com.aoapps</groupId><artifactId>ao-sql-pool</artifactId>
-  requires com.aoapps.tlds; // <groupId>com.aoapps</groupId><artifactId>ao-tlds</artifactId>
-  requires com.aoindustries.aoserv.client; // <groupId>com.aoindustries</groupId><artifactId>aoserv-client</artifactId>
-  requires com.aoindustries.aoserv.daemon.client; // <groupId>com.aoindustries</groupId><artifactId>aoserv-daemon-client</artifactId>
-  // Non-Java: <groupId>com.aoindustries</groupId><artifactId>aoserv-schema</artifactId><classifier>sql</classifier>
-  requires org.apache.commons.lang3; // <groupId>org.apache.commons</groupId><artifactId>commons-lang3</artifactId>
-  // Java SE
-  requires java.logging;
-  requires java.sql;
 }
