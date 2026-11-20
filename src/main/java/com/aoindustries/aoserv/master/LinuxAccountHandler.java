@@ -1023,7 +1023,7 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DBUS,                             81, Group.DBUS,                 "System Message Bus",                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DBUS,                             81, Group.DBUS,                 "System Message Bus",                                              "/",                             Shell.USR_SBIN_NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.BIRD,                             95, Group.BIRD,                 "BIRD Internet Routing Daemon",                                    "/var/opt/bird",                 Shell.NOLOGIN,  null);
           // Not in Rocky 9:                   User.BIRD
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.NOBODY,                           99, Group.NOBODY,               "Nobody",                                                          "/",                             Shell.NOLOGIN,  null);
@@ -1213,40 +1213,40 @@ public final class LinuxAccountHandler {
       if (systemUser.uid == SystemUser.ANY_SYSTEM_UID) {
         // System users in range 201 through uidMin - 1
         if (uid < getSysUidMin(osv) || uid >= uidMin) {
-          throw new SQLException("Invalid system uid: " + uid);
+          throw new SQLException("Invalid system uid for " + user + ": " + uid);
         }
       } else if (systemUser.uid == SystemUser.ANY_USER_UID) {
         // Regular users in range uidMin through User.UID_MAX
         if (uid < uidMin || uid > uidMax) {
-          throw new SQLException("Invalid regular user uid: " + uid);
+          throw new SQLException("Invalid regular user uid for " + user + ": " + uid);
         }
       } else {
         // UID must match exactly
         if (uid != systemUser.uid) {
-          throw new SQLException("Unexpected system uid: " + uid + " != " + systemUser.uid);
+          throw new SQLException("Unexpected system uid for " + user + ": " + uid + " != " + systemUser.uid);
         }
       }
       // Check other fields match
       if (!Objects.equals(group,          systemUser.group)) {
-        throw new SQLException("Unexpected system group: "          + group          + " != " + systemUser.group);
+        throw new SQLException("Unexpected system group for " + user + ": "          + group          + " != " + systemUser.group);
       }
       if (!Objects.equals(fullName,       systemUser.fullName)) {
-        throw new SQLException("Unexpected system fullName: "       + fullName       + " != " + systemUser.fullName);
+        throw new SQLException("Unexpected system fullName for " + user + ": "       + fullName       + " != " + systemUser.fullName);
       }
       if (!Objects.equals(officeLocation, systemUser.officeLocation)) {
-        throw new SQLException("Unexpected system officeLocation: " + officeLocation + " != " + systemUser.officeLocation);
+        throw new SQLException("Unexpected system officeLocation for " + user + ": " + officeLocation + " != " + systemUser.officeLocation);
       }
       if (!Objects.equals(officePhone,    systemUser.officePhone)) {
-        throw new SQLException("Unexpected system officePhone: "    + officePhone    + " != " + systemUser.officePhone);
+        throw new SQLException("Unexpected system officePhone for " + user + ": "    + officePhone    + " != " + systemUser.officePhone);
       }
       if (!Objects.equals(homePhone,      systemUser.homePhone)) {
-        throw new SQLException("Unexpected system homePhone: "      + homePhone      + " != " + systemUser.homePhone);
+        throw new SQLException("Unexpected system homePhone for " + user + ": "      + homePhone      + " != " + systemUser.homePhone);
       }
       if (!Objects.equals(home,           systemUser.home)) {
-        throw new SQLException("Unexpected system home: "           + home           + " != " + systemUser.home);
+        throw new SQLException("Unexpected system home for " + user + ": "           + home           + " != " + systemUser.home);
       }
       if (!Objects.equals(shell,          systemUser.shell)) {
-        throw new SQLException("Unexpected system shell: "          + shell          + " != " + systemUser.shell);
+        throw new SQLException("Unexpected system shell for " + user + ": "          + shell          + " != " + systemUser.shell);
       }
       // Add to database
       int userServer = conn.updateInt(
