@@ -181,6 +181,7 @@ public final class LinuxAccountHandler {
       new Tuple2<>(Group.SCREEN, 84),
       new Tuple2<>(Group.USERS, 100),
       new Tuple2<>(Group.SSH_KEYS, 101),
+      new Tuple2<>(Group.INPUT, 104), // As of Rocky 9.9
       new Tuple2<>(Group.RTKIT, 172),
       new Tuple2<>(Group.DHCPD, 177),
       new Tuple2<>(Group.SYSTEMD_JOURNAL, 190),
