@@ -1023,7 +1023,7 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.AWSTATS,                          78, Group.AWSTATS,              "AWStats Background Log Processing",                               "/var/opt/awstats",              Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DBUS,                             81, Group.DBUS,                 "System message bus",                                              "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DBUS,                             81, Group.DBUS,                 "System Message Bus",                                              "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.BIRD,                             95, Group.BIRD,                 "BIRD Internet Routing Daemon",                                    "/var/opt/bird",                 Shell.NOLOGIN,  null);
           // Not in Rocky 9:                   User.BIRD
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.NOBODY,                           99, Group.NOBODY,               "Nobody",                                                          "/",                             Shell.NOLOGIN,  null);
@@ -1049,7 +1049,7 @@ public final class LinuxAccountHandler {
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
           // Not in CentOS 7:                  User.FLATPAK
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.FLATPAK,              ANY_SYSTEM_UID, Group.FLATPAK,              "User for flatpak system helper",                                  "/",                             Shell.NOLOGIN,  null);
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.FLATPAK,              ANY_SYSTEM_UID, Group.FLATPAK,              "Flatpak system helper",                                           "/",                             Shell.NOLOGIN,  null);
           // Not in CentOS 7:                  User.GEOCLUE
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.GEOCLUE,              ANY_SYSTEM_UID, Group.GEOCLUE,              "User for geoclue",                                                "/var/lib/geoclue",              Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
