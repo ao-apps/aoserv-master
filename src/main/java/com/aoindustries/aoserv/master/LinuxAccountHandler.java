@@ -182,6 +182,8 @@ public final class LinuxAccountHandler {
       new Tuple2<>(Group.USERS, 100),
       new Tuple2<>(Group.SSH_KEYS, 101),
       new Tuple2<>(Group.INPUT, 104), // As of Rocky 9.9
+      new Tuple2<>(Group.RENDER, 105), // As of Rocky 9.9
+      new Tuple2<>(Group.SGX, 106), // As of Rocky 9.9
       new Tuple2<>(Group.RTKIT, 172),
       new Tuple2<>(Group.DHCPD, 177),
       new Tuple2<>(Group.SYSTEMD_JOURNAL, 190),
@@ -220,14 +222,14 @@ public final class LinuxAccountHandler {
       Group.CLAMUPDATE,
       Group.FLATPAK,
       Group.GEOCLUE,
-      Group.INPUT,
+      Group.INPUT, // Before Rocky 9.9
       Group.JENKINS,
       Group.MEMCACHED,
       Group.NGINX,
       Group.PIPEWIRE,
       Group.POLKITD,
-      Group.RENDER,
-      Group.SGX,
+      Group.RENDER, // Before Rocky 9.9
+      Group.SGX, // Before Rocky 9.9
       Group.SSSD,
       Group.SYSTEMD_COREDUMP,
       Group.SYSTEMD_OOM,
