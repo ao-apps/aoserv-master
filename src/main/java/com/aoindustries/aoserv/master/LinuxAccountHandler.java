@@ -236,7 +236,9 @@ public final class LinuxAccountHandler {
       Group.UNBOUND,
       Group.VIRUSGROUP,
       // Rocky 9.7
-      Group.PRINTADMIN
+      Group.PRINTADMIN,
+      // Valkey
+      Group.VALKEY
   ));
 
   /** See {@link LinuxAccountHandler#isRegularUserGroup(int, int, int, com.aoindustries.aoserv.client.linux.Group.Name, int)}. */
@@ -1102,6 +1104,9 @@ public final class LinuxAccountHandler {
           // SonarQube
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.SONARQUBE,            ANY_USER_UID,   Group.SONARQUBE,            "SonarQube",                                                       "/home/sonarqube",               Shell.BASH,     null);
+          // Valkey
+          // Not in CentOS 7:                  User.VALKEY
+          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.VALKEY,               ANY_SYSTEM_UID, Group.VALKEY,               "Valkey Database Server",                                          "/dev/null",                     Shell.NOLOGIN,  null);
         } catch (ValidationException e) {
           throw new AssertionError("These hard-coded values are valid", e);
         }

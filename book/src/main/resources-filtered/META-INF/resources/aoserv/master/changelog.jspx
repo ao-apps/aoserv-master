@@ -37,7 +37,7 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
     shortTitle="Changelog"
     tocLevels="1"
     datePublished="2020-04-13T15:17:05-05:00"
-    dateModified="2026-09-24T06:11:43Z"
+    dateModified="2026-11-21T04:07:21Z"
   >
     <c:set var="latestRelease" value="1.91.8" />
     <c:if test="${
@@ -88,6 +88,11 @@ along with aoserv-master.  If not, see <https://www.gnu.org/licenses/>.
           <li>Added support for <ao:a href="https://www.postgresql.org/docs/17/index.html">PostgreSQL 17</ao:a>.</li>
           <li>Added support for <ao:a href="https://www.postgresql.org/docs/18/index.html">PostgreSQL 18</ao:a>.</li>
           <li>Added support for <ao:a href="https://www.debian.org/releases/trixie/">Debian 13 "trixie"</ao:a>.</li>
+          <li>Now supporting <ao:a href="https://valkey.io/">Valkey</ao:a>:
+            <ol type="a">
+              <li>New system group and user for <code>valkey</code>.</li>
+            </ol>
+          </li>
         </ul>
       </changelog:release>
     </c:if>
