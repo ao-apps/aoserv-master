@@ -184,7 +184,6 @@ public final class LinuxAccountHandler {
       new Tuple2<>(Group.INPUT, 104), // As of Rocky 9.9
       new Tuple2<>(Group.RENDER, 105), // As of Rocky 9.9
       new Tuple2<>(Group.SGX, 106), // As of Rocky 9.9
-      new Tuple2<>(Group.RTKIT, 172),
       new Tuple2<>(Group.DHCPD, 177),
       new Tuple2<>(Group.SYSTEMD_JOURNAL, 190),
       new Tuple2<>(Group.NOBODY, 65534)
@@ -224,7 +223,6 @@ public final class LinuxAccountHandler {
       Group.JENKINS,
       Group.MEMCACHED,
       Group.NGINX,
-      Group.PIPEWIRE,
       Group.POLKITD,
       Group.RENDER, // Before Rocky 9.9
       Group.SGX, // Before Rocky 9.9
@@ -1030,8 +1028,6 @@ public final class LinuxAccountHandler {
           // Renumbered to 65534 in Rocky 9:   User.NOBODY
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.AVAHI_AUTOIPD,                   170, Group.AVAHI_AUTOIPD,        "Avahi IPv4LL Stack",                                              "/var/lib/avahi-autoipd",        Shell.NOLOGIN,  null);
           // Not in Rocky 9:                   User.AVAHI_AUTOIPD
-          // Not in CentOS 7:                  User.RTKIT
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.RTKIT,                           172, Group.RTKIT,                "RealtimeKit",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.DHCPD,                           177, Group.DHCPD,                "DHCP server",                                                     "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.SYSTEMD_NETWORK,                 192, Group.SYSTEMD_NETWORK,      "systemd Network Management",                                      "/",                             Shell.NOLOGIN,  null);
@@ -1054,8 +1050,6 @@ public final class LinuxAccountHandler {
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.MEMCACHED,            ANY_SYSTEM_UID, Group.MEMCACHED,            "Memcached daemon",                                                "/run/memcached",                Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.NGINX,                ANY_SYSTEM_UID, Group.NGINX,                "nginx user",                                                      "/var/cache/nginx",              Shell.NOLOGIN,  null);
-          // Not in CentOS 7:                  User.PIPEWIRE
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.PIPEWIRE,             ANY_SYSTEM_UID, Group.PIPEWIRE,             "PipeWire System Daemon",                                          "/run/pipewire",                 Shell.USR_SBIN_NOLOGIN, null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.OPENDKIM,             ANY_SYSTEM_UID, Group.OPENDKIM,             "OpenDKIM Milter",                                                 "/var/run/opendkim",             Shell.NOLOGIN,  null);
           // TODO: Rocky 9:                    User.OPENDKIM
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.POLKITD,              ANY_SYSTEM_UID, Group.POLKITD,              "User for polkitd",                                                "/",                             Shell.NOLOGIN,  null);
