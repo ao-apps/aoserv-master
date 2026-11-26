@@ -220,7 +220,6 @@ public final class LinuxAccountHandler {
       Group.CHRONY,
       Group.CLAMSCAN,
       Group.CLAMUPDATE,
-      Group.FLATPAK,
       Group.GEOCLUE,
       Group.INPUT, // Before Rocky 9.9
       Group.JENKINS,
@@ -1050,8 +1049,6 @@ public final class LinuxAccountHandler {
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CLAMSCAN,             ANY_SYSTEM_UID, Group.CLAMSCAN,             "Clamav scanner user",                                             "/",                             Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.CLAMUPDATE,           ANY_SYSTEM_UID, Group.CLAMUPDATE,           "Clamav database update user",                                     "/var/lib/clamav",               Shell.NOLOGIN,  null);
-          // Not in CentOS 7:                  User.FLATPAK
-          addSystemUser(ROCKY_9_SYSTEM_USERS,  User.FLATPAK,              ANY_SYSTEM_UID, Group.FLATPAK,              "Flatpak system helper",                                           "/",                             Shell.USR_SBIN_NOLOGIN,  null);
           // Not in CentOS 7:                  User.GEOCLUE
           addSystemUser(ROCKY_9_SYSTEM_USERS,  User.GEOCLUE,              ANY_SYSTEM_UID, Group.GEOCLUE,              "User for geoclue",                                                "/var/lib/geoclue",              Shell.NOLOGIN,  null);
           addSystemUser(CENTOS_7_SYSTEM_USERS, User.JENKINS,              ANY_SYSTEM_UID, Group.JENKINS,              "Jenkins Automation Server",                                       "/var/lib/jenkins",              Shell.FALSE,    null);
